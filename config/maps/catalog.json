@@ -1,0 +1,100 @@
+{
+  "default_map": "simple",
+  "maps": [
+    {
+      "id": "training",
+      "display_name": "Training Yard",
+      "difficulty": 1,
+      "difficulty_label": "Simple",
+      "description": "A 16×16 m training yard with few obstacles and wide corridors.",
+      "world_name": "substation_training",
+      "world_file": "simulation/worlds/substation_training.sdf",
+      "obstacle_config": "config/maps/substation_training.json",
+      "spawn_pose": [-8, -8, 0, 0, 0, 0],
+      "default_target": "top_right",
+      "targets": [
+        {"id": "top_right", "display_name": "Top Right", "description": "Original long-route destination near the northeast corner.", "cell": [13, 13]},
+        {"id": "center", "display_name": "Center", "description": "Interior destination for a medium-length route.", "cell": [7, 10]},
+        {"id": "left", "display_name": "Left Side", "description": "Destination along the west-side service lane.", "cell": [1, 7]},
+        {"id": "bottom", "display_name": "Bottom Side", "description": "Destination along the south-side service lane.", "cell": [2, 2]},
+        {"id": "right", "display_name": "Right Side", "description": "Destination along the east-side service lane.", "cell": [13, 9]}
+      ]
+    },
+    {
+      "id": "simple",
+      "display_name": "Classic Substation",
+      "difficulty": 2,
+      "difficulty_label": "Easy",
+      "description": "The classic 20×20 m baseline map for regression testing.",
+      "world_name": "substation_simple",
+      "world_file": "simulation/worlds/substation_simple.sdf",
+      "obstacle_config": "config/substation_obstacles.json",
+      "spawn_pose": [-10, -10, 0, 0, 0, 0],
+      "default_target": "top_right",
+      "targets": [
+        {"id": "top_right", "display_name": "Top Right", "description": "Original long-route destination near the northeast corner.", "cell": [16, 16]},
+        {"id": "center", "display_name": "Center", "description": "Interior destination for a medium-length route.", "cell": [10, 8]},
+        {"id": "left", "display_name": "Left Side", "description": "Destination along the west-side service lane.", "cell": [1, 12]},
+        {"id": "bottom", "display_name": "Bottom Side", "description": "Destination along the south-side service lane.", "cell": [13, 2]},
+        {"id": "right", "display_name": "Right Side", "description": "Destination along the east-side service lane.", "cell": [15, 11]}
+      ]
+    },
+    {
+      "id": "medium",
+      "display_name": "Dual-Bay Station",
+      "difficulty": 3,
+      "difficulty_label": "Medium",
+      "description": "A 24×24 m dual-bay station with mixed equipment and crossing corridors.",
+      "world_name": "substation_medium",
+      "world_file": "simulation/worlds/substation_medium.sdf",
+      "obstacle_config": "config/maps/substation_medium.json",
+      "spawn_pose": [-12, -12, 0, 0, 0, 0],
+      "default_target": "top_right",
+      "targets": [
+        {"id": "top_right", "display_name": "Top Right", "description": "Original long-route destination near the northeast corner.", "cell": [21, 21]},
+        {"id": "center", "display_name": "Center", "description": "Interior destination for a medium-length route.", "cell": [13, 11]},
+        {"id": "left", "display_name": "Left Side", "description": "Destination along the west-side service lane.", "cell": [1, 14]},
+        {"id": "bottom", "display_name": "Bottom Side", "description": "Destination along the south-side service lane.", "cell": [17, 2]},
+        {"id": "right", "display_name": "Right Side", "description": "Destination along the east-side service lane.", "cell": [21, 12]}
+      ]
+    },
+    {
+      "id": "complex",
+      "display_name": "Multi-Bay Station",
+      "difficulty": 4,
+      "difficulty_label": "Complex",
+      "description": "A 28×28 m multi-bay station for perception and local replanning tests.",
+      "world_name": "substation_complex",
+      "world_file": "simulation/worlds/substation_complex.sdf",
+      "obstacle_config": "config/maps/substation_complex.json",
+      "spawn_pose": [-14, -14, 0, 0, 0, 0],
+      "default_target": "top_right",
+      "targets": [
+        {"id": "top_right", "display_name": "Top Right", "description": "Original long-route destination near the northeast corner.", "cell": [25, 25]},
+        {"id": "center", "display_name": "Center", "description": "Interior destination for a medium-length route.", "cell": [16, 19]},
+        {"id": "left", "display_name": "Left Side", "description": "Destination along the west-side service lane.", "cell": [3, 21]},
+        {"id": "bottom", "display_name": "Bottom Side", "description": "Destination along the south-side service lane.", "cell": [18, 2]},
+        {"id": "right", "display_name": "Right Side", "description": "Destination along the east-side service lane.", "cell": [25, 15]}
+      ]
+    },
+    {
+      "id": "extreme",
+      "display_name": "Dense Multi-Voltage Station",
+      "difficulty": 5,
+      "difficulty_label": "Extreme",
+      "description": "A dense 32×32 m station for long routes, narrow corridors, and active-replanning stress tests.",
+      "world_name": "substation_extreme",
+      "world_file": "simulation/worlds/substation_extreme.sdf",
+      "obstacle_config": "config/maps/substation_extreme.json",
+      "spawn_pose": [-16, -16, 0, 0, 0, 0],
+      "default_target": "top_right",
+      "targets": [
+        {"id": "top_right", "display_name": "Top Right", "description": "Original long-route destination near the northeast corner.", "cell": [29, 29]},
+        {"id": "center", "display_name": "Center", "description": "Interior destination for a medium-length route.", "cell": [16, 18]},
+        {"id": "left", "display_name": "Left Side", "description": "Destination along the west-side service lane.", "cell": [2, 19]},
+        {"id": "bottom", "display_name": "Bottom Side", "description": "Destination along the south-side service lane.", "cell": [21, 2]},
+        {"id": "right", "display_name": "Right Side", "description": "Destination along the east-side service lane.", "cell": [30, 15]}
+      ]
+    }
+  ]
+}

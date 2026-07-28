@@ -1,0 +1,51 @@
+name: Offline validation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  offline-validation:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
+
+      - name: Compile Python sources
+        run: python -m compileall -q src scripts main.py
+
+      - name: Check all flight shell syntax
+        run: |
+          for script in scripts/flight/*.sh scripts/flight/experiments/*.sh; do
+            bash -n "$script"
+          done
+
+      - name: Run offline A-star preview smoke test
+        env:
+          MPLBACKEND: Agg
+        run: >-
+          python main.py astar preview
+          --obstacle-config config/substation_obstacles.json
+          --return-home
+          --altitude 1.5

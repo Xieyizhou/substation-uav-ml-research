@@ -1,0 +1,210 @@
+{
+  "map_name": "substation_complex_v1",
+  "world_name": "substation_complex",
+  "display_name": "Multi-Bay Station",
+  "difficulty": 4,
+  "difficulty_label": "复杂",
+  "description": "28×28 m 多间隔场地，设备类型丰富、通道更窄，适合重规划测试。",
+  "note": "Obstacle rectangles use inclusive grid cells; cell centers map to local coordinates using x+0.5 and y+0.5.",
+  "gazebo_world_origin_m": [
+    -14.0,
+    -14.0,
+    0
+  ],
+  "width": 28,
+  "height": 28,
+  "resolution_m": 1.0,
+  "start_cell": [
+    0,
+    0
+  ],
+  "goal_cell": [
+    25,
+    25
+  ],
+  "altitude_m": 1.5,
+  "vertical_safety_margin_m": 0.3,
+  "horizontal_inflation_cells": 1,
+  "raw_footprint_note": "Obstacle x/y bounds are physical grid footprints before planning inflation.",
+  "obstacles": [
+    {
+      "name": "entry_switchgear",
+      "type": "rect",
+      "x_min": 5,
+      "x_max": 6,
+      "y_min": 0,
+      "y_max": 2,
+      "z_min_m": 0.0,
+      "z_max_m": 1.4,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "west_switchgear_01",
+      "type": "rect",
+      "x_min": 0,
+      "x_max": 1,
+      "y_min": 5,
+      "y_max": 7,
+      "z_min_m": 0.0,
+      "z_max_m": 1.6,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "west_switchgear_02",
+      "type": "rect",
+      "x_min": 0,
+      "x_max": 1,
+      "y_min": 9,
+      "y_max": 11,
+      "z_min_m": 0.0,
+      "z_max_m": 1.6,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "west_switchgear_03",
+      "type": "rect",
+      "x_min": 0,
+      "x_max": 1,
+      "y_min": 13,
+      "y_max": 15,
+      "z_min_m": 0.0,
+      "z_max_m": 1.6,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "west_switchgear_04",
+      "type": "rect",
+      "x_min": 0,
+      "x_max": 1,
+      "y_min": 17,
+      "y_max": 18,
+      "z_min_m": 0.0,
+      "z_max_m": 1.6,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "transformer_sw",
+      "type": "rect",
+      "x_min": 5,
+      "x_max": 8,
+      "y_min": 5,
+      "y_max": 8,
+      "z_min_m": 0.0,
+      "z_max_m": 2.0,
+      "visual_category": "transformer"
+    },
+    {
+      "name": "transformer_se",
+      "type": "rect",
+      "x_min": 15,
+      "x_max": 18,
+      "y_min": 6,
+      "y_max": 9,
+      "z_min_m": 0.0,
+      "z_max_m": 2.0,
+      "visual_category": "transformer"
+    },
+    {
+      "name": "transformer_mid",
+      "type": "rect",
+      "x_min": 10,
+      "x_max": 13,
+      "y_min": 16,
+      "y_max": 19,
+      "z_min_m": 0.0,
+      "z_max_m": 2.0,
+      "visual_category": "transformer"
+    },
+    {
+      "name": "control_building",
+      "type": "rect",
+      "x_min": 20,
+      "x_max": 23,
+      "y_min": 18,
+      "y_max": 21,
+      "z_min_m": 0.0,
+      "z_max_m": 2.8,
+      "visual_category": "control_building"
+    },
+    {
+      "name": "switchgear_west",
+      "type": "rect",
+      "x_min": 3,
+      "x_max": 5,
+      "y_min": 15,
+      "y_max": 17,
+      "z_min_m": 0.0,
+      "z_max_m": 1.5,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "capacitor_east",
+      "type": "rect",
+      "x_min": 20,
+      "x_max": 22,
+      "y_min": 11,
+      "y_max": 13,
+      "z_min_m": 0.0,
+      "z_max_m": 1.8,
+      "visual_category": "capacitor_bank"
+    },
+    {
+      "name": "reactor_north",
+      "type": "rect",
+      "x_min": 6,
+      "x_max": 8,
+      "y_min": 22,
+      "y_max": 24,
+      "z_min_m": 0.0,
+      "z_max_m": 2.2,
+      "visual_category": "reactor"
+    },
+    {
+      "name": "cabinet_center",
+      "type": "rect",
+      "x_min": 16,
+      "x_max": 17,
+      "y_min": 14,
+      "y_max": 15,
+      "z_min_m": 0.0,
+      "z_max_m": 1.5,
+      "visual_category": "cabinet"
+    },
+    {
+      "name": "pole_a",
+      "type": "cell",
+      "x": 11,
+      "y": 11,
+      "z_min_m": 0.0,
+      "z_max_m": 4.8,
+      "visual_category": "pole"
+    },
+    {
+      "name": "pole_b",
+      "type": "cell",
+      "x": 18,
+      "y": 16,
+      "z_min_m": 0.0,
+      "z_max_m": 4.8,
+      "visual_category": "pole"
+    },
+    {
+      "name": "pole_c",
+      "type": "cell",
+      "x": 24,
+      "y": 10,
+      "z_min_m": 0.0,
+      "z_max_m": 4.8,
+      "visual_category": "pole"
+    },
+    {
+      "name": "pole_d",
+      "type": "cell",
+      "x": 14,
+      "y": 23,
+      "z_min_m": 0.0,
+      "z_max_m": 4.8,
+      "visual_category": "pole"
+    }
+  ]
+}

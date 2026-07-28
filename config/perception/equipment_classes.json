@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "image_size": 640,
+  "classes": [
+    "transformer",
+    "switchgear",
+    "capacitor_bank",
+    "reactor"
+  ],
+  "held_out_map": "extreme",
+  "camera": {
+    "frame_id": "research_rgb",
+    "horizontal_fov_deg": 84.0,
+    "native_width": 1920,
+    "native_height": 1080,
+    "frame_rate_hz": 30
+  }
+}

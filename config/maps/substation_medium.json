@@ -1,0 +1,124 @@
+{
+  "map_name": "substation_medium_v1",
+  "world_name": "substation_medium",
+  "display_name": "Dual-Bay Station",
+  "difficulty": 3,
+  "difficulty_label": "中等",
+  "description": "24×24 m 双间隔变电站，包含多种设备和交叉服务通道。",
+  "note": "Obstacle rectangles use inclusive grid cells; cell centers map to local coordinates using x+0.5 and y+0.5.",
+  "gazebo_world_origin_m": [
+    -12.0,
+    -12.0,
+    0
+  ],
+  "width": 24,
+  "height": 24,
+  "resolution_m": 1.0,
+  "start_cell": [
+    0,
+    0
+  ],
+  "goal_cell": [
+    21,
+    21
+  ],
+  "altitude_m": 1.5,
+  "vertical_safety_margin_m": 0.3,
+  "horizontal_inflation_cells": 1,
+  "raw_footprint_note": "Obstacle x/y bounds are physical grid footprints before planning inflation.",
+  "obstacles": [
+    {
+      "name": "entry_switchgear",
+      "type": "rect",
+      "x_min": 5,
+      "x_max": 6,
+      "y_min": 0,
+      "y_max": 2,
+      "z_min_m": 0.0,
+      "z_max_m": 1.4,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "transformer_west",
+      "type": "rect",
+      "x_min": 6,
+      "x_max": 8,
+      "y_min": 5,
+      "y_max": 7,
+      "z_min_m": 0.0,
+      "z_max_m": 1.9,
+      "visual_category": "transformer"
+    },
+    {
+      "name": "transformer_north",
+      "type": "rect",
+      "x_min": 15,
+      "x_max": 17,
+      "y_min": 14,
+      "y_max": 16,
+      "z_min_m": 0.0,
+      "z_max_m": 1.9,
+      "visual_category": "transformer"
+    },
+    {
+      "name": "cabinet_west",
+      "type": "rect",
+      "x_min": 4,
+      "x_max": 5,
+      "y_min": 15,
+      "y_max": 17,
+      "z_min_m": 0.0,
+      "z_max_m": 1.5,
+      "visual_category": "cabinet"
+    },
+    {
+      "name": "switchgear_south",
+      "type": "rect",
+      "x_min": 12,
+      "x_max": 14,
+      "y_min": 3,
+      "y_max": 4,
+      "z_min_m": 0.0,
+      "z_max_m": 1.4,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "capacitor_east",
+      "type": "rect",
+      "x_min": 18,
+      "x_max": 20,
+      "y_min": 7,
+      "y_max": 9,
+      "z_min_m": 0.0,
+      "z_max_m": 1.7,
+      "visual_category": "capacitor_bank"
+    },
+    {
+      "name": "pole_a",
+      "type": "cell",
+      "x": 10,
+      "y": 11,
+      "z_min_m": 0.0,
+      "z_max_m": 4.5,
+      "visual_category": "pole"
+    },
+    {
+      "name": "pole_b",
+      "type": "cell",
+      "x": 12,
+      "y": 18,
+      "z_min_m": 0.0,
+      "z_max_m": 4.5,
+      "visual_category": "pole"
+    },
+    {
+      "name": "pole_c",
+      "type": "cell",
+      "x": 20,
+      "y": 15,
+      "z_min_m": 0.0,
+      "z_max_m": 4.5,
+      "visual_category": "pole"
+    }
+  ]
+}

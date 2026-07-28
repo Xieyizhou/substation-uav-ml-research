@@ -1,0 +1,5 @@
+stage,stage_folder,run_count,completed_count,pass_count,mean_total_flight_time_s,std_total_flight_time_s,min_total_flight_time_s,max_total_flight_time_s,mean_planned_path_length_m,mean_actual_traveled_distance_m,mean_minimum_distance_to_obstacle_m,total_safety_buffer_violation_count,mean_perception_risk_detection_count,mean_slow_down_event_count,mean_local_replan_attempt_count,mean_successful_local_replan_count,mean_active_route_replacement_count
+static_astar,01_static_astar,4,4,4,149.918,0.493,149.316,150.450,68.000,68.048,,0,0.000,0.000,0.000,0.000,0.000
+perception_response,02_perception_response,3,3,3,175.393,1.960,173.985,177.631,68.000,67.500,0.872,0,674.333,300.000,0.000,0.000,0.000
+replan_log_only,03_replan_log_only,3,3,3,149.383,0.728,148.545,149.850,68.000,67.505,0.897,0,545.333,0.000,4.000,4.000,0.000
+active_replan,04_active_replan,6,6,6,223.078,2.091,220.785,225.878,82.667,68.414,0.839,0,868.333,0.000,3.000,3.000,1.000

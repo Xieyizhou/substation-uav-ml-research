@@ -1,0 +1,125 @@
+# macOS
+.DS_Store
+
+# Python
+.venv/
+__pycache__/
+.pycache_compile/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+
+# IDE/editor
+.idea/
+.vscode/
+
+# Local AI coding-agent instructions and prompt files.
+# Repository policy: these files must never be committed or pushed.
+AGENTS.md
+**/AGENTS.md
+CLAUDE.md
+**/CLAUDE.md
+GEMINI.md
+**/GEMINI.md
+.codex/
+**/.codex/
+.agents/
+**/.agents/
+.cursor/
+**/.cursor/
+.continue/
+**/.continue/
+.claude/
+**/.claude/
+.codebuddy/
+**/.codebuddy/
+.gemini/
+**/.gemini/
+.kiro/
+**/.kiro/
+.qoder/
+**/.qoder/
+.roo/
+**/.roo/
+.windsurf/
+**/.windsurf/
+.code-review-graph/
+**/.code-review-graph/
+.cursorrules
+.windsurfrules
+.mcp.json
+CODEBUDDY.md
+QODER.md
+opencode.json
+opencode.jsonc
+.github/copilot-instructions.md
+.github/instructions/
+.github/prompts/
+*.instruction.md
+*.prompt.md
+*.prompt.txt
+*.instructions.md
+*agent-prompt*
+*agent_prompt*
+*system-prompt*
+*system_prompt*
+
+# Environment / secrets
+.env
+.env.*
+
+# PX4/Gazebo and raw telemetry logs generated during local runs
+data/logs/
+data/px4_console_logs/
+data/raw_logs/*
+!data/raw_logs/README.md
+*.ulg
+*.tlog
+*.bag
+*.log
+*.csv.tmp
+
+# Research datasets and model artifacts. Keep schemas/configuration in Git,
+# but never commit raw scans, images, generated labels, or learned weights.
+data/research/
+datasets/
+models/checkpoints/
+models/lidar/
+models/equipment/
+*.pt
+*.pth
+*.onnx
+*.engine
+integrations/dji_psdk/generated/
+
+# Generated analysis outputs. Curated samples live in data/sample_outputs/.
+outputs/*
+!outputs/README.md
+
+# Local simulator/cache/temp output when generated inside this repo
+build/
+logs/
+tmp/
+temp/
+.tmp/
+.runtime/
+
+# Large local media should be attached to releases, not committed.
+release_assets/*
+!release_assets/.gitignore
+!release_assets/README.md
+!release_assets/raw/
+!release_assets/raw/.gitkeep
+!release_assets/source/
+!release_assets/source/.gitkeep
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+
+# Legacy / local learning scripts not part of the main UAV pipeline
+legacy/learning_scripts/
+# Added by code-review-graph
+.code-review-graph/

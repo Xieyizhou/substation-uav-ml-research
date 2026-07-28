@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package uav.research.dji;
+
+service FlightBridge {
+  rpc Health(Empty) returns (HealthState);
+  rpc ObtainControl(Empty) returns (CommandResult);
+  rpc ReleaseControl(Empty) returns (CommandResult);
+  rpc LatestTelemetry(Empty) returns (TelemetryState);
+  rpc CommandVelocity(VelocityNedYaw) returns (CommandResult);
+  rpc Hover(Empty) returns (CommandResult);
+  rpc Land(Empty) returns (CommandResult);
+  rpc ReturnToHome(Empty) returns (CommandResult);
+}
+
+message Empty {}
+
+message CommandResult {
+  bool accepted = 1;
+  string message = 2;
+}
+
+message HealthState {
+  bool connected = 1;
+  bool control_authority = 2;
+  double telemetry_age_s = 3;
+  bool failsafe_active = 4;
+  string message = 5;
+}
+
+message VelocityNedYaw {
+  double north_m_s = 1;
+  double east_m_s = 2;
+  double down_m_s = 3;
+  double yaw_deg = 4;
+}
+
+message TelemetryState {
+  double timestamp_s = 1;
+  double north_m = 2;
+  double east_m = 3;
+  double down_m = 4;
+  double velocity_north_m_s = 5;
+  double velocity_east_m_s = 6;
+  double velocity_down_m_s = 7;
+  double yaw_deg = 8;
+  double battery_percent = 9;
+  bool armed = 10;
+  bool in_air = 11;
+  string flight_mode = 12;
+}

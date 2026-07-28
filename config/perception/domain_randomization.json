@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "equipment_scale": [0.85, 1.15],
+  "equipment_position_jitter_m": [-0.75, 0.75],
+  "light_intensity": [0.35, 1.4],
+  "material_age": [0.0, 1.0],
+  "lidar_noise_stddev_m": [0.005, 0.05],
+  "lidar_dropout_probability": [0.0, 0.12],
+  "attitude_jitter_deg": [-4.0, 4.0],
+  "camera_noise_stddev": [0.0, 0.04],
+  "weather": ["clear", "overcast", "mist", "light_rain"]
+}

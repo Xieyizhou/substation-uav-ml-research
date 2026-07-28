@@ -1,0 +1,84 @@
+{
+  "map_name": "substation_training_v1",
+  "world_name": "substation_training",
+  "display_name": "Training Yard",
+  "difficulty": 1,
+  "difficulty_label": "简单",
+  "description": "16×16 m 入门场地，障碍少、通道宽，适合首次飞行和回归测试。",
+  "note": "Obstacle rectangles use inclusive grid cells; cell centers map to local coordinates using x+0.5 and y+0.5.",
+  "gazebo_world_origin_m": [
+    -8.0,
+    -8.0,
+    0
+  ],
+  "width": 16,
+  "height": 16,
+  "resolution_m": 1.0,
+  "start_cell": [
+    0,
+    0
+  ],
+  "goal_cell": [
+    13,
+    13
+  ],
+  "altitude_m": 1.5,
+  "vertical_safety_margin_m": 0.3,
+  "horizontal_inflation_cells": 1,
+  "raw_footprint_note": "Obstacle x/y bounds are physical grid footprints before planning inflation.",
+  "obstacles": [
+    {
+      "name": "entry_switchgear",
+      "type": "rect",
+      "x_min": 5,
+      "x_max": 6,
+      "y_min": 0,
+      "y_max": 2,
+      "z_min_m": 0.0,
+      "z_max_m": 1.4,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "transformer_a",
+      "type": "rect",
+      "x_min": 5,
+      "x_max": 7,
+      "y_min": 5,
+      "y_max": 7,
+      "z_min_m": 0.0,
+      "z_max_m": 1.8,
+      "visual_category": "transformer"
+    },
+    {
+      "name": "cabinet_north",
+      "type": "rect",
+      "x_min": 3,
+      "x_max": 4,
+      "y_min": 10,
+      "y_max": 11,
+      "z_min_m": 0.0,
+      "z_max_m": 1.4,
+      "visual_category": "cabinet"
+    },
+    {
+      "name": "switchgear_east",
+      "type": "rect",
+      "x_min": 10,
+      "x_max": 12,
+      "y_min": 3,
+      "y_max": 4,
+      "z_min_m": 0.0,
+      "z_max_m": 1.4,
+      "visual_category": "switchgear"
+    },
+    {
+      "name": "pole_center",
+      "type": "cell",
+      "x": 10,
+      "y": 10,
+      "z_min_m": 0.0,
+      "z_max_m": 4.2,
+      "visual_category": "pole"
+    }
+  ]
+}

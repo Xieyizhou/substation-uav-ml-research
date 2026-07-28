@@ -1,0 +1,8 @@
+# Local release media outputs are generated artifacts.
+*
+!.gitignore
+!README.md
+!raw/
+!raw/.gitkeep
+!source/
+!source/.gitkeep
