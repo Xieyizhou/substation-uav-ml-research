@@ -5,7 +5,17 @@ from __future__ import annotations
 import argparse
 import sys
 
-from src.cli import astar, checks, experiments, maintenance, models, reports, sensors
+from src.cli import (
+    astar,
+    checks,
+    data,
+    experiments,
+    maintenance,
+    models,
+    reports,
+    sensors,
+    studies,
+)
 from src.cli.process import run_script
 
 
@@ -22,7 +32,9 @@ MODULE_COMMANDS = {
     "check": checks.main,
     "maintenance": maintenance.main,
     "sensor": sensors.main,
+    "data": data.main,
     "model": models.main,
+    "study": studies.main,
 }
 
 
@@ -46,7 +58,9 @@ def build_parser():
         ("check", "Run environment and regression checks"),
         ("maintenance", "Run infrequent data maintenance"),
         ("sensor", "Inspect, record, or replay research sensors"),
+        ("data", "Collect, validate, or summarize research datasets"),
         ("model", "Train, evaluate, or benchmark research models"),
+        ("study", "Run resumable model comparison studies"),
     )
     for definition in definitions:
         name, help_text, *alias = definition

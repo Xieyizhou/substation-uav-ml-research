@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dataset_manifest.schema.json",
+  "title": "LiDAR Research Dataset Manifest",
+  "type": "object",
+  "required": [
+    "manifest_schema_version",
+    "dataset_id",
+    "dataset_schema_version",
+    "generator_commit",
+    "truth_generator_version",
+    "samples",
+    "data_sha256",
+    "split_counts",
+    "risk_label_distribution",
+    "maps",
+    "seeds"
+  ],
+  "properties": {
+    "manifest_schema_version": {"const": 1},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "dataset_schema_version": {"const": 2},
+    "generator_commit": {"type": "string"},
+    "truth_generator_version": {"type": "string"},
+    "samples": {"type": "integer", "minimum": 1},
+    "data_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "split_counts": {"type": "object"},
+    "risk_label_distribution": {"type": "object"},
+    "maps": {"type": "array", "items": {"type": "string"}},
+    "seeds": {"type": "array", "items": {"type": "integer"}},
+    "scenario_config_hashes": {"type": "array", "items": {"type": "string"}},
+    "scenarios": {"type": "array", "items": {"type": "object"}}
+  },
+  "additionalProperties": true
+}

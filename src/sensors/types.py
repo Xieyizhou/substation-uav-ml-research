@@ -3,13 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-import math
 import time
 from typing import Any
-
-
-def _finite(value: float) -> bool:
-    return math.isfinite(value)
 
 
 @dataclass(frozen=True)
@@ -39,13 +34,6 @@ class LaserScanFrame:
     def age_s(self, now_s: float | None = None) -> float:
         now_s = time.monotonic() if now_s is None else now_s
         return max(0.0, now_s - self.received_monotonic_s)
-
-    def valid_ranges(self) -> tuple[float, ...]:
-        return tuple(
-            value
-            for value in self.ranges_m
-            if _finite(value) and self.range_min_m <= value <= self.range_max_m
-        )
 
     def angle_at(self, index: int) -> float:
         return self.angle_min_rad + index * self.angle_step_rad

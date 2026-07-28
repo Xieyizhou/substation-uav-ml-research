@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "model_manifest.schema.json",
+  "title": "LiDAR ONNX Model Manifest",
+  "type": "object",
+  "required": [
+    "manifest_schema_version",
+    "model_id",
+    "dataset_id",
+    "dataset_sha256",
+    "network",
+    "preprocessing",
+    "training_commit",
+    "onnx_sha256",
+    "input_contract",
+    "output_contract",
+    "offline_metrics"
+  ],
+  "properties": {
+    "manifest_schema_version": {"const": 1},
+    "model_id": {"type": "string", "minLength": 1},
+    "parent_model": {"type": ["string", "null"]},
+    "dataset_id": {"type": "string", "minLength": 1},
+    "dataset_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "training_commit": {"type": "string"},
+    "onnx_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "input_contract": {"type": "object"},
+    "output_contract": {"type": "object"},
+    "offline_metrics": {"type": "object"}
+  },
+  "additionalProperties": true
+}

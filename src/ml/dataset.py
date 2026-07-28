@@ -10,7 +10,7 @@ from pathlib import Path
 from src.ml import EQUIPMENT_CLASSES, RISK_LABELS
 
 
-DATASET_SCHEMA_VERSION = 1
+DATASET_SCHEMA_VERSION = 2
 VALID_SPLITS = {"train", "validation", "test"}
 
 
@@ -34,6 +34,10 @@ class ResearchSample:
     ground_truth_occupancy: tuple[float, ...] = ()
     collision_time_s: float | None = None
     safety_label: str | None = None
+    recommended_direction_deg: float = 0.0
+    sensor_data_age_ms: float = 0.0
+    sensor_healthy: bool = True
+    scenario_config_hash: str = ""
     schema_version: int = DATASET_SCHEMA_VERSION
 
     def validate(self):
@@ -59,6 +63,10 @@ class ResearchSample:
             raise ValueError("ground-truth occupancy values must be in [0, 1]")
         if self.collision_time_s is not None and self.collision_time_s < 0:
             raise ValueError("collision_time_s must be non-negative")
+        if not -180.0 <= self.recommended_direction_deg <= 180.0:
+            raise ValueError("recommended_direction_deg must be in [-180, 180]")
+        if self.sensor_data_age_ms < 0:
+            raise ValueError("sensor_data_age_ms must be non-negative")
 
     def to_record(self):
         return {
@@ -83,6 +91,10 @@ class ResearchSample:
             "ground_truth_occupancy": list(self.ground_truth_occupancy),
             "collision_time_s": self.collision_time_s,
             "safety_label": self.safety_label or self.risk_label,
+            "recommended_direction_deg": self.recommended_direction_deg,
+            "sensor_data_age_ms": self.sensor_data_age_ms,
+            "sensor_healthy": self.sensor_healthy,
+            "scenario_config_hash": self.scenario_config_hash,
         }
 
     @classmethod
@@ -119,6 +131,12 @@ class ResearchSample:
                 else None
             ),
             safety_label=str(record.get("safety_label", record["risk_label"])),
+            recommended_direction_deg=float(
+                record.get("recommended_direction_deg", 0.0)
+            ),
+            sensor_data_age_ms=float(record.get("sensor_data_age_ms", 0.0)),
+            sensor_healthy=bool(record.get("sensor_healthy", True)),
+            scenario_config_hash=str(record.get("scenario_config_hash", "")),
             schema_version=int(record.get("schema_version", 0)),
         )
         sample.validate()

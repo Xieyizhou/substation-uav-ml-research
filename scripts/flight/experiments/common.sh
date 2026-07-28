@@ -105,12 +105,6 @@ update_stage_reports() {
   python main.py report summarize
 }
 
-update_cross_stage_comparison() {
-  echo
-  echo "Updating landmark cross-stage comparison..."
-  python main.py report compare
-}
-
 latest_output_dir() {
   # Stage names map to the canonical output folders documented in
   # docs/EXPERIMENT_PROTOCOL.md.

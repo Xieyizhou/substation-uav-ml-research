@@ -14,18 +14,32 @@ Evidence: [v0.1 LiDAR validation](docs/results/v0.1_lidar_validation_20260728.md
 This milestone is simulation evidence, not a real-airframe or statistical ML
 claim.
 
-## v0.2 — Unknown-obstacle replanning
+## v0.2 — ML experiment sandbox — Infrastructure complete, evidence pending
 
-- Add reproducible unknown-obstacle and sensor-fault scenarios.
-- Validate slowdown, hover, landing, and active route replacement.
-- Report collision, near-miss, clearance, success, and replan latency.
+- [x] Materialize deterministic Gazebo worlds with equipment variation,
+  unknown obstacles, and sensor-fault manifests.
+- [x] Generate geometry-derived risk, TTC, occupancy, 72-bin traversability,
+  and recommended-direction labels from synchronized replay.
+- [x] Enforce train/validation/test seed boundaries and reserve formal seeds.
+- [x] Train with validation selection, class weighting, early stopping, a best
+  checkpoint, real direction targets, and PyTorch/ONNX consistency checks.
+- [x] Package dataset/model identities, hashes, contracts, history, and metrics.
+- [x] Schedule replay, 5-scenario closed-loop, and 30-scenario paired formal
+  studies in a resumable SQLite registry.
+- [ ] Collect the full split-isolated dataset and publish aggregate statistics.
+- [ ] Train the first candidate and complete replay, 5-scenario, and 120-run
+  formal evidence gates.
 
-## v0.3 — LiDAR ML risk and traversability
+The runner uses 30 paired scenarios × four conditions, not the previous
+1,800-run Cartesian expansion.
 
-- Generate split-isolated datasets using map layout and seed boundaries.
-- Train and export the 1D CNN/ONNX baseline.
-- Compare oracle, geometric LiDAR, ML LiDAR, and safety fusion over at least
-  thirty independent seeds per formal condition.
+## v0.3 — First LiDAR ML evidence
+
+- Publish the first candidate model card and fixed replay results.
+- Compare oracle, geometric LiDAR, ML LiDAR, and safety fusion without
+  suppressing neutral or negative results.
+- Promote a model only when safety does not regress and at least one quality or
+  latency metric improves.
 
 ## v0.4 — Four-class equipment perception
 

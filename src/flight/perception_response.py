@@ -80,6 +80,7 @@ def build_perception_detector(args, planner_config):
         topic=args.sensor_topic,
         replay_path=args.sensor_replay,
         stale_after_s=args.sensor_stale_after,
+        scenario_manifest=args.scenario_manifest,
     )
     risk_predictor = None
     if args.risk_model != "geometric":
@@ -100,4 +101,5 @@ def build_perception_detector(args, planner_config):
             * planner_config["resolution_m"]
         ),
         risk_predictor=risk_predictor,
+        risk_fusion=args.risk_fusion,
     )

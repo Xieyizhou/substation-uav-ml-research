@@ -2,7 +2,6 @@ import argparse
 import json
 import math
 import os
-import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,15 +39,12 @@ from src.logging.metrics import (
     risk_level_series,
     safe_last_valid,
     safe_max,
-    safe_median,
     time_in_risk_levels,
 )
 from src.logging.output_registry import ensure_output_tree, get_run_output_dir
 
 
 OUTPUT_ROOT = PROJECT_ROOT / "outputs"
-MAX_ASTAR_OUTPUT_FOLDERS = 10
-ASTAR_OUTPUT_PATTERN = re.compile(r"^as_\d{8}_\d{6}$")
 WAYPOINT_REACHED_THRESHOLD_M = 0.4
 PLOT_SPLIT_DISTANCE_M = 3.0
 # Keep matplotlib cache files inside this project instead of relying on a
@@ -121,10 +117,6 @@ def parse_args():
         ),
     )
     return parser.parse_args()
-
-
-def cleanup_old_astar_outputs():
-    return []
 
 
 def load_run_status(log_path, warnings):
@@ -407,7 +399,6 @@ def main():
     ]
 
     output_dir.touch()
-    cleanup_old_astar_outputs()
 
     print("\nAnalysis complete.")
     print(f"Source log: {display_path(log_path)}")

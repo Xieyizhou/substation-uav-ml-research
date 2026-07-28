@@ -18,6 +18,19 @@ Important conventions:
 JSON does not support comments, so durable explanation belongs here and in
 `docs/EXPERIMENT_PROTOCOL.md`.
 
+`perception/domain_randomization.json` defines deterministic v0.2 scene and
+sensor ranges. `python main.py data world` applies equipment pose/scale,
+lighting, and unknown-obstacle changes to a generated SDF; its adjacent
+scenario JSON drives scan noise, point dropout, stream outages, and
+attitude-label jitter. Source worlds are never edited in place.
+
+`perception/research_protocol.json` uses 30 reserved paired scenarios and four
+conditions, producing 120 formal runs. Seeds `1001–1030` are rejected by the
+dataset collector so formal evidence cannot leak into training.
+
+Machine-readable dataset, model, and study-result contracts live in
+`config/schemas/`.
+
 The coordinated map catalog in `config/maps/catalog.json` also defines five
 safe A* destination presets per map. The selected target is stored under
 `.runtime/selected_targets.json`; obstacle config files remain deterministic and

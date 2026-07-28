@@ -133,8 +133,8 @@ class ProtocolAndSafetyTests(unittest.TestCase):
     def test_research_protocol_has_30_independent_seeds(self):
         protocol = load_protocol(ROOT / "config/perception/research_protocol.json")
         matrix = experiment_matrix(protocol)
-        self.assertEqual(len(protocol["seeds"]), 30)
-        self.assertEqual(len(matrix), 3 * 5 * 4 * 30)
+        self.assertEqual({row["seed"] for row in matrix}, set(range(1001, 1031)))
+        self.assertEqual(len(matrix), 30 * 4)
 
     def test_domain_randomization_is_seeded(self):
         config = load_ranges(ROOT / "config/perception/domain_randomization.json")

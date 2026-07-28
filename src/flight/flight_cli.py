@@ -131,6 +131,11 @@ def build_argument_parser():
         help="JSONL scan recording used by replay perception.",
     )
     parser.add_argument(
+        "--scenario-manifest",
+        type=Path,
+        help="Optional deterministic sensor-noise and outage manifest.",
+    )
+    parser.add_argument(
         "--sensor-startup-timeout",
         type=float,
         default=5.0,
@@ -146,6 +151,12 @@ def build_argument_parser():
         "--risk-model",
         default="geometric",
         help="Risk model: geometric or an ONNX model path. Default: geometric",
+    )
+    parser.add_argument(
+        "--risk-fusion",
+        choices=["ml_only", "safety_max"],
+        default="safety_max",
+        help="How ONNX risk combines with geometry. Default: safety_max",
     )
     parser.add_argument(
         "--equipment-model",

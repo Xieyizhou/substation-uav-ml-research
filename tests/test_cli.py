@@ -21,6 +21,10 @@ class RootCliTests(unittest.TestCase):
             "report",
             "check",
             "maintenance",
+            "sensor",
+            "data",
+            "model",
+            "study",
         ):
             self.assertIn(command, help_text)
 

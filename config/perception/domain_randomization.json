@@ -8,5 +8,9 @@
   "lidar_dropout_probability": [0.0, 0.12],
   "attitude_jitter_deg": [-4.0, 4.0],
   "camera_noise_stddev": [0.0, 0.04],
+  "unknown_obstacle_count": [0, 4],
+  "unknown_obstacle_size_m": [0.35, 1.2],
+  "sensor_outage_probability": [0.0, 0.08],
+  "sensor_outage_duration_s": [0.1, 1.5],
   "weather": ["clear", "overcast", "mist", "light_rain"]
 }

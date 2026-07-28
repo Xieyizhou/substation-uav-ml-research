@@ -20,6 +20,7 @@ boundaries.
 · [Architecture](docs/architecture.md)
 · [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
 · [ML research platform](docs/ML_RESEARCH_PLATFORM.md)
+· [ML study workflow](docs/STUDY_WORKFLOW.md)
 · [Research roadmap](ROADMAP.md)
 · [Project provenance](PROVENANCE.md)
 
@@ -30,7 +31,7 @@ boundaries.
 | Autonomous planning | Height-aware A* routing, obstacle inflation, path simplification, and return-route generation |
 | Flight execution | MAVSDK local-NED waypoint control against PX4 SITL and Gazebo |
 | Risk response | Map-oracle baseline plus live/replayed 2D LiDAR costmaps, geometric risk, safety actions, and optional ONNX fusion |
-| ML research | Versioned LiDAR datasets, split-leakage checks, 1D CNN/ONNX tooling, four-class YOLO boundary, semantic fusion, BEV, and 2.5D A* |
+| ML research | Reproducible randomized worlds, automatic LiDAR truth labels, versioned datasets/model packages, deterministic 1D CNN training, and resumable paired studies |
 | Hardware boundary | Vendor-neutral high-level flight protocol with MAVSDK implementation and a future DJI M30/M30T PSDK gRPC interface |
 | Local replanning | Candidate-only evaluation and active replacement of remaining outbound waypoints |
 | Test environments | 5 coordinated Gazebo/A* maps, 5 safe destination presets per map, and map/target switching |
@@ -189,6 +190,9 @@ python main.py check all
 
 python main.py map start complex --vehicle-model x500_research
 python main.py sensor check --source gazebo_lidar_2d
+python main.py data --help
+python main.py model --help
+python main.py study --help
 python main.py model protocol --config config/perception/research_protocol.json
 ```
 
@@ -205,7 +209,8 @@ parameter-forwarding example.
 | `src/flight/` | MAVSDK flight runtime, task presets, and replanning orchestration |
 | `src/perception/` | Simulated obstacle detector and risk-state logic |
 | `src/sensors/` | Unified live/replay sensor sources and stable data contracts |
-| `src/ml/` | Dataset, metrics, ONNX, LiDAR training, YOLO, and research protocols |
+| `src/ml/` | Scenario generation, truth labels, datasets, metrics, ONNX training, packages, and protocols |
+| `src/study/` | SQLite registry, tier matrices, resumable queues, gates, and paired statistics |
 | `src/backends/` | Vendor-neutral flight backend contract and PX4/DJI adapters |
 | `src/maps/` | Map catalog, target selection, and Gazebo marker synchronization |
 | `src/logging/` | Telemetry, metrics, plots, reports, and comparisons |
@@ -224,7 +229,7 @@ python main.py check tests
 python main.py check all
 ```
 
-The offline suite covers CLI routing, map/target
+The dependency-free suite currently passes 118 tests and covers CLI routing, map/target
 alignment, A* reachability, parameter safety, exit-code propagation, timeout
 behavior, landing confirmation, sensor parsing/replay, costmaps, dataset
 isolation, semantic fusion, 2.5D planning, backend contracts, task presets,
@@ -238,12 +243,15 @@ not implied by a passing offline CI run.
 - The legacy four-stage comparison artifacts use the map oracle. The separate
   v0.1 evidence above uses live Gazebo LiDAR with geometric risk; neither is a
   learned-perception result.
-- Live/replayed 2D LiDAR and optional ONNX risk inference are implemented, but
-  no trained model or statistically complete 30-seed benchmark is committed.
+- Live/replayed 2D LiDAR, deterministic fault injection, automatic truth
+  labels, ONNX packaging, and the 120-run paired study registry are
+  implemented. No trained model or statistically complete 30-seed benchmark
+  is committed.
 - YOLO, 3D/BEV, 2.5D, and DJI PSDK boundaries are research components; they
   still require generated data, trained weights, and staged integration runs.
-- The validated complex/extreme scenarios use static equipment layouts;
-  unknown and moving-obstacle fault injection is planned for v0.2.
+- Reproducible unknown static obstacles, equipment pose/scale variation, scan
+  noise/dropout, stream outage, and attitude-label jitter are implemented.
+  Their formal closed-loop comparison is still pending.
 - Active route replacement has passed repeated target-switching validation on
   the simple map, but still needs cross-map and dynamic-obstacle validation.
 - The committed results are selected demonstration runs, not a statistical

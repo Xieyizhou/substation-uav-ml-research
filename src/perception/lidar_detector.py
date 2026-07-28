@@ -27,6 +27,7 @@ class LidarRiskDetector:
         nominal_speed_m_s=1.0,
         inflation_radius_m=0.5,
         risk_predictor=None,
+        risk_fusion="safety_max",
     ):
         self.source = source
         self.resolution_m = float(resolution_m)
@@ -40,6 +41,9 @@ class LidarRiskDetector:
         self.nominal_speed_m_s = float(nominal_speed_m_s)
         self.inflation_radius_m = float(inflation_radius_m)
         self.risk_predictor = risk_predictor
+        if risk_fusion not in {"ml_only", "safety_max"}:
+            raise ValueError("risk_fusion must be ml_only or safety_max")
+        self.risk_fusion = risk_fusion
         self.last_costmap = None
         self.last_risk = None
         self.costmap_builder = RollingCostmapBuilder(
@@ -154,15 +158,18 @@ class LidarRiskDetector:
             prediction = self.risk_predictor.predict(scan)
             order = {"clear": 0, "detected": 1, "warning": 2, "danger": 3}
             predicted_level = prediction["risk_level"]
-            # Geometry is an independent safety supervisor. ML may increase
-            # risk but never downgrade a geometric danger decision.
-            if order.get(predicted_level, 0) > order.get(level, 0):
+            if self.risk_fusion == "ml_only":
+                level = predicted_level
+                reason = "ML risk selected for candidate comparison"
+                model_id = prediction["model_id"]
+            elif order.get(predicted_level, 0) > order.get(level, 0):
                 level = predicted_level
                 reason = "ML risk exceeded geometric safety risk"
             confidence = float(prediction["confidence"])
             recommended_direction = prediction["recommended_direction_deg"]
             model_latency_ms = float(prediction["latency_ms"])
-            model_id = f"hybrid:{prediction['model_id']}+geometric_lidar_v1"
+            if self.risk_fusion == "safety_max":
+                model_id = f"hybrid:{prediction['model_id']}+geometric_lidar_v1"
         latency_ms = (time.perf_counter() - started) * 1000.0
         self.last_risk = RiskEstimate(
             level=level,
