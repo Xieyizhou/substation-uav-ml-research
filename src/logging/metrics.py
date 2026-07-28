@@ -40,14 +40,6 @@ def safe_mean(df, column):
     return None if pd.isna(value) else float(value)
 
 
-def safe_median(df, column):
-    if column not in df.columns:
-        return None
-    values = pd.to_numeric(df[column], errors="coerce")
-    value = values.median(skipna=True)
-    return None if pd.isna(value) else float(value)
-
-
 def safe_last_valid(df, column):
     if column not in df.columns:
         return None

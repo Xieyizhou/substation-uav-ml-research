@@ -58,9 +58,13 @@ def build_perception_config(args):
         "source": args.perception_source,
         "sensor_topic": args.sensor_topic,
         "sensor_replay": str(args.sensor_replay) if args.sensor_replay else None,
+        "scenario_manifest": (
+            str(args.scenario_manifest) if args.scenario_manifest else None
+        ),
         "sensor_startup_timeout_s": args.sensor_startup_timeout,
         "sensor_stale_after_s": args.sensor_stale_after,
         "risk_model": args.risk_model,
+        "risk_fusion": args.risk_fusion,
         "equipment_model": str(args.equipment_model) if args.equipment_model else None,
         "detection_range_m": args.detection_range,
         "detection_fov_deg": args.detection_fov,
@@ -79,6 +83,7 @@ def print_perception_summary(perception_config):
     print(f"  detector: {perception_config['detector_name']}")
     print(f"  source: {perception_config['source']}")
     print(f"  risk model: {perception_config['risk_model']}")
+    print(f"  risk fusion: {perception_config['risk_fusion']}")
     print(f"  detection range: {perception_config['detection_range_m']} m")
     print(f"  detection FOV: {perception_config['detection_fov_deg']} deg")
     print(f"  warning distance: {perception_config['warning_distance_m']} m")

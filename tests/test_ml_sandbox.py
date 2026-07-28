@@ -1,0 +1,357 @@
+import json
+from pathlib import Path
+import tempfile
+import time
+import unittest
+
+from src.ml.artifacts import file_sha256
+from src.ml.dataset import ResearchSample
+from src.ml.dataset_builder import (
+    build_dataset_manifest,
+    collect_replay,
+    validate_dataset_directory,
+)
+from src.ml.domain_randomization import (
+    load_ranges,
+    materialize_planner_config,
+    materialize_world,
+    sample_manifest,
+)
+from src.ml.model_package import create_model_package, validate_model_package
+from src.ml.research_recorder import ResearchDatasetWriter
+from src.ml.scenarios import formal_scenarios, split_for
+from src.ml.truth_labels import label_scan, recommended_direction_deg
+from src.sensors.fault_injection import FaultInjectedLidarSource
+from src.sensors.replay import append_scan_record
+from src.sensors.types import LaserScanFrame, SensorHealth
+from src.study.comparison import (
+    bootstrap_interval,
+    paired_differences,
+    promotion_gate,
+    study_gate_report,
+)
+from src.study.matrix import tier_matrix
+from src.study.registry import ResearchRegistry
+from src.study.runner import write_run_queue
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def research_sample(split, map_id, seed, scenario):
+    return ResearchSample(
+        scenario_id=scenario,
+        split=split,
+        map_id=map_id,
+        seed=seed,
+        timestamp_s=1.0,
+        ranges_m=(1.0, 2.0, 4.0),
+        range_max_m=10.0,
+        velocity_ned_m_s=(0.5, 0.0, 0.0),
+        pose_ned_m=(0.0, 0.0, -1.5),
+        yaw_deg=0.0,
+        risk_label="warning",
+        traversability=(0.0,) * 72,
+        ground_truth_occupancy=(1.0,) * 72,
+        recommended_direction_deg=0.0,
+    )
+
+
+class ScenarioAndTruthTests(unittest.TestCase):
+    def test_versioned_split_policy_reserves_formal_seeds_and_extreme(self):
+        self.assertEqual(split_for("complex", 2001), "train")
+        self.assertEqual(split_for("simple", 2041), "validation")
+        self.assertEqual(split_for("extreme", 2051), "test")
+        with self.assertRaisesRegex(ValueError, "formal evaluation"):
+            split_for("simple", 1001)
+        with self.assertRaisesRegex(ValueError, "held-out extreme"):
+            split_for("extreme", 2001)
+
+    def test_formal_plan_is_30_unique_balanced_scenarios(self):
+        scenarios = formal_scenarios()
+        self.assertEqual(len(scenarios), 30)
+        self.assertEqual(len({row["scenario_id"] for row in scenarios}), 30)
+        self.assertEqual(len(tier_matrix("formal")), 120)
+        self.assertEqual(len(tier_matrix("closed-loop")), 15)
+
+    def test_truth_labels_include_nonconstant_recommended_direction(self):
+        ranges = [6.0] * 72
+        ranges[36] = 0.4
+        labels = label_scan(ranges, 10.0, (1.0, 0.0, 0.0))
+        self.assertEqual(labels["risk_label"], "danger")
+        self.assertNotEqual(labels["recommended_direction_deg"], 0.0)
+        self.assertEqual(len(labels["traversability"]), 72)
+        self.assertEqual(len(labels["ground_truth_occupancy"]), 72)
+        self.assertEqual(recommended_direction_deg((0.1, 1.0, 0.2)), 0.0)
+
+    def test_randomization_materializes_reproducible_launchable_sdf(self):
+        config = load_ranges(ROOT / "config/perception/domain_randomization.json")
+        manifest = sample_manifest(config, map_id="training", seed=2001)
+        with tempfile.TemporaryDirectory() as directory:
+            first = Path(directory) / "first.sdf"
+            second = Path(directory) / "second.sdf"
+            materialize_world(
+                ROOT / "simulation/worlds/substation_training.sdf", first, manifest
+            )
+            materialize_world(
+                ROOT / "simulation/worlds/substation_training.sdf", second, manifest
+            )
+            self.assertEqual(file_sha256(first), file_sha256(second))
+            self.assertIn("<world", first.read_text())
+            report = materialize_world(
+                ROOT / "simulation/worlds/substation_training.sdf", first, manifest
+            )
+            planner = Path(directory) / "planner.json"
+            randomized = materialize_planner_config(
+                ROOT / "config/maps/substation_training.json", planner, report
+            )
+            self.assertGreaterEqual(
+                len(randomized["obstacles"]),
+                len(json.loads((ROOT / "config/maps/substation_training.json").read_text())["obstacles"]),
+            )
+            self.assertEqual(
+                randomized["scenario_config_hash"], manifest["config_hash"]
+            )
+
+
+class DatasetManifestTests(unittest.TestCase):
+    def test_small_replay_builds_a_valid_automatically_labelled_dataset(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            replay = root / "scan.jsonl"
+            append_scan_record(
+                replay,
+                LaserScanFrame(
+                    timestamp_s=1,
+                    received_monotonic_s=1,
+                    frame_id="lidar",
+                    angle_min_rad=-1,
+                    angle_max_rad=1,
+                    angle_step_rad=1,
+                    range_min_m=0.1,
+                    range_max_m=10,
+                    ranges_m=(5.0, 0.5, 5.0),
+                    source="fixture",
+                    sequence=1,
+                ),
+            )
+            manifest = {
+                "seed": 2001,
+                "config_hash": "b" * 64,
+                "lidar_noise_stddev_m": 0,
+                "lidar_dropout_probability": 0,
+                "sensor_outage_probability": 0,
+                "attitude_jitter_deg": 0,
+            }
+            result = collect_replay(
+                replay,
+                root / "dataset",
+                map_id="simple",
+                target_id="center",
+                seed=2001,
+                scenario_manifest=manifest,
+            )
+            self.assertEqual(result["samples"], 1)
+            self.assertEqual(result["risk_label_distribution"], {"warning": 1})
+            self.assertEqual(
+                validate_dataset_directory(root / "dataset")["dataset_id"],
+                result["dataset_id"],
+            )
+
+    def test_manifest_hash_detects_changed_data(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            samples = root / "samples.jsonl"
+            with ResearchDatasetWriter(samples) as writer:
+                writer.append(research_sample("train", "simple", 2001, "train-1"))
+                writer.append(
+                    research_sample("validation", "simple", 2041, "validation-1")
+                )
+                writer.append(research_sample("test", "extreme", 2051, "test-1"))
+            manifest = build_dataset_manifest(samples)
+            (root / "dataset_manifest.json").write_text(json.dumps(manifest))
+            self.assertEqual(
+                validate_dataset_directory(root)["dataset_id"], manifest["dataset_id"]
+            )
+            with samples.open("a") as output:
+                output.write("\n")
+            with self.assertRaisesRegex(ValueError, "data_sha256"):
+                validate_dataset_directory(root)
+
+    def test_model_package_records_dataset_and_detects_weight_changes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.onnx"
+            source.write_bytes(b"deterministic-test-model")
+            dataset_manifest = root / "dataset_manifest.json"
+            dataset_manifest.write_text(
+                json.dumps(
+                    {
+                        "dataset_id": "dataset-test",
+                        "data_sha256": "a" * 64,
+                    }
+                )
+            )
+            history = root / "history.json"
+            metrics = root / "metrics.json"
+            history.write_text("[]")
+            metrics.write_text('{"test":{"macro_f1":0.5}}')
+            package = root / "package"
+            create_model_package(
+                package,
+                onnx_path=source,
+                dataset_manifest_path=dataset_manifest,
+                training_history_path=history,
+                offline_metrics_path=metrics,
+                model_id="model-test",
+            )
+            self.assertEqual(
+                validate_model_package(package)["dataset_id"], "dataset-test"
+            )
+            (package / "model.onnx").write_bytes(b"changed")
+            with self.assertRaisesRegex(ValueError, "hash mismatch"):
+                validate_model_package(package)
+
+
+class _FakeSource:
+    def __init__(self, frame):
+        self.frame = frame
+
+    async def start(self):
+        return None
+
+    async def stop(self):
+        return None
+
+    async def wait_ready(self, timeout_s):
+        return self.frame
+
+    def latest(self):
+        return self.frame
+
+    def health(self, now_s=None):
+        return SensorHealth("fake", True, frequency_hz=10)
+
+
+class FaultInjectionTests(unittest.TestCase):
+    def test_forced_outage_is_reported_unhealthy(self):
+        frame = LaserScanFrame(
+            timestamp_s=1,
+            received_monotonic_s=time.monotonic(),
+            frame_id="lidar",
+            angle_min_rad=-1,
+            angle_max_rad=1,
+            angle_step_rad=1,
+            range_min_m=0.1,
+            range_max_m=10,
+            ranges_m=(1.0, 2.0, 3.0),
+            source="fake",
+            sequence=1,
+        )
+        source = FaultInjectedLidarSource(
+            _FakeSource(frame),
+            {
+                "seed": 1,
+                "sensor_outage_probability": 1.0,
+                "lidar_noise_stddev_m": 0,
+                "lidar_dropout_probability": 0,
+            },
+        )
+        self.assertIsNone(source.latest())
+        self.assertFalse(source.health().healthy)
+        self.assertIn("outage", source.health().message)
+
+
+class RegistryAndComparisonTests(unittest.TestCase):
+    def test_registry_scheduling_is_idempotent_and_resume_only_resets_failures(self):
+        with tempfile.TemporaryDirectory() as directory:
+            registry = ResearchRegistry(Path(directory) / "registry.sqlite")
+            study = registry.create_study("candidate", "model-v2", "model-v1")
+            matrix = tier_matrix("closed-loop")
+            first = registry.ensure_runs(study, "closed-loop", matrix)
+            second = registry.ensure_runs(study, "closed-loop", matrix)
+            self.assertEqual(len(first), 15)
+            self.assertEqual(
+                [row["run_id"] for row in first], [row["run_id"] for row in second]
+            )
+            registry.record_metrics(first[0]["run_id"], {"collision_count": 0})
+            registry.set_run_status(first[1]["run_id"], "failed", failure_reason="stop")
+            registry.reset_incomplete(study, "closed-loop")
+            statuses = {
+                row["run_id"]: row["status"]
+                for row in registry.runs(study, tier="closed-loop")
+            }
+            self.assertEqual(statuses[first[0]["run_id"]], "completed")
+            self.assertEqual(statuses[first[1]["run_id"]], "pending")
+
+    def test_study_queue_materializes_scenarios_and_skips_missing_champion(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            registry = ResearchRegistry(root / "registry.sqlite")
+            model = root / "model"
+            model.mkdir()
+            registry.register_model(
+                {
+                    "model_id": "model-v1",
+                    "onnx_sha256": "c" * 64,
+                    "dataset_id": "dataset-v1",
+                    "parent_model": None,
+                },
+                model,
+            )
+            study = registry.create_study("first", "model-v1")
+            queue = write_run_queue(registry, study, "replay", root / "results")
+            payload = json.loads(queue.read_text())
+            self.assertEqual(len(payload["runs"]), 5)
+            self.assertEqual(
+                {row["condition"] for row in payload["runs"]}, {"candidate"}
+            )
+            for row in payload["runs"]:
+                self.assertTrue(Path(row["scenario_manifest"]).is_file())
+
+    def test_paired_bootstrap_and_promotion_gate(self):
+        runs = []
+        for index in range(5):
+            runs.extend(
+                [
+                    {
+                        "scenario_id": str(index),
+                        "condition": "geometric_lidar",
+                        "status": "completed",
+                        "metrics": {
+                            "risk_f1": 0.7,
+                            "traversability_iou": 0.6,
+                            "inference_p95_ms": 20,
+                            "collision_count": 0,
+                            "safety_failure_count": 0,
+                        },
+                    },
+                    {
+                        "scenario_id": str(index),
+                        "condition": "ml_lidar",
+                        "status": "completed",
+                        "metrics": {
+                            "risk_f1": 0.8,
+                            "traversability_iou": 0.65,
+                            "inference_p95_ms": 18,
+                            "collision_count": 0,
+                            "safety_failure_count": 0,
+                        },
+                    },
+                ]
+            )
+        differences = paired_differences(
+            runs, "risk_f1", "ml_lidar", "geometric_lidar"
+        )
+        interval = bootstrap_interval(differences, samples=100)
+        self.assertAlmostEqual(interval["mean"], 0.1)
+        self.assertTrue(promotion_gate(runs)["passed"])
+        report = study_gate_report(
+            {"replay": [], "closed-loop": runs, "formal": runs}
+        )
+        self.assertFalse(report["passed"])
+        self.assertIn("replay", report)
+
+
+if __name__ == "__main__":
+    unittest.main()

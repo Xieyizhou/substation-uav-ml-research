@@ -7,8 +7,10 @@ assessment, traversability, route planning, and substation equipment
 perception. The map-aware detector remains an oracle baseline rather than a
 claim of real perception.
 
-The first release target is `v0.1`: ten-minute 2D LiDAR stability evidence plus
-repeatable complex/extreme closed-loop runs across multiple targets.
+The completed release milestone is `v0.1`: ten-minute 2D LiDAR stability
+evidence plus repeatable complex/extreme closed-loop runs across multiple
+targets. The active milestone is `v0.2`, the reproducible ML experiment
+sandbox.
 
 The LiDAR stability gate and the complex/extreme multi-target closed-loop gates
 were completed on 2026-07-28. Six live-LiDAR round trips completed with
@@ -44,6 +46,14 @@ python main.py report validate-active --latest 3
 python main.py check all
 ```
 
+The v0.2 data/model/study workflow is integrated:
+
+```bash
+python main.py data --help
+python main.py model --help
+python main.py study --help
+```
+
 See [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for the complete command set.
 
 ## Repository Structure
@@ -52,7 +62,10 @@ See [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for the complete command set.
 - `src/planner/`: A* search and obstacle-map conversion.
 - `src/perception/`: simulated obstacle detection and risk states.
 - `src/sensors/`: Gazebo/replay sources and timestamped sensor contracts.
-- `src/ml/`: research datasets, metrics, training, ONNX, YOLO, and protocols.
+- `src/ml/`: randomized scenarios, truth labels, datasets, training, ONNX
+  packages, metrics, and protocols.
+- `src/study/`: local SQLite registry, resumable run queues, comparison gates,
+  and paired confidence intervals.
 - `src/backends/`: high-level flight abstraction and MAVSDK/DJI boundaries.
 - `src/flight/`: MAVSDK/PX4 flight execution, tasks, and replanning.
 - `src/maps/`: map catalog, destination persistence, and goal-marker sync.
@@ -112,8 +125,11 @@ mixing sensor-driven results into the map-oracle comparison.
 - Complex `left`, `center`, and `top_right` replicated that result with
   confirmed landing, no physical collisions, no inflated-buffer entries, and
   no reported LiDAR drops.
-- ML, 3D/BEV, four-class YOLO, semantic fusion, and DJI PSDK interfaces exist,
-  but trained weights and closed-loop statistical results are not yet evidence.
+- The v0.2 dataset/model/study infrastructure is implemented, including
+  deterministic SDF mutation, sensor faults, true direction labels,
+  validation-selected training, model packages, 15-run closed-loop and 120-run
+  formal matrices, idempotent resume, and paired bootstrap intervals.
+- Trained weights and closed-loop statistical ML results are not yet evidence.
 - The project has no real-airframe validation or dynamic-obstacle benchmark.
 - Flight execution and configuration, per-run analysis and report writing,
   stage summaries, plotting, and cross-stage comparison now use bounded
@@ -122,9 +138,10 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Next Priorities
 
-1. Generate split-isolated randomized LiDAR datasets on complex/extreme maps.
-2. Train and evaluate geometric, ML, and fused conditions, then run the checked
-   30-seed protocol without suppressing negative results.
+1. Collect train/validation data on training/simple/medium/complex seeds
+   `2001–2050` and held-out extreme test data on `2051–2060`.
+2. Train and package the first model, pass fixed replay and the 15-run
+   closed-loop gate, then execute the 120-run paired formal protocol.
 3. Generate four-class equipment labels and train the locked 640-input YOLO
    model while keeping extreme layouts unseen.
 4. Implement and bench the DJI C++ PSDK service only after simulation and HIL
@@ -132,7 +149,8 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Release State
 
-- Current research milestone: `v0.1` evidence gates complete locally.
+- Current research milestone: `v0.2` infrastructure implemented; data
+  collection, model training, and formal evidence remain pending.
 - No research release tag is implied until the reviewed summary is committed
   and explicitly published.
 - The predecessor resume demo and its releases remain in

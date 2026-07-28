@@ -54,12 +54,23 @@ identifier, source, sequence, and receive time for age checks.
 
 ### ML and future-sensor research components
 
-- Versioned LiDAR research sample schema and streaming JSONL writer.
-- Scenario and map/seed split-isolation checks that reject leakage.
+- Versioned LiDAR research sample schema, synchronized replay collector,
+  geometry-derived truth labels, and hashed dataset manifests.
+- Fixed seed ranges and scenario/map isolation checks that reject leakage and
+  prevent formal evaluation seeds from entering training data.
+- Deterministic SDF materialization for equipment pose/scale, unknown
+  obstacles, lighting, scan noise/dropout, stream outage, and attitude-label
+  jitter.
 - Lightweight PyTorch 1D CNN for risk classification, sector traversability,
-  direction, and uncertainty, with ONNX export.
-- ONNX runtime adapter and geometry-plus-ML fusion. ML can increase a geometric
-  risk level, but cannot downgrade it.
+  direction, and uncertainty. Training uses validation selection, class
+  weighting, early stopping, a real direction target, and a best checkpoint.
+- ONNX export is rejected unless PyTorch and ONNX Runtime outputs agree within
+  tolerance. Model packages include hashes, contracts, history, and metrics.
+- ONNX runtime supports an isolated `ml_only` research condition and
+  `safety_max` fusion. The latter never permits ML to downgrade geometric risk.
+- A local SQLite registry schedules idempotent replay, five-scenario
+  closed-loop, and 30-scenario paired formal studies with resume, comparison,
+  and promotion gates.
 - Four-class YOLO wrapper and fixed class table: `transformer`, `switchgear`,
   `capacitor_bank`, and `reactor`.
 - Simulator bounding-box to YOLO label conversion and deterministic domain
@@ -96,35 +107,72 @@ python main.py astar fly \
   --sensor-replay data/research/scans/complex_seed_1001.jsonl
 ```
 
-Train and evaluate:
+Create a randomized world and collect an automatically labelled replay:
+
+```bash
+python main.py data world \
+  --source simulation/worlds/substation_complex.sdf \
+  --output outputs/research/worlds/complex_2001.sdf \
+  --map complex --seed 2001
+python main.py data collect \
+  --input data/research/scans/complex_2001.jsonl \
+  --telemetry data/research/telemetry/complex_2001.jsonl \
+  --output data/research/lidar_v2 \
+  --map complex --target center --seed 2001
+python main.py data validate --dataset data/research/lidar_v2
+python main.py data summarize --dataset data/research/lidar_v2
+```
+
+The world command also writes a matching `.planner.json` oracle map. Oracle
+trials use this truth config; geometric and ML trials retain the original
+static planner map and must discover injected unknown obstacles from LiDAR.
+
+Train, package, predict, and evaluate:
 
 ```bash
 pip install -r requirements-ml.txt
-python main.py model dataset --input data/research/lidar_samples.jsonl
-python main.py model train --kind lidar \
-  --dataset data/research/lidar_samples.jsonl \
-  --output models/lidar/risk_v1.onnx
-python main.py model evaluate --predictions outputs/research/predictions.jsonl
-python main.py model benchmark --predictions outputs/research/predictions.jsonl
+python main.py model train \
+  --dataset data/research/lidar_v2/samples.jsonl \
+  --output models/lidar/risk_v2 \
+  --epochs 20 --seed 7
+python main.py model inspect --package models/lidar/risk_v2
+python main.py model predict \
+  --model models/lidar/risk_v2 \
+  --dataset data/research/lidar_v2/samples.jsonl \
+  --output outputs/research/predictions/risk_v2.jsonl
+python main.py model evaluate \
+  --predictions outputs/research/predictions/risk_v2.jsonl
+python main.py model benchmark \
+  --predictions outputs/research/predictions/risk_v2.jsonl
 ```
 
-Validate the formal comparison matrix and generate a reproducible randomized
-scenario:
+Create and run a resumable study:
 
 ```bash
 python main.py model protocol \
   --config config/perception/research_protocol.json
-python main.py model randomize \
-  --config config/perception/domain_randomization.json \
-  --map complex --seed 1001
+python main.py study create --name risk-cnn-v2 \
+  --candidate models/lidar/risk_v2
+python main.py study run STUDY_ID --tier replay
+python main.py study run STUDY_ID --tier closed-loop
+python main.py study run STUDY_ID --tier formal
+python main.py study resume STUDY_ID
+python main.py study status STUDY_ID
+python main.py study compare STUDY_ID
+python main.py study promote STUDY_ID
 ```
+
+`study run` creates an auditable queue and ingests available result JSON. It
+does not invent metrics for simulator trials that have not run. Failed or
+interrupted entries remain resumable in the ignored local registry.
 
 Use an ONNX model during flight only after replay evaluation:
 
 ```bash
 python main.py astar fly \
   --perception-source gazebo_lidar_2d \
-  --risk-model models/lidar/risk_v1.onnx
+  --risk-model models/lidar/risk_v2/model.onnx \
+  --risk-fusion safety_max
 ```
 
 Weights are loaded once before flight; runtime weight replacement is not
@@ -132,13 +180,15 @@ supported.
 
 ## Dataset rules
 
-Each LiDAR sample records scenario ID, split, map, seed, scan, local pose,
-velocity, goal context, risk class, sector traversability, and optional
-equipment labels. A map/seed pair and scenario ID may appear in only one split.
+Each LiDAR sample records scenario/config identity, split, map, seed, scan,
+sensor health/age, local pose, velocity, goal/future path, risk, TTC, safety,
+72-bin traversability, recommended direction, occupancy, and optional equipment
+labels. A map/seed pair and scenario ID may appear in only one split.
 
-The held-out `extreme` layouts are reserved for final visual evaluation.
-Training randomization covers equipment pose and scale, lighting, material age,
-weather, LiDAR noise and dropout, attitude jitter, and camera noise.
+- train: training/simple/medium/complex, seeds `2001–2040`
+- validation: new layouts on the same map classes, seeds `2041–2050`
+- test: held-out extreme only, seeds `2051–2060`
+- formal: seeds `1001–1030`, never accepted by the dataset collector
 
 Raw scans, images, full logs, generated datasets, checkpoints, and ONNX weights
 stay outside Git. The repository contains schemas, configuration, tests, and
@@ -153,7 +203,8 @@ The checked protocol defines four conditions:
 3. ML LiDAR
 4. geometric + ML safety fusion
 
-Every formal condition uses at least 30 unique seeds. Reports must include task
+Thirty balanced scenarios are expanded across the four conditions for exactly
+120 paired runs. Reports must include task
 and landing success, collision and near-miss counts, buffer entries, path
 length, flight time, speed changes, replan count and latency, sensor frequency,
 drops and age, inference latency, risk F1/ECE, and traversability IoU. Model
@@ -161,9 +212,9 @@ results are reported even when they do not outperform the geometric baseline.
 
 CI runs unit and short replay checks. The v0.1 manual gate has completed a
 600-second sensor capture plus six complex/extreme closed-loop trials; see the
-[validation report](results/v0.1_lidar_validation_20260728.md). Model training,
-fault injection, and 30-seed comparisons remain manual research pipelines whose
-logs and manifests provide future evidence.
+[validation report](results/v0.1_lidar_validation_20260728.md). Fault injection
+and the experiment registry are implemented; model training and 30-scenario
+results remain manual evidence work.
 
 ## DJI boundary
 

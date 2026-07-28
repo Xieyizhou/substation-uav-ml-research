@@ -98,7 +98,7 @@ python main.py report compare --mode both --min-runs-per-stage 3
 python main.py report validate-active --latest 3
 ```
 
-## Sensors and research models
+## Sensors, datasets, models, and studies
 
 ```bash
 python main.py sensor list
@@ -106,22 +106,52 @@ python main.py sensor check --source gazebo_lidar_2d
 python main.py sensor record --output data/research/scans/run.jsonl
 python main.py sensor replay --input data/research/scans/run.jsonl
 
-python main.py model dataset --input data/research/lidar_samples.jsonl
-python main.py model train --kind lidar \
-  --dataset data/research/lidar_samples.jsonl \
-  --output models/lidar/risk_v1.onnx
-python main.py model evaluate --predictions outputs/research/predictions.jsonl
-python main.py model benchmark --predictions outputs/research/predictions.jsonl
+python main.py data world \
+  --source simulation/worlds/substation_complex.sdf \
+  --output outputs/research/worlds/complex_2001.sdf \
+  --map complex --seed 2001
+python main.py data collect \
+  --input data/research/scans/run.jsonl \
+  --output data/research/lidar_v2 \
+  --map complex --target center --seed 2001
+python main.py data validate --dataset data/research/lidar_v2
+python main.py data summarize --dataset data/research/lidar_v2
+
+python main.py model train \
+  --dataset data/research/lidar_v2/samples.jsonl \
+  --output models/lidar/risk_v2
+python main.py model inspect --package models/lidar/risk_v2
+python main.py model predict \
+  --model models/lidar/risk_v2 \
+  --dataset data/research/lidar_v2/samples.jsonl \
+  --output outputs/research/predictions/risk_v2.jsonl
+python main.py model evaluate \
+  --predictions outputs/research/predictions/risk_v2.jsonl
+python main.py model benchmark \
+  --predictions outputs/research/predictions/risk_v2.jsonl
 python main.py model protocol --config config/perception/research_protocol.json
-python main.py model randomize \
-  --config config/perception/domain_randomization.json \
-  --map complex --seed 1001
+
+python main.py study create --name risk-cnn-v2 \
+  --candidate models/lidar/risk_v2
+python main.py study run STUDY_ID --tier replay
+python main.py study run STUDY_ID --tier closed-loop
+python main.py study run STUDY_ID --tier formal
+python main.py study resume STUDY_ID
+python main.py study status STUDY_ID
+python main.py study compare STUDY_ID
+python main.py study promote STUDY_ID
 ```
 
 Optional training and inference dependencies are pinned in
 `requirements-ml.txt`. Raw datasets and model weights are ignored by Git.
 See `docs/ML_RESEARCH_PLATFORM.md` for data isolation, safety, and benchmark
 requirements.
+
+Study state lives in ignored `outputs/research/registry.sqlite`. `study run`
+is idempotent: it preserves completed runs, writes a machine-readable worker
+queue, and imports any matching result JSON. `study resume` resets only
+interrupted/failed work. Promotion remains blocked until formal paired results
+show no safety regression and at least one quality or latency improvement.
 
 ## Checks
 

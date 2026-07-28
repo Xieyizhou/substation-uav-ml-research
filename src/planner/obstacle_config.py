@@ -23,38 +23,6 @@ def load_obstacle_config(path):
     return config
 
 
-def expand_rect_obstacles(config) -> set[Cell]:
-    obstacle_cells = set()
-    width = int(config["width"])
-    height = int(config["height"])
-
-    for obstacle in config.get("obstacles", []):
-        obstacle_type = obstacle.get("type")
-
-        if obstacle_type == "rect":
-            x_min = int(obstacle["x_min"])
-            x_max = int(obstacle["x_max"])
-            y_min = int(obstacle["y_min"])
-            y_max = int(obstacle["y_max"])
-
-            for x in range(x_min, x_max + 1):
-                for y in range(y_min, y_max + 1):
-                    if 0 <= x < width and 0 <= y < height:
-                        obstacle_cells.add((x, y))
-
-        elif obstacle_type == "cell":
-            x = int(obstacle["x"])
-            y = int(obstacle["y"])
-            if 0 <= x < width and 0 <= y < height:
-                obstacle_cells.add((x, y))
-
-        else:
-            name = obstacle.get("name", "<unnamed>")
-            raise ValueError(f"Unsupported obstacle type for {name}: {obstacle_type}")
-
-    return obstacle_cells
-
-
 def obstacle_blocks_altitude(obstacle, flight_altitude_m, vertical_safety_margin_m):
     z_min_m = float(obstacle.get("z_min_m", float("-inf")))
     z_max_m = float(obstacle.get("z_max_m", float("inf")))
