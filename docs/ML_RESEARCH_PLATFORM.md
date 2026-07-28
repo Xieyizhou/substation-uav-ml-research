@@ -159,9 +159,11 @@ length, flight time, speed changes, replan count and latency, sensor frequency,
 drops and age, inference latency, risk F1/ECE, and traversability IoU. Model
 results are reported even when they do not outperform the geometric baseline.
 
-CI runs unit and short replay checks. Ten-minute sensor stability runs, complete
-PX4/Gazebo closed-loop trials, model training, and 30-seed comparisons are
-manual research pipelines whose logs and manifests provide the evidence.
+CI runs unit and short replay checks. The v0.1 manual gate has completed a
+600-second sensor capture plus six complex/extreme closed-loop trials; see the
+[validation report](results/v0.1_lidar_validation_20260728.md). Model training,
+fault injection, and 30-seed comparisons remain manual research pipelines whose
+logs and manifests provide future evidence.
 
 ## DJI boundary
 

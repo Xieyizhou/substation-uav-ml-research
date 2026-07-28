@@ -2,7 +2,9 @@
 
 Thank you for your interest in this project.
 
-This repository is a simulation-first UAV autonomy demo built around PX4 SITL, Gazebo, MAVSDK-Python, A* path planning, simulated perception, and local replanning.
+This repository is a simulation-first UAV autonomy research platform built
+around PX4 SITL, Gazebo, MAVSDK-Python, A* path planning, live/replayed LiDAR,
+geometric and learned-risk interfaces, and local replanning.
 
 ## Development Setup
 
@@ -24,6 +26,9 @@ Run commands from the repository root.
 - `src/flight/`: flight execution and mission runtime
 - `src/planner/`: A* planning and obstacle-map conversion
 - `src/perception/`: simulated perception and risk states
+- `src/sensors/`: live/replay sensor sources and timestamped contracts
+- `src/ml/`: datasets, evaluation, ONNX, and semantic-perception research
+- `src/backends/`: vendor-neutral flight backend boundaries
 - `src/maps/`: map and destination management
 - `src/logging/`: telemetry analysis, reports, plots, and comparisons
 - `scripts/flight/experiments/`: official experiment launchers

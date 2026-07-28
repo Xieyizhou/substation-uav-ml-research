@@ -13,25 +13,35 @@ PX4/Gazebo simulation
   -> Mission lifecycle (`src/flight/mission_lifecycle.py`)
   -> A* global planner (`src/planner/`)
   -> Local NED waypoint execution
-  -> Telemetry CSV logging (`src/logging/flight_logger.py`)
-  -> Simulated perception/risk state (`src/perception/`)
+  -> Sensor source (`src/sensors/`)
+       - map oracle baseline
+       - Gazebo 2D LiDAR
+       - deterministic replay
+  -> Local costmap + geometric/optional ONNX risk (`src/perception/`, `src/ml/`)
   -> Risk action
        - Experiment 2 perception_response: reduce speed during warning/danger risk
        - Experiment 3 replan log-only: test replan availability without replacing route
        - Experiment 4 active route replacement: replace remaining outbound waypoints
+  -> Telemetry CSV logging (`src/logging/flight_logger.py`)
   -> Per-run analysis and staged summaries (`src/logging/`)
-  -> Curated sample comparison (`data/sample_outputs/comparison_summary.csv`)
+  -> Curated evidence (`data/sample_outputs/`)
 ```
 
 ## Major Modules
 
 - `src/planner/`: grid A* search, path simplification, obstacle-map conversion.
-- `src/perception/`: map-based simulated obstacle detector and structured risk state.
+- `src/sensors/`: Gazebo/replay sources, scan parsing, health, and stable data contracts.
+- `src/perception/`: map-oracle baseline, LiDAR detector, rolling costmap,
+  safety state, BEV, and semantic fusion.
+- `src/ml/`: dataset schemas, split isolation, metrics, ONNX risk, LiDAR
+  training, domain randomization, and YOLO label boundaries.
+- `src/backends/`: vendor-neutral flight protocol, MAVSDK adapter, and future
+  DJI PSDK boundary.
 - `src/flight/fly_astar_path.py`: thin CLI and backward-compatible exports.
 - `src/flight/mavsdk_preflight.py`: connection and position readiness.
 - `src/flight/waypoint_executor.py`: Offboard waypoint and route execution.
 - `src/flight/landing_manager.py`: normal and failsafe landing confirmation.
-- `src/flight/perception_response.py`: simulated detection state and detector setup.
+- `src/flight/perception_response.py`: sensor-driven detection state and detector setup.
 - `src/flight/replanning_controller.py`: local A* and active route replacement.
 - `src/flight/telemetry_runtime.py`: MAVSDK subscriptions and CSV logging.
 - `src/flight/mission_lifecycle.py`: connection, supervision, status, and cleanup.
@@ -54,7 +64,8 @@ PX4/Gazebo simulation
 - `src/logging/comparison_*.py`: run discovery, landmark output, aggregation,
   and shared comparison schemas.
 - `scripts/flight/experiments/`: repeatable staged experiment runners.
-- `config/substation_obstacles.json`: substation obstacle map used by planning and simulated perception.
+- `config/maps/`: synchronized map-specific planner configurations.
+- `config/perception/`: research protocol, equipment classes, and domain randomization.
 
 ## Formal Experiment Runners
 
@@ -79,3 +90,11 @@ Generated raw logs and full experiment outputs remain local:
 - `outputs/`
 
 Small GitHub-ready sample outputs are copied to `data/sample_outputs/`.
+
+## Validated Runtime Evidence
+
+The v0.1 simulation gate covers a 600-second Gazebo LiDAR capture, deterministic
+replay, and six live-LiDAR round trips across complex/extreme targets. All six
+completed with confirmed landing, zero physical collisions, zero inflated
+buffer entries, and zero reported LiDAR drops. See
+[`docs/results/v0.1_lidar_validation_20260728.md`](results/v0.1_lidar_validation_20260728.md).

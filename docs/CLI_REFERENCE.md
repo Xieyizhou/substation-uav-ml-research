@@ -137,7 +137,7 @@ python main.py check all
 `check all` combines the dependency check, perception smoke test, and complete
 offline regression suite. It does not start PX4 or fly the vehicle.
 
-## Maintenance and release-only tools
+## Maintenance tools
 
 Legacy output migration is intentionally separated from daily commands because
 it moves files:
@@ -146,6 +146,3 @@ it moves files:
 python main.py maintenance migrate-outputs --dry-run
 python main.py maintenance migrate-outputs
 ```
-
-Demo-video generation remains under `scripts/media/`. It is a release asset
-workflow, not part of map, flight, experiment, or analysis execution.

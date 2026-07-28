@@ -10,6 +10,11 @@ claim of real perception.
 The first release target is `v0.1`: ten-minute 2D LiDAR stability evidence plus
 repeatable complex/extreme closed-loop runs across multiple targets.
 
+The LiDAR stability gate and the complex/extreme multi-target closed-loop gates
+were completed on 2026-07-28. Six live-LiDAR round trips completed with
+confirmed landing, no physical collisions, and no inflated-buffer entries. A
+300-frame slice of the stability capture also passed deterministic replay.
+
 ## Active Workflow
 
 Run public commands through `main.py` from the repository root:
@@ -87,18 +92,26 @@ validation. Each records the contiguous outbound sequence
 `RWP01 → RWP02 → RWP03 → RWP04 → RWP05 → RWP06`, no old `WP` target after
 replacement, original-goal arrival, and completed landing.
 
-Local stage summaries now include 17 valid analyzed runs. The refreshed public
-landmark uses active run `as_20260713_070842`; the committed public aggregate
-remains the curated 16-run release sample with zero safety-buffer violations.
+The legacy four-stage sample contains 16 completed PASS runs with zero
+safety-buffer violations. The separate live-LiDAR v0.1 evidence adds six
+complex/extreme closed-loop runs, for 1,288.365 seconds of flight, without
+mixing sensor-driven results into the map-oracle comparison.
 
 ## Remaining Evidence Gaps
 
 - Formal experiment manifests currently come from `substation_simple_v3`.
-- The other four maps are validated offline but still need representative
-  PX4/Gazebo flight runs.
+- Complex and extreme each have three representative live-LiDAR PX4/Gazebo
+  round trips; training and medium still need representative sensor-driven runs.
 - Published landmark runs still use the map oracle; they are baseline data.
-- Live/replayed 2D Gazebo LiDAR and geometric local costmaps are implemented,
-  but the 10-minute stability gate needs a captured run artifact.
+- Live/replayed 2D Gazebo LiDAR and geometric local costmaps are implemented.
+  The 600-second stability capture produced 18,165 valid frames at 30.295 Hz,
+  with 0 dropped frames and 11.56 ms P95 frame age.
+- Extreme `left`, `center`, and `top_right` live-LiDAR round trips completed
+  with confirmed landing, no physical collisions, and no inflated-buffer
+  entries.
+- Complex `left`, `center`, and `top_right` replicated that result with
+  confirmed landing, no physical collisions, no inflated-buffer entries, and
+  no reported LiDAR drops.
 - ML, 3D/BEV, four-class YOLO, semantic fusion, and DJI PSDK interfaces exist,
   but trained weights and closed-loop statistical results are not yet evidence.
 - The project has no real-airframe validation or dynamic-obstacle benchmark.
@@ -109,22 +122,24 @@ remains the curated 16-run release sample with zero safety-buffer violations.
 
 ## Next Priorities
 
-1. Capture and validate a 10-minute x500 research LiDAR recording.
-2. Generate split-isolated randomized LiDAR datasets on complex/extreme maps.
-3. Train and evaluate geometric, ML, and fused conditions, then run the checked
+1. Generate split-isolated randomized LiDAR datasets on complex/extreme maps.
+2. Train and evaluate geometric, ML, and fused conditions, then run the checked
    30-seed protocol without suppressing negative results.
-4. Generate four-class equipment labels and train the locked 640-input YOLO
+3. Generate four-class equipment labels and train the locked 640-input YOLO
    model while keeping extreme layouts unseen.
-5. Implement and bench the DJI C++ PSDK service only after simulation and HIL
+4. Implement and bench the DJI C++ PSDK service only after simulation and HIL
    gates pass.
 
 ## Release State
 
-- `v0.1-demo`: original public demo release.
-- `v0.2.0`: current resume-demo release target.
+- Current research milestone: `v0.1` evidence gates complete locally.
+- No research release tag is implied until the reviewed summary is committed
+  and explicitly published.
+- The predecessor resume demo and its releases remain in
+  `uav-path-planning-demo`; they are not release targets for this repository.
 - License: MIT.
-- Generated videos, raw telemetry, simulator logs, and full output trees remain
-  outside Git history.
+- Raw telemetry, simulator logs, datasets, weights, and full output trees
+  remain outside Git history.
 
 ## Detailed Documentation
 
@@ -132,4 +147,5 @@ remains the curated 16-run release sample with zero safety-buffer violations.
 - [docs/EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md): experiment protocol.
 - [docs/MAP_TESTING.md](docs/MAP_TESTING.md): map and destination workflow.
 - [docs/experiment_results.md](docs/experiment_results.md): current evidence.
-- [docs/RELEASE_PREP.md](docs/RELEASE_PREP.md): release checklist.
+- [docs/results/v0.1_lidar_validation_20260728.md](docs/results/v0.1_lidar_validation_20260728.md):
+  live-LiDAR stability and extreme multi-target evidence.

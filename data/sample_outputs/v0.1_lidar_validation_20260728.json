@@ -1,0 +1,154 @@
+{
+  "schema_version": 1,
+  "evidence_id": "v0.1_lidar_validation_20260728",
+  "environment": {
+    "map_ids": ["complex", "extreme"],
+    "map_names": ["substation_complex_v1", "substation_extreme_v1"],
+    "vehicle_model": "x500_research",
+    "perception_source": "gazebo_lidar_2d",
+    "risk_model": "geometric",
+    "risk_action": "slow_down"
+  },
+  "stability_capture": {
+    "command_duration_s": 600.0,
+    "sensor_duration_s": 599.577,
+    "frames": 18165,
+    "frequency_hz": 30.295,
+    "samples_per_frame": 1080,
+    "frame_age_p50_ms": 8.602,
+    "frame_age_p95_ms": 11.557,
+    "max_timestamp_gap_ms": 132.0,
+    "dropped_frames": 0,
+    "invalid_frames": 0,
+    "non_monotonic_timestamps": 0,
+    "raw_size_mib": 226.9,
+    "raw_sha256": "fb06afc307370570d3e28de708e2eef27343112b3ab14edb20eae1b1148e1808",
+    "raw_artifact_tracked": false
+  },
+  "replay_validation": {
+    "frames": 300,
+    "duration_s": 10.032,
+    "frequency_hz": 29.805,
+    "samples_per_frame": 1080,
+    "artifact_tracked": false
+  },
+  "closed_loop_runs": [
+    {
+      "map_id": "extreme",
+      "target": "left",
+      "run_id": "as_20260728_022128",
+      "duration_s": 113.155,
+      "sensor_healthy_ratio": 0.998214,
+      "sensor_frame_age_p95_ms": 31.287,
+      "inference_latency_p95_ms": 2.543,
+      "minimum_lidar_distance_m": 3.237,
+      "physical_collision": false,
+      "safety_buffer_entry": false,
+      "landing_confirmed": true
+    },
+    {
+      "map_id": "extreme",
+      "target": "center",
+      "run_id": "as_20260728_022431",
+      "duration_s": 176.605,
+      "sensor_healthy_ratio": 0.998852,
+      "sensor_frame_age_p95_ms": 31.638,
+      "inference_latency_p95_ms": 3.106,
+      "minimum_lidar_distance_m": 2.386,
+      "physical_collision": false,
+      "safety_buffer_entry": false,
+      "landing_confirmed": true
+    },
+    {
+      "map_id": "extreme",
+      "target": "top_right",
+      "run_id": "as_20260728_022750",
+      "duration_s": 298.673,
+      "sensor_healthy_ratio": 0.999326,
+      "sensor_frame_age_p95_ms": 31.594,
+      "inference_latency_p95_ms": 2.186,
+      "minimum_lidar_distance_m": 2.366,
+      "physical_collision": false,
+      "safety_buffer_entry": false,
+      "landing_confirmed": true
+    },
+    {
+      "map_id": "complex",
+      "target": "left",
+      "run_id": "as_20260728_024528",
+      "duration_s": 166.106,
+      "sensor_healthy_ratio": 0.998785,
+      "sensor_frame_age_p95_ms": 31.581,
+      "inference_latency_p95_ms": 2.534,
+      "minimum_lidar_distance_m": 2.720,
+      "physical_collision": false,
+      "safety_buffer_entry": false,
+      "landing_confirmed": true
+    },
+    {
+      "map_id": "complex",
+      "target": "center",
+      "run_id": "as_20260728_024835",
+      "duration_s": 260.005,
+      "sensor_healthy_ratio": 0.999224,
+      "sensor_frame_age_p95_ms": 31.537,
+      "inference_latency_p95_ms": 2.670,
+      "minimum_lidar_distance_m": 2.315,
+      "physical_collision": false,
+      "safety_buffer_entry": false,
+      "landing_confirmed": true
+    },
+    {
+      "map_id": "complex",
+      "target": "top_right",
+      "run_id": "as_20260728_025319",
+      "duration_s": 273.821,
+      "sensor_healthy_ratio": 0.999263,
+      "sensor_frame_age_p95_ms": 31.565,
+      "inference_latency_p95_ms": 2.752,
+      "minimum_lidar_distance_m": 1.940,
+      "physical_collision": false,
+      "safety_buffer_entry": false,
+      "landing_confirmed": true
+    }
+  ],
+  "aggregate": {
+    "missions": 6,
+    "missions_completed": 6,
+    "landings_confirmed": 6,
+    "total_flight_duration_s": 1288.365,
+    "mean_flight_duration_s": 214.727,
+    "minimum_lidar_distance_m": 1.940,
+    "minimum_sensor_healthy_ratio": 0.998214,
+    "maximum_sensor_frame_age_p95_ms": 31.638,
+    "maximum_inference_latency_p95_ms": 3.106,
+    "physical_collisions": 0,
+    "safety_buffer_entries": 0,
+    "sensor_dropped_frames_max": 0
+  },
+  "map_aggregate": {
+    "complex": {
+      "missions": 3,
+      "total_flight_duration_s": 699.932,
+      "mean_flight_duration_s": 233.311,
+      "minimum_lidar_distance_m": 1.940,
+      "minimum_sensor_healthy_ratio": 0.998785,
+      "maximum_sensor_frame_age_p95_ms": 31.581,
+      "maximum_inference_latency_p95_ms": 2.752
+    },
+    "extreme": {
+      "missions": 3,
+      "total_flight_duration_s": 588.433,
+      "mean_flight_duration_s": 196.144,
+      "minimum_lidar_distance_m": 2.366,
+      "minimum_sensor_healthy_ratio": 0.998214,
+      "maximum_sensor_frame_age_p95_ms": 31.638,
+      "maximum_inference_latency_p95_ms": 3.106
+    }
+  },
+  "limitations": [
+    "simulation_only",
+    "geometric_risk_not_ml",
+    "six_runs_not_statistical_benchmark"
+  ]
+}

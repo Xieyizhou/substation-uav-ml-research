@@ -79,6 +79,30 @@ log-only replan, and 6 active-replan runs. All 16 are completed and marked
 `PASS`, with zero recorded safety-buffer violations. See the committed
 [aggregate summary](data/sample_outputs/aggregate_summary.md).
 
+### Live LiDAR v0.1 evidence
+
+On 2026-07-28, the `x500_research` vehicle completed a 600-second LiDAR
+stability capture in the held-out `extreme` world and six sensor-driven round
+trips across the `complex` and `extreme` worlds. Each map used the `left`,
+`center`, and `top_right` targets:
+
+| Evidence | Result |
+| --- | --- |
+| Stability capture | 18,165 frames; 599.577 s sensor timestamp span; 30.295 Hz |
+| Data health | 0 dropped or invalid frames; 11.56 ms P95 frame age |
+| Closed-loop missions | 6/6 completed with confirmed landing |
+| Safety result | 0 physical collisions; 0 inflated-buffer entries |
+| In-flight LiDAR health | ≥99.82% healthy samples; ≤31.64 ms P95 frame age; 0 drops |
+| Closed-loop flight time | 1,288.365 s total; 214.727 s mean |
+| Geometric inference | ≤3.11 ms P95 across all six runs |
+
+The capture command ran for 600 seconds; the timestamp span starts at the
+first received scan. Raw scans, telemetry, simulator logs, and generated plots
+remain outside Git. The exact run IDs, hashes, limitations, and per-target
+metrics are recorded in the
+[v0.1 LiDAR validation report](docs/results/v0.1_lidar_validation_20260728.md)
+and its [machine-readable summary](data/sample_outputs/v0.1_lidar_validation_20260728.json).
+
 ## System Architecture
 
 ```text
@@ -211,13 +235,15 @@ not implied by a passing offline CI run.
 ## Scope and Limitations
 
 - Simulation only; the system has not been validated on real UAV hardware.
-- Existing committed experiment results use the map oracle. They are baseline
-  evidence, not real-sensor or learned-perception results.
+- The legacy four-stage comparison artifacts use the map oracle. The separate
+  v0.1 evidence above uses live Gazebo LiDAR with geometric risk; neither is a
+  learned-perception result.
 - Live/replayed 2D LiDAR and optional ONNX risk inference are implemented, but
   no trained model or statistically complete 30-seed benchmark is committed.
 - YOLO, 3D/BEV, 2.5D, and DJI PSDK boundaries are research components; they
   still require generated data, trained weights, and staged integration runs.
-- Obstacles are static in the current portfolio demo.
+- The validated complex/extreme scenarios use static equipment layouts;
+  unknown and moving-obstacle fault injection is planned for v0.2.
 - Active route replacement has passed repeated target-switching validation on
   the simple map, but still needs cross-map and dynamic-obstacle validation.
 - The committed results are selected demonstration runs, not a statistical

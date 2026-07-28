@@ -17,6 +17,28 @@ There are now two comparison layers:
 
 A four-row `comparison_summary.csv` is not wrong; it is the landmark comparison, not the repeated-trial statistical summary.
 
+## Live LiDAR v0.1 Evidence
+
+The map-oracle comparison below is retained as a deterministic control. A
+separate v0.1 validation used live Gazebo 2D LiDAR with geometric risk and a
+rolling local costmap:
+
+| Map | Runs | Targets | Total flight time | Mean flight time | Minimum LiDAR return | Lowest sensor health | Worst P95 age | Worst P95 inference |
+| --- | ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| `complex` | 3 | left, center, top_right | 699.932 s | 233.311 s | 1.940 m | 99.879% | 31.581 ms | 2.752 ms |
+| `extreme` | 3 | left, center, top_right | 588.433 s | 196.144 s | 2.366 m | 99.821% | 31.638 ms | 3.106 ms |
+| **Combined** | **6** | **two maps / three target types** | **1,288.365 s** | **214.727 s** | **1.940 m** | **99.821%** | **31.638 ms** | **3.106 ms** |
+
+All six missions completed with confirmed landing. Analysis found zero physical
+collisions, zero inflated-buffer entries, and zero reported LiDAR drops. The
+600-second stability capture recorded 18,165 frames at 30.295 Hz with 11.56 ms
+P95 frame age; a 300-frame slice passed deterministic replay.
+
+See the [full validation report](results/v0.1_lidar_validation_20260728.md) and
+[machine-readable evidence](../data/sample_outputs/v0.1_lidar_validation_20260728.json).
+The normalized [per-run CSV](../data/sample_outputs/v0.1_lidar_closed_loop_runs.csv)
+is suitable for plotting and statistical analysis.
+
 ## Four-Stage Experiment Design
 
 The formal experiment pipeline has four stages, matching `outputs/01_*` through `outputs/04_*`:
@@ -69,7 +91,12 @@ If a stage has fewer than the requested run count, the command still writes the 
 
 ## Known Issues and Next Steps
 
-- Formal experiment evidence currently covers only `substation_simple_v3`; representative PX4/Gazebo runs are still needed on the other four maps.
-- Several runs include near-boundary clearance warnings even when they do not enter raw obstacle footprints or inflated safety buffers.
-- Active replanning still needs cross-map and dynamic-obstacle validation before being treated as a general solution.
-- Add a system architecture diagram or short demo GIF for GitHub readers.
+- The legacy four-stage comparison remains a `substation_simple_v3` map-oracle
+  control; it must not be combined statistically with the live-LiDAR runs.
+- Complex/extreme live-LiDAR coverage is route-diversity evidence from six
+  runs, not the planned 30-seed ML benchmark.
+- Several runs include near-boundary clearance warnings even when they do not
+  enter raw obstacle footprints or inflated safety buffers.
+- Active replanning still needs unknown/dynamic-obstacle fault injection and
+  cross-map sensor-driven validation before being treated as a general solution.
+- No trained LiDAR ML or YOLO result is claimed yet.

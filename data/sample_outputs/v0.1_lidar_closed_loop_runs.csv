@@ -1,0 +1,7 @@
+map_id,target,run_id,duration_s,sensor_healthy_ratio,sensor_frame_age_p95_ms,inference_latency_p95_ms,minimum_lidar_distance_m,physical_collision,safety_buffer_entry,landing_confirmed
+extreme,left,as_20260728_022128,113.155,0.998214,31.287,2.543,3.237,false,false,true
+extreme,center,as_20260728_022431,176.605,0.998852,31.638,3.106,2.386,false,false,true
+extreme,top_right,as_20260728_022750,298.673,0.999326,31.594,2.186,2.366,false,false,true
+complex,left,as_20260728_024528,166.106,0.998785,31.581,2.534,2.720,false,false,true
+complex,center,as_20260728_024835,260.005,0.999224,31.537,2.670,2.315,false,false,true
+complex,top_right,as_20260728_025319,273.821,0.999263,31.565,2.752,1.940,false,false,true

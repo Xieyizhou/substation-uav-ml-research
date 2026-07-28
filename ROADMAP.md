@@ -3,12 +3,16 @@
 The roadmap is evidence-gated. Interfaces or untrained model wrappers do not
 count as completed capabilities.
 
-## v0.1 — LiDAR stability and cross-map evidence
+## v0.1 — LiDAR stability and cross-map evidence — Evidence complete
 
-- Record a continuous ten-minute 2D LiDAR run.
-- Validate frequency, drops, P95 frame age, shutdown, and replay.
-- Complete complex and extreme flights across multiple target presets.
-- Preserve the map-aware detector as an oracle comparison only.
+- [x] Record a continuous 600-second 2D LiDAR run.
+- [x] Validate frequency, drops, P95 frame age, shutdown, and replay.
+- [x] Complete complex and extreme flights across three target presets each.
+- [x] Preserve the map-aware detector as an oracle comparison only.
+
+Evidence: [v0.1 LiDAR validation](docs/results/v0.1_lidar_validation_20260728.md).
+This milestone is simulation evidence, not a real-airframe or statistical ML
+claim.
 
 ## v0.2 — Unknown-obstacle replanning
 

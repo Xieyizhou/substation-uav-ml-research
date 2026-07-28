@@ -1,8 +1,10 @@
-# Release Assets
+# Optional Local Media
 
 This directory is for local release-media assembly only.
 
-Generated videos such as `uav_path_planning_demo_preview.mp4` are ignored by git and should be uploaded manually as GitHub release assets when needed.
+This directory retains optional media tooling inherited from the predecessor
+demo. It is not part of the research evidence pipeline. Generated videos such
+as `uav_path_planning_demo_preview.mp4` are ignored by Git.
 
 Optional source media for the reusable demo assembler can be placed under `release_assets/raw/`:
 
