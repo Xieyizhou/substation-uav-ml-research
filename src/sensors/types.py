@@ -283,6 +283,7 @@ class VisualTiming:
 
     capture_to_receive_ms: float | None = None
     queue_wait_ms: float | None = None
+    payload_load_ms: float | None = None
     decode_ms: float | None = None
     preprocess_ms: float | None = None
     backend_call_ms: float | None = None
@@ -305,6 +306,7 @@ class VisualTiming:
         duration_fields = (
             "capture_to_receive_ms",
             "queue_wait_ms",
+            "payload_load_ms",
             "decode_ms",
             "preprocess_ms",
             "backend_call_ms",

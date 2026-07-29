@@ -1,0 +1,35 @@
+{
+  "benchmark_schema_version": 1,
+  "benchmark_id": "visual_static_v1",
+  "title": "Static visual replay policy matrix",
+  "materialization_status": "template",
+  "canonical_payload_format": "png",
+  "canonical_decoded_representation": {
+    "pixel_format": "rgb8",
+    "layout": "HWC",
+    "dtype": "uint8",
+    "memory": "C_contiguous"
+  },
+  "identity_boundaries": [
+    "source_payload",
+    "decoded_content",
+    "decoder_configuration",
+    "preprocessing_configuration",
+    "model",
+    "benchmark_condition",
+    "benchmark_result"
+  ],
+  "evidence_status": {
+    "formal_visual_dataset_exists": false,
+    "trained_visual_model_exists": false,
+    "static_benchmark_completed": false,
+    "adaptive_scheduler_evaluated": false,
+    "real_airframe_evaluated": false
+  },
+  "definitions": {
+    "conditions": "conditions.json",
+    "metrics": "metrics.json",
+    "pilot_protocol": "pilot_protocol.json",
+    "class_order": "class_order.json"
+  }
+}

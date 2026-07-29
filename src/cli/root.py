@@ -15,6 +15,7 @@ from src.cli import (
     reports,
     sensors,
     studies,
+    visual,
 )
 from src.cli.process import run_script
 
@@ -35,6 +36,7 @@ MODULE_COMMANDS = {
     "data": data.main,
     "model": models.main,
     "study": studies.main,
+    "visual": visual.main,
 }
 
 
@@ -61,6 +63,7 @@ def build_parser():
         ("data", "Collect, validate, or summarize research datasets"),
         ("model", "Train, evaluate, or benchmark research models"),
         ("study", "Run resumable model comparison studies"),
+        ("visual", "Inspect frozen visual benchmark identities and templates"),
     )
     for definition in definitions:
         name, help_text, *alias = definition

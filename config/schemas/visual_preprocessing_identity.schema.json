@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual_preprocessing_identity.schema.json",
+  "title": "Visual Preprocessing Identity",
+  "type": "object",
+  "required": [
+    "identity_schema_version",
+    "target_input_width",
+    "target_input_height",
+    "resize_policy",
+    "letterbox_policy",
+    "interpolation_method",
+    "padding_value",
+    "hwc_to_chw",
+    "rgb_bgr_policy",
+    "uint8_to_float",
+    "normalization_scale",
+    "mean",
+    "standard_deviation",
+    "batch_dimension_policy",
+    "tensor_dtype",
+    "contiguous_memory_policy",
+    "implementation",
+    "implementation_version",
+    "preprocessing_configuration_id"
+  ],
+  "properties": {
+    "identity_schema_version": {"const": 1},
+    "target_input_width": {"type": "integer", "minimum": 1},
+    "target_input_height": {"type": "integer", "minimum": 1},
+    "resize_policy": {"type": "string", "minLength": 1},
+    "letterbox_policy": {"type": "string", "minLength": 1},
+    "interpolation_method": {"type": "string", "minLength": 1},
+    "padding_value": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"type": "integer", "minimum": 0, "maximum": 255}
+    },
+    "hwc_to_chw": {"type": "boolean"},
+    "rgb_bgr_policy": {"type": "string", "minLength": 1},
+    "uint8_to_float": {"type": "boolean"},
+    "normalization_scale": {"type": "number", "exclusiveMinimum": 0},
+    "mean": {
+      "type": ["array", "null"],
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"type": "number"}
+    },
+    "standard_deviation": {
+      "type": ["array", "null"],
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {"type": "number", "exclusiveMinimum": 0}
+    },
+    "batch_dimension_policy": {"type": "string", "minLength": 1},
+    "tensor_dtype": {"type": "string", "minLength": 1},
+    "contiguous_memory_policy": {"type": "string", "minLength": 1},
+    "implementation": {"type": "string", "minLength": 1},
+    "implementation_version": {"type": "string", "minLength": 1},
+    "preprocessing_configuration_id": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "additionalProperties": false
+}

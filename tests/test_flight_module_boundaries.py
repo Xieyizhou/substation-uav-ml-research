@@ -56,6 +56,12 @@ class ModuleBoundaryTests(unittest.TestCase):
             "src/logging/summary_collection.py",
             "src/logging/summary_outputs.py",
             "src/logging/summary_values.py",
+            "src/ml/visual_annotations.py",
+            "src/ml/visual_benchmark.py",
+            "src/ml/visual_benchmark_matrix.py",
+            "src/ml/visual_identity.py",
+            "src/sensors/camera_decoded.py",
+            "src/sensors/camera_decoder.py",
         ):
             with self.subTest(path=path):
                 self.assertLessEqual(

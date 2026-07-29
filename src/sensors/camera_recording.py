@@ -221,11 +221,11 @@ class _CameraRecordingWriter:
             "payload_directory": "frames",
             "manifest_order_authoritative": True,
             "source_ids": sorted({frame.source_id for frame in self.frames}),
-        "capture_clock_domains": summary["capture_clock_domains"],
-        "payload_formats": summary["payload_formats"],
-        "pixel_formats": summary["pixel_formats"],
-        "raw_layout_contract": CAMERA_RAW_LAYOUT,
-        "invalid_frames": self.invalid_frames,
+            "capture_clock_domains": summary["capture_clock_domains"],
+            "payload_formats": summary["payload_formats"],
+            "pixel_formats": summary["pixel_formats"],
+            "raw_layout_contract": CAMERA_RAW_LAYOUT,
+            "invalid_frames": self.invalid_frames,
         }
         _write_json(self.output_directory / "metadata.json", metadata)
         _write_json(self.output_directory / "summary.json", summary)
@@ -343,6 +343,17 @@ class CameraReplaySource:
         """Yield verified frames in manifest order without sleeping."""
         for frame in self.load():
             yield frame
+
+    def iter_decoded(self, configuration=None):
+        """Yield canonical decoded images in verified manifest order."""
+        from src.sensors.camera_decoder import decode_camera_payload
+
+        for frame in self.iter_frames():
+            yield decode_camera_payload(
+                frame,
+                self.recording_directory,
+                configuration,
+            )
 
     async def replay(self, *, mode="no_sleep", rate=1.0):
         if mode not in {"no_sleep", "paced"}:

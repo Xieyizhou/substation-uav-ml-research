@@ -66,10 +66,13 @@ override the declared replay output layout.
 Schema v1 raw payloads are restricted to tightly packed unsigned 8-bit
 channels with no row padding. Their exact byte length is therefore
 `width × height × channel_count`, where the channel count comes from the
-declared `pixel_format`. Recording and replay both enforce this rule. PNG and
-raw are preferred canonical inputs for formal benchmarks. JPEG remains
-supported for controlled experiments, but it is lossy and must not be the
-only canonical benchmark representation.
+declared `pixel_format`. Recording and replay both enforce this rule. Formal
+visual replay uses PNG as its canonical payload because PNG is lossless,
+portable, inspectable, and smaller than raw for these images. Raw remains
+available for provenance and storage/transport experiments. JPEG remains
+supported for controlled experiments, but it is lossy; converting a JPEG
+source to PNG does not restore lost information, so source provenance remains
+explicit.
 
 Capture and receive timestamps are not assumed comparable. Simulator, source,
 and wall-clock capture times remain useful for ordering and provenance, but
@@ -124,6 +127,50 @@ python main.py sensor camera-replay \
 There is intentionally no live Gazebo camera-record command yet because the
 repository does not have a stable live camera source adapter.
 
+### Canonical camera decoding
+
+`src/sensors/camera_decoder.py` decodes a recorded frame on the CPU into the
+detector-neutral `DecodedImage` contract from
+`src/sensors/camera_decoded.py`. The canonical in-memory representation is
+RGB8, unsigned 8-bit, HWC, three-channel, C-contiguous, read-only, and exactly
+the declared width and height. Full arrays are never written to JSON
+manifests. `CameraReplaySource.iter_decoded()` preserves manifest order and
+yields the canonical result plus measured decoder-stage timing.
+
+PNG, JPEG, and raw are supported. The declared payload format, portable file
+extension, and encoded format must agree. PNG/JPEG modes are limited to
+grayscale (`L`), RGB, and RGBA. Grayscale luma is repeated into all three RGB
+channels. Alpha is dropped without compositing. Declared BGR/BGRA channels are
+reordered explicitly to RGB; RGB is never silently treated as BGR. Palette,
+CMYK, and other modes fail with a typed error. EXIF orientation and ICC colour
+profiles are ignored by the canonical policy. JPEG is supported but remains
+lossy. Formal visual inputs use PNG.
+
+Raw schema v1 has one mandatory interpretation:
+`tightly_packed_uint8_no_row_padding`. Its dtype is `uint8`, byte order is
+`not_applicable`, row stride is `width × channel_count`, and the byte count is
+`width × height × channel_count`. These values may be restated in frame
+metadata, but any conflicting dtype, stride, byte order, or recording-level
+raw-layout contract is rejected. The decoder never guesses an alternative raw
+layout.
+
+Decoder identity contains the implementation name and version, Pillow backend
+and version, canonical target format/dtype/layout, grayscale policy, alpha
+policy, raw-layout policy, colour-conversion policy, and relevant fixed
+options. Canonical sorted JSON of those fields is SHA256-hashed as
+`decoder_configuration_id`; this identity must accompany future dataset and
+benchmark results. It deliberately excludes paths, timestamps, process IDs,
+and random identifiers.
+
+The source identity is SHA256 of the payload bytes and is checked before
+decoding. Decoded identity is SHA256 over canonical sorted JSON containing the
+decoded schema version, width, height, pixel format, dtype, and layout,
+followed by one newline byte and the contiguous C-order pixel bytes. Repeated
+CPU decoding with one recording and configuration must preserve manifest
+order, dimensions, dtype, layout, pixel format, source hash, decoded hash, and
+decoder configuration ID. Timing values are deliberately excluded from the
+determinism comparison.
+
 ### Visual latency contract
 
 `VisualTiming` separates the following optional stages:
@@ -132,7 +179,8 @@ repository does not have a stable live camera source adapter.
 | --- | --- |
 | `capture_to_receive_ms` | Capture to local receive; only for explicitly comparable local-monotonic timestamps |
 | `queue_wait_ms` | Queue entry to backend-call start, measured locally when queue context is supplied |
-| `decode_ms` | Payload decode; currently unavailable because decoding is outside `EquipmentDetector` |
+| `payload_load_ms` | Local monotonic elapsed time spent reading the payload bytes from storage; excludes hashing and decoding |
+| `decode_ms` | Local monotonic elapsed time from payload-read completion through source-hash verification, codec/raw decode, explicit channel conversion, canonical hashing, and validated canonical image construction |
 | `preprocess_ms` | Backend-reported preprocessing, only when present |
 | `backend_call_ms` | Entire outer detector call, measured locally with a monotonic clock |
 | `inference_ms` | Backend-reported inference, only when present |
@@ -153,6 +201,80 @@ behavior, locked class order, and default input size of 640.
 The outer backend call and detection finalization are locally measured;
 Ultralytics preprocess/inference/postprocess durations are copied only when
 the returned result actually provides them.
+
+Decoder `decode_ms` does not include model resize, letterboxing, normalization,
+HWC-to-CHW conversion, float conversion, inference, or detection
+postprocessing. Those operations belong to `preprocess_ms` or later stages.
+The current canonical path is CPU Pillow only; there is no GPU decoder
+identity, orientation transform, colour-management transform, palette-mode
+conversion, or padded/typed raw support.
+
+### Frozen visual research identities
+
+The versioned contracts in `src/ml/visual_identity.py`,
+`src/ml/visual_annotations.py`, `src/ml/visual_benchmark.py`, and
+`src/ml/visual_benchmark_matrix.py` keep six different identities separate:
+
+1. `DatasetIdentity` binds ordered recording membership, payload hashes through
+   the recording manifest, annotations, scenarios, splits, decoder
+   configuration, class order, maps, seeds, and source recording IDs.
+2. `VisualFrameAnnotation` links ground truth to the exact source payload and
+   canonical decoded-content hash. Object labels use the locked four-class
+   order and `xyxy_pixels_half_open` boxes. Pseudo-labels are not formal truth.
+3. `PreprocessingIdentity` binds resize, letterbox, interpolation, padding,
+   channel/tensor conversion, normalization, batch, dtype, contiguity, and
+   implementation version.
+4. `ModelIdentity` binds weights and model-file hashes, architecture, task,
+   class order, dimensions, preprocessing, runtime, precision, export, and
+   available training provenance. Unknown external provenance remains null.
+5. `VisualBenchmarkCondition` binds one dataset, decoder, preprocessing,
+   model, static inference policy, runtime, device, precision, deadline, and
+   software commit.
+6. `VisualBenchmarkResult` binds the exact condition and records frame
+   outcomes, available timing summaries, scheduling outcomes, visual/resource
+   metrics, unavailable metrics, failures, and the raw-artifact manifest.
+
+Each identity hash is SHA256 of canonical sorted JSON excluding its own hash.
+Absolute paths, usernames, timestamps that do not affect content, process IDs,
+and random UUIDs are not identity fields. Changing ordered frame membership,
+annotations, split assignment, scenario identity, decoder, preprocessing,
+class order, model contents, precision, or runtime-relevant settings changes
+the corresponding identity.
+
+The boundaries are deliberate:
+
+```text
+stored PNG bytes
+  -> source payload SHA256
+  -> canonical decoded RGB8 SHA256 + decoder_configuration_id
+  -> model tensor + preprocessing_configuration_id
+  -> inference + model_identity_sha256
+  -> condition_identity_sha256
+  -> result_identity_sha256
+```
+
+The static v1 definition lives in `benchmarks/visual_static_v1/`. Its nine
+unmaterialized templates cross input sizes 320, 416, and 640 with every-frame,
+every-second-frame, and every-third-frame inference. Dataset and model
+identities stay null until real validated artifacts exist. ROI is disabled,
+and no adaptive policy is present. The matrix may be narrowed after pilot
+validation if a size is unsupported; it must not be silently expanded.
+
+Inspect the frozen contracts offline:
+
+```bash
+python main.py visual matrix-validate
+python main.py visual condition-list
+python main.py visual dataset-validate --input DATASET_IDENTITY.json
+python main.py visual dataset-inspect --input DATASET_IDENTITY.json
+python main.py visual model-validate --input MODEL_IDENTITY.json
+python main.py visual model-inspect --input MODEL_IDENTITY.json
+python main.py visual preprocessing-validate --input PREPROCESSING_IDENTITY.json
+python main.py visual result-inspect --input RESULT.json
+```
+
+These commands validate files and templates only. They do not access the
+network, start a simulator, materialize a template, or execute a benchmark.
 
 ## What is implemented
 
@@ -203,9 +325,12 @@ These components make M1-M3 offline development and M4-M7 interface development
 possible. They do not constitute trained production models, a completed C++
 DJI application, or real-airframe validation.
 
-The camera record/replay and timing contracts are experimental infrastructure.
-They do not constitute trained visual-model evidence and make no claim about
-visual accuracy, throughput, latency, scheduling quality, or flight safety.
+The camera record/replay, deterministic decoder, identity contracts, pilot
+protocol, static templates, and timing contracts are experimental
+infrastructure. They do not constitute a visual dataset, trained-model
+evidence, a static visual benchmark result, adaptive-scheduler evidence, or
+real-airframe evidence. They make no claim about visual accuracy, throughput,
+latency, scheduling quality, or flight safety.
 
 ## Commands
 

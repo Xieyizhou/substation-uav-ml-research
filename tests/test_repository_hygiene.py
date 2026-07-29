@@ -95,6 +95,42 @@ class RepositoryHygieneTests(unittest.TestCase):
             "AI agent prompt/instruction files must remain local and untracked",
         )
 
+    def test_visual_payload_model_and_benchmark_outputs_are_ignored(self):
+        generated = (
+            "data/research/visual_pilot/frames/000000001.png",
+            "data/research/visual_pilot/annotations.jsonl",
+            "datasets/visual/dataset_identity.json",
+            "models/equipment/candidate.pt",
+            "models/equipment/candidate.onnx",
+            "outputs/research/visual_static_v1/results.json",
+            "outputs/research/visual_static_v1/runtime_environment.json",
+        )
+        result = subprocess.run(
+            ["git", "check-ignore", "--stdin"],
+            cwd=PROJECT_ROOT,
+            input="\n".join(generated),
+            text=True,
+            check=True,
+            capture_output=True,
+        )
+        self.assertEqual(set(result.stdout.splitlines()), set(generated))
+
+    def test_visual_schemas_and_benchmark_templates_are_not_ignored(self):
+        tracked_definitions = (
+            "config/schemas/visual_dataset_identity.schema.json",
+            "benchmarks/visual_static_v1/conditions.json",
+            "benchmarks/visual_static_v1/pilot_protocol.json",
+        )
+        result = subprocess.run(
+            ["git", "check-ignore", "--stdin"],
+            cwd=PROJECT_ROOT,
+            input="\n".join(tracked_definitions),
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, "")
+
 
 if __name__ == "__main__":
     unittest.main()

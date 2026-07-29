@@ -25,6 +25,7 @@ class RootCliTests(unittest.TestCase):
             "data",
             "model",
             "study",
+            "visual",
         ):
             self.assertIn(command, help_text)
 

@@ -1,0 +1,74 @@
+{
+  "pilot_protocol_schema_version": 1,
+  "protocol_id": "visual-pilot-png-v1",
+  "evidence_role": "pipeline_validation_only",
+  "canonical_payload_format": "png",
+  "canonical_pixel_format": "rgb8",
+  "scenario": {
+    "map_id": "training",
+    "target_id": "center",
+    "seed": 2001,
+    "route": "short_approach_and_inspect",
+    "recording_count": 1
+  },
+  "practical_retained_frame_range": {
+    "minimum": 100,
+    "maximum": 300,
+    "scientific_requirement": false
+  },
+  "recording": {
+    "declared_source_rate_hz": 10.0,
+    "retain_rate_hz": 5.0,
+    "sampling_basis": "sequence",
+    "retain_every_nth_valid_frame": 2,
+    "preserve_original_sequence_numbers": true,
+    "synchronized_ground_truth": "required_when_available"
+  },
+  "frame_handling": {
+    "duplicate_timestamps": "retain_first_and_record_duplicate",
+    "sequence_gaps": "preserve_gap_and_record_it",
+    "invalid_frames": "exclude_from_dataset_and_retain_failure_record",
+    "no_target_frames": "retain",
+    "maximum_consecutive_near_duplicates": 5
+  },
+  "coverage": {
+    "required_mission_phases": [
+      "cruise_distant",
+      "approach",
+      "close_inspection",
+      "target_transition"
+    ],
+    "mission_phase_minimum_fraction": {
+      "cruise_distant": 0.1,
+      "approach": 0.2,
+      "close_inspection": 0.3,
+      "target_transition": 0.1
+    },
+    "partial_occlusion_required_when_available": true,
+    "target_enter_or_leave_required": true,
+    "minimum_no_target_fraction": 0.1,
+    "target_distance_bins": ["distant", "approach", "close"],
+    "visibility_states": ["visible", "partially_occluded"]
+  },
+  "validation_gates": [
+    "identity_continuity",
+    "recording_integrity",
+    "annotation_linkage",
+    "decoder_determinism",
+    "storage_inspection",
+    "frame_sampling",
+    "scene_coverage",
+    "cli_workflow"
+  ],
+  "split_isolation": {
+    "minimum_split_unit": "recording",
+    "allowed_units": ["scenario", "map", "route", "recording", "seed"],
+    "adjacent_frame_random_split_forbidden": true
+  },
+  "before_recording": [
+    "implement_stable_png_camera_source_adapter",
+    "confirm_gazebo_camera_rate_is_10_hz",
+    "confirm_target_and_route_are_visible",
+    "confirm_ground_truth_source"
+  ]
+}

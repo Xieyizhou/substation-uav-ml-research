@@ -20,8 +20,10 @@ Static visual-model and scheduling studies will use one validated camera
 recording per scenario. Every candidate resolution, model, skip policy, and
 future adaptive scheduler must consume the same `frames.jsonl` manifest order
 and hash-verified payloads. This prevents input drift between conditions.
-Formal inputs should use PNG or tightly packed raw payloads where practical;
-JPEG cannot be the sole canonical representation. Each frame declares storage
+Formal visual inputs use PNG. Raw may be retained as provenance or as an
+explicit storage/transport experiment, but it is not the canonical formal
+payload. JPEG cannot be canonical; converting an already lossy JPEG to PNG
+does not make the source lossless. Each frame declares storage
 `payload_format` separately from consumer-visible `pixel_format`, so benchmark
 code must not infer RGB or BGR from a codec.
 
@@ -32,10 +34,66 @@ summaries. A visual study result may report a latency stage only when
 `VisualTiming` marks it as measured and records its provenance; unavailable
 stages remain null.
 
-The current study registry does not yet schedule visual replay conditions.
-Adding those matrices, static detector benchmarks, and the risk-adaptive
-scheduler is later work and must not be inferred from the existence of the
-camera contracts.
+Future visual study identity must also include the canonical decoder
+configuration ID, source-payload SHA256, and decoded-content SHA256. This
+locks the CPU decoding backend, version, colour conversion, grayscale, alpha,
+and raw-layout policies alongside the ordered input frames. Timing values are
+measurements, not identity fields.
+
+### Visual pilot gate
+
+The versioned pilot protocol is
+`benchmarks/visual_static_v1/pilot_protocol.json`. Before a fixed visual
+dataset is collected, the project must:
+
+1. implement a stable PNG camera-source adapter;
+2. confirm the actual source rate, route visibility, and ground-truth source;
+3. record one training-map, center-target, seed-2001 approach/inspection run;
+4. retain a practical 100–300-frame inspection set using the declared
+   sequence policy;
+5. validate hashes, ordered identity, decoder determinism, annotation linkage,
+   storage, phase coverage, no-target frames, occlusion where available, and
+   the offline CLI workflow.
+
+The range is a manual-inspection target, not a scientific sample-size claim.
+The pilot is pipeline validation and cannot be included as formal performance
+evidence merely because it passes.
+
+Recording sampling and benchmark skipping are separate. Recording preserves
+the source sequence and declares its rate; dataset sampling determines frozen
+membership; benchmark skipping then operates on that same ordered membership.
+Duplicate timestamps, source gaps, invalid frames, no-target frames, and
+near-duplicate concentration remain explicit.
+
+Training, validation, held-out, and formal partitions occur at scenario, map,
+route, recording, or seed boundaries. Adjacent frames from one recording must
+never be randomly divided between train and evaluation splits.
+
+### Static replay gate before adaptive scheduling
+
+`benchmarks/visual_static_v1/conditions.json` freezes nine unmaterialized
+static templates: sizes 320/416/640 crossed with every frame/every second/every
+third frame. A template is not executable until exact dataset, decoder,
+preprocessing, model, runtime, device, precision, deadline, and commit
+identities are supplied. Unrun templates never produce result rows.
+
+Adaptive scheduling starts only after:
+
+- the pilot gate passes;
+- a fixed split-isolated dataset identity exists;
+- a real hashed model package and preprocessing identity exist;
+- supported static conditions complete successfully;
+- result artifacts pass identity and availability validation.
+
+Paper tables must be generated from validated result artifacts. Missing
+metrics remain null, failed frames remain failures rather than zero-latency
+successes, and results without raw-artifact manifest hashes cannot claim
+completion.
+
+The existing study registry does not yet schedule visual replay conditions.
+The frozen visual contracts and templates do not create a second registry and
+do not imply that a dataset, model, static result, or adaptive scheduler
+exists.
 
 ## Local state
 

@@ -10,6 +10,7 @@ from src.sensors.types import VisualTiming
 VISUAL_DURATION_FIELDS = (
     "capture_to_receive_ms",
     "queue_wait_ms",
+    "payload_load_ms",
     "decode_ms",
     "preprocess_ms",
     "backend_call_ms",

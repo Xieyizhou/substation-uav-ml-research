@@ -1,0 +1,11 @@
+{
+  "class_order_schema_version": 1,
+  "classes": [
+    {"class_id": 0, "class_name": "transformer"},
+    {"class_id": 1, "class_name": "switchgear"},
+    {"class_id": 2, "class_name": "capacitor_bank"},
+    {"class_id": 3, "class_name": "reactor"}
+  ],
+  "class_order_identity": "700980c235bfc163d2123f082381c1e81b692359e33e4de11f6e194ef87e8365",
+  "pseudo_labels_are_formal_ground_truth": false
+}

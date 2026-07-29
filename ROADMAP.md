@@ -26,6 +26,11 @@ claim.
 - [x] Package dataset/model identities, hashes, contracts, history, and metrics.
 - [x] Schedule replay, 5-scenario closed-loop, and 30-scenario paired formal
   studies in a resumable SQLite registry.
+- [x] Freeze PNG visual replay identity, annotation, preprocessing, static
+  condition/result contracts, nine unmaterialized templates, and a pilot
+  recording protocol.
+- [ ] Implement the stable PNG camera-source adapter and pass the visual pilot
+  identity/annotation/determinism gate.
 - [ ] Collect the full split-isolated dataset and publish aggregate statistics.
 - [ ] Train the first candidate and complete replay, 5-scenario, and 120-run
   formal evidence gates.
