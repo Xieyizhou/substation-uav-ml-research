@@ -34,11 +34,24 @@ validated `VisualBenchmarkResult` artifacts rather than typed manually.
 
 ## Pilot gate
 
-`pilot_protocol.json` defines the first small recording gate. The pilot checks
-identity continuity, annotation linkage, decoding determinism, storage,
-sampling, scene coverage, and CLI inspection. It is not formal benchmark
-evidence. The capture adapter must exist and the remaining operator fields
-must be confirmed before recording.
+`pilot_protocol.json` defines the version-3 small recording gate. The recorder
+retains every valid source frame as PNG and measures the actual source rate;
+the expected 10 Hz value is not forced or claimed as observed. The practical
+100–300-frame range is not an automatic stop. Every-second and every-third
+frame policies apply only to later replay of the frozen ordered dataset.
+
+Invalid simulator truth remains an explicit recorded failure. V3 permits at
+most 0.1% of RGB frames to reference invalid truth, with no more than two such
+frames consecutively, and excludes those frames from dataset membership.
+Unmatched and ambiguous synchronization remain disallowed. Required mission
+phases use minimum synchronized simulation-time coverage rather than a share
+of the recording's total duration.
+
+The pilot checks identity continuity, annotation linkage, decoding
+determinism, synchronization health, storage, scene coverage, and CLI
+inspection. It is not formal benchmark evidence. Runtime topics, shared
+Gazebo clock behavior, route visibility, observed rate, and synchronization
+offsets still require a live probe and human review.
 
 ## Schemas
 

@@ -157,6 +157,13 @@ CATEGORY_COLORS = {
     "pole": "0.08 0.09 0.09 1",
 }
 
+GAZEBO_VISUAL_LABELS = {
+    "transformer": 1,
+    "switchgear": 2,
+    "capacitor_bank": 3,
+    "reactor": 4,
+}
+
 
 def text(parent, tag, value, **attributes):
     element = ET.SubElement(parent, tag, attributes)
@@ -223,6 +230,19 @@ def add_static_model(parent, name, pose):
     return model
 
 
+def add_visual_label(model, category):
+    label = GAZEBO_VISUAL_LABELS.get(category)
+    if label is None:
+        return
+    plugin = ET.SubElement(
+        model,
+        "plugin",
+        filename="gz-sim-label-system",
+        name="gz::sim::systems::Label",
+    )
+    text(plugin, "label", label)
+
+
 def obstacle_bounds(obstacle):
     if obstacle["type"] == "cell":
         x_min = x_max = int(obstacle["x"])
@@ -249,6 +269,7 @@ def add_equipment(parent, obstacle):
     color = CATEGORY_COLORS.get(category, CATEGORY_COLORS["cabinet"])
 
     model = add_static_model(parent, obstacle["name"], [center_x, center_y, 0, 0, 0, 0])
+    add_visual_label(model, category)
     link = ET.SubElement(model, "link", name="link")
 
     if category == "pole":

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 from pathlib import Path
 
@@ -17,6 +18,20 @@ from src.ml.visual_identity import (
     DatasetIdentity,
     ModelIdentity,
     PreprocessingIdentity,
+)
+from src.ml.visual_pilot_validation import (
+    inspect_pilot_recording,
+    materialize_pilot_dataset_identity,
+    validate_pilot_recording,
+)
+from src.ml.visual_pilot_live import (
+    append_live_phase_event,
+    probe_live_visual_sources,
+    record_live_visual_pilot,
+)
+from src.sensors.gazebo_visual_transport import (
+    inspect_visual_sources,
+    load_research_visual_configuration,
 )
 
 
@@ -48,6 +63,53 @@ def build_parser():
         "condition-list", help="List unmaterialized static condition templates"
     )
     conditions.add_argument("--benchmark", type=Path, default=DEFAULT_BENCHMARK)
+    for name, help_text in (
+        ("gazebo-inspect", "Inspect configured live Gazebo visual topics"),
+        ("gazebo-probe", "Receive one RGB and truth message with a timeout"),
+    ):
+        command = commands.add_parser(name, help=help_text)
+        command.add_argument("--timeout", type=float, default=5.0)
+    pilot_record = commands.add_parser(
+        "pilot-record", help="Record one labelled Gazebo visual pilot"
+    )
+    pilot_record.add_argument("--output", type=Path, required=True)
+    pilot_record.add_argument("--recording-id")
+    stopping = pilot_record.add_mutually_exclusive_group(required=True)
+    stopping.add_argument("--duration", type=float)
+    stopping.add_argument("--frame-limit", type=int)
+    stopping.add_argument(
+        "--until-interrupt",
+        action="store_true",
+        help="record without a limit until Ctrl-C",
+    )
+    pilot_record.add_argument("--source-timeout", type=float, default=5.0)
+    pilot_record.add_argument("--max-sync-skew-ms", type=float, default=33.334)
+    pilot_record.add_argument("--expected-rate-tolerance-fraction", type=float)
+    pilot_record.add_argument("--jitter-p95-limit-ms", type=float)
+    pilot_record.add_argument("--receive-stall-limit-ms", type=float, default=500.0)
+    pilot_record.add_argument("--mission-events", type=Path)
+    pilot_phase = commands.add_parser(
+        "pilot-phase", help="Mark the current live pilot mission phase"
+    )
+    pilot_phase.add_argument("--output", type=Path, required=True)
+    pilot_phase.add_argument(
+        "--phase",
+        choices=[
+            "cruise_distant",
+            "approach",
+            "close_inspection",
+            "target_transition",
+            "other",
+        ],
+        required=True,
+    )
+    for name, help_text in (
+        ("pilot-inspect", "Inspect a pilot recording, including partial state"),
+        ("pilot-validate", "Validate a complete labelled pilot recording"),
+        ("pilot-materialize", "Materialize a validated pilot DatasetIdentity"),
+    ):
+        command = commands.add_parser(name, help=help_text)
+        command.add_argument("--input", type=Path, required=True)
     return parser
 
 
@@ -108,10 +170,75 @@ def main(argv=None):
             result = VisualBenchmarkResult.from_record(
                 load_json(args.input)
             ).to_record()
+        elif args.command == "gazebo-inspect":
+            result = {
+                "prerequisites": [
+                    "Gazebo Sim is already running",
+                    "x500_research is spawned",
+                    "PX4 may run separately but is not controlled by this command",
+                ],
+                "configured": load_research_visual_configuration(),
+                "live": asyncio.run(
+                    inspect_visual_sources(timeout_s=args.timeout)
+                ),
+            }
+        elif args.command == "gazebo-probe":
+            result = asyncio.run(
+                probe_live_visual_sources(timeout_s=args.timeout)
+            )
+            result["prerequisites"] = [
+                "Gazebo Sim is already running",
+                "x500_research is spawned",
+            ]
+        elif args.command == "pilot-record":
+            recording_id = args.recording_id or args.output.name
+            print(
+                "Prerequisites: Gazebo Sim is already running; x500_research "
+                "is spawned; the existing flight task runs separately; this "
+                "command does not start PX4, Gazebo, or flight control."
+            )
+            if args.until_interrupt:
+                print(
+                    "Recording has no automatic limit; press Ctrl-C once to "
+                    "finalize manifests.",
+                    flush=True,
+                )
+            result = asyncio.run(
+                record_live_visual_pilot(
+                    args.output,
+                    recording_id=recording_id,
+                    source_timeout_s=args.source_timeout,
+                    duration_s=args.duration,
+                    frame_limit=args.frame_limit,
+                    maximum_skew_ms=args.max_sync_skew_ms,
+                    expected_rate_tolerance_fraction=(
+                        args.expected_rate_tolerance_fraction
+                    ),
+                    jitter_p95_limit_ms=args.jitter_p95_limit_ms,
+                    receive_stall_limit_ms=args.receive_stall_limit_ms,
+                    mission_events_path=args.mission_events,
+                )
+            )
+        elif args.command == "pilot-phase":
+            result = {
+                "recorded": True,
+                "event": append_live_phase_event(args.output, args.phase),
+            }
+        elif args.command == "pilot-inspect":
+            result = inspect_pilot_recording(args.input)
+        elif args.command == "pilot-validate":
+            result = validate_pilot_recording(args.input)
+        elif args.command == "pilot-materialize":
+            identity = materialize_pilot_dataset_identity(args.input)
+            result = {
+                "valid": True,
+                "dataset_identity": identity.to_record(),
+                "path": str(args.input / "identity/dataset_identity.json"),
+            }
         else:
             return 2
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
-    except (FileNotFoundError, TypeError, ValueError) as error:
+    except (FileNotFoundError, RuntimeError, TimeoutError, TypeError, ValueError) as error:
         print(f"Visual command failed: {error}")
         return 1

@@ -239,6 +239,19 @@ if command -v brew >/dev/null 2>&1; then
     echo "OpenCV compatibility prefix: $OPENCV_PREFIX"
     echo "OpenCV_DIR=$OpenCV_DIR"
   fi
+
+  if brew --prefix qt@5 >/dev/null 2>&1; then
+    QT5_PREFIX="$(brew --prefix qt@5)"
+    QT5_CONFIG="$QT5_PREFIX/lib/cmake/Qt5/Qt5Config.cmake"
+    [[ -f "$QT5_CONFIG" ]] || fail \
+      "Qt 5 CMake configuration was not found: $QT5_CONFIG"
+    export Qt5_DIR="$QT5_PREFIX/lib/cmake/Qt5"
+    export CMAKE_PREFIX_PATH="$QT5_PREFIX${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+    echo "Qt 5 compatibility prefix: $QT5_PREFIX"
+    echo "Qt5_DIR=$Qt5_DIR"
+  else
+    fail "Gazebo GUI libraries require Qt 5. Install it with: brew install qt@5"
+  fi
 fi
 
 echo
@@ -259,6 +272,7 @@ if [[ -n "${OpenCV_DIR:-}" ]]; then
     -U 'PC_GSTREAMER_APP_*' \
     -DCONFIG=px4_sitl_default \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    -DOpenCV_DIR="$OpenCV_DIR"
+    -DOpenCV_DIR="$OpenCV_DIR" \
+    -DQt5_DIR="$Qt5_DIR"
 fi
 PX4_GZ_WORLD="$WORLD_NAME" make px4_sitl "gz_$MAKE_SIM_MODEL"

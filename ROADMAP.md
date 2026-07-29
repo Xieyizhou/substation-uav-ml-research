@@ -29,7 +29,9 @@ claim.
 - [x] Freeze PNG visual replay identity, annotation, preprocessing, static
   condition/result contracts, nine unmaterialized templates, and a pilot
   recording protocol.
-- [ ] Implement the stable PNG camera-source adapter and pass the visual pilot
+- [x] Implement the stable PNG camera/truth adapters, deterministic
+  synchronization, and pilot recording/identity workflow.
+- [ ] Pass the live visual source, synchronization, route-coverage, and pilot
   identity/annotation/determinism gate.
 - [ ] Collect the full split-isolated dataset and publish aggregate statistics.
 - [ ] Train the first candidate and complete replay, 5-scenario, and 120-run

@@ -69,6 +69,16 @@ class ModuleBoundaryTests(unittest.TestCase):
                     500,
                 )
 
+    def test_all_python_implementation_files_stay_below_five_hundred_lines(self):
+        paths = sorted((PROJECT_ROOT / "src").rglob("*.py"))
+        paths.extend(sorted((PROJECT_ROOT / "scripts").rglob("*.py")))
+        for path in paths:
+            with self.subTest(path=path.relative_to(PROJECT_ROOT)):
+                self.assertLessEqual(
+                    len(path.read_text(encoding="utf-8").splitlines()),
+                    500,
+                )
+
 
 if __name__ == "__main__":
     unittest.main()

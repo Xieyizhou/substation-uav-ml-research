@@ -1092,6 +1092,9 @@
       <model name="entry_switchgear">
         <static>true</static>
         <pose>6 1.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>2</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.7 0 0 0</pose>
@@ -1145,6 +1148,9 @@
       <model name="transformer_01">
         <static>true</static>
         <pose>7 7 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>1</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 1.05 0 0 0</pose>
@@ -1227,6 +1233,9 @@
       <model name="transformer_02">
         <static>true</static>
         <pose>16 6 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>1</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 1.05 0 0 0</pose>
@@ -1309,6 +1318,9 @@
       <model name="transformer_03">
         <static>true</static>
         <pose>24 8 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>1</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 1.05 0 0 0</pose>
@@ -1391,6 +1403,9 @@
       <model name="transformer_04">
         <static>true</static>
         <pose>9 19 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>1</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 1.05 0 0 0</pose>
@@ -1473,6 +1488,9 @@
       <model name="transformer_05">
         <static>true</static>
         <pose>21 20 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>1</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 1.05 0 0 0</pose>
@@ -1608,6 +1626,9 @@
       <model name="switchgear_south">
         <static>true</static>
         <pose>10.5 11.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>2</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.8 0 0 0</pose>
@@ -1661,6 +1682,9 @@
       <model name="switchgear_center">
         <static>true</static>
         <pose>16.5 14.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>2</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.8 0 0 0</pose>
@@ -1714,6 +1738,9 @@
       <model name="switchgear_north">
         <static>true</static>
         <pose>14.5 25.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>2</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.8 0 0 0</pose>
@@ -1767,6 +1794,9 @@
       <model name="capacitor_01">
         <static>true</static>
         <pose>26.5 14.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>3</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.9 0 0 0</pose>
@@ -1891,6 +1921,9 @@
       <model name="capacitor_02">
         <static>true</static>
         <pose>5.5 26.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>3</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.9 0 0 0</pose>
@@ -2015,6 +2048,9 @@
       <model name="reactor_01">
         <static>true</static>
         <pose>17.5 28.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>4</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 1.15 0 0 0</pose>
@@ -2057,6 +2093,9 @@
       <model name="reactor_02">
         <static>true</static>
         <pose>27.5 5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>4</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 1.15 0 0 0</pose>

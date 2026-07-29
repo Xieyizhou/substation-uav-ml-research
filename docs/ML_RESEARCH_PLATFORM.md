@@ -124,8 +124,142 @@ python main.py sensor camera-replay \
   --input data/research/camera/example --mode paced --rate 1.0
 ```
 
-There is intentionally no live Gazebo camera-record command yet because the
-repository does not have a stable live camera source adapter.
+### Gazebo RGB and simulator-truth adapters
+
+The live visual path reuses Gazebo Transport through the existing subprocess
+boundary; it does not add ROS or control PX4:
+
+```text
+gz.msgs.Image                         gz.msgs.AnnotatedAxisAligned2DBox_V
+      |                                             |
+GazeboCameraSource                         GazeboTruthSource
+      |                                             |
+canonical PNG CameraFrame                    SimulatorTruthFrame
+      +---------------- simulation time -------------+
+                            |
+              deterministic timestamp matching
+                            |
+       VisualFrameAnnotation + SynchronizationRecord
+```
+
+The repository-owned SDF configures `research_camera/image` at 30 Hz and
+`research_camera/boxes` at 15 Hz. Runtime topics may be scoped by Gazebo, so
+the CLI discovers the full topic names and verifies their message types before
+subscribing. It never invents a scoped topic. Both sources require
+`header.stamp` and identify its clock as `gazebo_sim_time`; local monotonic
+receive time is recorded separately and is not used for RGB/truth matching.
+
+Gazebo image messages declare their row stride and pixel enum. Supported
+uint8 RGB, BGR, RGBA, BGRA, and mono layouts are converted explicitly to
+canonical RGB PNG. The source raw-message hash, source layout, stride, topic,
+message type, and sequence provenance remain metadata. Invalid messages
+produce failure events rather than disappearing.
+
+Generated transformer, switchgear, capacitor-bank, and reactor models carry
+Gazebo labels 1 through 4, mapped to locked dataset class IDs 0 through 3.
+Cabinets, poles, buildings, and other scene objects remain background.
+Bounding boxes use `xyxy_pixels_half_open`; partial out-of-bounds boxes are
+clipped and marked truncated, while unknown labels, zero-area boxes, and
+incompatible dimensions invalidate the truth message. The sensor does not
+provide a reliable occlusion flag, so visibility remains `unknown`.
+
+Synchronization first uses exact simulation timestamps, then the nearest
+timestamp within a configurable tolerance. The default 33.334 ms is half the
+configured 15 Hz truth period and is an engineering starting point, not a
+scientifically validated threshold. Equidistant candidates are ordered by
+earlier timestamp and message identity for reproducibility but remain
+`ambiguous` and do not receive annotations. `unmatched`, `ambiguous`,
+`invalid_truth`, and a valid synchronized `verified_no_target` frame are
+different states.
+
+Inspect and probe without launching external processes:
+
+```bash
+python main.py visual gazebo-inspect --timeout 5
+python main.py visual gazebo-probe --timeout 5
+```
+
+Gazebo Sim and the `x500_research` entity must already be running. PX4 may run
+separately, but these commands do not start it or send flight commands.
+
+### Labelled visual pilot recording
+
+The pilot recorder retains every valid source frame and writes:
+
+```text
+pilot_recording_ID/
+  metadata.json
+  frames.jsonl
+  annotations.jsonl
+  synchronization.jsonl
+  truth_events.jsonl
+  mission_events.jsonl
+  summary.json
+  identity/
+    recording_identity.json
+    dataset_membership.jsonl  # only after acceptance validation
+    dataset_identity.json  # only after acceptance validation
+  frames/
+    *.png
+```
+
+An expected source rate of 10 Hz is recorded as an expectation and is not
+forced onto the configured 30 Hz camera. A material difference is reported
+as an observation. The summary measures actual frame counts, valid timestamp
+duration and rate, P50/P95/P99 intervals, gaps, duplicate and non-monotonic
+sequences/timestamps, receive stalls, timeouts, PNG bytes, match states,
+synchronization offsets, no-target and labelled frames, boxes, and per-class
+counts. Unavailable rate or percentile values remain null. Rate and jitter
+flags are observations unless a reviewed protocol later defines a hard gate.
+
+The protocol is `visual-pilot-png-v3`. Its 100–300-frame range is a manual
+inspection target, not an automatic stop or validity threshold. Recording
+does not downsample; every-second and every-third policies apply only after
+the ordered dataset is frozen. A partial, timed-out, camera-only, unmatched,
+or phase-incomplete recording cannot materialize a `DatasetIdentity`.
+Successful materialization always uses dataset role `pilot`, never `formal`.
+Invalid simulator truth remains explicitly invalid and is preserved in
+`truth_events.jsonl`; it is never rewritten as a no-target annotation. V3
+allows at most 0.1% of RGB frames to reference invalid truth and at most two
+such frames consecutively. Those RGB frames remain in the source recording
+but are excluded from `dataset_membership.jsonl`. Unmatched and ambiguous
+frames remain disallowed. Each required mission phase must contain at least
+one second of valid synchronized simulation time; its share of the total
+recording duration is not an acceptance field.
+
+```bash
+python main.py visual pilot-record \
+  --output data/research/visual_pilot/pilot_recording_001 \
+  --duration 20 --source-timeout 5
+python main.py visual pilot-phase \
+  --output data/research/visual_pilot/pilot_recording_001 \
+  --phase cruise_distant
+python main.py visual pilot-phase \
+  --output data/research/visual_pilot/pilot_recording_001 \
+  --phase approach
+python main.py visual pilot-phase \
+  --output data/research/visual_pilot/pilot_recording_001 \
+  --phase close_inspection
+python main.py visual pilot-phase \
+  --output data/research/visual_pilot/pilot_recording_001 \
+  --phase target_transition
+python main.py visual pilot-inspect \
+  --input data/research/visual_pilot/pilot_recording_001
+python main.py visual pilot-validate \
+  --input data/research/visual_pilot/pilot_recording_001
+python main.py visual pilot-materialize \
+  --input data/research/visual_pilot/pilot_recording_001
+```
+
+Run `pilot-record` while the existing flight task is active, and issue
+`pilot-phase` from another terminal when each reviewed route phase begins.
+The marker reads the last accepted RGB simulation timestamp from the live
+recording status; it does not infer phases from detector output. An externally
+prepared JSONL event log may instead be supplied with `--mission-events`.
+Exactly one stopping mode is required: `--duration`, `--frame-limit`, or the
+explicitly unbounded `--until-interrupt`. At the configured 30 Hz source rate,
+300 retained frames represent about 10 seconds of simulation time. PNG
+compression reduces bytes per frame but does not control recording length.
 
 ### Canonical camera decoding
 
@@ -285,6 +419,9 @@ network, start a simulator, materialize a template, or execute a benchmark.
   effective frequency, dropped-frame count, and subprocess cleanup.
 - A repository-owned `x500_research` model containing x500, 2D LiDAR, forward
   RGB, and 2D bounding-box cameras.
+- Stable Gazebo RGB and labelled bounding-box sources, explicit PNG
+  materialization, timestamp synchronization, pilot manifests, health
+  summaries, and pilot-only dataset identity materialization.
 - Ray clearing, occupied-cell inflation, unknown-cell penalty, forward-corridor
   risk, stopping distance, collision time, and recommended free direction.
 - Inflated local costmap cells are projected into the global grid consumed by

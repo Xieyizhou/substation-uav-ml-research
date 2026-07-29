@@ -7,6 +7,7 @@ from pathlib import Path
 
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import object_sha256
+from src.ml.visual_pilot_acceptance import validate_v3_acceptance_policy
 from src.ml.visual_identity import _required_text, class_order_identity
 
 
@@ -55,8 +56,21 @@ def validate_static_benchmark_directory(benchmark_directory):
         raise ValueError("unsupported visual metrics schema")
     if pilot.get("pilot_protocol_schema_version") != 1:
         raise ValueError("unsupported visual pilot protocol schema")
+    if (
+        pilot.get("protocol_version") != 3
+        or pilot.get("protocol_id") != "visual-pilot-png-v3"
+    ):
+        raise ValueError("visual pilot must use the reviewed protocol v3")
     if pilot.get("canonical_payload_format") != "png":
         raise ValueError("visual pilot canonical payload must be png")
+    recording = pilot.get("recording") or {}
+    if (
+        recording.get("expected_source_rate_hz") != 10.0
+        or not recording.get("retain_every_valid_source_frame")
+        or recording.get("automatic_downsampling") is not False
+    ):
+        raise ValueError("visual pilot v3 all-frame recording policy is invalid")
+    validate_v3_acceptance_policy(pilot)
     classes = tuple(
         item.get("class_name") for item in class_order.get("classes", [])
     )

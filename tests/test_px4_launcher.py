@@ -20,6 +20,9 @@ class Px4LauncherPathTests(unittest.TestCase):
         self.assertIn("brew --prefix opencv@4", launcher_text)
         self.assertIn("brew install opencv@4", launcher_text)
         self.assertIn('-DOpenCV_DIR="$OpenCV_DIR"', launcher_text)
+        self.assertIn("brew --prefix qt@5", launcher_text)
+        self.assertIn("brew install qt@5", launcher_text)
+        self.assertIn('-DQt5_DIR="$Qt5_DIR"', launcher_text)
         self.assertIn("-U 'GSTREAMER_*'", launcher_text)
 
     def test_research_vehicle_uses_registered_x500_airframe_target(self):

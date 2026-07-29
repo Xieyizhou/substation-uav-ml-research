@@ -49,8 +49,8 @@ dataset is collected, the project must:
 1. implement a stable PNG camera-source adapter;
 2. confirm the actual source rate, route visibility, and ground-truth source;
 3. record one training-map, center-target, seed-2001 approach/inspection run;
-4. retain a practical 100–300-frame inspection set using the declared
-   sequence policy;
+4. retain every valid source frame; use 100–300 frames only as a practical
+   manual inspection target;
 5. validate hashes, ordered identity, decoder determinism, annotation linkage,
    storage, phase coverage, no-target frames, occlusion where available, and
    the offline CLI workflow.
@@ -59,11 +59,47 @@ The range is a manual-inspection target, not a scientific sample-size claim.
 The pilot is pipeline validation and cannot be included as formal performance
 evidence merely because it passes.
 
-Recording sampling and benchmark skipping are separate. Recording preserves
-the source sequence and declares its rate; dataset sampling determines frozen
-membership; benchmark skipping then operates on that same ordered membership.
-Duplicate timestamps, source gaps, invalid frames, no-target frames, and
-near-duplicate concentration remain explicit.
+Recording and benchmark skipping are separate. Pilot protocol v3 preserves
+every valid source frame and measures the actual rate. It does not force or
+claim the expected 10 Hz rate and does not reduce the pilot to 5 Hz. Benchmark
+skipping operates later on the same frozen ordered membership. Duplicate
+timestamps, source gaps, invalid frames, unmatched frames, no-target frames,
+and near-duplicate concentration remain explicit.
+
+Gazebo can emit a zero-visible-area box for one truth period while a target
+crosses the image boundary. V3 keeps that truth message explicitly invalid,
+retains the corresponding RGB source frames, and excludes them from pilot
+dataset membership. Acceptance permits at most 0.1% affected RGB frames and
+at most two consecutively; unmatched and ambiguous synchronization remain
+disallowed. Required mission phases use a minimum of one second of valid
+synchronized simulation-time coverage instead of a fraction of the complete
+recording.
+
+Before recording, `visual gazebo-inspect` must resolve the configured RGB and
+truth topics and verify `gz.msgs.Image` and
+`gz.msgs.AnnotatedAxisAligned2DBox_V`. `visual gazebo-probe` must then receive
+one valid message from each source within an explicit timeout. A missing
+topic, incompatible message type, invalid clock, or truth-source failure
+blocks the pilot.
+
+The synchronization-health gate reviews exact, nearest, unmatched, ambiguous,
+and invalid-truth counts plus the measured offset distribution. The default
+33.334 ms tolerance is provisional. An expected/observed rate difference is
+reported but does not itself change the protocol. Changes to collection or
+sampling policy require a later pilot protocol version.
+
+The pilot review gate requires complete manifests, hash-valid PNGs,
+deterministic decoding, one synchronization row per RGB frame, explicit
+mission-phase events, labelled and verified no-target frames, and a successful
+pilot-role identity. Passing this gate validates the pipeline only. No formal
+visual dataset has been collected, no trained visual model evidence exists,
+no static visual benchmark has run, and no adaptive scheduler exists.
+
+During the existing flight task, mark `cruise_distant`, `approach`,
+`close_inspection`, and `target_transition` with `visual pilot-phase`. Each
+event uses the latest accepted RGB simulation timestamp exposed by the
+recorder. A phase listed in an event file but not represented by a
+synchronized frame does not satisfy coverage.
 
 Training, validation, held-out, and formal partitions occur at scenario, map,
 route, recording, or seed boundaries. Adjacent frames from one recording must
