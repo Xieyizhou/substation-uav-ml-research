@@ -26,6 +26,11 @@ def build_parser():
     train.add_argument("--seed", type=int, default=7)
     train.add_argument("--model-id")
     train.add_argument("--parent-model")
+    train.add_argument(
+        "--allow-incomplete-labels",
+        action="store_true",
+        help="Allow missing training risk classes for pipeline smoke tests only",
+    )
     package = commands.add_parser("package", help="Create a versioned model package")
     package.add_argument("--model", type=Path, required=True)
     package.add_argument("--dataset-manifest", type=Path, required=True)
@@ -81,6 +86,7 @@ def _train(args):
         seed=args.seed,
         patience=args.patience,
         model_id=resolved_model_id,
+        allow_incomplete_labels=args.allow_incomplete_labels,
     )
     manifest_path = args.dataset.parent / "dataset_manifest.json"
     manifest = create_model_package(
@@ -98,6 +104,7 @@ def _train(args):
             "learning_rate": args.learning_rate,
             "patience": args.patience,
             "seed": args.seed,
+            "allow_incomplete_labels": args.allow_incomplete_labels,
         },
     )
     return {"package": str(args.output), "model_id": manifest["model_id"]}

@@ -9,7 +9,7 @@ from src.ml.dataset_builder import build_dataset_manifest
 from src.ml.model_package import create_model_package, validate_model_package
 from src.ml.predictions import evaluate_predictions, predict_dataset
 from src.ml.research_recorder import ResearchDatasetWriter
-from src.ml.train_lidar import train
+from src.ml.train_lidar import _validate_training_label_coverage, train
 
 
 ML_RUNTIME_AVAILABLE = all(
@@ -44,6 +44,12 @@ def sample(split, map_id, seed, index, risk):
     ML_RUNTIME_AVAILABLE, "optional PyTorch/ONNX research stack is not installed"
 )
 class EndToEndTrainingTests(unittest.TestCase):
+    def test_training_rejects_missing_risk_classes_by_default(self):
+        samples = [sample("train", "simple", 2001, 0, "clear")]
+        with self.assertRaisesRegex(ValueError, "warning, danger"):
+            _validate_training_label_coverage(samples)
+        _validate_training_label_coverage(samples, allow_incomplete=True)
+
     def test_one_epoch_train_export_package_predict_evaluate(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -158,6 +158,61 @@ class DatasetManifestTests(unittest.TestCase):
                 result["dataset_id"],
             )
 
+    def test_flight_csv_is_synchronized_to_scan_receive_time(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            replay = root / "scan.jsonl"
+            append_scan_record(
+                replay,
+                LaserScanFrame(
+                    timestamp_s=100,
+                    received_monotonic_s=10,
+                    frame_id="lidar",
+                    angle_min_rad=-1,
+                    angle_max_rad=1,
+                    angle_step_rad=1,
+                    range_min_m=0.1,
+                    range_max_m=10,
+                    ranges_m=(5.0, 0.5, 5.0),
+                    source="fixture",
+                    sequence=1,
+                ),
+            )
+            replay.with_suffix(".metadata.json").write_text(
+                json.dumps({"wall_clock_minus_monotonic_s": 10})
+            )
+            telemetry = root / "flight.csv"
+            telemetry.write_text(
+                "timestamp_utc,local_north_m,local_east_m,local_down_m,"
+                "velocity_north_m_s,velocity_east_m_s,velocity_down_m_s,"
+                "yaw_deg,sensor_frame_age_s,sensor_healthy\n"
+                "1970-01-01T00:00:20+00:00,1,2,-3,0.5,0.25,0,45,0.01,true\n"
+            )
+            manifest = {
+                "seed": 2001,
+                "config_hash": "b" * 64,
+                "lidar_noise_stddev_m": 0,
+                "lidar_dropout_probability": 0,
+                "sensor_outage_probability": 0,
+                "attitude_jitter_deg": 0,
+            }
+            collect_replay(
+                replay,
+                root / "dataset",
+                map_id="simple",
+                target_id="center",
+                seed=2001,
+                scenario_manifest=manifest,
+                telemetry_path=telemetry,
+            )
+            sample = json.loads(
+                (root / "dataset/samples.jsonl").read_text().splitlines()[0]
+            )
+            self.assertEqual(sample["pose_ned_m"], [1.0, 2.0, -3.0])
+            self.assertEqual(sample["velocity_ned_m_s"], [0.5, 0.25, 0.0])
+            self.assertEqual(sample["sensor_data_age_ms"], 10.0)
+            self.assertTrue(sample["sensor_healthy"])
+
     def test_manifest_hash_detects_changed_data(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

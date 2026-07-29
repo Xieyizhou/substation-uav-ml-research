@@ -8,6 +8,10 @@ and optional return-home route. It does not connect to PX4 or MAVSDK.
 
 import json
 
+from src.plotting_runtime import configure_matplotlib
+
+configure_matplotlib()
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 

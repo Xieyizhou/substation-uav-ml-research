@@ -8,6 +8,10 @@ import json
 from pathlib import Path
 import time
 
+from src.sensors.camera_recording import (
+    CameraReplaySource,
+    validate_camera_recording,
+)
 from src.sensors.factory import build_lidar_source
 from src.sensors.gazebo_lidar import discover_lidar_topic
 from src.sensors.replay import append_scan_record, load_scan_records
@@ -45,6 +49,22 @@ def build_parser():
     replay = commands.add_parser("replay", help="Validate and summarize a scan recording")
     replay.add_argument("--input", type=Path, required=True)
     replay.add_argument("--json", action="store_true")
+    camera_inspect = commands.add_parser(
+        "camera-inspect", help="Inspect and hash-check a camera recording"
+    )
+    camera_inspect.add_argument("--input", type=Path, required=True)
+    camera_validate = commands.add_parser(
+        "camera-validate", help="Validate a camera recording"
+    )
+    camera_validate.add_argument("--input", type=Path, required=True)
+    camera_replay = commands.add_parser(
+        "camera-replay", help="Replay a verified camera recording"
+    )
+    camera_replay.add_argument("--input", type=Path, required=True)
+    camera_replay.add_argument(
+        "--mode", choices=["no_sleep", "paced"], default="no_sleep"
+    )
+    camera_replay.add_argument("--rate", type=float, default=1.0)
     return parser
 
 
@@ -89,6 +109,7 @@ async def _record(args):
     ages_ms = []
     dropped_frames = 0
     started = time.monotonic()
+    wall_clock_minus_monotonic_s = time.time() - started
     try:
         await source.wait_ready(min(args.duration, 5.0))
         while time.monotonic() - started < args.duration:
@@ -117,6 +138,7 @@ async def _record(args):
         "path": str(args.output),
         "source": "gazebo_lidar_2d",
         "topic": source.topic,
+        "wall_clock_minus_monotonic_s": wall_clock_minus_monotonic_s,
         "frames": count,
         "duration_s": scan_duration,
         "frequency_hz": frequency_hz,
@@ -158,6 +180,34 @@ def _replay(args):
     return 0
 
 
+def _camera_recording_status(summary):
+    invalid = (
+        summary["accepted_frame_count"] == 0
+        or summary["invalid_frame_count"] > 0
+        or summary["duplicate_sequence_count"] > 0
+        or summary["non_monotonic_timestamp_count"] > 0
+    )
+    return 1 if invalid else 0
+
+
+def _camera_inspect(args):
+    summary = validate_camera_recording(args.input)
+    summary["inspection_mode"] = "validated"
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return _camera_recording_status(summary)
+
+
+async def _camera_replay(args):
+    source = CameraReplaySource(args.input)
+    replayed = 0
+    async for _ in source.replay(mode=args.mode, rate=args.rate):
+        replayed += 1
+    summary = source.replay_summary(mode=args.mode)
+    summary["replayed_frame_count"] = replayed
+    print(json.dumps(summary, indent=2, sort_keys=True))
+    return _camera_recording_status(summary)
+
+
 def main(argv=None):
     args = build_parser().parse_args(argv)
     try:
@@ -169,6 +219,10 @@ def main(argv=None):
             return asyncio.run(_record(args))
         if args.command == "replay":
             return _replay(args)
+        if args.command in {"camera-inspect", "camera-validate"}:
+            return _camera_inspect(args)
+        if args.command == "camera-replay":
+            return asyncio.run(_camera_replay(args))
     except (FileNotFoundError, RuntimeError, TimeoutError, ValueError) as error:
         print(f"Sensor command failed: {error}")
         return 1

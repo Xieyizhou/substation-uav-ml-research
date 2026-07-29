@@ -37,6 +37,123 @@ The stable internal contracts live in `src/sensors/types.py`. Coordinates use
 metres, seconds, and local NED. Every sensor frame includes a timestamp, frame
 identifier, source, sequence, and receive time for age checks.
 
+### Camera data and clock contracts
+
+`CameraFrame` is the simulator- and detector-independent visual input
+contract. It records:
+
+- `frame_id`, `source_id`, and `sequence_number`;
+- `capture_timestamp` and its explicit `capture_clock_domain`;
+- `receive_monotonic_timestamp`;
+- `width` and `height`;
+- `payload_format`: `png`, `jpeg`, or `raw`;
+- `pixel_format`: `rgb8`, `bgr8`, `rgba8`, `bgra8`, or `mono8`;
+- portable `payload_relative_path` and `payload_sha256`;
+- optional JSON-serializable metadata.
+
+Image bytes never appear in JSONL. Dimensions must be positive, sequence
+numbers non-negative, timestamps finite, formats supported, payload paths
+relative and portable, and SHA256 values well formed.
+
+Storage and decoded pixel layout are deliberately separate. `payload_format`
+describes the stored bytes. `pixel_format` describes the consumer-visible
+layout that a replay decoder must expose; it is never inferred from a PNG or
+JPEG codec's internal representation. In particular, RGB and BGR are not
+interchangeable defaults. A future adapter may retain its native source layout
+as optional `source_pixel_format` metadata, but that provenance does not
+override the declared replay output layout.
+
+Schema v1 raw payloads are restricted to tightly packed unsigned 8-bit
+channels with no row padding. Their exact byte length is therefore
+`width × height × channel_count`, where the channel count comes from the
+declared `pixel_format`. Recording and replay both enforce this rule. PNG and
+raw are preferred canonical inputs for formal benchmarks. JPEG remains
+supported for controlled experiments, but it is lossy and must not be the
+only canonical benchmark representation.
+
+Capture and receive timestamps are not assumed comparable. Simulator, source,
+and wall-clock capture times remain useful for ordering and provenance, but
+`capture_to_receive_ms` is available only when the capture clock is explicitly
+`local_monotonic`. Runtime durations use the local high-resolution monotonic
+clock. No latency is produced by subtracting incompatible clocks.
+
+### Deterministic camera recording and replay
+
+`src/sensors/camera_recording.py` extends the existing sensor JSONL approach
+with external, hash-addressed payload validation:
+
+```text
+camera_recording/
+  metadata.json
+  frames.jsonl
+  summary.json
+  frames/
+    000000000.png
+    000000001.png
+```
+
+The recorder accepts synchronous or asynchronous iterables. Accepted frames
+are written in input order with stable payload names. Invalid inputs are not
+converted into valid-looking frames: their input indexes, error types, and
+messages are retained in `metadata.json` and counted in `summary.json`.
+
+The summary contains observed accepted and invalid counts, missing and
+duplicate sequences, non-monotonic capture timestamps, valid timestamp span
+and effective frequency when computable, payload bytes, endpoint sequence and
+frame IDs, clock domains, and schema version.
+
+Replay treats `frames.jsonl` order as authoritative; file names never reorder
+frames. Before yielding anything it validates the schema, every manifest row,
+payload existence, and every SHA256. Missing, corrupted, malformed, and
+unsupported-schema artifacts raise distinct recording errors. `no_sleep`
+replay is deterministic. `paced` replay additionally requires one clock
+domain and non-decreasing capture timestamps.
+
+Inspect, validate, or replay a recorded directory without starting PX4 or
+Gazebo:
+
+```bash
+python main.py sensor camera-inspect --input data/research/camera/example
+python main.py sensor camera-validate --input data/research/camera/example
+python main.py sensor camera-replay \
+  --input data/research/camera/example --mode no_sleep
+python main.py sensor camera-replay \
+  --input data/research/camera/example --mode paced --rate 1.0
+```
+
+There is intentionally no live Gazebo camera-record command yet because the
+repository does not have a stable live camera source adapter.
+
+### Visual latency contract
+
+`VisualTiming` separates the following optional stages:
+
+| Field | Definition and provenance |
+| --- | --- |
+| `capture_to_receive_ms` | Capture to local receive; only for explicitly comparable local-monotonic timestamps |
+| `queue_wait_ms` | Queue entry to backend-call start, measured locally when queue context is supplied |
+| `decode_ms` | Payload decode; currently unavailable because decoding is outside `EquipmentDetector` |
+| `preprocess_ms` | Backend-reported preprocessing, only when present |
+| `backend_call_ms` | Entire outer detector call, measured locally with a monotonic clock |
+| `inference_ms` | Backend-reported inference, only when present |
+| `postprocess_ms` | Backend-reported postprocessing, only when present |
+| `decision_finalize_ms` | Local conversion of backend results into stable detections |
+| `end_to_end_ms` | Capture to finalized detections, only with a compatible local-monotonic capture clock |
+
+The record also carries queue depth, deadline, deadline outcome, model ID,
+runtime backend, device, input dimensions, detection count, and per-stage
+timing provenance. A deadline outcome is calculated only when the deadline
+and a comparable elapsed duration both exist. Missing stages remain `null`;
+they are never represented by zero. Summary helpers exclude missing values and
+report count, P50, P95, P99, minimum, maximum, and mean for each stage.
+
+`EquipmentDetector.detect(...)` retains its tuple-of-`EquipmentDetection`
+behavior, locked class order, and default input size of 640.
+`detect_with_metrics(...)` returns equivalent detections plus `VisualTiming`.
+The outer backend call and detection finalization are locally measured;
+Ultralytics preprocess/inference/postprocess durations are copied only when
+the returned result actually provides them.
+
 ## What is implemented
 
 ### Sensor and geometric baseline
@@ -85,6 +202,10 @@ identifier, source, sequence, and receive time for age checks.
 These components make M1-M3 offline development and M4-M7 interface development
 possible. They do not constitute trained production models, a completed C++
 DJI application, or real-airframe validation.
+
+The camera record/replay and timing contracts are experimental infrastructure.
+They do not constitute trained visual-model evidence and make no claim about
+visual accuracy, throughput, latency, scheduling quality, or flight safety.
 
 ## Commands
 

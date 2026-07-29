@@ -14,6 +14,29 @@ putting raw runs, weights, or SQLite state into Git.
 Formal seeds `1001–1030` are reserved. The same scenario is repeated across
 conditions so comparisons are paired rather than independent.
 
+## Future visual replay inputs
+
+Static visual-model and scheduling studies will use one validated camera
+recording per scenario. Every candidate resolution, model, skip policy, and
+future adaptive scheduler must consume the same `frames.jsonl` manifest order
+and hash-verified payloads. This prevents input drift between conditions.
+Formal inputs should use PNG or tightly packed raw payloads where practical;
+JPEG cannot be the sole canonical representation. Each frame declares storage
+`payload_format` separately from consumer-visible `pixel_format`, so benchmark
+code must not infer RGB or BGR from a codec.
+
+Camera recordings remain under ignored raw-data/output paths and are referenced
+by identity rather than copied into the repository. Failed, missing, corrupt,
+duplicate, gapped, and non-monotonic outcomes remain visible in recording
+summaries. A visual study result may report a latency stage only when
+`VisualTiming` marks it as measured and records its provenance; unavailable
+stages remain null.
+
+The current study registry does not yet schedule visual replay conditions.
+Adding those matrices, static detector benchmarks, and the risk-adaptive
+scheduler is later work and must not be inferred from the existence of the
+camera contracts.
+
 ## Local state
 
 ```text

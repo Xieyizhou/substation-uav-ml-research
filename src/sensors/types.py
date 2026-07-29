@@ -3,8 +3,44 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
+import json
+import math
+from pathlib import PurePosixPath
+import re
 import time
 from typing import Any
+
+
+CAMERA_PAYLOAD_FORMATS = frozenset({"png", "jpeg", "raw"})
+CAMERA_PIXEL_FORMATS = frozenset(
+    {"rgb8", "bgr8", "rgba8", "bgra8", "mono8"}
+)
+CAMERA_PIXEL_CHANNELS = {
+    "rgb8": 3,
+    "bgr8": 3,
+    "rgba8": 4,
+    "bgra8": 4,
+    "mono8": 1,
+}
+CAMERA_RAW_LAYOUT = "tightly_packed_uint8_no_row_padding"
+LOCAL_MONOTONIC_CLOCK = "local_monotonic"
+_SHA256_PATTERN = re.compile(r"^[0-9a-fA-F]{64}$")
+
+
+def _json_serializable_mapping(value, name):
+    if not isinstance(value, dict):
+        raise ValueError(f"{name} must be a dictionary")
+    try:
+        json.dumps(value, allow_nan=False)
+    except (TypeError, ValueError) as error:
+        raise ValueError(f"{name} must contain only JSON-serializable values") from error
+
+
+def _finite_number(value, name):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a finite number")
+    if not math.isfinite(float(value)):
+        raise ValueError(f"{name} must be a finite number")
 
 
 @dataclass(frozen=True)
@@ -50,6 +86,106 @@ class LaserScanFrame:
         values.pop("record_type", None)
         values["ranges_m"] = tuple(float(value) for value in values["ranges_m"])
         return cls(**values)
+
+
+@dataclass(frozen=True)
+class CameraFrame:
+    """Portable metadata for one camera payload stored outside JSONL."""
+
+    frame_id: str
+    source_id: str
+    sequence_number: int
+    capture_timestamp: float
+    capture_clock_domain: str
+    receive_monotonic_timestamp: float
+    width: int
+    height: int
+    payload_format: str
+    pixel_format: str
+    payload_relative_path: str
+    payload_sha256: str
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        if not str(self.frame_id).strip():
+            raise ValueError("frame_id must not be empty")
+        if not str(self.source_id).strip():
+            raise ValueError("source_id must not be empty")
+        if (
+            isinstance(self.sequence_number, bool)
+            or not isinstance(self.sequence_number, int)
+            or self.sequence_number < 0
+        ):
+            raise ValueError("sequence_number must be a non-negative integer")
+        _finite_number(self.capture_timestamp, "capture_timestamp")
+        _finite_number(
+            self.receive_monotonic_timestamp, "receive_monotonic_timestamp"
+        )
+        if self.receive_monotonic_timestamp < 0:
+            raise ValueError("receive_monotonic_timestamp must be non-negative")
+        if not str(self.capture_clock_domain).strip():
+            raise ValueError("capture_clock_domain must not be empty")
+        if (
+            isinstance(self.width, bool)
+            or not isinstance(self.width, int)
+            or self.width <= 0
+        ):
+            raise ValueError("width must be a positive integer")
+        if (
+            isinstance(self.height, bool)
+            or not isinstance(self.height, int)
+            or self.height <= 0
+        ):
+            raise ValueError("height must be a positive integer")
+        normalized_payload_format = str(self.payload_format).strip().lower()
+        if normalized_payload_format not in CAMERA_PAYLOAD_FORMATS:
+            raise ValueError(
+                f"unsupported camera payload_format: {self.payload_format!r}"
+            )
+        object.__setattr__(self, "payload_format", normalized_payload_format)
+        normalized_pixel_format = str(self.pixel_format).strip().lower()
+        if normalized_pixel_format not in CAMERA_PIXEL_FORMATS:
+            raise ValueError(
+                f"unsupported camera pixel_format: {self.pixel_format!r}"
+            )
+        object.__setattr__(self, "pixel_format", normalized_pixel_format)
+        payload_path = str(self.payload_relative_path)
+        portable_path = PurePosixPath(payload_path)
+        if (
+            not payload_path
+            or "\\" in payload_path
+            or portable_path.is_absolute()
+            or ".." in portable_path.parts
+            or portable_path.name in {"", ".", ".."}
+        ):
+            raise ValueError("payload_relative_path must be a portable relative path")
+        if not _SHA256_PATTERN.fullmatch(str(self.payload_sha256)):
+            raise ValueError("payload_sha256 must be a 64-character hexadecimal digest")
+        object.__setattr__(self, "payload_sha256", self.payload_sha256.lower())
+        _json_serializable_mapping(self.metadata, "metadata")
+
+    def to_record(self):
+        return {
+            "record_type": "camera_frame",
+            **asdict(self),
+        }
+
+    @classmethod
+    def from_record(cls, record):
+        values = dict(record)
+        record_type = values.pop("record_type", "camera_frame")
+        if record_type != "camera_frame":
+            raise ValueError(f"unsupported camera record type: {record_type!r}")
+        return cls(**values)
+
+    def capture_to_receive_ms(self):
+        """Return latency only when both timestamps use local monotonic time."""
+        if self.capture_clock_domain != LOCAL_MONOTONIC_CLOCK:
+            return None
+        duration_ms = (
+            self.receive_monotonic_timestamp - self.capture_timestamp
+        ) * 1000.0
+        return duration_ms if duration_ms >= 0 else None
 
 
 @dataclass(frozen=True)
@@ -115,6 +251,105 @@ class EquipmentDetection:
     frame_id: str
     tracking_id: str | None = None
     position_ned_m: tuple[float, float, float] | None = None
+
+
+@dataclass(frozen=True)
+class VisualTimingContext:
+    """Comparable monotonic timestamps supplied to one detector call."""
+
+    frame: CameraFrame | None = None
+    queue_entered_monotonic_timestamp: float | None = None
+    queue_depth: int | None = None
+    deadline_ms: float | None = None
+
+    def __post_init__(self):
+        for name in ("queue_entered_monotonic_timestamp", "deadline_ms"):
+            value = getattr(self, name)
+            if value is not None:
+                _finite_number(value, name)
+                if value < 0:
+                    raise ValueError(f"{name} must be non-negative")
+        if self.queue_depth is not None and (
+            isinstance(self.queue_depth, bool)
+            or not isinstance(self.queue_depth, int)
+            or self.queue_depth < 0
+        ):
+            raise ValueError("queue_depth must be a non-negative integer")
+
+
+@dataclass(frozen=True)
+class VisualTiming:
+    """Detector-neutral stage timings; unavailable measurements remain null."""
+
+    capture_to_receive_ms: float | None = None
+    queue_wait_ms: float | None = None
+    decode_ms: float | None = None
+    preprocess_ms: float | None = None
+    backend_call_ms: float | None = None
+    inference_ms: float | None = None
+    postprocess_ms: float | None = None
+    decision_finalize_ms: float | None = None
+    end_to_end_ms: float | None = None
+    queue_depth: int | None = None
+    deadline_ms: float | None = None
+    deadline_missed: bool | None = None
+    model_id: str | None = None
+    runtime_backend: str | None = None
+    device: str | None = None
+    input_width: int | None = None
+    input_height: int | None = None
+    detection_count: int | None = None
+    timing_provenance: dict[str, str] = field(default_factory=dict)
+
+    def __post_init__(self):
+        duration_fields = (
+            "capture_to_receive_ms",
+            "queue_wait_ms",
+            "decode_ms",
+            "preprocess_ms",
+            "backend_call_ms",
+            "inference_ms",
+            "postprocess_ms",
+            "decision_finalize_ms",
+            "end_to_end_ms",
+            "deadline_ms",
+        )
+        for name in duration_fields:
+            value = getattr(self, name)
+            if value is not None:
+                _finite_number(value, name)
+                if value < 0:
+                    raise ValueError(f"{name} must be non-negative")
+        for name in ("queue_depth", "detection_count"):
+            value = getattr(self, name)
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, int) or value < 0
+            ):
+                raise ValueError(f"{name} must be a non-negative integer")
+        for name in ("input_width", "input_height"):
+            value = getattr(self, name)
+            if value is not None and (
+                isinstance(value, bool) or not isinstance(value, int) or value <= 0
+            ):
+                raise ValueError(f"{name} must be a positive integer")
+        if self.deadline_missed is not None and not isinstance(
+            self.deadline_missed, bool
+        ):
+            raise ValueError("deadline_missed must be a boolean or null")
+        _json_serializable_mapping(self.timing_provenance, "timing_provenance")
+
+    def to_record(self):
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class VisualDetectionResult:
+    detections: tuple[EquipmentDetection, ...]
+    timing: VisualTiming
+
+    def __iter__(self):
+        yield self.detections
+        yield self.timing
 
 
 @dataclass(frozen=True)
