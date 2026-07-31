@@ -69,7 +69,15 @@ def load_training_config(path):
 
 def environment_record():
     packages = {}
-    for name in ("torch", "ultralytics", "onnx", "onnxruntime", "numpy", "Pillow"):
+    for name in (
+        "torch",
+        "ultralytics",
+        "onnx",
+        "onnxruntime",
+        "onnxslim",
+        "numpy",
+        "Pillow",
+    ):
         try:
             packages[name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
@@ -114,7 +122,8 @@ def train_yolo(
     except ImportError as error:
         raise RuntimeError("visual training requires requirements-ml.txt") from error
     config = load_training_config(config_path)
-    dataset_root, output_root = Path(dataset_root), Path(output_root)
+    dataset_root = Path(dataset_root)
+    output_root = Path(output_root).resolve()
     identity = TrainingViewIdentity.from_record(
         json.loads(
             (dataset_root / "identity/training_view_identity.json").read_text()
@@ -129,7 +138,7 @@ def train_yolo(
     resolved = {key: config[key] for key in CONFIG_FIELDS}
     resolved.update(
         {
-            "data": str(dataset_root / "dataset.yaml"),
+            "data": str((dataset_root / "dataset.yaml").resolve()),
             "project": str(output_root.parent),
             "name": output_root.name,
             "exist_ok": True,

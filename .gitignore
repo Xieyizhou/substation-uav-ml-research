@@ -100,6 +100,7 @@ outputs/*
 # Local simulator/cache/temp output when generated inside this repo
 build/
 logs/
+runs/
 tmp/
 temp/
 .tmp/

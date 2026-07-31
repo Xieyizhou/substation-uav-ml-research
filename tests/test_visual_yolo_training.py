@@ -80,6 +80,13 @@ class VisualYoloTrainingTests(unittest.TestCase):
             )
             self.assertEqual(provenance["resolved_config"]["batch"], 8)
             self.assertEqual(_FakeYolo.calls[0]["device"], "mps")
+            self.assertEqual(
+                Path(_FakeYolo.calls[0]["project"]),
+                output.resolve().parent,
+            )
+            self.assertTrue(
+                Path(_FakeYolo.calls[0]["data"]).is_absolute()
+            )
 
     def test_existing_checkpoint_requires_explicit_resume(self):
         with tempfile.TemporaryDirectory() as directory:
