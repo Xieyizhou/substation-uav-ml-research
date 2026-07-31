@@ -7,6 +7,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest import mock
+import xml.etree.ElementTree as ET
 
 from scripts.maps.generate_test_maps import (
     GAZEBO_VISUAL_LABELS,
@@ -28,6 +29,9 @@ from src.ml.visual_pilot_validation import (
     validate_pilot_recording,
 )
 from src.ml.visual_pilot_metrics import summarize_source_health
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 from src.ml.visual_pilot_acceptance import invalid_truth_acceptance_failures
 from src.ml.visual_pilot_live import prepare_pilot_output_directory
 from src.ml.visual_synchronization import synchronize_visual_frames
@@ -124,6 +128,20 @@ class GazeboConfigurationTests(unittest.TestCase):
         self.assertEqual(config["truth"]["box_type"], "full_2d")
         self.assertEqual(config["rgb"]["width"], config["truth"]["width"])
 
+    def test_research_model_uses_lightweight_lidar_payload(self):
+        model = ET.parse(
+            PROJECT_ROOT / "simulation/models/x500_research/model.sdf"
+        ).getroot()
+        lidar_link = model.find(".//link[@name='research_lidar_link']")
+        self.assertIsNotNone(lidar_link)
+        self.assertLessEqual(
+            float(lidar_link.findtext("inertial/mass")),
+            0.05,
+        )
+        self.assertIsNotNone(
+            lidar_link.find("sensor[@name='lidar_2d_v2']")
+        )
+
     def test_generated_equipment_uses_locked_simulator_labels(self):
         self.assertEqual(
             GAZEBO_VISUAL_LABELS,
@@ -144,6 +162,35 @@ class GazeboConfigurationTests(unittest.TestCase):
             )
             expected = GAZEBO_VISUAL_LABELS.get(obstacle["visual_category"])
             self.assertEqual(int(label) if label is not None else None, expected)
+
+    def test_classic_simple_world_labels_only_transformers(self):
+        world = ET.parse(
+            PROJECT_ROOT / "simulation/worlds/substation_simple.sdf"
+        ).getroot()
+        models = {
+            model.get("name"): model
+            for model in world.findall(".//model")
+        }
+        for name in ("transformer_1", "transformer_2"):
+            self.assertEqual(
+                models[name].findtext(
+                    "plugin[@name='gz::sim::systems::Label']/label"
+                ),
+                "1",
+            )
+        for name in (
+            "switchgear_1",
+            "switchgear_2",
+            "capacitor_bank",
+            "reactor",
+            "control_building",
+        ):
+            if name in models:
+                self.assertIsNone(
+                    models[name].find(
+                        "plugin[@name='gz::sim::systems::Label']"
+                    )
+                )
 
     def test_timestamp_requires_gazebo_header(self):
         with self.assertRaisesRegex(ValueError, "header"):

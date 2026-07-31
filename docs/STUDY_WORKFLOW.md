@@ -105,6 +105,96 @@ Training, validation, held-out, and formal partitions occur at scenario, map,
 route, recording, or seed boundaries. Adjacent frames from one recording must
 never be randomly divided between train and evaluation splits.
 
+### Multi-scenario visual dataset collection
+
+After the PNG v3 pilot passes, materialize the frozen collection plan:
+
+```bash
+python main.py visual collection-plan \
+  --output data/research/visual_collection_v1/collection_plan.json
+python main.py visual collection-plan-validate \
+  --input data/research/visual_collection_v1/collection_plan.json
+python main.py visual collection-status \
+  --plan data/research/visual_collection_v1/collection_plan.json
+```
+
+The plan contains 40 train scenarios using seeds 2001–2040, 10 validation
+scenarios using 2041–2050, and 10 extreme-map held-out test scenarios using
+2051–2060. Map-target combinations are balanced within each split allocation.
+Formal evaluation seeds 1001–1030 are rejected. One complete recording is the
+minimum split unit.
+
+Prepare one randomized, reachable scenario before launching PX4/Gazebo:
+
+```bash
+python main.py visual collection-prepare \
+  --plan data/research/visual_collection_v1/collection_plan.json \
+  --scenario-id training-top_right-2001
+```
+
+The result prints the launcher environment, world, planner, scenario report,
+flight command, and recording directory. Start the returned world with the
+`x500_research` model, probe RGB/truth, then record:
+
+```bash
+python main.py visual collection-record \
+  --plan data/research/visual_collection_v1/collection_plan.json \
+  --scenario-id training-top_right-2001 \
+  --scenario-report \
+    data/research/visual_collection_v1/scenarios/training-top_right-2001/scenario.json
+```
+
+Start the returned flight command only after the recorder is receiving RGB
+frames. The flight command writes `flight_events.jsonl`; the recorder maps the
+first outbound route, final outbound waypoint, goal hover, and return route to
+`cruise_distant`, `approach`, `close_inspection`, and `target_transition`
+using the latest RGB Gazebo timestamp. Manual `collection-phase` commands
+remain available for debugging but are not required in the normal workflow.
+Manual runs must pass `--manual-lifecycle` plus exactly one explicit stopping
+mode and omit `--visual-mission-events` from the flight command.
+
+After the flight reports `completed`, `landed`, and `landing_confirmed=true`,
+the recorder drains the visual streams for one second, stops, validates the
+recording, and writes an acceptance receipt. A failed flight produces a
+partial recording and a nonzero command result. `collection-status` reads
+receipts instead of repeatedly hashing and decoding every PNG. An active
+recorder with `live_status.json` is reported as `recording`; `partial` is
+reserved for an interrupted output without complete manifests. The command
+also identifies the first invalid-receipt, unvalidated, or missing scenario.
+Final materialization always revalidates every recording.
+
+After one scenario has passed interactively, the remaining scenarios can be
+run sequentially with the resumable local orchestrator:
+
+```bash
+python main.py visual collection-run \
+  --plan data/research/visual_collection_v1/collection_plan.json
+```
+
+The command prepares each missing scenario, starts its PX4/Gazebo world,
+waits for a successful RGB/truth probe, starts the recorder before the flight,
+and requires a current validation receipt before advancing. It never
+overwrites a partial or invalid recording. Per-scenario simulator, probe,
+recorder, and flight logs are retained under
+`data/research/visual_collection_v1/batch_logs/`. Simulator standard output is
+discarded because the non-interactive PXH console output is unbounded; simulator
+standard error and all probe/recorder/flight output remain available. Use
+`--max-scenarios 1` for a bounded smoke run or `--dry-run` to inspect the
+pending order.
+
+Only after all 60 recordings pass:
+
+```bash
+python main.py visual collection-materialize \
+  --plan data/research/visual_collection_v1/collection_plan.json
+```
+
+Materialization fails if any recording is missing, any split lacks transformer,
+switchgear, capacitor-bank, reactor, or verified no-target coverage, decoder
+identities differ, or scenario/recording/seed identity overlaps. It writes
+separate development and held-out-test identities; the held-out identity must
+not be used for fitting or model selection.
+
 ### Static replay gate before adaptive scheduling
 
 `benchmarks/visual_static_v1/conditions.json` freezes nine unmaterialized

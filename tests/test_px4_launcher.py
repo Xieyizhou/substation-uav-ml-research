@@ -15,6 +15,12 @@ LAUNCHER = PROJECT_ROOT / "scripts" / "flight" / "start_px4_substation.sh"
 
 
 class Px4LauncherPathTests(unittest.TestCase):
+    def test_launcher_force_stops_verified_stale_gazebo_server(self):
+        launcher_text = LAUNCHER.read_text()
+        self.assertIn('[[ "$stale_command" == *"gz sim"* ]]', launcher_text)
+        self.assertIn('[[ "$stale_command" == *"$WORLD_DST"* ]]', launcher_text)
+        self.assertIn('kill -KILL "$stale_pid"', launcher_text)
+
     def test_launcher_prefers_opencv4_and_refreshes_px4_configuration(self):
         launcher_text = LAUNCHER.read_text()
         self.assertIn("brew --prefix opencv@4", launcher_text)

@@ -149,14 +149,20 @@ def pilot_acceptance_failures(
     sync_summary = summary.get("synchronization") or {}
     if not sync_summary.get("labelled_target_frame_count"):
         failures.append("pilot has no labelled target frame")
-    if not sync_summary.get("no_target_frame_count"):
-        failures.append("pilot has no verified no-target frame")
     valid_count = len(annotations)
     no_target_fraction = (
         sync_summary.get("no_target_frame_count", 0) / valid_count
         if valid_count
         else 0.0
     )
-    if no_target_fraction < float(coverage["minimum_no_target_fraction"]):
+    minimum_no_target_fraction = float(
+        coverage["minimum_no_target_fraction"]
+    )
+    if (
+        minimum_no_target_fraction > 0.0
+        and not sync_summary.get("no_target_frame_count")
+    ):
+        failures.append("pilot has no verified no-target frame")
+    if no_target_fraction < minimum_no_target_fraction:
         failures.append("pilot no-target fraction is too small")
     return failures, phase_durations

@@ -160,8 +160,29 @@ if (( ${#stale_gazebo_pids[@]} > 0 )); then
 
   for stale_pid in "${stale_gazebo_pids[@]}"; do
     if kill -0 "$stale_pid" 2>/dev/null; then
-      echo "ERROR: stale Gazebo server PID $stale_pid did not stop."
-      echo "Stop that process before starting PX4 again."
+      stale_command="$(ps -p "$stale_pid" -o command= 2>/dev/null || true)"
+      if [[ "$stale_command" == *"gz sim"* ]] && [[ "$stale_command" == *"$WORLD_DST"* ]]; then
+        echo "Stale Gazebo server PID $stale_pid ignored SIGTERM; sending SIGKILL."
+        kill -KILL "$stale_pid" 2>/dev/null || true
+      fi
+    fi
+  done
+
+  for _ in {1..20}; do
+    servers_still_running=false
+    for stale_pid in "${stale_gazebo_pids[@]}"; do
+      if kill -0 "$stale_pid" 2>/dev/null; then
+        servers_still_running=true
+        break
+      fi
+    done
+    [[ "$servers_still_running" == false ]] && break
+    sleep 0.1
+  done
+
+  for stale_pid in "${stale_gazebo_pids[@]}"; do
+    if kill -0 "$stale_pid" 2>/dev/null; then
+      echo "ERROR: stale Gazebo server PID $stale_pid did not stop after SIGKILL."
       exit 1
     fi
   done

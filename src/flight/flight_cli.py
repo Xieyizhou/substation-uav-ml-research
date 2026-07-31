@@ -282,4 +282,12 @@ def build_argument_parser():
         default=LOGGER_SHUTDOWN_TIMEOUT_S,
         help=f"Seconds to wait for telemetry logger shutdown. Default: {LOGGER_SHUTDOWN_TIMEOUT_S:g}",
     )
+    parser.add_argument(
+        "--visual-mission-events",
+        type=Path,
+        help=(
+            "Optional JSONL lifecycle event output consumed by the visual "
+            "recorder. The file must not already exist."
+        ),
+    )
     return parser

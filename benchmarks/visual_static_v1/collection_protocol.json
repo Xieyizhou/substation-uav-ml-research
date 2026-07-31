@@ -1,0 +1,89 @@
+{
+  "collection_protocol_schema_version": 1,
+  "protocol_version": 1,
+  "protocol_id": "visual-multiscenario-png-v1",
+  "evidence_role": "model_development_and_held_out_evaluation",
+  "canonical_payload_format": "png",
+  "canonical_pixel_format": "rgb8",
+  "required_pilot_protocol": "visual-pilot-png-v3",
+  "randomization": {
+    "configuration": "config/perception/domain_randomization.json",
+    "generator_version": "gazebo-sdf-v2",
+    "materialized_world_required": true,
+    "applied_visual_fields": [
+      "equipment_scale",
+      "equipment_position_jitter_m",
+      "light_intensity",
+      "unknown_obstacles"
+    ],
+    "explicitly_not_applied": [
+      "weather",
+      "material_age",
+      "camera_noise_stddev",
+      "attitude_jitter_deg",
+      "lidar_noise_stddev_m",
+      "lidar_dropout_probability",
+      "sensor_outage_probability",
+      "sensor_outage_duration_s"
+    ]
+  },
+  "scenario_allocation": {
+    "train": {
+      "seed_first": 2001,
+      "seed_last": 2040,
+      "maps": ["training", "simple", "medium", "complex"],
+      "targets": ["top_right", "center", "left", "bottom", "right"]
+    },
+    "validation": {
+      "seed_first": 2041,
+      "seed_last": 2050,
+      "maps": ["medium", "complex"],
+      "targets": ["top_right", "center", "left", "bottom", "right"]
+    },
+    "test": {
+      "seed_first": 2051,
+      "seed_last": 2060,
+      "maps": ["extreme"],
+      "targets": ["top_right", "center", "left", "bottom", "right"]
+    }
+  },
+  "split_policy": {
+    "minimum_split_unit": "recording",
+    "adjacent_frame_random_split_forbidden": true,
+    "seed_overlap_forbidden": true,
+    "scenario_overlap_forbidden": true,
+    "formal_evaluation_seeds_forbidden": [1001, 1030],
+    "test_map_policy": "extreme_only"
+  },
+  "recording": {
+    "recordings_per_scenario": 1,
+    "route": "fly_round_trip_v1",
+    "required_mission_phases": [
+      "cruise_distant",
+      "approach",
+      "close_inspection",
+      "target_transition"
+    ],
+    "retain_every_valid_source_frame": true,
+    "automatic_downsampling": false,
+    "default_phase_source": "flight_lifecycle",
+    "automatic_stop_condition": "completed_landed_and_landing_confirmed",
+    "default_post_landing_drain_s": 1.0,
+    "manual_phase_fallback_allowed": true,
+    "maximum_invalid_truth_rgb_fraction": 0.005,
+    "maximum_consecutive_invalid_truth_rgb_frames": 2,
+    "maximum_unmatched_rgb_frames": 0,
+    "maximum_ambiguous_rgb_frames": 2,
+    "minimum_phase_duration_s": 1.0
+  },
+  "aggregate_gate": {
+    "required_classes_per_split": [
+      "transformer",
+      "switchgear",
+      "capacitor_bank",
+      "reactor"
+    ],
+    "minimum_labelled_frames_per_class_per_split": 1,
+    "minimum_verified_no_target_frames_per_split": 1
+  }
+}

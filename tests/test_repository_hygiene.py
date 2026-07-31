@@ -118,8 +118,11 @@ class RepositoryHygieneTests(unittest.TestCase):
     def test_visual_schemas_and_benchmark_templates_are_not_ignored(self):
         tracked_definitions = (
             "config/schemas/visual_dataset_identity.schema.json",
+            "config/schemas/visual_collection_protocol.schema.json",
+            "config/schemas/visual_collection_plan.schema.json",
             "benchmarks/visual_static_v1/conditions.json",
             "benchmarks/visual_static_v1/pilot_protocol.json",
+            "benchmarks/visual_static_v1/collection_protocol.json",
         )
         result = subprocess.run(
             ["git", "check-ignore", "--stdin"],

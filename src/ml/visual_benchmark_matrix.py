@@ -7,6 +7,7 @@ from pathlib import Path
 
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import object_sha256
+from src.ml.visual_collection import load_collection_protocol
 from src.ml.visual_pilot_acceptance import validate_v3_acceptance_policy
 from src.ml.visual_identity import _required_text, class_order_identity
 
@@ -45,6 +46,7 @@ def validate_static_benchmark_directory(benchmark_directory):
     conditions = load_json(root / "conditions.json")
     metrics = load_json(root / "metrics.json")
     pilot = load_json(root / "pilot_protocol.json")
+    collection = load_collection_protocol(root / "collection_protocol.json")
     class_order = load_json(root / "class_order.json")
     if benchmark.get("benchmark_schema_version") != 1:
         raise ValueError("unsupported visual static benchmark schema")
@@ -155,6 +157,7 @@ def validate_static_benchmark_directory(benchmark_directory):
         "benchmark_id": benchmark["benchmark_id"],
         "materialization_status": benchmark.get("materialization_status"),
         "pilot_protocol_id": pilot.get("protocol_id"),
+        "collection_protocol_id": collection.get("protocol_id"),
         "template_count": len(rows),
         "templates": rows,
     }

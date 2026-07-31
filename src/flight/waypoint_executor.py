@@ -23,6 +23,7 @@ from src.flight.flight_state import (
     horizontal_command_speed,
     horizontal_distance_to_waypoint,
     local_position,
+    publish_mission_event,
     set_phase,
     target_errors,
 )
@@ -64,6 +65,43 @@ def configure_runtime(settings):
 
 def clamp(value, min_value, max_value):
     return max(min_value, min(max_value, value))
+
+
+def validate_takeoff_stability(latest, target_altitude_m):
+    position = local_position(latest)
+    attitude = latest.get("attitude")
+    if position is None or attitude is None:
+        raise RuntimeError("Takeoff stability check requires position and attitude")
+    roll_deg = abs(float(attitude.roll_deg))
+    pitch_deg = abs(float(attitude.pitch_deg))
+    horizontal_drift_m = sqrt(position.north_m**2 + position.east_m**2)
+    altitude_m = -float(position.down_m)
+    if roll_deg > 30.0 or pitch_deg > 30.0:
+        raise RuntimeError(
+            "Takeoff is unstable: "
+            f"roll={roll_deg:.1f} deg, pitch={pitch_deg:.1f} deg"
+        )
+    if horizontal_drift_m > 2.5:
+        raise RuntimeError(
+            f"Takeoff drifted {horizontal_drift_m:.1f} m before Offboard start"
+        )
+    if altitude_m < -0.5 or altitude_m > target_altitude_m + 1.5:
+        raise RuntimeError(
+            "Takeoff altitude is outside the stability envelope: "
+            f"{altitude_m:.1f} m"
+        )
+
+
+def takeoff_climb_waypoint(latest, target_down_m):
+    position = local_position(latest)
+    if position is None:
+        raise RuntimeError("Takeoff climb requires local position")
+    return {
+        "name": "TAKEOFF_CLIMB",
+        "north_m": float(position.north_m),
+        "east_m": float(position.east_m),
+        "down_m": float(target_down_m),
+    }
 
 
 def velocity_command_from_error(error, speed_scale=1.0):
@@ -300,6 +338,16 @@ async def fly_waypoint_route(
     active_waypoints = list(waypoints)
     waypoint_index = 0
     while waypoint_index < len(active_waypoints):
+        publish_mission_event(
+            phase_state,
+            "waypoint_started",
+            phase=phase_name,
+            route_direction=route_direction,
+            waypoint_index=waypoint_index,
+            waypoint_count=len(active_waypoints),
+            waypoint_name=active_waypoints[waypoint_index]["name"],
+            is_final_waypoint=waypoint_index == len(active_waypoints) - 1,
+        )
         replacement_waypoints = await fly_to_waypoint(
             drone,
             latest,
@@ -356,11 +404,27 @@ async def fly_astar_waypoints(
     print("Waiting 8 seconds for takeoff stabilization...")
     await asyncio.sleep(8)
     await wait_for_local_position(latest, TELEMETRY_TIMEOUT_S)
+    validate_takeoff_stability(latest, target_takeoff_altitude_m)
     print("Sending initial zero velocity setpoint before Offboard start...")
     await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
     print("Starting Offboard mode...")
     await drone.offboard.start()
     print("Offboard mode started.")
+    print("Climbing vertically to route altitude...")
+    await fly_to_waypoint(
+        drone,
+        latest,
+        phase_state,
+        target_state,
+        takeoff_climb_waypoint(latest, waypoints[0]["down_m"]),
+        "takeoff",
+        "none",
+        1.0,
+        perception_config,
+        perception_detector,
+        replan_config,
+        replan_state,
+    )
     print("Flying outbound A* path to goal...")
     await fly_waypoint_route(
         drone,

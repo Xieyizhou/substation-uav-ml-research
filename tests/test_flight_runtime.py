@@ -133,6 +133,7 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
     async def test_successful_mission_records_confirmed_completion(self):
         with tempfile.TemporaryDirectory() as directory:
             log_path = Path(directory) / "astar_20260715_120001.csv"
+            mission_events = Path(directory) / "mission_events.jsonl"
             with (
                 patch.object(fly_astar_path, "System", return_value=FakeDrone()),
                 patch.object(fly_astar_path, "make_log_path", return_value=log_path),
@@ -147,14 +148,23 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
                     {},
                     {},
                     {},
+                    visual_mission_events=mission_events,
                 )
             payload = json.loads(status_path_for_log(log_path).read_text())
             self.assertEqual(payload["status"], "completed")
             self.assertTrue(payload["landing_confirmed"])
+            events = [
+                json.loads(line)
+                for line in mission_events.read_text().splitlines()
+            ]
+            self.assertEqual(events[0]["event_type"], "mission_started")
+            self.assertEqual(events[-1]["event_type"], "mission_completed")
+            self.assertTrue(events[-1]["landing_confirmed"])
 
     async def test_failed_mission_records_failure_and_propagates(self):
         with tempfile.TemporaryDirectory() as directory:
             log_path = Path(directory) / "astar_20260715_120002.csv"
+            mission_events = Path(directory) / "mission_events.jsonl"
             with (
                 patch.object(fly_astar_path, "System", return_value=FakeDrone()),
                 patch.object(fly_astar_path, "make_log_path", return_value=log_path),
@@ -175,10 +185,16 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
                         {},
                         {},
                         {},
+                        visual_mission_events=mission_events,
                     )
             payload = json.loads(status_path_for_log(log_path).read_text())
             self.assertEqual(payload["status"], "failed")
             self.assertFalse(payload["landing_confirmed"])
+            events = [
+                json.loads(line)
+                for line in mission_events.read_text().splitlines()
+            ]
+            self.assertEqual(events[-1]["event_type"], "mission_failed")
 
 
 if __name__ == "__main__":

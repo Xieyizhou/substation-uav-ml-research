@@ -53,7 +53,8 @@ class MapAlignmentAndPlanningTests(unittest.TestCase):
                 config = json.loads(config_path.read_text())
 
                 origin = [float(value) for value in config["gazebo_world_origin_m"]]
-                self.assertEqual(entry["spawn_pose"][:3], origin)
+                self.assertEqual(entry["spawn_pose"][:2], origin[:2])
+                self.assertGreaterEqual(entry["spawn_pose"][2], origin[2])
 
                 world = ET.parse(world_path).getroot().find("world")
                 self.assertIsNotNone(world)

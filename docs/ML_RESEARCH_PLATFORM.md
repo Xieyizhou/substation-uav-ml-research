@@ -261,6 +261,34 @@ explicitly unbounded `--until-interrupt`. At the configured 30 Hz source rate,
 300 retained frames represent about 10 seconds of simulation time. PNG
 compression reduces bytes per frame but does not control recording length.
 
+### Multi-scenario visual collection
+
+The accepted pilot unlocks `visual-multiscenario-png-v1`, a frozen 60-recording
+plan for model development and held-out evaluation. It uses seeds 2001–2040
+for train, 2041–2050 for validation, and 2051–2060 for extreme-map held-out
+test. Formal evaluation seeds 1001–1030 cannot enter any dataset identity.
+Each map/target/seed recording remains an indivisible split unit.
+
+`visual collection-prepare` materializes a reachable randomized SDF, matching
+planner config, and scenario report. Only equipment geometry, equipment
+position, light intensity, and unknown obstacles currently contribute to the
+visual scenario identity. Randomization fields that are not rendered are
+listed explicitly as not applied. The final applied configuration, world, and
+planner hashes become recording metadata.
+
+`visual collection-record` reuses the validated Gazebo transport, PNG,
+synchronization, truth, and phase pipeline while recording collection rather
+than pilot identity. Flight lifecycle events supply semantic route state but
+no fabricated simulation time; the recorder assigns the latest accepted RGB
+Gazebo timestamp. The final outbound waypoint, goal hover, and return route
+generate the reviewed phases automatically. Confirmed landing stops recording
+after a short drain, triggers validation, and hashes the raw flight-event
+manifest into recording identity. `visual collection-record-validate` remains
+available as an explicit retry. After every planned recording passes,
+`visual collection-materialize` creates separate development and held-out-test
+DatasetIdentity artifacts with globally unique `recording_id:frame_id`
+membership. Aggregate class and no-target coverage are mandatory per split.
+
 ### Canonical camera decoding
 
 `src/sensors/camera_decoder.py` decodes a recorded frame on the CPU into the

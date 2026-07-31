@@ -29,7 +29,7 @@
       "world_name": "substation_simple",
       "world_file": "simulation/worlds/substation_simple.sdf",
       "obstacle_config": "config/substation_obstacles.json",
-      "spawn_pose": [-10, -10, 0, 0, 0, 0],
+      "spawn_pose": [-10, -10, 0.1, 0, 0, 0],
       "default_target": "top_right",
       "targets": [
         {"id": "top_right", "display_name": "Top Right", "description": "Original long-route destination near the northeast corner.", "cell": [16, 16]},

@@ -3,11 +3,16 @@
 from __future__ import annotations
 
 import asyncio
-import json
 from pathlib import Path
 import tempfile
 
 from src.ml.gazebo_visual_truth import GazeboTruthSource
+from src.ml.visual_flight_lifecycle import (
+    append_live_phase_event,
+    load_mission_events,
+    monitor_flight_lifecycle,
+    write_live_status,
+)
 from src.ml.visual_pilot import write_pilot_recording
 from src.sensors.gazebo_camera import GazeboCameraSource
 from src.sensors.gazebo_visual_transport import (
@@ -30,51 +35,6 @@ def prepare_pilot_output_directory(output_directory):
     else:
         output.mkdir(parents=True)
     return output
-
-
-def load_mission_events(path):
-    if path is None or not Path(path).is_file():
-        return ()
-    events = []
-    with Path(path).open(encoding="utf-8") as source:
-        for line_number, line in enumerate(source, start=1):
-            if not line.strip():
-                continue
-            try:
-                events.append(json.loads(line))
-            except json.JSONDecodeError as error:
-                raise ValueError(
-                    f"{path}:{line_number}: malformed mission event: {error}"
-                ) from error
-    return tuple(events)
-
-
-def append_live_phase_event(output_directory, mission_phase):
-    allowed = {
-        "cruise_distant",
-        "approach",
-        "close_inspection",
-        "target_transition",
-        "other",
-    }
-    if mission_phase not in allowed:
-        raise ValueError(f"unsupported mission phase: {mission_phase}")
-    output = Path(output_directory)
-    status_path = output / "live_status.json"
-    if not status_path.is_file():
-        raise RuntimeError("pilot recording has no live RGB status")
-    status = json.loads(status_path.read_text(encoding="utf-8"))
-    timestamp = status.get("last_simulation_timestamp")
-    if timestamp is None:
-        raise RuntimeError("pilot recording has not received an RGB frame")
-    event = {
-        "simulation_timestamp": float(timestamp),
-        "mission_phase": mission_phase,
-    }
-    events_path = output / "mission_events.jsonl"
-    with events_path.open("a", encoding="utf-8") as destination:
-        destination.write(json.dumps(event, sort_keys=True) + "\n")
-    return event
 
 
 async def probe_live_visual_sources(*, timeout_s):
@@ -137,6 +97,9 @@ async def record_live_visual_pilot(
     jitter_p95_limit_ms=None,
     receive_stall_limit_ms=None,
     mission_events_path=None,
+    recording_context_override=None,
+    flight_events_path=None,
+    post_landing_drain_s=1.0,
 ):
     if source_timeout_s <= 0:
         raise ValueError("source_timeout_s must be positive")
@@ -169,6 +132,7 @@ async def record_live_visual_pilot(
     source_timeout_count = 0
     complete = False
     live_status_path = output / "live_status.json"
+    mission_outcome = {}
 
     async def collect_camera():
         async for event in camera.events(timeout_s=source_timeout_s):
@@ -181,20 +145,13 @@ async def record_live_visual_pilot(
                         f"simulation time {event.frame.capture_timestamp:.3f}s",
                         flush=True,
                     )
-                live_status_path.write_text(
-                    json.dumps(
-                        {
-                            "recording_id": recording_id,
-                            "accepted_frame_count": len(frames),
-                            "last_simulation_timestamp": (
-                                event.frame.capture_timestamp
-                            ),
-                        },
-                        indent=2,
-                        sort_keys=True,
-                    )
-                    + "\n",
-                    encoding="utf-8",
+                write_live_status(
+                    live_status_path,
+                    {
+                        "recording_id": recording_id,
+                        "accepted_frame_count": len(frames),
+                        "last_simulation_timestamp": event.frame.capture_timestamp,
+                    },
                 )
                 if frame_limit is not None and len(frames) >= frame_limit:
                     stop.set()
@@ -220,6 +177,20 @@ async def record_live_visual_pilot(
     truth_task = asyncio.create_task(collect_truth(), name="visual-pilot-truth")
     stop_task = asyncio.create_task(stop.wait(), name="visual-pilot-stop")
     tasks = {camera_task, truth_task, stop_task}
+    lifecycle_task = None
+    if flight_events_path is not None:
+        lifecycle_task = asyncio.create_task(
+            monitor_flight_lifecycle(
+                flight_events_path,
+                live_status_path,
+                output / "mission_events.jsonl",
+                stop,
+                mission_outcome,
+                post_landing_drain_s=post_landing_drain_s,
+            ),
+            name="visual-flight-lifecycle",
+        )
+        tasks.add(lifecycle_task)
     timer_task = None
     if duration_s is not None:
         timer_task = asyncio.create_task(
@@ -241,6 +212,17 @@ async def record_live_visual_pilot(
             if isinstance(error, TimeoutError):
                 source_timeout_count += 1
             raise error
+        if (
+            lifecycle_task is not None
+            and lifecycle_task in done
+            and lifecycle_task.exception() is not None
+        ):
+            raise lifecycle_task.exception()
+        if mission_outcome.get("event_type") == "mission_failed":
+            raise RuntimeError(
+                "flight mission failed during visual recording: "
+                + mission_outcome.get("message", "unknown failure")
+            )
         complete = stop.is_set() or stop_task in done or (
             timer_task is not None and timer_task in done
         )
@@ -258,6 +240,13 @@ async def record_live_visual_pilot(
         await asyncio.gather(*tasks, return_exceptions=True)
         await camera.stop()
         await truth_source.stop()
+        context = (
+            None
+            if recording_context_override is None
+            else dict(recording_context_override)
+        )
+        if context is not None and mission_outcome:
+            context["flight_lifecycle"] = dict(mission_outcome)
         summary = write_pilot_recording(
             output_directory,
             frames,
@@ -274,10 +263,12 @@ async def record_live_visual_pilot(
             expected_rate_tolerance_fraction=expected_rate_tolerance_fraction,
             jitter_p95_limit_ms=jitter_p95_limit_ms,
             receive_stall_limit_ms=receive_stall_limit_ms,
+            recording_context_override=context,
         )
         live_status_path.unlink(missing_ok=True)
     return {
         "inspection": inspected,
         "configured": configured,
         "summary": summary,
+        "flight_lifecycle": mission_outcome or None,
     }

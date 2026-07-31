@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import time
-
 from src.backends.base import BackendHealth, FlightBackend, TelemetryState
 
 

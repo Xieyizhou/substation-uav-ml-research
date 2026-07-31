@@ -336,9 +336,6 @@ class CameraReplaySource:
             self.load()
         return dict(self._summary)
 
-    def payload_path(self, frame):
-        return self.recording_directory / frame.payload_relative_path
-
     def iter_frames(self):
         """Yield verified frames in manifest order without sleeping."""
         for frame in self.load():

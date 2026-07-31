@@ -212,13 +212,6 @@ def infer_stage_from_output_dir(output_dir):
     return None
 
 
-def find_analysis_dirs():
-    dirs = []
-    for stage_name in RUN_STAGES:
-        dirs.extend(find_stage_analysis_dirs(stage_name))
-    return dirs
-
-
 def find_stage_analysis_dirs(stage_name):
     runs_dir = get_runs_dir(stage_name)
     if not runs_dir.exists():

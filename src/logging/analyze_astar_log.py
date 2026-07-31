@@ -79,7 +79,6 @@ from src.logging.analysis_inference import (
     infer_local_replan_enabled,
     infer_return_home_enabled,
     load_analysis_obstacles,
-    obstacle_cell_names,
 )
 from src.logging.analysis_warnings import (
     active_replan_replacement_events,

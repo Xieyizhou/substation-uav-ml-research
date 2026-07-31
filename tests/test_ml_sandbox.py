@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import time
 import unittest
+import xml.etree.ElementTree as ET
 
 from src.ml.artifacts import file_sha256
 from src.ml.dataset import ResearchSample
@@ -112,6 +113,22 @@ class ScenarioAndTruthTests(unittest.TestCase):
             self.assertEqual(
                 randomized["scenario_config_hash"], manifest["config_hash"]
             )
+
+    def test_randomized_light_color_is_clamped_to_sdf_range(self):
+        config = load_ranges(ROOT / "config/perception/domain_randomization.json")
+        manifest = sample_manifest(config, map_id="simple", seed=2007)
+        manifest["light_intensity"] = 2.0
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "world.sdf"
+            materialize_world(
+                ROOT / "simulation/worlds/substation_simple.sdf",
+                output,
+                manifest,
+            )
+            diffuse = ET.parse(output).getroot().findtext(
+                "./world/light[@name='sun']/diffuse"
+            )
+        self.assertEqual(diffuse, "1 1 1 1")
 
 
 class DatasetManifestTests(unittest.TestCase):

@@ -165,6 +165,7 @@ async def run_flight(
     replan_config,
     perception_detector=None,
     return_home=False,
+    visual_mission_events=None,
 ):
     settings = current_runtime_settings()
     configure_runtime(settings)
@@ -190,6 +191,7 @@ async def run_flight(
         services,
         perception_detector,
         return_home,
+        visual_mission_events,
     )
 
 
@@ -279,6 +281,7 @@ def main(argv=None):
             replan_config,
             perception_detector,
             return_home=args.return_home,
+            visual_mission_events=args.visual_mission_events,
         ),
         LOGGER_SHUTDOWN_TIMEOUT_S,
     )

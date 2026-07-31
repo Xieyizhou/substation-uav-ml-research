@@ -53,6 +53,34 @@ inspection. It is not formal benchmark evidence. Runtime topics, shared
 Gazebo clock behavior, route visibility, observed rate, and synchronization
 offsets still require a live probe and human review.
 
+## Multi-scenario collection gate
+
+`collection_protocol.json` freezes the model-development dataset plan after
+the pilot gate. It expands to 60 recording-isolated scenarios: 40 training,
+10 validation, and 10 extreme-map held-out test recordings. Dataset seeds
+2001–2060 are disjoint from formal evaluation seeds 1001–1030. Adjacent frames
+never cross split boundaries.
+
+The v1 visual randomization identity includes only effects currently applied
+to the rendered SDF: equipment scale, equipment position, light intensity,
+and unknown obstacles. Weather, material age, camera noise, attitude jitter,
+LiDAR noise, dropout, and outages remain explicit non-applied fields; they do
+not create fictitious visual-domain variation. Every prepared scenario hashes
+the final world, planner configuration, and applied visual configuration.
+
+After all recordings pass per-recording synchronization and phase gates,
+materialization creates separate `development` and `held_out_test`
+DatasetIdentity artifacts. Aggregate validation requires every equipment
+class and verified no-target frames in train, validation, and test. These
+identities enable later training and static replay; they are not themselves
+formal benchmark results.
+
+Collection phases are normally generated from the flight lifecycle rather
+than entered manually. The final outbound waypoint starts `approach`,
+`goal_hover` starts `close_inspection`, and `return_to_start` starts
+`target_transition`. Recording stops only after the flight reports confirmed
+landing, then performs a short stream drain and per-recording validation.
+
 ## Schemas
 
 Canonical JSON schemas live in `config/schemas/`. The local `schemas/README.md`

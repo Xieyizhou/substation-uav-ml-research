@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 
 from src.flight.async_runtime import cancel_tasks
+from src.flight.mission_events import MissionEventWriter
 from src.flight.perception_response import DangerObstacleDetected
 from src.flight.replanning_controller import empty_replan_state
 
@@ -18,6 +19,7 @@ async def execute_flight(
     services,
     perception_detector=None,
     return_home=False,
+    visual_mission_events=None,
 ):
     drone = services["system_factory"]()
     log_path = services["make_log_path"]()
@@ -34,6 +36,18 @@ async def execute_flight(
     replan_state = empty_replan_state()
     replan_state["replan_mode"] = replan_config.get("mode", "log_only")
     phase_state = {"phase": "connecting", "route_direction": "none"}
+    event_writer = (
+        MissionEventWriter(visual_mission_events)
+        if visual_mission_events is not None
+        else None
+    )
+    if event_writer is not None:
+        phase_state["_event_publisher"] = event_writer
+        event_writer.publish(
+            "mission_started",
+            phase=phase_state["phase"],
+            route_direction=phase_state["route_direction"],
+        )
     target_state = {"name": "", "north_m": 0.0, "east_m": 0.0, "down_m": 0.0}
     stop_logging = asyncio.Event()
     telemetry_task = None
@@ -119,6 +133,13 @@ async def execute_flight(
         services["write_run_status"](
             log_path, "completed", phase_state["phase"], landing_confirmed=True
         )
+        if event_writer is not None:
+            event_writer.publish(
+                "mission_completed",
+                status="completed",
+                phase=phase_state["phase"],
+                landing_confirmed=True,
+            )
     except Exception as error:
         print(f"Flight error: {error}")
         pending_error = error
@@ -140,6 +161,15 @@ async def execute_flight(
             message=f"{type(error).__name__}: {error}",
             landing_confirmed=landing_confirmed,
         )
+        if event_writer is not None:
+            event_writer.publish(
+                "mission_failed",
+                status="failed",
+                phase=phase_state["phase"],
+                landing_confirmed=landing_confirmed,
+                failure_type=type(error).__name__,
+                message=str(error),
+            )
     finally:
         if telemetry_task is not None:
             print("Stopping telemetry logging...")

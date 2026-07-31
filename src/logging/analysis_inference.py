@@ -89,28 +89,3 @@ def load_analysis_obstacles(args, df, warnings):
     obstacles = obstacle_map["inflated_blocking_cells"]
     resolution_m, _ = get_resolution_altitude(config)
     return config_path, config, obstacles, resolution_m, obstacle_map
-
-
-def obstacle_cell_names(config):
-    if not config:
-        return {}
-    width = int(config["width"])
-    height = int(config["height"])
-    names_by_cell = {}
-    for obstacle in config.get("obstacles", []):
-        name = obstacle.get("name", "<unnamed>")
-        if obstacle.get("type") == "rect":
-            cells = [
-                (x, y)
-                for x in range(int(obstacle["x_min"]), int(obstacle["x_max"]) + 1)
-                for y in range(int(obstacle["y_min"]), int(obstacle["y_max"]) + 1)
-            ]
-        elif obstacle.get("type") == "cell":
-            cells = [(int(obstacle["x"]), int(obstacle["y"]))]
-        else:
-            cells = []
-        for cell in cells:
-            x, y = cell
-            if 0 <= x < width and 0 <= y < height:
-                names_by_cell.setdefault(cell, []).append(name)
-    return names_by_cell

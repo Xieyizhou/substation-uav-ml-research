@@ -363,6 +363,10 @@ class StaticMatrixTests(unittest.TestCase):
     def test_matrix_has_nine_unique_unmaterialized_nonadaptive_templates(self):
         result = validate_static_benchmark_directory(BENCHMARK)
         self.assertEqual(result["template_count"], 9)
+        self.assertEqual(
+            result["collection_protocol_id"],
+            "visual-multiscenario-png-v1",
+        )
         ids = [row["template_id"] for row in result["templates"]]
         self.assertEqual(len(ids), len(set(ids)))
         self.assertTrue(
@@ -384,6 +388,7 @@ class StaticMatrixTests(unittest.TestCase):
             for name in (
                 "metrics.json",
                 "pilot_protocol.json",
+                "collection_protocol.json",
                 "class_order.json",
             ):
                 (root / name).write_text((BENCHMARK / name).read_text())

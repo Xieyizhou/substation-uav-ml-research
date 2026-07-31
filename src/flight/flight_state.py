@@ -5,8 +5,26 @@ from math import sqrt
 
 
 def set_phase(phase_state, phase, route_direction="none"):
+    changed = (
+        phase_state.get("phase") != phase
+        or phase_state.get("route_direction") != route_direction
+    )
     phase_state["phase"] = phase
     phase_state["route_direction"] = route_direction
+    if changed:
+        publish_mission_event(
+            phase_state,
+            "phase_changed",
+            phase=phase,
+            route_direction=route_direction,
+        )
+
+
+def publish_mission_event(phase_state, event_type, **details):
+    publisher = phase_state.get("_event_publisher")
+    if publisher is None:
+        return None
+    return publisher.publish(event_type, **details)
 
 
 def update_latest(latest, key, value):

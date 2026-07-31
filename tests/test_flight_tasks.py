@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from src.flight import task_runner
+from src.flight.flight_cli import build_argument_parser
 from src.flight.task_presets import TASKS
 
 
@@ -24,6 +25,15 @@ class FlightTaskTests(unittest.TestCase):
             ["--max-speed", "0.6"],
         )
         self.assertEqual(args[-2:], ["--max-speed", "0.6"])
+
+    def test_flight_cli_accepts_visual_mission_event_output(self):
+        args = build_argument_parser().parse_args(
+            ["--visual-mission-events", "recording/flight_events.jsonl"]
+        )
+        self.assertEqual(
+            str(args.visual_mission_events),
+            "recording/flight_events.jsonl",
+        )
 
     def test_task_runner_calls_existing_engine_in_process(self):
         with (

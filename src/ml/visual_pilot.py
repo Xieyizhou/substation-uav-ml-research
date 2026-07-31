@@ -12,7 +12,13 @@ from src.ml.visual_pilot_metrics import (
     summarize_source_health,
     summarize_synchronization,
 )
-from src.ml.visual_pilot_acceptance import validate_v3_acceptance_policy
+from src.ml.visual_pilot_contract import (
+    DEFAULT_PROTOCOL,
+    load_pilot_protocol,
+    mission_phase as _mission_phase,
+    recording_context,
+    validate_mission_events as _validate_mission_events,
+)
 from src.ml.visual_synchronization import (
     DEFAULT_MAX_SKEW_MS,
     materialize_frame_annotation,
@@ -22,8 +28,6 @@ from src.sensors.camera_decoder import decode_camera_payload
 from src.sensors.types import CameraFrame
 
 
-ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_PROTOCOL = ROOT / "benchmarks/visual_static_v1/pilot_protocol.json"
 REQUIRED_MANIFESTS = (
     "metadata.json",
     "frames.jsonl",
@@ -95,55 +99,6 @@ def _read_jsonl(path):
     return records
 
 
-def load_pilot_protocol(path=DEFAULT_PROTOCOL):
-    protocol = _read_json(path)
-    if protocol.get("protocol_id") != "visual-pilot-png-v3":
-        raise PilotRecordingError("pilot protocol must be visual-pilot-png-v3")
-    recording = protocol.get("recording") or {}
-    if not recording.get("retain_every_valid_source_frame"):
-        raise PilotRecordingError("pilot protocol must retain every valid frame")
-    if recording.get("automatic_downsampling"):
-        raise PilotRecordingError("pilot protocol cannot downsample automatically")
-    try:
-        validate_v3_acceptance_policy(protocol)
-    except ValueError as error:
-        raise PilotRecordingError(str(error)) from error
-    return protocol
-
-
-def _mission_phase(frame, events):
-    applicable = [
-        event
-        for event in events
-        if float(event["simulation_timestamp"]) <= frame.capture_timestamp
-    ]
-    return applicable[-1]["mission_phase"] if applicable else "other"
-
-
-def _validate_mission_events(events):
-    previous = None
-    allowed = {
-        "cruise_distant",
-        "approach",
-        "close_inspection",
-        "target_transition",
-        "other",
-    }
-    normalized = []
-    for event in events:
-        timestamp = float(event["simulation_timestamp"])
-        phase = str(event["mission_phase"])
-        if timestamp < 0 or (previous is not None and timestamp < previous):
-            raise PilotRecordingError("mission events must use ordered timestamps")
-        if phase not in allowed:
-            raise PilotRecordingError(f"unsupported mission phase: {phase}")
-        normalized.append(
-            {"simulation_timestamp": timestamp, "mission_phase": phase}
-        )
-        previous = timestamp
-    return tuple(normalized)
-
-
 def _copy_payloads(frames, source_root, output):
     copied = []
     for frame in frames:
@@ -176,6 +131,7 @@ def write_pilot_recording(
     jitter_p95_limit_ms=None,
     receive_stall_limit_ms=None,
     protocol_path=DEFAULT_PROTOCOL,
+    recording_context_override=None,
 ):
     output = Path(output_directory)
     output.mkdir(parents=True, exist_ok=True)
@@ -191,22 +147,19 @@ def write_pilot_recording(
         expected_rate_tolerance_fraction = protocol["recording"][
             "default_rate_observation_tolerance_fraction"
         ]
-    scenario = protocol["scenario"]
+    context = recording_context(protocol, recording_context_override)
     metadata = {
-        "pilot_recording_schema_version": 2,
-        "recording_type": "labelled_visual_pilot",
+        "visual_recording_schema_version": 2,
+        "recording_type": context["recording_type"],
         "recording_id": recording_id,
         "recording_state": "in_progress",
-        "protocol_id": protocol["protocol_id"],
-        "dataset_role": "pilot",
-        "map_id": scenario["map_id"],
-        "target_id": scenario["target_id"],
-        "seed": scenario["seed"],
-        "route_id": scenario["route"],
+        **context,
         "canonical_payload_format": "png",
         "canonical_pixel_format": "rgb8",
         "invalid_frames": list(invalid_frames),
     }
+    if context["recording_type"] == "labelled_visual_pilot":
+        metadata["pilot_recording_schema_version"] = 2
     _write_json(output / "metadata.json", metadata)
     payload_sizes = _copy_payloads(frames, payload_root or output, output)
     _write_jsonl(output / "frames.jsonl", [frame.to_record() for frame in frames])
@@ -234,9 +187,9 @@ def write_pilot_recording(
                 item,
                 decoded_image,
                 recording_id=recording_id,
-                scenario_id=f"training-center-{scenario['seed']}",
-                map_id=scenario["map_id"],
-                seed=scenario["seed"],
+                scenario_id=context["scenario_id"],
+                map_id=context["map_id"],
+                seed=context["seed"],
                 mission_phase=_mission_phase(item.frame, events),
                 frame_order_reference=index,
             )
@@ -263,19 +216,22 @@ def write_pilot_recording(
         synchronized, truths, annotations
     )
     summary = {
-        "pilot_recording_schema_version": 2,
+        "visual_recording_schema_version": 2,
         "recording_id": recording_id,
         "recording_state": "complete" if complete else "in_progress",
+        "recording_is_formal_evidence": False,
         "pilot_is_formal_evidence": False,
         "decoder_configuration_id": decoder_configuration_id,
         "source_health": source_summary,
         "synchronization": synchronization_summary,
     }
+    if context["recording_type"] == "labelled_visual_pilot":
+        summary["pilot_recording_schema_version"] = 2
     _write_json(output / "summary.json", summary)
     identity_record = {
         "recording_identity_schema_version": 2,
         "recording_id": recording_id,
-        "protocol_id": protocol["protocol_id"],
+        "protocol_id": context["protocol_id"],
         "recording_state": summary["recording_state"],
         "frames_manifest_sha256": _sha256(output / "frames.jsonl"),
         "annotation_manifest_sha256": _sha256(output / "annotations.jsonl"),
@@ -287,6 +243,11 @@ def write_pilot_recording(
             output / "mission_events.jsonl"
         ),
     }
+    flight_events_path = output / "flight_events.jsonl"
+    if flight_events_path.is_file():
+        identity_record["flight_events_manifest_sha256"] = _sha256(
+            flight_events_path
+        )
     identity_record["recording_identity_sha256"] = object_sha256(identity_record)
     _write_json(output / "identity/recording_identity.json", identity_record)
     metadata["recording_state"] = summary["recording_state"]
