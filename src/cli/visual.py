@@ -37,6 +37,10 @@ from src.cli.visual_collection import (
     add_collection_parsers,
     handle_collection_command,
 )
+from src.cli.visual_training import (
+    add_training_parsers,
+    handle_training_command,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -115,6 +119,7 @@ def build_parser():
         command = commands.add_parser(name, help=help_text)
         command.add_argument("--input", type=Path, required=True)
     add_collection_parsers(commands)
+    add_training_parsers(commands)
     return parser
 
 
@@ -242,6 +247,8 @@ def main(argv=None):
             }
         else:
             result = handle_collection_command(args)
+            if result is None:
+                result = handle_training_command(args)
             if result is None:
                 return 2
         print(json.dumps(result, indent=2, sort_keys=True))

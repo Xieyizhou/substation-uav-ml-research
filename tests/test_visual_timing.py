@@ -2,6 +2,8 @@ import hashlib
 import time
 import unittest
 
+import numpy as np
+
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.equipment_detector import EquipmentDetector
 from src.sensors.types import (
@@ -116,6 +118,14 @@ class VisualTimingContractTests(unittest.TestCase):
 
 
 class EquipmentDetectorTimingTests(unittest.TestCase):
+    def test_canonical_rgb_is_explicitly_converted_to_backend_bgr(self):
+        detector = _detector()
+        rgb = np.array([[[1, 2, 3], [4, 5, 6]]], dtype=np.uint8)
+        detector.detect(rgb)
+        source = detector.model.calls[0]["source"]
+        self.assertTrue(source.flags.c_contiguous)
+        self.assertEqual(source.tolist(), [[[3, 2, 1], [6, 5, 4]]])
+
     def test_detect_remains_compatible_and_uses_locked_default_size(self):
         detector = _detector()
         detections = detector.detect(_Image(), timestamp_s=7.0, frame_id="camera")

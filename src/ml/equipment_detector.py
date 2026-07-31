@@ -61,8 +61,9 @@ class EquipmentDetector:
             timestamp_s = timing_context.frame.capture_timestamp
         timestamp_s = time.time() if timestamp_s is None else timestamp_s
         backend_started_s = time.monotonic_ns() / 1_000_000_000
+        backend_source = _canonical_rgb_to_ultralytics_bgr(image)
         results = self.model.predict(
-            source=image,
+            source=backend_source,
             imgsz=getattr(self, "image_size", 640),
             conf=self.confidence,
             device=self.device,
@@ -221,3 +222,16 @@ def _input_dimensions(image, frame):
     if isinstance(size, tuple) and len(size) >= 2:
         return int(size[0]), int(size[1])
     return None, None
+
+
+def _canonical_rgb_to_ultralytics_bgr(image):
+    """Convert the declared RGB8 ndarray to Ultralytics' ndarray BGR boundary."""
+    try:
+        import numpy as np
+    except ImportError:
+        return image
+    if not isinstance(image, np.ndarray):
+        return image
+    if image.ndim != 3 or image.shape[2] != 3 or image.dtype != np.uint8:
+        raise ValueError("equipment detector requires an RGB8 HWC ndarray")
+    return np.ascontiguousarray(image[:, :, ::-1])

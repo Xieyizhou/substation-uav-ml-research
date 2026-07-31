@@ -10,5 +10,6 @@ The canonical schemas are kept in the repository-wide schema directory:
 - `config/schemas/visual_benchmark_result.schema.json`
 - `config/schemas/visual_collection_protocol.schema.json`
 - `config/schemas/visual_collection_plan.schema.json`
+- `config/schemas/visual_training_view_identity.schema.json`
 
 Keeping one canonical copy prevents benchmark-local schema drift.

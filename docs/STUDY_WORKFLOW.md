@@ -195,6 +195,59 @@ identities differ, or scenario/recording/seed identity overlaps. It writes
 separate development and held-out-test identities; the held-out identity must
 not be used for fitting or model selection.
 
+### Visual baseline training
+
+Create the deterministic YOLO view only from the development identity:
+
+```bash
+python main.py visual training-view-materialize \
+  --collection-root data/research/visual_collection_v1 \
+  --output data/research/visual_yolo_v1
+```
+
+The view caps each training class at 5,000 frames, retains up to 8,000
+verified no-target frames, and creates a smaller class-balanced validation
+view. Quotas are proportional by recording and selected frames are evenly
+spaced by source sequence. A separate full-validation partition is generated
+for the one-time post-training evaluation. Images are hard-linked, with a
+relative symlink fallback when hard links are unavailable; PNG bytes are not
+duplicated.
+
+Run the one-epoch gate before the full baseline:
+
+```bash
+python main.py visual train-yolo --smoke
+python main.py visual train-yolo
+```
+
+Training requires a clean tracked worktree and records the commit, resolved
+configuration, package versions, training-view identity, pretrained-weight
+hash, and checkpoint hashes. The frozen baseline is YOLO11n at 640 pixels on
+Apple MPS, batch 8 with an explicit batch-4 restart policy for out-of-memory
+failures. Resume uses the run's `last.pt`; it does not silently change
+hyperparameters.
+
+After full validation and threshold selection, export the identity-bound
+package:
+
+```bash
+python main.py visual export-yolo \
+  --weights models/equipment/visual-yolo11n-baseline-v1/weights/best.pt \
+  --training-view-identity \
+    data/research/visual_yolo_v1/identity/training_view_identity.json \
+  --training-provenance \
+    models/equipment/visual-yolo11n-baseline-v1/training_provenance.json \
+  --validation-results \
+    outputs/research/visual_yolo11n/full_validation_results.json \
+  --output models/equipment/visual-yolo11n-baseline-v1-package
+```
+
+The package contains one weights identity and fixed FP32 ONNX exports at 320,
+416, and 640. Run `onnx-equivalence` on the fixed 200-frame validation
+calibration view before inspection. `heldout-view-materialize` requires a
+hash-valid frozen package and writes a receipt binding that package to the
+held-out dataset. This is the only supported route to held-out labels.
+
 ### Static replay gate before adaptive scheduling
 
 `benchmarks/visual_static_v1/conditions.json` freezes nine unmaterialized

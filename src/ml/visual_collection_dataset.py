@@ -6,7 +6,7 @@ from collections import Counter
 from pathlib import Path
 
 from src.ml import EQUIPMENT_CLASSES
-from src.ml.artifacts import object_sha256
+from src.ml.artifacts import git_commit, object_sha256
 from src.ml.visual_collection import DEFAULT_PROTOCOL, load_collection_protocol
 from src.ml.visual_collection_recording import validate_collection_recording
 from src.ml.visual_identity import DatasetIdentity, class_order_identity
@@ -128,6 +128,7 @@ def _materialize_group(
     decoder_id,
     output_root,
     protocol,
+    creation_commit_sha,
 ):
     selected = [item for item in recordings if item["row"]["split"] in splits]
     membership = []
@@ -192,6 +193,7 @@ def _materialize_group(
         class_order_identity=class_order_identity(),
         annotation_manifest_sha256=_sha256(annotations_path),
         source_payload_formats=("png",),
+        creation_commit_sha=creation_commit_sha,
     )
     path = identity_root / f"{name}_dataset_identity.json"
     _write_json(path, identity.to_record())
@@ -204,8 +206,16 @@ def materialize_collection_datasets(
     output_root,
     *,
     protocol_path=DEFAULT_PROTOCOL,
+    creation_commit_sha=None,
 ):
     protocol = load_collection_protocol(protocol_path)
+    if creation_commit_sha is None:
+        observed_commit = git_commit()
+        creation_commit_sha = (
+            None
+            if observed_commit == "unknown" or observed_commit.endswith("-dirty")
+            else observed_commit
+        )
     recordings, decoder_id, split_counts = _aggregate_recordings(
         plan,
         recordings_root,
@@ -221,6 +231,7 @@ def materialize_collection_datasets(
             decoder_id,
             output_root,
             protocol,
+            creation_commit_sha,
         )
         identities[name] = {
             "path": str(path),

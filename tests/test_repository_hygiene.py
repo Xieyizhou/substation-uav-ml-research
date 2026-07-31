@@ -120,6 +120,7 @@ class RepositoryHygieneTests(unittest.TestCase):
             "config/schemas/visual_dataset_identity.schema.json",
             "config/schemas/visual_collection_protocol.schema.json",
             "config/schemas/visual_collection_plan.schema.json",
+            "config/schemas/visual_training_view_identity.schema.json",
             "benchmarks/visual_static_v1/conditions.json",
             "benchmarks/visual_static_v1/pilot_protocol.json",
             "benchmarks/visual_static_v1/collection_protocol.json",

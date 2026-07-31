@@ -289,6 +289,21 @@ available as an explicit retry. After every planned recording passes,
 DatasetIdentity artifacts with globally unique `recording_id:frame_id`
 membership. Aggregate class and no-target coverage are mandatory per split.
 
+`visual training-view-materialize` derives a path-independent, hash-bound
+training view from the development identity. It performs deterministic
+recording-proportional temporal thinning, retains minority classes, limits
+negative frames, emits explicit empty YOLO labels for verified no-target
+images, and never reads the held-out identity. The training identity binds
+the selected memberships and generated label hashes rather than claiming the
+entire development dataset was fitted.
+
+The first visual baseline uses COCO-pretrained YOLO11n at 640 pixels. Training
+and validation use Apple MPS locally; model selection uses the balanced
+validation view, followed by one full-validation pass. A frozen package
+exports static batch-1 FP32 ONNX graphs at 320, 416, and 640, each with its
+own preprocessing and model identity. Held-out materialization is gated on a
+valid frozen package and cannot be used for fitting or threshold selection.
+
 ### Canonical camera decoding
 
 `src/sensors/camera_decoder.py` decodes a recorded frame on the CPU into the
