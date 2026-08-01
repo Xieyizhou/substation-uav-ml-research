@@ -7,6 +7,10 @@ from pathlib import Path
 from src.ml.visual_heldout_view import materialize_heldout_view
 from src.ml.visual_onnx_gate import validate_onnx_equivalence
 from src.ml.visual_training_view import materialize_training_view
+from src.ml.visual_static_replay import (
+    materialize_static_replay,
+    run_static_replay,
+)
 from src.ml.visual_yolo_evaluation import evaluate_yolo
 from src.ml.visual_yolo_package import export_yolo_package, validate_yolo_package
 from src.ml.visual_yolo_training import train_yolo
@@ -58,6 +62,10 @@ def add_training_parsers(commands):
     export.add_argument("--training-provenance", type=Path, required=True)
     export.add_argument("--validation-results", type=Path, required=True)
     export.add_argument("--output", type=Path, required=True)
+    export.add_argument(
+        "--equivalence-dataset", type=Path, default=DEFAULT_TRAINING_VIEW
+    )
+    export.add_argument("--equivalence-device", default="cpu")
 
     inspect = commands.add_parser(
         "model-package-inspect", help="Validate a visual YOLO model package"
@@ -82,6 +90,24 @@ def add_training_parsers(commands):
     heldout.add_argument("--collection-root", type=Path, default=DEFAULT_COLLECTION)
     heldout.add_argument("--package", type=Path, required=True)
     heldout.add_argument("--output", type=Path, required=True)
+
+    static_materialize = commands.add_parser(
+        "static-replay-materialize",
+        help="Bind the nine static replay templates to frozen identities",
+    )
+    static_materialize.add_argument("--package", type=Path, required=True)
+    static_materialize.add_argument("--dataset", type=Path, required=True)
+    static_materialize.add_argument(
+        "--benchmark", type=Path, default=Path("benchmarks/visual_static_v1")
+    )
+    static_materialize.add_argument("--output", type=Path, required=True)
+
+    static_run = commands.add_parser(
+        "static-replay-run", help="Execute all incomplete static replay conditions"
+    )
+    static_run.add_argument("--input", type=Path, required=True)
+    static_run.add_argument("--package", type=Path, required=True)
+    static_run.add_argument("--dataset", type=Path, required=True)
 
 
 def handle_training_command(args):
@@ -113,6 +139,8 @@ def handle_training_command(args):
             args.training_provenance,
             args.validation_results,
             args.output,
+            equivalence_dataset=args.equivalence_dataset,
+            equivalence_device=args.equivalence_device,
         )
     if args.command == "model-package-inspect":
         return validate_yolo_package(args.input)
@@ -129,4 +157,10 @@ def handle_training_command(args):
         return materialize_heldout_view(
             args.collection_root, args.package, args.output
         )
+    if args.command == "static-replay-materialize":
+        return materialize_static_replay(
+            args.package, args.dataset, args.benchmark, args.output
+        )
+    if args.command == "static-replay-run":
+        return run_static_replay(args.input, args.package, args.dataset)
     return None

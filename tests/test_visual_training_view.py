@@ -262,6 +262,13 @@ class TrainingCliTests(unittest.TestCase):
             ["heldout-view-materialize", "--package", "model", "--output", "test"]
         )
         self.assertEqual(heldout.command, "heldout-view-materialize")
+        static = parser.parse_args(
+            [
+                "static-replay-materialize", "--package", "model",
+                "--dataset", "test", "--output", "results",
+            ]
+        )
+        self.assertEqual(static.command, "static-replay-materialize")
 
     def test_frozen_training_configuration_is_valid(self):
         config = load_training_config(
@@ -283,6 +290,106 @@ class TrainingCliTests(unittest.TestCase):
                     root / "result.json",
                     partition="heldout_test",
                 )
+
+    def test_heldout_uses_frozen_threshold_without_search(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model = root / "model.onnx"
+            model.write_bytes(b"model")
+            receipt = {
+                "canonical_model_sha256": file_sha256(model),
+                "frozen_confidence_threshold": 0.42,
+                "heldout_dataset_identity_sha256": "b" * 64,
+                "membership_sha256": "c" * 64,
+            }
+            write_json(root / "identity/heldout_access_receipt.json", receipt)
+            frames = [
+                {
+                    "truth": [],
+                    "predictions": [],
+                    "sample_id": "sample",
+                }
+            ]
+            output = root / "result.json"
+            with patch(
+                "src.ml.visual_yolo_evaluation._formal_commit",
+                return_value="commit",
+            ), patch(
+                "src.ml.visual_yolo_evaluation._standard_metrics",
+                return_value={"mAP50_95": 0.5},
+            ), patch(
+                "src.ml.visual_yolo_evaluation.collect_predictions",
+                return_value=frames,
+            ), patch(
+                "src.ml.visual_yolo_evaluation.select_confidence_threshold"
+            ) as search:
+                result = evaluate_yolo(
+                    model,
+                    root,
+                    output,
+                    partition="heldout_test",
+                )
+            search.assert_not_called()
+            self.assertEqual(
+                result["confidence_evaluation"]["frozen"]["threshold"],
+                0.42,
+            )
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                evaluate_yolo(
+                    model,
+                    root,
+                    output,
+                    partition="heldout_test",
+                )
+
+    def test_full_validation_binds_training_view_and_selects_threshold(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            model = root / "best.pt"
+            model.write_bytes(b"weights")
+            identity = TrainingViewIdentity(
+                source_development_dataset_identity="a" * 64,
+                sampling_algorithm="test",
+                sampling_seed=7,
+                train_membership_sha256="b" * 64,
+                validation_membership_sha256="c" * 64,
+                full_validation_membership_sha256="d" * 64,
+                labels_manifest_sha256="e" * 64,
+                class_order_identity=class_order_identity(),
+                train_frame_count=4,
+                validation_frame_count=4,
+                full_validation_frame_count=4,
+                train_class_counts={name: 1 for name in EQUIPMENT_CLASSES},
+                validation_class_counts={name: 1 for name in EQUIPMENT_CLASSES},
+                train_no_target_count=0,
+                validation_no_target_count=0,
+            )
+            write_json(
+                root / "identity/training_view_identity.json", identity.to_record()
+            )
+            frames = [{"sample_id": "sample", "truth": [], "predictions": []}]
+            with patch(
+                "src.ml.visual_yolo_evaluation._formal_commit",
+                return_value="evaluation-commit",
+            ), patch(
+                "src.ml.visual_yolo_evaluation._standard_metrics",
+                return_value={"mAP50_95": 0.5},
+            ), patch(
+                "src.ml.visual_yolo_evaluation.collect_predictions",
+                return_value=frames,
+            ):
+                result = evaluate_yolo(
+                    model,
+                    root,
+                    root / "result.json",
+                    partition="full_validation",
+                )
+            self.assertEqual(
+                result["dataset_provenance"]["training_view_identity_sha256"],
+                identity.training_view_identity_sha256,
+            )
+            self.assertEqual(result["evaluation_code_commit_sha"], "evaluation-commit")
+            self.assertEqual(len(result["confidence_evaluation"]["candidates"]), 71)
 
 
 if __name__ == "__main__":

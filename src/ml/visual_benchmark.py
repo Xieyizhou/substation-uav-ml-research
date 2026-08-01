@@ -71,6 +71,7 @@ class VisualBenchmarkCondition:
     input_height: int
     inference_policy: str
     frame_skip_interval: int
+    confidence_threshold: float
     target_inference_rate_hz: float | None
     roi_mode: str
     batch_size: int
@@ -90,8 +91,7 @@ class VisualBenchmarkCondition:
             != VISUAL_BENCHMARK_CONDITION_SCHEMA_VERSION
         ):
             raise ValueError(
-                f"unsupported visual condition schema "
-                f"{self.condition_schema_version}"
+                f"unsupported visual condition schema {self.condition_schema_version}"
             )
         for name in (
             "condition_id",
@@ -101,9 +101,7 @@ class VisualBenchmarkCondition:
             "deadline_definition",
             "software_commit_sha",
         ):
-            object.__setattr__(
-                self, name, _required_text(getattr(self, name), name)
-            )
+            object.__setattr__(self, name, _required_text(getattr(self, name), name))
         for name in (
             "dataset_identity_sha256",
             "decoder_configuration_id",
@@ -122,11 +120,13 @@ class VisualBenchmarkCondition:
             raise ValueError("every_frame requires frame_skip_interval=1")
         if self.inference_policy == "every_nth_frame":
             if self.frame_skip_interval < 2:
-                raise ValueError(
-                    "every_nth_frame requires frame_skip_interval >= 2"
-                )
+                raise ValueError("every_nth_frame requires frame_skip_interval >= 2")
         if self.roi_mode != "disabled":
             raise ValueError("visual static benchmark v1 supports roi_mode=disabled")
+        confidence = _finite_non_negative(self.confidence_threshold, "confidence_threshold")
+        if confidence > 1:
+            raise ValueError("confidence_threshold must not exceed 1")
+        object.__setattr__(self, "confidence_threshold", confidence)
         if self.target_inference_rate_hz is not None:
             value = _finite_non_negative(
                 self.target_inference_rate_hz, "target_inference_rate_hz"

@@ -239,14 +239,17 @@ python main.py visual export-yolo \
     models/equipment/visual-yolo11n-baseline-v1/training_provenance.json \
   --validation-results \
     outputs/research/visual_yolo11n/full_validation_results.json \
+  --equivalence-dataset data/research/visual_yolo_v1 \
   --output models/equipment/visual-yolo11n-baseline-v1-package
 ```
 
 The package contains one weights identity and fixed FP32 ONNX exports at 320,
-416, and 640. Run `onnx-equivalence` on the fixed 200-frame validation
-calibration view before inspection. `heldout-view-materialize` requires a
-hash-valid frozen package and writes a receipt binding that package to the
-held-out dataset. This is the only supported route to held-out labels.
+416, and 640. Export runs the fixed 200-frame equivalence gate for every size
+and writes `manifest.json` only after all three pass. A failed export remains a
+non-executable staging directory. `heldout-view-materialize` requires that
+finalized package and writes a receipt containing the canonical 640 model and
+the full-validation confidence threshold. Held-out evaluation cannot search
+or override that threshold.
 
 ### Static replay gate before adaptive scheduling
 
@@ -255,6 +258,19 @@ static templates: sizes 320/416/640 crossed with every frame/every second/every
 third frame. A template is not executable until exact dataset, decoder,
 preprocessing, model, runtime, device, precision, deadline, and commit
 identities are supplied. Unrun templates never produce result rows.
+
+Materialize and run the frozen matrix after the held-out receipt exists:
+
+```bash
+python main.py visual static-replay-materialize \
+  --package models/equipment/visual-yolo11n-baseline-v1-package \
+  --dataset data/research/visual_yolo_v1_heldout \
+  --output outputs/research/visual_static_v1
+python main.py visual static-replay-run \
+  --input outputs/research/visual_static_v1 \
+  --package models/equipment/visual-yolo11n-baseline-v1-package \
+  --dataset data/research/visual_yolo_v1_heldout
+```
 
 Adaptive scheduling starts only after:
 

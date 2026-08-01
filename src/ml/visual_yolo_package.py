@@ -14,6 +14,7 @@ from src.ml.visual_identity import (
     class_order_identity,
 )
 from src.ml.visual_training_identity import TrainingViewIdentity
+from src.ml.visual_onnx_gate import validate_onnx_equivalence
 
 
 EXPORT_SIZES = (320, 416, 640)
@@ -54,6 +55,9 @@ def export_yolo_package(
     training_provenance_path,
     validation_results_path,
     output_root,
+    *,
+    equivalence_dataset,
+    equivalence_device="cpu",
 ):
     try:
         from ultralytics import YOLO
@@ -70,11 +74,28 @@ def export_yolo_package(
     ):
         raise ValueError("training provenance references a different training view")
     output_root.mkdir(parents=True, exist_ok=True)
-    if (output_root / "manifest.json").exists():
-        raise ValueError("visual model package is already frozen")
+    if any(output_root.iterdir()):
+        raise ValueError("visual model package output must be empty")
+    status_path = output_root / "package_status.json"
+    write_json(
+        status_path,
+        {"visual_model_package_status_schema_version": 1, "status": "staging"},
+    )
     validation_results = json.loads(Path(validation_results_path).read_text())
     if validation_results.get("partition") != "full_validation":
         raise ValueError("model package requires full-validation results")
+    if validation_results.get("model_sha256") != file_sha256(weights):
+        raise ValueError("full-validation results reference different weights")
+    validation_dataset = validation_results.get("dataset_provenance", {})
+    if (
+        validation_dataset.get("training_view_identity_sha256")
+        != training_view.training_view_identity_sha256
+    ):
+        raise ValueError("full-validation results reference a different dataset")
+    selected = validation_results.get("confidence_evaluation", {}).get("selected")
+    frozen_threshold = selected.get("threshold") if isinstance(selected, dict) else None
+    if not isinstance(frozen_threshold, (int, float)):
+        raise ValueError("full-validation results lack a selected threshold")
     weights_copy = output_root / "weights/best.pt"
     weights_copy.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(weights, weights_copy)
@@ -150,6 +171,33 @@ def export_yolo_package(
     history_source = Path(training_provenance_path).parent / "results.csv"
     if history_source.is_file():
         shutil.copy2(history_source, output_root / "training_history.csv")
+    gates = {}
+    try:
+        for size in EXPORT_SIZES:
+            path = output_root / "equivalence" / f"onnx_equivalence_{size}.json"
+            gate = validate_onnx_equivalence(
+                weights_copy,
+                output_root / exports[str(size)]["path"],
+                equivalence_dataset,
+                path,
+                imgsz=size,
+                device=equivalence_device,
+            )
+            if not gate.get("passed"):
+                raise ValueError(f"ONNX equivalence failed for input size {size}")
+            gates[str(size)] = {
+                "path": path.relative_to(output_root).as_posix(),
+                "sha256": file_sha256(path),
+            }
+    except Exception:
+        write_json(
+            status_path,
+            {
+                "visual_model_package_status_schema_version": 1,
+                "status": "staging_failed",
+            },
+        )
+        raise
     manifest = {
         "visual_model_package_schema_version": 1,
         "architecture": "yolo11n",
@@ -164,12 +212,18 @@ def export_yolo_package(
         "full_validation_results_sha256": file_sha256(
             output_root / "full_validation_results.json"
         ),
+        "frozen_confidence_threshold": float(frozen_threshold),
+        "equivalence_gates": gates,
         "model_identity_sha256": {
             size: record["model_identity_sha256"]
             for size, record in model_records.items()
         },
     }
     manifest["package_identity_sha256"] = object_sha256(manifest)
+    write_json(
+        status_path,
+        {"visual_model_package_status_schema_version": 1, "status": "finalized"},
+    )
     write_json(output_root / "manifest.json", manifest)
     return validate_yolo_package(output_root)
 
@@ -187,6 +241,14 @@ def validate_yolo_package(root):
         != manifest["full_validation_results_sha256"]
     ):
         raise ValueError("full-validation results hash mismatch")
+    validation = json.loads((root / "full_validation_results.json").read_text())
+    threshold = manifest.get("frozen_confidence_threshold")
+    selected = validation.get("confidence_evaluation", {}).get("selected", {})
+    if threshold != selected.get("threshold"):
+        raise ValueError("frozen confidence threshold mismatch")
+    status = json.loads((root / "package_status.json").read_text())
+    if status.get("status") != "finalized":
+        raise ValueError("visual model package is not finalized")
     model_records = json.loads((root / "model_identities.json").read_text())
     preprocessing_records = json.loads(
         (root / "preprocessing_identities.json").read_text()
@@ -207,6 +269,20 @@ def validate_yolo_package(root):
             != preprocessing.preprocessing_configuration_id
         ):
             raise ValueError(f"preprocessing identity mismatch for input size {size}")
+        gate_record = manifest.get("equivalence_gates", {}).get(key)
+        if not isinstance(gate_record, dict):
+            raise ValueError(f"missing ONNX equivalence gate for input size {size}")
+        gate_path = root / gate_record.get("path", "")
+        if file_sha256(gate_path) != gate_record.get("sha256"):
+            raise ValueError(f"ONNX equivalence hash mismatch for input size {size}")
+        gate = json.loads(gate_path.read_text())
+        if (
+            gate.get("passed") is not True
+            or gate.get("input_size") != size
+            or gate.get("onnx_model_sha256") != export["sha256"]
+            or gate.get("pt_model_sha256") != manifest["weights"]["sha256"]
+        ):
+            raise ValueError(f"invalid ONNX equivalence gate for input size {size}")
     return {
         **manifest,
         "package_identity_sha256": supplied,

@@ -53,6 +53,7 @@ def condition(dataset=None, preprocessing=None, model=None, **overrides):
         "input_height": model.input_height,
         "inference_policy": "every_frame",
         "frame_skip_interval": 1,
+        "confidence_threshold": 0.42,
         "target_inference_rate_hz": None,
         "roi_mode": "disabled",
         "batch_size": 1,

@@ -31,6 +31,7 @@ def _template_identity(row):
             "input_size": row.get("input_size"),
             "inference_policy": row.get("inference_policy"),
             "frame_skip_interval": row.get("frame_skip_interval"),
+            "confidence_threshold": row.get("confidence_threshold"),
             "target_inference_rate_hz": row.get("target_inference_rate_hz"),
             "roi_mode": row.get("roi_mode"),
             "batch_size": row.get("batch_size"),
@@ -106,6 +107,7 @@ def validate_static_benchmark_directory(benchmark_directory):
         "input_size",
         "inference_policy",
         "frame_skip_interval",
+        "confidence_threshold",
         "target_inference_rate_hz",
         "roi_mode",
         "batch_size",
@@ -129,8 +131,9 @@ def validate_static_benchmark_directory(benchmark_directory):
         if (
             row.get("target_inference_rate_hz") is not None
             or row.get("measured_frame_count") is not None
+            or row.get("confidence_threshold") is not None
         ):
-            raise ValueError("unmaterialized template runtime counts must be null")
+            raise ValueError("unmaterialized template runtime values must be null")
         warmup = row.get("warmup_frame_count")
         if isinstance(warmup, bool) or not isinstance(warmup, int) or warmup < 0:
             raise ValueError("template warmup_frame_count must be non-negative")

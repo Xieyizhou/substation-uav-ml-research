@@ -8,11 +8,12 @@ from pathlib import Path
 import tempfile
 
 from src.ml import EQUIPMENT_CLASSES
-from src.ml.artifacts import write_json
+from src.ml.artifacts import file_sha256, write_json
 from src.ml.visual_detection_metrics import onnx_equivalence
 from src.ml.visual_training_view import evenly_select
 from src.ml.visual_yolo_dataset import link_image
 from src.ml.visual_yolo_evaluation import (
+    PREDICTION_CONFIDENCE_FLOOR,
     _standard_metrics,
     collect_predictions,
 )
@@ -81,7 +82,7 @@ def validate_onnx_equivalence(
             "calibration",
             device=device,
             imgsz=imgsz,
-            confidence=0.25,
+            confidence=PREDICTION_CONFIDENCE_FLOOR,
         )
         onnx_frames = collect_predictions(
             onnx_model,
@@ -89,7 +90,7 @@ def validate_onnx_equivalence(
             "calibration",
             device="cpu",
             imgsz=imgsz,
-            confidence=0.25,
+            confidence=PREDICTION_CONFIDENCE_FLOOR,
         )
     equivalence = onnx_equivalence(pt_frames, onnx_frames)
     map_difference = abs(
@@ -99,6 +100,10 @@ def validate_onnx_equivalence(
         "onnx_equivalence_schema_version": 1,
         "input_size": imgsz,
         "calibration_frame_count": len(selected),
+        "calibration_membership": [row["sample_id"] for row in selected],
+        "prediction_confidence_floor": PREDICTION_CONFIDENCE_FLOOR,
+        "pt_model_sha256": file_sha256(Path(pt_model)),
+        "onnx_model_sha256": file_sha256(Path(onnx_model)),
         "pt_metrics": pt_metrics,
         "onnx_metrics": onnx_metrics,
         "mAP50_95_absolute_difference": map_difference,

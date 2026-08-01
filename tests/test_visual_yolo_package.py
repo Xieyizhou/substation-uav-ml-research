@@ -2,11 +2,15 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
+from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import file_sha256, object_sha256, write_json
 from src.ml.visual_identity import ModelIdentity, class_order_identity
+from src.ml.visual_training_identity import TrainingViewIdentity
 from src.ml.visual_yolo_package import (
     EXPORT_SIZES,
+    export_yolo_package,
     preprocessing_identity,
     validate_yolo_package,
 )
@@ -15,7 +19,62 @@ from src.ml.visual_yolo_package import (
 HASH = "a" * 64
 
 
+class _FakeYolo:
+    def __init__(self, weights):
+        self.weights = Path(weights)
+
+    def export(self, *, imgsz, **_):
+        output = self.weights.with_suffix(".onnx")
+        output.write_bytes(f"onnx-{imgsz}".encode())
+        return str(output)
+
+
 class VisualYoloPackageTests(unittest.TestCase):
+    def _export_inputs(self, root):
+        identity = TrainingViewIdentity(
+            source_development_dataset_identity="1" * 64,
+            sampling_algorithm="test",
+            sampling_seed=7,
+            train_membership_sha256="2" * 64,
+            validation_membership_sha256="3" * 64,
+            full_validation_membership_sha256="4" * 64,
+            labels_manifest_sha256="5" * 64,
+            class_order_identity=class_order_identity(),
+            train_frame_count=4,
+            validation_frame_count=4,
+            full_validation_frame_count=4,
+            train_class_counts={name: 1 for name in EQUIPMENT_CLASSES},
+            validation_class_counts={name: 1 for name in EQUIPMENT_CLASSES},
+            train_no_target_count=0,
+            validation_no_target_count=0,
+        )
+        identity_path = root / "training_view_identity.json"
+        write_json(identity_path, identity.to_record())
+        weights = root / "source/best.pt"
+        weights.parent.mkdir()
+        weights.write_bytes(b"weights")
+        provenance = root / "source/training_provenance.json"
+        write_json(
+            provenance,
+            {
+                "training_view_identity_sha256": identity.training_view_identity_sha256,
+                "training_code_commit_sha": "commit",
+            },
+        )
+        validation = root / "validation.json"
+        write_json(
+            validation,
+            {
+                "partition": "full_validation",
+                "model_sha256": file_sha256(weights),
+                "dataset_provenance": {
+                    "training_view_identity_sha256": identity.training_view_identity_sha256
+                },
+                "confidence_evaluation": {"selected": {"threshold": 0.42}},
+            },
+        )
+        return weights, identity_path, provenance, validation
+
     def _package(self, root):
         weights = root / "weights/best.pt"
         weights.parent.mkdir(parents=True)
@@ -62,7 +121,35 @@ class VisualYoloPackageTests(unittest.TestCase):
         write_json(root / "model_identities.json", model_records)
         write_json(
             root / "full_validation_results.json",
-            {"partition": "full_validation"},
+            {
+                "partition": "full_validation",
+                "model_sha256": weight_hash,
+                "confidence_evaluation": {"selected": {"threshold": 0.42}},
+            },
+        )
+        gates = {}
+        for size in EXPORT_SIZES:
+            key = str(size)
+            path = root / "equivalence" / f"onnx_equivalence_{size}.json"
+            write_json(
+                path,
+                {
+                    "passed": True,
+                    "input_size": size,
+                    "pt_model_sha256": weight_hash,
+                    "onnx_model_sha256": exports[key]["sha256"],
+                },
+            )
+            gates[key] = {
+                "path": path.relative_to(root).as_posix(),
+                "sha256": file_sha256(path),
+            }
+        write_json(
+            root / "package_status.json",
+            {
+                "visual_model_package_status_schema_version": 1,
+                "status": "finalized",
+            },
         )
         manifest = {
             "visual_model_package_schema_version": 1,
@@ -73,6 +160,8 @@ class VisualYoloPackageTests(unittest.TestCase):
             "full_validation_results_sha256": file_sha256(
                 root / "full_validation_results.json"
             ),
+            "frozen_confidence_threshold": 0.42,
+            "equivalence_gates": gates,
             "model_identity_sha256": {
                 size: record["model_identity_sha256"]
                 for size, record in model_records.items()
@@ -94,6 +183,49 @@ class VisualYoloPackageTests(unittest.TestCase):
             (root / "onnx/model_416.onnx").write_bytes(b"changed")
             with self.assertRaisesRegex(ValueError, "ONNX hash mismatch"):
                 validate_yolo_package(root)
+
+    def test_missing_or_failed_equivalence_gate_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._package(root)
+            manifest = json.loads((root / "manifest.json").read_text())
+            del manifest["equivalence_gates"]["416"]
+            identity = manifest.pop("package_identity_sha256")
+            self.assertIsNotNone(identity)
+            manifest["package_identity_sha256"] = object_sha256(manifest)
+            write_json(root / "manifest.json", manifest)
+            with self.assertRaisesRegex(ValueError, "missing ONNX equivalence"):
+                validate_yolo_package(root)
+
+    def test_export_writes_manifest_only_after_all_equivalence_gates(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            inputs = self._export_inputs(root)
+
+            def gate(pt, onnx, _, output, *, imgsz, device):
+                result = {
+                    "passed": imgsz != 416,
+                    "input_size": imgsz,
+                    "pt_model_sha256": file_sha256(pt),
+                    "onnx_model_sha256": file_sha256(onnx),
+                }
+                write_json(output, result)
+                return result
+
+            output = root / "package"
+            with patch("ultralytics.YOLO", _FakeYolo), patch(
+                "src.ml.visual_yolo_package.validate_onnx_equivalence",
+                side_effect=gate,
+            ):
+                with self.assertRaisesRegex(ValueError, "input size 416"):
+                    export_yolo_package(
+                        *inputs,
+                        output,
+                        equivalence_dataset=root,
+                    )
+            self.assertFalse((output / "manifest.json").exists())
+            status = json.loads((output / "package_status.json").read_text())
+            self.assertEqual(status["status"], "staging_failed")
 
 
 if __name__ == "__main__":

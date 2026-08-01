@@ -3,11 +3,19 @@
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 
 from src.ml import EQUIPMENT_CLASSES
-from src.ml.artifacts import file_sha256, write_json
-from src.ml.visual_detection_metrics import select_confidence_threshold
+from src.ml.artifacts import file_sha256, git_commit, write_json
+from src.ml.visual_detection_metrics import (
+    select_confidence_threshold,
+    threshold_metrics,
+)
+from src.ml.visual_training_identity import TrainingViewIdentity
+
+
+PREDICTION_CONFIDENCE_FLOOR = 0.05
 
 
 def _truth(label_path, width=1920, height=1080, input_size=640):
@@ -50,7 +58,13 @@ def _prediction_rows(result):
 
 
 def collect_predictions(
-    model_path, dataset_root, partition, *, device, imgsz, confidence=0.05
+    model_path,
+    dataset_root,
+    partition,
+    *,
+    device,
+    imgsz,
+    confidence=PREDICTION_CONFIDENCE_FLOOR,
 ):
     try:
         from ultralytics import YOLO
@@ -105,13 +119,50 @@ def _standard_metrics(model_path, dataset_yaml, *, split, device, imgsz):
             "mAP50_95": float(box.ap[index]),
         }
     confusion = getattr(getattr(metrics, "confusion_matrix", None), "matrix", None)
-    return {
+    result = {
         "precision": float(box.mp),
         "recall": float(box.mr),
         "mAP50": float(box.map50),
         "mAP50_95": float(box.map),
         "per_class": per_class,
         "confusion_matrix": confusion.tolist() if confusion is not None else None,
+    }
+    if set(per_class) != set(EQUIPMENT_CLASSES):
+        raise ValueError("evaluation did not produce metrics for every class")
+    _require_finite(result)
+    return result
+
+
+def _require_finite(value):
+    if isinstance(value, dict):
+        for item in value.values():
+            _require_finite(item)
+    elif isinstance(value, (list, tuple)):
+        for item in value:
+            _require_finite(item)
+    elif isinstance(value, float) and not math.isfinite(value):
+        raise ValueError("evaluation metrics contain a non-finite value")
+
+
+def _formal_commit():
+    commit = git_commit()
+    if commit == "unknown" or commit.endswith("-dirty"):
+        raise ValueError("formal visual evaluation requires a clean tracked worktree")
+    return commit
+
+
+def _full_validation_provenance(dataset_root):
+    identity = TrainingViewIdentity.from_record(
+        json.loads(
+            (dataset_root / "identity/training_view_identity.json").read_text()
+        )
+    )
+    return {
+        "training_view_identity_sha256": identity.training_view_identity_sha256,
+        "source_development_dataset_identity": (
+            identity.source_development_dataset_identity
+        ),
+        "membership_sha256": identity.full_validation_membership_sha256,
     }
 
 
@@ -125,20 +176,24 @@ def evaluate_yolo(
     imgsz=640,
 ):
     dataset_root = Path(dataset_root)
+    output_path = Path(output_path)
     heldout_receipt = None
     if partition == "heldout_test":
+        if output_path.exists():
+            raise ValueError("held-out evaluation result already exists")
         receipt_path = dataset_root / "identity/heldout_access_receipt.json"
         if not receipt_path.is_file():
             raise ValueError(
                 "held-out evaluation requires a frozen-package access receipt"
             )
         heldout_receipt = json.loads(receipt_path.read_text())
-        if file_sha256(Path(model_path)) not in heldout_receipt.get(
-            "allowed_model_sha256", []
+        if file_sha256(Path(model_path)) != heldout_receipt.get(
+            "canonical_model_sha256"
         ):
             raise ValueError(
-                "held-out model is not part of the package that unlocked the view"
+                "held-out evaluation requires the canonical frozen model"
             )
+    evaluation_commit = _formal_commit()
     split = (
         "test"
         if partition in {"full_validation", "heldout_test"}
@@ -154,7 +209,26 @@ def evaluate_yolo(
     frames = collect_predictions(
         model_path, dataset_root, partition, device=device, imgsz=imgsz
     )
-    threshold = select_confidence_threshold(frames)
+    if partition == "full_validation":
+        confidence = select_confidence_threshold(frames)
+        threshold_source = "full_validation_macro_f1_sweep"
+        dataset_provenance = _full_validation_provenance(dataset_root)
+    elif partition == "heldout_test":
+        frozen = heldout_receipt.get("frozen_confidence_threshold")
+        if not isinstance(frozen, (int, float)):
+            raise ValueError("held-out receipt lacks a frozen confidence threshold")
+        confidence = {"frozen": threshold_metrics(frames, float(frozen))}
+        threshold_source = "frozen_model_package"
+        dataset_provenance = {
+            "heldout_dataset_identity_sha256": heldout_receipt[
+                "heldout_dataset_identity_sha256"
+            ],
+            "membership_sha256": heldout_receipt["membership_sha256"],
+        }
+    else:
+        confidence = {"fixed": threshold_metrics(frames, 0.25)}
+        threshold_source = "fixed_diagnostic_threshold"
+        dataset_provenance = _full_validation_provenance(dataset_root)
     result = {
         "visual_evaluation_schema_version": 1,
         "model_sha256": file_sha256(Path(model_path)),
@@ -162,9 +236,14 @@ def evaluate_yolo(
         "frame_count": len(frames),
         "input_size": imgsz,
         "device": device,
+        "evaluation_code_commit_sha": evaluation_commit,
+        "prediction_confidence_floor": PREDICTION_CONFIDENCE_FLOOR,
+        "dataset_provenance": dataset_provenance,
         "heldout_access_receipt": heldout_receipt,
         "standard_metrics": standard,
-        "confidence_selection": threshold,
+        "confidence_threshold_source": threshold_source,
+        "confidence_evaluation": confidence,
     }
-    write_json(Path(output_path), result)
+    _require_finite(result)
+    write_json(output_path, result)
     return result

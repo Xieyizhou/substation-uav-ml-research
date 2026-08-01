@@ -45,6 +45,10 @@ def materialize_heldout_view(collection_root, package_root, output_root):
     result = materialize_yolo_partition(
         "heldout_test", rows, collection_root, output_root
     )
+    write_json(
+        output_root / "identity/held_out_test_dataset_identity.json",
+        heldout.to_record(),
+    )
     yaml = output_root / "dataset.yaml"
     yaml.write_text(
         f"path: {output_root.resolve()}\ntest: images/heldout_test\nnames:\n"
@@ -58,6 +62,11 @@ def materialize_heldout_view(collection_root, package_root, output_root):
         "allowed_model_sha256": sorted(
             export["sha256"] for export in package["exports"].values()
         ),
+        "canonical_input_size": 640,
+        "canonical_model_sha256": package["exports"]["640"]["sha256"],
+        "frozen_confidence_threshold": package[
+            "frozen_confidence_threshold"
+        ],
         "membership_sha256": result["membership_sha256"],
         "frame_count": result["frame_count"],
     }

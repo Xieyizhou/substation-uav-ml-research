@@ -301,8 +301,10 @@ The first visual baseline uses COCO-pretrained YOLO11n at 640 pixels. Training
 and validation use Apple MPS locally; model selection uses the balanced
 validation view, followed by one full-validation pass. A frozen package
 exports static batch-1 FP32 ONNX graphs at 320, 416, and 640, each with its
-own preprocessing and model identity. Held-out materialization is gated on a
-valid frozen package and cannot be used for fitting or threshold selection.
+own preprocessing and model identity. The package manifest is written only
+after all three 200-frame PT/ONNX equivalence gates pass. Held-out
+materialization is gated on that finalized package; its canonical 640 model
+must use the full-validation threshold and cannot fit or select a new one.
 
 ### Canonical camera decoding
 
