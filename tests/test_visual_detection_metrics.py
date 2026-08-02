@@ -1,4 +1,6 @@
 import unittest
+from pathlib import Path
+import tempfile
 
 from src.ml.visual_detection_metrics import (
     box_iou,
@@ -7,7 +9,7 @@ from src.ml.visual_detection_metrics import (
     select_confidence_threshold,
     threshold_metrics,
 )
-from src.ml.visual_onnx_gate import calibration_members
+from src.ml.visual_onnx_gate import _calibration_dataset, calibration_members
 
 
 def truth(class_name="transformer", *, small=False):
@@ -108,6 +110,25 @@ class DetectionMetricTests(unittest.TestCase):
             [row["sample_id"] for row in second],
         )
         self.assertEqual(len(first), 200)
+
+    def test_calibration_dataset_is_valid_for_ultralytics_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            dataset = root / "source"
+            image = dataset / "images/validation/sample.png"
+            label = dataset / "labels/validation/sample.txt"
+            image.parent.mkdir(parents=True)
+            label.parent.mkdir(parents=True)
+            image.write_bytes(b"png")
+            label.write_text("", encoding="utf-8")
+            row = {
+                "image_relative_path": "images/validation/sample.png",
+                "label_relative_path": "labels/validation/sample.txt",
+            }
+            yaml = _calibration_dataset(dataset, root / "calibration", [row])
+            content = yaml.read_text(encoding="utf-8")
+            self.assertIn("train: images/calibration\n", content)
+            self.assertIn("val: images/calibration\n", content)
 
 
 if __name__ == "__main__":

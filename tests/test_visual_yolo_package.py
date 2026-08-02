@@ -127,6 +127,8 @@ class VisualYoloPackageTests(unittest.TestCase):
                 "confidence_evaluation": {"selected": {"threshold": 0.42}},
             },
         )
+        write_json(root / "training_provenance.json", {"environment": {}})
+        write_json(root / "training_view_identity.json", {"identity": HASH})
         gates = {}
         for size in EXPORT_SIZES:
             key = str(size)
@@ -135,6 +137,7 @@ class VisualYoloPackageTests(unittest.TestCase):
                 path,
                 {
                     "passed": True,
+                    "equivalence_code_commit_sha": "gate-commit",
                     "input_size": size,
                     "pt_model_sha256": weight_hash,
                     "onnx_model_sha256": exports[key]["sha256"],
@@ -160,6 +163,10 @@ class VisualYoloPackageTests(unittest.TestCase):
             "full_validation_results_sha256": file_sha256(
                 root / "full_validation_results.json"
             ),
+            "supporting_artifacts": {
+                name: file_sha256(root / name)
+                for name in ("training_provenance.json", "training_view_identity.json")
+            },
             "frozen_confidence_threshold": 0.42,
             "equivalence_gates": gates,
             "model_identity_sha256": {
@@ -182,6 +189,14 @@ class VisualYoloPackageTests(unittest.TestCase):
             self._package(root)
             (root / "onnx/model_416.onnx").write_bytes(b"changed")
             with self.assertRaisesRegex(ValueError, "ONNX hash mismatch"):
+                validate_yolo_package(root)
+
+    def test_changed_supporting_artifact_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self._package(root)
+            write_json(root / "training_provenance.json", {"environment": {"changed": True}})
+            with self.assertRaisesRegex(ValueError, "supporting artifact hash mismatch"):
                 validate_yolo_package(root)
 
     def test_missing_or_failed_equivalence_gate_is_rejected(self):

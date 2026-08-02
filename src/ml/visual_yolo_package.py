@@ -209,9 +209,14 @@ def export_yolo_package(
         "training_view_identity_sha256": (
             training_view.training_view_identity_sha256
         ),
-        "full_validation_results_sha256": file_sha256(
-            output_root / "full_validation_results.json"
-        ),
+        "full_validation_results_sha256": file_sha256(output_root / "full_validation_results.json"),
+        "supporting_artifacts": {
+            name: file_sha256(output_root / name)
+            for name in ("training_view_identity.json", "training_provenance.json",
+                         "training_history.csv", "preprocessing_identities.json",
+                         "model_identities.json")
+            if (output_root / name).is_file()
+        },
         "frozen_confidence_threshold": float(frozen_threshold),
         "equivalence_gates": gates,
         "model_identity_sha256": {
@@ -241,6 +246,9 @@ def validate_yolo_package(root):
         != manifest["full_validation_results_sha256"]
     ):
         raise ValueError("full-validation results hash mismatch")
+    for path, expected in manifest.get("supporting_artifacts", {}).items():
+        if file_sha256(root / path) != expected:
+            raise ValueError(f"supporting artifact hash mismatch: {path}")
     validation = json.loads((root / "full_validation_results.json").read_text())
     threshold = manifest.get("frozen_confidence_threshold")
     selected = validation.get("confidence_evaluation", {}).get("selected", {})
@@ -278,6 +286,7 @@ def validate_yolo_package(root):
         gate = json.loads(gate_path.read_text())
         if (
             gate.get("passed") is not True
+            or not isinstance(gate.get("equivalence_code_commit_sha"), str)
             or gate.get("input_size") != size
             or gate.get("onnx_model_sha256") != export["sha256"]
             or gate.get("pt_model_sha256") != manifest["weights"]["sha256"]

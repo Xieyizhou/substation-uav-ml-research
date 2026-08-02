@@ -14,6 +14,7 @@ from src.ml.visual_training_view import evenly_select
 from src.ml.visual_yolo_dataset import link_image
 from src.ml.visual_yolo_evaluation import (
     PREDICTION_CONFIDENCE_FLOOR,
+    _formal_commit,
     _standard_metrics,
     collect_predictions,
 )
@@ -49,7 +50,8 @@ def _calibration_dataset(dataset_root, root, rows):
         link_image(label, root / "labels/calibration" / label.name)
     yaml = root / "dataset.yaml"
     yaml.write_text(
-        f"path: {root}\nval: images/calibration\nnames:\n"
+        f"path: {root}\ntrain: images/calibration\n"
+        "val: images/calibration\nnames:\n"
         + "".join(f"  {index}: {name}\n" for index, name in enumerate(EQUIPMENT_CLASSES)),
         encoding="utf-8",
     )
@@ -98,6 +100,7 @@ def validate_onnx_equivalence(
     )
     result = {
         "onnx_equivalence_schema_version": 1,
+        "equivalence_code_commit_sha": _formal_commit(),
         "input_size": imgsz,
         "calibration_frame_count": len(selected),
         "calibration_membership": [row["sample_id"] for row in selected],
