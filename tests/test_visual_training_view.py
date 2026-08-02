@@ -11,6 +11,7 @@ from src.cli.visual import build_parser
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import file_sha256, object_sha256, write_json
 from src.ml.visual_identity import DatasetIdentity, class_order_identity
+from src.ml.visual_heldout_view import _heldout_dataset_yaml
 from src.ml.visual_training_identity import TrainingViewIdentity
 from src.ml.visual_training_view import (
     evenly_select,
@@ -58,6 +59,12 @@ def annotation(sample, recording, split, class_name=None, sequence=1):
 
 
 class SamplingTests(unittest.TestCase):
+    def test_heldout_yaml_supports_test_but_disables_training_splits(self):
+        content = _heldout_dataset_yaml("/tmp/heldout")
+        self.assertIn("test: images/heldout_test\n", content)
+        self.assertIn("train: disabled/heldout_not_for_training\n", content)
+        self.assertIn("val: disabled/heldout_not_for_validation\n", content)
+
     def test_standard_metrics_enable_confusion_matrix_collection(self):
         class Box:
             mp = 0.9

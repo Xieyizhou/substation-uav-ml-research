@@ -17,6 +17,16 @@ def _read_jsonl(path):
         return [json.loads(line) for line in source if line.strip()]
 
 
+def _heldout_dataset_yaml(output_root):
+    return (
+        f"path: {Path(output_root).resolve()}\n"
+        "train: disabled/heldout_not_for_training\n"
+        "val: disabled/heldout_not_for_validation\n"
+        "test: images/heldout_test\nnames:\n"
+        + "".join(f"  {index}: {name}\n" for index, name in enumerate(EQUIPMENT_CLASSES))
+    )
+
+
 def materialize_heldout_view(collection_root, package_root, output_root):
     collection_root, output_root = Path(collection_root), Path(output_root)
     package = validate_yolo_package(package_root)
@@ -50,11 +60,7 @@ def materialize_heldout_view(collection_root, package_root, output_root):
         heldout.to_record(),
     )
     yaml = output_root / "dataset.yaml"
-    yaml.write_text(
-        f"path: {output_root.resolve()}\ntest: images/heldout_test\nnames:\n"
-        + "".join(f"  {index}: {name}\n" for index, name in enumerate(EQUIPMENT_CLASSES)),
-        encoding="utf-8",
-    )
+    yaml.write_text(_heldout_dataset_yaml(output_root), encoding="utf-8")
     receipt = {
         "heldout_access_schema_version": 1,
         "heldout_dataset_identity_sha256": heldout.dataset_identity_sha256,
