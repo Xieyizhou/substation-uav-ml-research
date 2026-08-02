@@ -65,6 +65,7 @@ def collect_predictions(
     device,
     imgsz,
     confidence=PREDICTION_CONFIDENCE_FLOOR,
+    batch=1,
 ):
     try:
         from ultralytics import YOLO
@@ -80,6 +81,7 @@ def collect_predictions(
         stream=True,
         imgsz=imgsz,
         conf=confidence,
+        batch=batch,
         iou=0.7,
         device=device,
         rect=False,
@@ -208,8 +210,10 @@ def evaluate_yolo(
         device=device,
         imgsz=imgsz,
     )
+    prediction_batch = 1 if Path(model_path).suffix == ".onnx" else 16
     frames = collect_predictions(
-        model_path, dataset_root, partition, device=device, imgsz=imgsz
+        model_path, dataset_root, partition, device=device, imgsz=imgsz,
+        batch=prediction_batch,
     )
     if partition == "full_validation":
         confidence = select_confidence_threshold(frames)
@@ -240,6 +244,7 @@ def evaluate_yolo(
         "device": device,
         "evaluation_code_commit_sha": evaluation_commit,
         "prediction_confidence_floor": PREDICTION_CONFIDENCE_FLOOR,
+        "prediction_batch_size": prediction_batch,
         "dataset_provenance": dataset_provenance,
         "heldout_access_receipt": heldout_receipt,
         "standard_metrics": standard,

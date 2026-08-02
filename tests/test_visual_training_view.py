@@ -103,6 +103,7 @@ class SamplingTests(unittest.TestCase):
                 [],
             )
         self.assertFalse(model.predict.call_args.kwargs["rect"])
+        self.assertEqual(model.predict.call_args.kwargs["batch"], 1)
 
     def test_largest_remainder_is_exact_stable_and_bounded(self):
         first = proportional_quotas({"b": 3, "a": 7}, 6)
@@ -385,6 +386,7 @@ class TrainingCliTests(unittest.TestCase):
                 result["confidence_evaluation"]["frozen"]["threshold"],
                 0.42,
             )
+            self.assertEqual(result["prediction_batch_size"], 1)
             with self.assertRaisesRegex(ValueError, "already exists"):
                 evaluate_yolo(
                     model,
@@ -440,6 +442,7 @@ class TrainingCliTests(unittest.TestCase):
                 identity.training_view_identity_sha256,
             )
             self.assertEqual(result["evaluation_code_commit_sha"], "evaluation-commit")
+            self.assertEqual(result["prediction_batch_size"], 16)
             self.assertEqual(len(result["confidence_evaluation"]["candidates"]), 71)
 
 
