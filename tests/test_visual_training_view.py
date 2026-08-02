@@ -20,7 +20,11 @@ from src.ml.visual_training_view import (
 )
 from src.ml.visual_yolo_dataset import link_image, yolo_label_text
 from src.ml.visual_yolo_training import load_training_config
-from src.ml.visual_yolo_evaluation import _standard_metrics, evaluate_yolo
+from src.ml.visual_yolo_evaluation import (
+    _standard_metrics,
+    collect_predictions,
+    evaluate_yolo,
+)
 
 
 HASH = "a" * 64
@@ -82,7 +86,23 @@ class SamplingTests(unittest.TestCase):
                 "model.pt", "dataset.yaml", split="test", device="cpu", imgsz=640
             )
         self.assertTrue(model.val.call_args.kwargs["plots"])
+        self.assertFalse(model.val.call_args.kwargs["rect"])
         self.assertEqual(result["confusion_matrix"], [[1.0]])
+
+    def test_prediction_collection_uses_static_square_preprocessing(self):
+        model = types.SimpleNamespace(predict=Mock(return_value=[]))
+        module = types.SimpleNamespace(YOLO=Mock(return_value=model))
+        with tempfile.TemporaryDirectory() as directory, patch.dict(
+            "sys.modules", {"ultralytics": module}
+        ):
+            self.assertEqual(
+                collect_predictions(
+                    "model.pt", directory, "full_validation",
+                    device="cpu", imgsz=640,
+                ),
+                [],
+            )
+        self.assertFalse(model.predict.call_args.kwargs["rect"])
 
     def test_largest_remainder_is_exact_stable_and_bounded(self):
         first = proportional_quotas({"b": 3, "a": 7}, 6)

@@ -82,6 +82,7 @@ def collect_predictions(
         conf=confidence,
         iou=0.7,
         device=device,
+        rect=False,
         verbose=False,
     ):
         stem = Path(result.path).stem
@@ -106,6 +107,7 @@ def _standard_metrics(model_path, dataset_yaml, *, split, device, imgsz):
         iou=0.7,
         device=device,
         plots=True,
+        rect=False,
         verbose=False,
     )
     box = metrics.box
