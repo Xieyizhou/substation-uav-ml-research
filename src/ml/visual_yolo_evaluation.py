@@ -105,7 +105,7 @@ def _standard_metrics(model_path, dataset_yaml, *, split, device, imgsz):
         conf=0.001,
         iou=0.7,
         device=device,
-        plots=False,
+        plots=True,
         verbose=False,
     )
     box = metrics.box

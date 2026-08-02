@@ -3,8 +3,9 @@ import hashlib
 import json
 from pathlib import Path
 import tempfile
+import types
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from src.cli.visual import build_parser
 from src.ml import EQUIPMENT_CLASSES
@@ -19,7 +20,7 @@ from src.ml.visual_training_view import (
 )
 from src.ml.visual_yolo_dataset import link_image, yolo_label_text
 from src.ml.visual_yolo_training import load_training_config
-from src.ml.visual_yolo_evaluation import evaluate_yolo
+from src.ml.visual_yolo_evaluation import _standard_metrics, evaluate_yolo
 
 
 HASH = "a" * 64
@@ -53,6 +54,36 @@ def annotation(sample, recording, split, class_name=None, sequence=1):
 
 
 class SamplingTests(unittest.TestCase):
+    def test_standard_metrics_enable_confusion_matrix_collection(self):
+        class Box:
+            mp = 0.9
+            mr = 0.8
+            map50 = 0.85
+            map = 0.75
+            ap_class_index = [0, 1, 2, 3]
+            p = [0.9] * 4
+            r = [0.8] * 4
+            ap50 = [0.85] * 4
+            ap = [0.75] * 4
+
+        class Matrix:
+            matrix = type("Values", (), {"tolist": lambda self: [[1.0]]})()
+
+        metrics = types.SimpleNamespace(
+            box=Box(),
+            names=dict(enumerate(EQUIPMENT_CLASSES)),
+            confusion_matrix=Matrix(),
+        )
+        model = types.SimpleNamespace(val=Mock(return_value=metrics))
+        yolo = Mock(return_value=model)
+        module = types.SimpleNamespace(YOLO=yolo)
+        with patch.dict("sys.modules", {"ultralytics": module}):
+            result = _standard_metrics(
+                "model.pt", "dataset.yaml", split="test", device="cpu", imgsz=640
+            )
+        self.assertTrue(model.val.call_args.kwargs["plots"])
+        self.assertEqual(result["confusion_matrix"], [[1.0]])
+
     def test_largest_remainder_is_exact_stable_and_bounded(self):
         first = proportional_quotas({"b": 3, "a": 7}, 6)
         second = proportional_quotas({"a": 7, "b": 3}, 6)
