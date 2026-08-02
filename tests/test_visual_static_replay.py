@@ -7,12 +7,53 @@ from unittest.mock import patch
 from src.ml.artifacts import file_sha256, write_json
 from src.ml.visual_benchmark import VisualBenchmarkCondition
 from src.ml.visual_static_replay import materialize_static_replay
+from src.ml.visual_static_runtime import timing_summary
+from src.ml.visual_static_source import (
+    ordered_replay_sources,
+    static_predict_options,
+    write_source_list,
+)
 from src.ml.visual_yolo_dataset import _write_jsonl
 from tests.test_visual_identity import dataset_identity
 from tests.test_visual_yolo_package import VisualYoloPackageTests
 
 
 class StaticReplayTests(unittest.TestCase):
+    def test_ordered_source_is_batch_one_and_preserves_membership_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            images = root / "images"
+            images.mkdir()
+            rows = []
+            for name in ("z.png", "a.png", "m.png"):
+                (images / name).write_bytes(name.encode())
+                rows.append({"image_relative_path": f"images/{name}"})
+            with ordered_replay_sources(rows, root) as (source_root, paths):
+                source = write_source_list(source_root, "ordered", paths)
+                self.assertEqual([path.name for path in paths], [
+                    "00000000.png", "00000001.png", "00000002.png",
+                ])
+                self.assertEqual(
+                    [Path(line).name for line in source.read_text().splitlines()],
+                    ["00000000.png", "00000001.png", "00000002.png"],
+                )
+                self.assertEqual(
+                    [Path(line).read_bytes().decode() for line in source.read_text().splitlines()],
+                    ["z.png", "a.png", "m.png"],
+                )
+        condition = type("Condition", (), {
+            "input_width": 320, "confidence_threshold": 0.65,
+        })()
+        options = static_predict_options(condition)
+        self.assertEqual(options["batch"], 1)
+        self.assertFalse(options["rect"])
+
+    def test_timing_summary_reports_exact_count_and_percentiles(self):
+        result = timing_summary([1, 2, 3, 4, 5])
+        self.assertEqual(result["count"], 5)
+        self.assertEqual(result["p50_ms"], 3.0)
+        self.assertEqual(result["p95_ms"], 5.0)
+
     def test_materialization_binds_nine_conditions_and_frozen_threshold(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

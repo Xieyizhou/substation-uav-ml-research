@@ -1,11 +1,9 @@
 """Materialize and execute identity-bound static visual replay conditions."""
 from __future__ import annotations
-import importlib.metadata
 import json
 from pathlib import Path
 import platform
 import resource
-import sys
 import time
 
 from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
@@ -18,6 +16,12 @@ from src.ml.visual_benchmark_matrix import validate_static_benchmark_directory
 from src.ml.visual_detection_metrics import threshold_metrics
 from src.ml.visual_identity import DatasetIdentity, ModelIdentity, PreprocessingIdentity
 from src.ml.visual_pilot import _read_jsonl, _write_jsonl
+from src.ml.visual_static_source import (
+    ordered_replay_sources,
+    static_predict_options,
+    write_source_list,
+)
+from src.ml.visual_static_runtime import runtime_environment, timing_summary
 from src.ml.visual_yolo_evaluation import _prediction_rows, _truth
 from src.ml.visual_yolo_package import validate_yolo_package
 
@@ -121,61 +125,25 @@ def materialize_static_replay(
     return manifest
 
 
-def _summary(values):
-    if not values:
-        return None
-    ordered = sorted(float(value) for value in values)
-    def percentile(fraction):
-        index = min(round((len(ordered) - 1) * fraction), len(ordered) - 1)
-        return ordered[index]
-
-    return {
-        "count": len(ordered),
-        "min_ms": ordered[0],
-        "max_ms": ordered[-1],
-        "mean_ms": sum(ordered) / len(ordered),
-        "p50_ms": percentile(0.50),
-        "p95_ms": percentile(0.95),
-        "p99_ms": percentile(0.99),
-    }
-
-
-def _runtime_environment():
-    values = {
-        "python": sys.version,
-        "platform": platform.platform(),
-        "machine": platform.machine(),
-        "ultralytics": importlib.metadata.version("ultralytics"),
-        "onnxruntime": importlib.metadata.version("onnxruntime"),
-    }
-    return values, object_sha256(values)
-
-
-def _run_condition(condition, rows, heldout_root, model_path, output_root):
+def _run_condition(condition, rows, ordered_paths, source_root, heldout_root,
+                   model_path, output_root):
     from ultralytics import YOLO
     selected = rows[:: condition.frame_skip_interval]
-    image_paths = [str(Path(heldout_root) / row["image_relative_path"]) for row in selected]
+    selected_paths = ordered_paths[:: condition.frame_skip_interval]
     model = YOLO(str(model_path))
-    warmup = image_paths[: condition.warmup_frame_count]
+    options = static_predict_options(condition)
+    warmup = selected_paths[: condition.warmup_frame_count]
     if warmup:
-        list(model.predict(warmup, stream=True, batch=1, verbose=False))
+        source = write_source_list(source_root, "warmup", warmup)
+        list(model.predict(str(source), **options))
     timings = {stage: [] for stage in TIMING_STAGES}
     predictions, raw = {}, []
     started = time.perf_counter()
-    results = model.predict(
-        image_paths,
-        stream=True,
-        batch=1,
-        imgsz=condition.input_width,
-        conf=condition.confidence_threshold,
-        iou=0.7,
-        device="cpu",
-        verbose=False,
-    )
-    for result in results:
-        stem = Path(result.path).stem
+    source = write_source_list(source_root, condition.condition_id, selected_paths)
+    results = model.predict(str(source), **options)
+    for row, result in zip(selected, results, strict=True):
         prediction = _prediction_rows(result)
-        predictions[stem] = prediction
+        predictions[row["sample_id"]] = prediction
         speed = result.speed
         preprocess = float(speed.get("preprocess", 0.0))
         inference = float(speed.get("inference", 0.0))
@@ -185,16 +153,20 @@ def _run_condition(condition, rows, heldout_root, model_path, output_root):
         timings["inference_ms"].append(inference)
         timings["postprocess_ms"].append(postprocess)
         timings["end_to_end_ms"].append(preprocess + inference + postprocess)
-        raw.append({"sample_id": stem, "predictions": prediction, "speed_ms": speed})
+        raw.append(
+            {"sample_id": row["sample_id"], "predictions": prediction, "speed_ms": speed}
+        )
     wall = time.perf_counter() - started
     frames = []
     for row in rows:
-        stem = Path(row["image_relative_path"]).stem
         frames.append(
             {
                 "sample_id": row["sample_id"],
-                "truth": _truth(Path(heldout_root) / row["label_relative_path"]),
-                "predictions": predictions.get(stem, []),
+                "truth": _truth(
+                    Path(heldout_root) / row["label_relative_path"],
+                    input_size=condition.input_width,
+                ),
+                "predictions": predictions.get(row["sample_id"], []),
             }
         )
     metrics = threshold_metrics(frames, condition.confidence_threshold)
@@ -210,7 +182,7 @@ def _run_condition(condition, rows, heldout_root, model_path, output_root):
     }
     manifest_path = output_root / "raw" / f"{condition.condition_id}.manifest.json"
     write_json(manifest_path, raw_manifest)
-    environment, environment_id = _runtime_environment()
+    environment, environment_id = runtime_environment()
     inferred = len(raw)
     visual = {
         "precision": tp / max(tp + fp, 1),
@@ -248,7 +220,7 @@ def _run_condition(condition, rows, heldout_root, model_path, output_root):
             "failed_inference": 0,
             "labelled": sum(bool(frame["truth"]) for frame in frames),
         },
-        timing_summaries={stage: _summary(values) for stage, values in timings.items()},
+        timing_summaries={stage: timing_summary(values) for stage, values in timings.items()},
         scheduling_summaries={
             "requested_inference_frames": len(selected),
             "completed_inference_frames": inferred,
@@ -275,26 +247,33 @@ def run_static_replay(matrix_root, package_root, heldout_root):
         package_root, heldout_root
     )
     completed = []
-    for item in manifest["conditions"]:
-        condition = VisualBenchmarkCondition.from_record(
-            json.loads((matrix_root / item["path"]).read_text())
-        )
-        size = str(condition.input_width)
-        model = ModelIdentity.from_record(models[size])
-        preprocess = PreprocessingIdentity.from_record(preprocessing[size])
-        condition.validate_references(dataset, model, preprocess)
-        result_path = matrix_root / "results" / f"{condition.condition_id}.json"
-        if result_path.exists():
-            existing = VisualBenchmarkResult.from_record(json.loads(result_path.read_text()))
-            existing.validate_references(condition, dataset, model, preprocess)
+    commit = _clean_commit()
+    with ordered_replay_sources(rows, heldout_root) as (source_root, paths):
+        for item in manifest["conditions"]:
+            condition = VisualBenchmarkCondition.from_record(
+                json.loads((matrix_root / item["path"]).read_text())
+            )
+            if condition.software_commit_sha != commit:
+                raise ValueError("static replay condition references different code")
+            size = str(condition.input_width)
+            model = ModelIdentity.from_record(models[size])
+            preprocess = PreprocessingIdentity.from_record(preprocessing[size])
+            condition.validate_references(dataset, model, preprocess)
+            result_path = matrix_root / "results" / f"{condition.condition_id}.json"
+            if result_path.exists():
+                existing = VisualBenchmarkResult.from_record(
+                    json.loads(result_path.read_text())
+                )
+                existing.validate_references(condition, dataset, model, preprocess)
+                completed.append(condition.condition_id)
+                continue
+            model_path = Path(package_root) / package["exports"][size]["path"]
+            result, environment = _run_condition(
+                condition, rows, paths, source_root, heldout_root,
+                model_path, matrix_root,
+            )
+            result.validate_references(condition, dataset, model, preprocess)
+            write_json(result_path, result.to_record())
+            write_json(matrix_root / "runtime_environment.json", environment)
             completed.append(condition.condition_id)
-            continue
-        model_path = Path(package_root) / package["exports"][size]["path"]
-        result, environment = _run_condition(
-            condition, rows, heldout_root, model_path, matrix_root
-        )
-        result.validate_references(condition, dataset, model, preprocess)
-        write_json(result_path, result.to_record())
-        write_json(matrix_root / "runtime_environment.json", environment)
-        completed.append(condition.condition_id)
     return {"completed_condition_ids": completed, "condition_count": len(completed)}
