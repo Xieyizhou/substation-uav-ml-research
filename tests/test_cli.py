@@ -20,7 +20,6 @@ class RootCliTests(unittest.TestCase):
             "experiment",
             "report",
             "check",
-            "maintenance",
             "sensor",
             "data",
             "model",

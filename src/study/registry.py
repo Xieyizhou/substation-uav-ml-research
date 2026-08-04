@@ -114,15 +114,6 @@ class ResearchRegistry:
                 ),
             )
 
-    def get_dataset(self, dataset_id):
-        with self.connection() as connection:
-            row = connection.execute(
-                "SELECT * FROM datasets WHERE dataset_id=?", (dataset_id,)
-            ).fetchone()
-        if row is None:
-            raise ValueError(f"unknown dataset: {dataset_id}")
-        return dict(row)
-
     def register_model(self, manifest, path):
         with self.connection() as connection:
             connection.execute(

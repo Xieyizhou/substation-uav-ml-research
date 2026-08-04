@@ -189,16 +189,6 @@ class CameraFrame:
 
 
 @dataclass(frozen=True)
-class PointCloudFrame:
-    timestamp_s: float
-    received_monotonic_s: float
-    frame_id: str
-    points_xyz_m: tuple[tuple[float, float, float], ...]
-    source: str
-    sequence: int = 0
-
-
-@dataclass(frozen=True)
 class LocalCostmap:
     timestamp_s: float
     frame_id: str
@@ -250,7 +240,6 @@ class EquipmentDetection:
     timestamp_s: float
     frame_id: str
     tracking_id: str | None = None
-    position_ned_m: tuple[float, float, float] | None = None
 
 
 @dataclass(frozen=True)
@@ -348,21 +337,3 @@ class VisualTiming:
 class VisualDetectionResult:
     detections: tuple[EquipmentDetection, ...]
     timing: VisualTiming
-
-    def __iter__(self):
-        yield self.detections
-        yield self.timing
-
-
-@dataclass(frozen=True)
-class PerceptionSnapshot:
-    timestamp_s: float
-    frame_id: str
-    sensor_health: SensorHealth
-    lidar_scan: LaserScanFrame | None = None
-    point_cloud: PointCloudFrame | None = None
-    costmap: LocalCostmap | None = None
-    risk: RiskEstimate | None = None
-    equipment: tuple[EquipmentDetection, ...] = field(default_factory=tuple)
-    pose_ned_m: tuple[float, float, float] | None = None
-    yaw_deg: float | None = None

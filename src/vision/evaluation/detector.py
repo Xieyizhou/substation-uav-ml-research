@@ -1,4 +1,4 @@
-"""Four-class YOLO equipment detector with optional ONNX export."""
+"""Four-class YOLO equipment detector."""
 
 from __future__ import annotations
 
@@ -168,21 +168,6 @@ class EquipmentDetector:
             timing_provenance=provenance,
         )
         return VisualDetectionResult(tuple(detections), timing)
-
-    def export_onnx(self, output_directory=None):
-        exported = self.model.export(
-            format="onnx",
-            imgsz=getattr(self, "image_size", 640),
-            dynamic=False,
-        )
-        path = Path(exported)
-        if output_directory is not None:
-            destination = Path(output_directory) / path.name
-            destination.parent.mkdir(parents=True, exist_ok=True)
-            path.replace(destination)
-            path = destination
-        return path
-
 
 def _backend_stage_timings(results):
     values = {

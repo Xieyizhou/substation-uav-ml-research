@@ -31,14 +31,12 @@ PX4/Gazebo simulation
 
 - `src/planner/`: grid A* search, path simplification, obstacle-map conversion.
 - `src/sensors/`: Gazebo/replay sources, scan parsing, health, and stable data contracts.
-- `src/perception/`: map-oracle baseline, LiDAR detector, rolling costmap,
-  safety state, BEV, and semantic fusion.
+- `src/perception/`: map-oracle baseline, LiDAR detector, rolling costmap, and
+  safety state.
 - `src/ml/`: shared dataset schemas, split isolation, ONNX risk, LiDAR
   training, and domain randomization.
 - `src/vision/`: deterministic camera collection, visual contracts, YOLO
   training, evaluation, model packaging, and static replay.
-- `src/backends/`: vendor-neutral flight protocol, MAVSDK adapter, and future
-  DJI PSDK boundary.
 - `src/flight/fly_astar_path.py`: thin CLI and backward-compatible exports.
 - `src/flight/mavsdk_preflight.py`: connection and position readiness.
 - `src/flight/waypoint_executor.py`: Offboard waypoint and route execution.

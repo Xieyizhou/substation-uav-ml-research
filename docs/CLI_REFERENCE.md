@@ -166,13 +166,3 @@ python main.py check all
 
 `check all` combines the dependency check, perception smoke test, and complete
 offline regression suite. It does not start PX4 or fly the vehicle.
-
-## Maintenance tools
-
-Legacy output migration is intentionally separated from daily commands because
-it moves files:
-
-```bash
-python main.py maintenance migrate-outputs --dry-run
-python main.py maintenance migrate-outputs
-```

@@ -14,23 +14,21 @@ health, data age, confidence, clearance, or collision-time limits are violated.
 ## Runtime architecture
 
 ```text
-Gazebo LiDAR / replay / future DJI payload
-                    |
-            timestamped SensorSource
-                    |
-          LaserScanFrame / PointCloudFrame
-                    |
-       geometric + optional ONNX inference
-                    |
-      LocalCostmap + RiskEstimate + health
-                    |
-          independent safety supervisor
-                    |
-          A* / active local replanning
-                    |
-         FlightBackend high-level commands
-              /                    \
-       MAVSDK + PX4          DJI PSDK gRPC bridge
+Gazebo LiDAR / deterministic replay
+                 |
+         timestamped SensorSource
+                 |
+            LaserScanFrame
+                 |
+    geometric + optional ONNX inference
+                 |
+   LocalCostmap + RiskEstimate + health
+                 |
+       independent safety supervisor
+                 |
+       A* / active local replanning
+                 |
+            MAVSDK + PX4
 ```
 
 The stable internal contracts live in `src/sensors/types.py`. Coordinates use
@@ -500,7 +498,7 @@ network, start a simulator, materialize a template, or execute a benchmark.
   active replanning. Runtime LiDAR does not read map obstacle names or cells.
 - Sensor loss and stale data are fail-safe danger conditions.
 
-### ML and future-sensor research components
+### ML research components
 
 - Versioned LiDAR research sample schema, synchronized replay collector,
   geometry-derived truth labels, and hashed dataset manifests.
@@ -523,16 +521,9 @@ network, start a simulator, materialize a template, or execute a benchmark.
   `capacitor_bank`, and `reactor`.
 - Simulator bounding-box to YOLO label conversion and deterministic domain
   randomization manifests.
-- LiDAR/YOLO projection association; semantic positions are only created when
-  LiDAR range evidence exists.
-- Point-cloud to BEV height, occupancy, and clearance conversion, plus a
-  height-layer A* planner with explicit climb cost.
-- High-level `FlightBackend` contract, a MAVSDK implementation, and a Python
-  client boundary for a future DJI PSDK C++ gRPC service.
 
-These components make M1-M3 offline development and M4-M7 interface development
-possible. They do not constitute trained production models, a completed C++
-DJI application, or real-airframe validation.
+These components support offline development and simulation evaluation. They
+do not constitute trained production models or real-airframe validation.
 
 The camera record/replay, deterministic decoder, identity contracts, pilot
 protocol, static templates, and timing contracts are experimental
@@ -670,26 +661,3 @@ CI runs unit and short replay checks. The v0.1 manual gate has completed a
 [validation report](results/v0.1_lidar_validation_20260728.md). Fault injection
 and the experiment registry are implemented; model training and 30-scenario
 results remain manual evidence work.
-
-## DJI boundary
-
-`integrations/dji_psdk/flight_bridge.proto` defines the local gRPC boundary.
-The future C++ companion process owns PSDK initialization, control authority,
-flight-control subscriptions, joystick/FlyTo calls, HMS/watchdog handling,
-camera streams, link-loss behavior, and hardware limits. Python remains
-vendor-neutral.
-
-M30/M30T integration assumes E-Port plus PSDK and an independently integrated
-LiDAR payload. The aircraft's built-in obstacle sensing and single-point laser
-range finder are not treated as a scanning LiDAR. Payload mass, compute,
-mounting, power, and cooling must be recalculated before hardware work.
-
-Hardware validation order is fixed: software-in-the-loop, hardware-in-the-loop,
-propellers removed, tethered low altitude, open field, then controlled
-substation exterior testing.
-
-References:
-
-- [DJI PSDK product capabilities](https://developer.dji.com/doc/payload-sdk-tutorial/en/product-introduction/product-capabilities.html)
-- [DJI PSDK flight control](https://developer.dji.com/doc/payload-sdk-tutorial/en/function-overview/advanced-function/flight-control.html)
-- [DJI Matrice 30 specifications](https://enterprise.dji.com/matrice-30/specs)

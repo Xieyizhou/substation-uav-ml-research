@@ -66,7 +66,8 @@ See [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for the complete command set.
   packages, metrics, and protocols.
 - `src/study/`: local SQLite registry, resumable run queues, comparison gates,
   and paired confidence intervals.
-- `src/backends/`: high-level flight abstraction and MAVSDK/DJI boundaries.
+- `src/vision/`: deterministic camera collection, visual contracts, YOLO
+  training/evaluation, model packaging, and static replay.
 - `src/flight/`: MAVSDK/PX4 flight execution, tasks, and replanning.
 - `src/maps/`: map catalog, destination persistence, and goal-marker sync.
 - `src/logging/`: telemetry, analysis, summaries, and comparisons.
@@ -85,9 +86,9 @@ See [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for the complete command set.
 - Cleanup limited to project-managed flight and PX4 PIDs.
 - Map switching blocked while a managed flight or PX4 session is active.
 - Parameter, map, destination, and A* reachability validation.
-- Offline tests plus shell and five-map preview checks. The suite now also
-  covers sensor parsing/replay, costmaps, split leakage, semantic fusion, BEV,
-  2.5D planning, safety policy, and backend contracts.
+- Offline tests plus shell and five-map preview checks. The suite also covers
+  sensor parsing/replay, costmaps, split leakage, visual identity gates,
+  deterministic collection, safety policy, and flight lifecycle behavior.
 
 ## Experiment Status
 
@@ -138,19 +139,19 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Next Priorities
 
-1. Collect train/validation data on training/simple/medium/complex seeds
-   `2001–2050` and held-out extreme test data on `2051–2060`.
-2. Train and package the first model, pass fixed replay and the 15-run
-   closed-loop gate, then execute the 120-run paired formal protocol.
-3. Generate four-class equipment labels and train the locked 640-input YOLO
-   model while keeping extreme layouts unseen.
-4. Implement and bench the DJI C++ PSDK service only after simulation and HIL
-   gates pass.
+1. Collect and audit the 50 frozen v2 visual recordings across development,
+   validation, and blind layouts.
+2. Build the v2 composite dataset and deterministic phase/size-balanced
+   training view.
+3. Train one YOLO11n v2 candidate, freeze its validation threshold, and pass
+   the three static ONNX equivalence gates.
+4. Run the paired blind comparison once, then execute the nine static replay
+   conditions without changing the frozen model.
 
 ## Release State
 
-- Current research milestone: `v0.2` infrastructure implemented; data
-  collection, model training, and formal evidence remain pending.
+- Current research milestone: the visual v1 baseline is frozen; v2 formal
+  collection and the paired blind comparison remain pending.
 - No research release tag is implied until the reviewed summary is committed
   and explicitly published.
 - The predecessor resume demo and its releases remain in
