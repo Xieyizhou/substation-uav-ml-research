@@ -34,21 +34,23 @@ def load_visual_route(path):
     return VisualRoute.from_record(record)
 
 
-def _cell_waypoint(cell, altitude_m, yaw_deg, name):
+def _cell_waypoint(cell, altitude_m, yaw_deg, name, origin):
+    origin_east_m, origin_north_m = origin
     return {
         "name": name,
-        "north_m": float(cell[1]) + 0.5,
-        "east_m": float(cell[0]) + 0.5,
+        "north_m": float(cell[1]) + 0.5 - origin_north_m,
+        "east_m": float(cell[0]) + 0.5 - origin_east_m,
         "down_m": -float(altitude_m),
         "yaw_deg": float(yaw_deg),
     }
 
 
-def _observation_waypoint(observation):
+def _observation_waypoint(observation, origin):
+    origin_east_m, origin_north_m = origin
     return {
         "name": observation.waypoint_id,
-        "north_m": observation.north_m,
-        "east_m": observation.east_m,
+        "north_m": observation.north_m - origin_north_m,
+        "east_m": observation.east_m - origin_east_m,
         "down_m": -observation.altitude_m,
         "yaw_deg": observation.yaw_deg,
     }
@@ -121,12 +123,19 @@ async def _takeoff(drone, latest, phase_state, target_state, route, configs):
 
 
 async def _fly_observations(drone, latest, phase_state, target_state, route, configs):
+    origin = (route.start_cell[0] + 0.5, route.start_cell[1] + 0.5)
     for observation in route.waypoints:
         transit = [
-            _cell_waypoint(cell, observation.altitude_m, observation.yaw_deg, f"{observation.waypoint_id}_path_{index:03d}")
+            _cell_waypoint(
+                cell,
+                observation.altitude_m,
+                observation.yaw_deg,
+                f"{observation.waypoint_id}_path_{index:03d}",
+                origin,
+            )
             for index, cell in enumerate(observation.transit_cells, start=1)
         ]
-        transit.append(_observation_waypoint(observation))
+        transit.append(_observation_waypoint(observation, origin))
         await fly_waypoint_route(
             drone,
             latest,
@@ -169,6 +178,7 @@ async def _settle_departure_yaw(drone, latest, phase_state, route):
 
 
 def _return_waypoints(route):
+    origin = (route.start_cell[0] + 0.5, route.start_cell[1] + 0.5)
     return [
         _cell_waypoint(
             cell,
@@ -179,6 +189,7 @@ def _return_waypoints(route):
                 if index == len(route.return_transit_cells)
                 else f"return_{index:03d}"
             ),
+            origin,
         )
         for index, cell in enumerate(route.return_transit_cells, start=1)
     ]

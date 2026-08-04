@@ -68,7 +68,13 @@ def _write_scenario_report(paths, plan, row, protocol, layout, route, timing):
     write_json(paths["report"], report)
 
 
-def _runtime_record(output_root, row, paths, timing):
+def _spawn_pose(layout):
+    east_m = -layout.width_m / 2 + layout.start_cell[0] + 0.5
+    north_m = -layout.height_m / 2 + layout.start_cell[1] + 0.5
+    return f"{east_m:g},{north_m:g},0,0,0,0"
+
+
+def _runtime_record(output_root, row, paths, timing, layout):
     recording_directory = Path(output_root) / "recordings" / row["recording_id"]
     flight_events_path = recording_directory / "flight_events.jsonl"
     return {
@@ -82,7 +88,7 @@ def _runtime_record(output_root, row, paths, timing):
             "MAP_ID": "custom",
             "WORLD_NAME": f"visual_{row['layout_id']}",
             "WORLD_SRC": str(paths["world"].resolve()),
-            "PX4_GZ_MODEL_POSE": "-20,-20,0,0,0,0",
+            "PX4_GZ_MODEL_POSE": _spawn_pose(layout),
             "SIM_MODEL": "x500_research",
             "RESEARCH_MODEL_SRC": str(paths["camera"].resolve()),
             "HEADLESS": "1",
@@ -126,4 +132,4 @@ def prepare_v2_collection_scenario(plan, row, output_root, protocol):
         protocol["recording"]["camera_pitch_down_deg"],
     )
     _write_scenario_report(paths, plan, row, protocol, layout, route, timing)
-    return _runtime_record(output_root, row, paths, timing)
+    return _runtime_record(output_root, row, paths, timing, layout)

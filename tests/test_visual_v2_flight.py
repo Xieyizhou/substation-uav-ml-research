@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from src.flight.waypoint_executor import hover_at_waypoint
 from src.vision.collection.flight_route import (
+    _fly_observations,
     _return_and_land,
     _return_waypoints,
     _settle_departure_yaw,
@@ -80,14 +81,48 @@ class VisualYawSettlingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(waypoints[-1]["name"], "return_start")
         self.assertEqual(
             (waypoints[-1]["east_m"], waypoints[-1]["north_m"]),
-            (route.start_cell[0] + 0.5, route.start_cell[1] + 0.5),
+            (0.0, 0.0),
         )
         self.assertEqual(
             [
-                (waypoint["east_m"] - 0.5, waypoint["north_m"] - 0.5)
+                (
+                    waypoint["east_m"] + route.start_cell[0],
+                    waypoint["north_m"] + route.start_cell[1],
+                )
                 for waypoint in waypoints
             ],
             [tuple(map(float, cell)) for cell in route.return_transit_cells],
+        )
+
+    async def test_observation_route_is_relative_to_spawn_cell(self):
+        route = self.route()
+        drone = Mock()
+        configs = ({}, None, {"mode": "disabled"}, {})
+        with (
+            patch(
+                "src.vision.collection.flight_route.fly_waypoint_route",
+                AsyncMock(),
+            ) as fly_route,
+            patch(
+                "src.vision.collection.flight_route._settle_observation_yaw",
+                AsyncMock(),
+            ),
+            patch(
+                "src.vision.collection.flight_route.hover_at_waypoint",
+                AsyncMock(),
+            ),
+        ):
+            await _fly_observations(drone, {}, {}, {}, route, configs)
+        first_observation = route.waypoints[0]
+        first_executed_route = fly_route.await_args_list[0].args[4]
+        final_waypoint = first_executed_route[-1]
+        self.assertAlmostEqual(
+            final_waypoint["east_m"],
+            first_observation.east_m - route.start_cell[0] - 0.5,
+        )
+        self.assertAlmostEqual(
+            final_waypoint["north_m"],
+            first_observation.north_m - route.start_cell[1] - 0.5,
         )
 
     async def test_return_execution_consumes_frozen_path_then_lands(self):

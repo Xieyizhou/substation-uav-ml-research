@@ -23,6 +23,7 @@ from src.vision.collection.recording import (
     collection_recording_context,
     prepare_collection_scenario,
 )
+from src.vision.collection.v2_recording import _spawn_pose
 from src.vision.collection.route import (
     ObservationWaypoint,
     VisualRoute,
@@ -188,14 +189,47 @@ class VisualV2CollectionTests(unittest.TestCase):
             self.assertAlmostEqual(view_delta, 90.0)
 
     def test_layout_axes_match_px4_local_ned_at_flight_boundary(self):
-        cell = _cell_waypoint((7, 11), 1.5, 30.0, "cell")
+        cell = _cell_waypoint((7, 11), 1.5, 30.0, "cell", (0.0, 0.0))
         self.assertEqual((cell["north_m"], cell["east_m"]), (11.5, 7.5))
         observation = ObservationWaypoint(
             "point", "approach", 8.0, 12.0, 1.5, 45.0, 2.0,
             "labelled_target", (),
         )
-        mapped = _observation_waypoint(observation)
+        mapped = _observation_waypoint(observation, (0.0, 0.0))
         self.assertEqual((mapped["north_m"], mapped["east_m"]), (12.0, 8.0))
+
+        origin = (2.5, 2.5)
+        local_cell = _cell_waypoint((7, 11), 1.5, 30.0, "cell", origin)
+        self.assertEqual(
+            (local_cell["north_m"], local_cell["east_m"]),
+            (9.0, 5.0),
+        )
+        local_observation = _observation_waypoint(observation, origin)
+        self.assertEqual(
+            (local_observation["north_m"], local_observation["east_m"]),
+            (9.5, 5.5),
+        )
+
+    def test_v2_spawn_pose_is_center_of_planner_start_cell(self):
+        layout = self.layout()
+        self.assertEqual(_spawn_pose(layout), "-17.5,-17.5,0,0,0,0")
+
+        route = build_visual_route(
+            layout,
+            "transformer_centered_v2",
+            "transformer",
+        )
+        origin = (layout.start_cell[0] + 0.5, layout.start_cell[1] + 0.5)
+        local = _observation_waypoint(route.waypoints[0], origin)
+        spawn_east, spawn_north = (-17.5, -17.5)
+        self.assertAlmostEqual(
+            spawn_east + local["east_m"],
+            route.waypoints[0].east_m - layout.width_m / 2,
+        )
+        self.assertAlmostEqual(
+            spawn_north + local["north_m"],
+            route.waypoints[0].north_m - layout.height_m / 2,
+        )
 
     def test_target_yaw_uses_px4_ned_axes(self):
         self.assertEqual(_yaw_to_target(0, 1, 0, 0), 180.0)
@@ -289,6 +323,10 @@ class VisualV2CollectionTests(unittest.TestCase):
             for name in ("world_path", "planner_path", "route_path", "scenario_report"):
                 self.assertTrue(Path(prepared[name]).is_file())
             self.assertTrue(Path(prepared["launcher_environment"]["RESEARCH_MODEL_SRC"]).is_file())
+            self.assertEqual(
+                prepared["launcher_environment"]["PX4_GZ_MODEL_POSE"],
+                "-17.5,-17.5,0,0,0,0",
+            )
             self.assertIn("--visual-route", prepared["flight_command"])
             self.assertLess(prepared["flight_timeout_s"], 600.0)
             context = collection_recording_context(plan, row["scenario_id"], prepared["scenario_report"])
