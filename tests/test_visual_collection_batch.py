@@ -63,6 +63,7 @@ class VisualCollectionBatchTests(unittest.TestCase):
         self.assertEqual(args.max_scenarios, 2)
         self.assertEqual(args.max_attempts, 3)
         self.assertEqual(args.recorder_timeout, 900.0)
+        self.assertIsNone(args.flight_timeout)
 
     def test_failed_attempt_is_archived_without_deleting_evidence(self):
         with tempfile.TemporaryDirectory() as directory:

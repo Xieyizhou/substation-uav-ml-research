@@ -290,4 +290,9 @@ def build_argument_parser():
             "recorder. The file must not already exist."
         ),
     )
+    parser.add_argument(
+        "--visual-route",
+        type=Path,
+        help="Validated visual observation route JSON for equipment-centered collection.",
+    )
     return parser

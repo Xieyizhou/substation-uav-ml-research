@@ -63,6 +63,8 @@ def write_live_status(path, payload):
 def visual_phase_for_flight_event(event):
     if event.get("event_type") == "phase_changed":
         phase = event.get("phase")
+        if phase in {"cruise_distant", "approach", "close_inspection", "target_transition"}:
+            return phase
         if phase == "outbound_to_goal":
             return "cruise_distant"
         if phase == "goal_hover":
@@ -129,7 +131,6 @@ async def monitor_flight_lifecycle(
         raise ValueError("post_landing_drain_s must be non-negative")
     offset = 0
     previous_sequence = 0
-    emitted_phases = set()
     pending = []
     while True:
         path = Path(flight_events_path)
@@ -144,9 +145,8 @@ async def monitor_flight_lifecycle(
                 event = json.loads(line)
                 previous_sequence = _validate_event(event, previous_sequence)
                 mission_phase = visual_phase_for_flight_event(event)
-                if mission_phase and mission_phase not in emitted_phases:
+                if mission_phase:
                     pending.append((event, mission_phase))
-                    emitted_phases.add(mission_phase)
                 event_type = event.get("event_type")
                 if event_type == "mission_completed":
                     if (

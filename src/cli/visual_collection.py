@@ -8,7 +8,6 @@ from pathlib import Path
 from src.vision.collection.plan import (
     collection_status,
     load_collection_plan,
-    load_collection_protocol,
     validate_collection_plan,
     write_collection_plan,
 )
@@ -27,6 +26,8 @@ from src.vision.collection.pilot_live import (
     append_live_phase_event,
     record_live_visual_pilot,
 )
+from src.vision.collection.audit import audit_collection_plan
+from src.vision.contracts.protocol import protocol_for_plan
 
 
 DEFAULT_COLLECTION_ROOT = Path("data/research/visual_collection_v1")
@@ -35,7 +36,12 @@ DEFAULT_COLLECTION_ROOT = Path("data/research/visual_collection_v1")
 def add_collection_parsers(commands):
     plan = commands.add_parser(
         "collection-plan",
-        help="Materialize the frozen 60-scenario visual collection plan",
+        help="Materialize a frozen visual collection plan",
+    )
+    plan.add_argument(
+        "--protocol",
+        default="v1",
+        help="Registered protocol ID, v1/v2 alias, or protocol JSON path",
     )
     plan.add_argument(
         "--output",
@@ -47,6 +53,11 @@ def add_collection_parsers(commands):
         help="Validate a frozen visual collection plan",
     )
     validate.add_argument("--input", type=Path, required=True)
+    audit = commands.add_parser(
+        "collection-audit",
+        help="Audit v2 layouts, routes, labels, reachability, and SDF consistency",
+    )
+    audit.add_argument("--plan", type=Path, required=True)
     status = commands.add_parser(
         "collection-status",
         help=(
@@ -58,7 +69,7 @@ def add_collection_parsers(commands):
     status.add_argument(
         "--recordings-root",
         type=Path,
-        default=DEFAULT_COLLECTION_ROOT / "recordings",
+        help="Recording directory; defaults beside the selected plan",
     )
     prepare = commands.add_parser(
         "collection-prepare",
@@ -142,7 +153,11 @@ def add_collection_parsers(commands):
     batch.add_argument("--simulator-startup-timeout", type=float, default=180.0)
     batch.add_argument("--probe-timeout", type=float, default=5.0)
     batch.add_argument("--first-frame-timeout", type=float, default=30.0)
-    batch.add_argument("--flight-timeout", type=float, default=600.0)
+    batch.add_argument(
+        "--flight-timeout",
+        type=float,
+        help="Explicit override; v2 otherwise uses its route-derived timeout",
+    )
     batch.add_argument("--recorder-timeout", type=float, default=900.0)
 
 
@@ -167,7 +182,7 @@ def _scenario_state(args):
 
 def handle_collection_command(args):
     if args.command == "collection-plan":
-        plan = write_collection_plan(args.output)
+        plan = write_collection_plan(args.output, args.protocol)
         return {
             "valid": True,
             "path": str(args.output),
@@ -181,10 +196,13 @@ def handle_collection_command(args):
     if args.command == "collection-plan-validate":
         plan = load_collection_plan(args.input)
         return validate_collection_plan(plan)
+    if args.command == "collection-audit":
+        return audit_collection_plan(load_collection_plan(args.plan))
     if args.command == "collection-status":
+        recordings_root = args.recordings_root or args.plan.parent / "recordings"
         return collection_status(
             load_collection_plan(args.plan),
-            args.recordings_root,
+            recordings_root,
         )
     if args.command == "collection-prepare":
         plan, _, _ = _scenario_state(args)
@@ -218,7 +236,7 @@ def handle_collection_command(args):
         )
         post_landing_drain = args.post_landing_drain
         if post_landing_drain is None:
-            post_landing_drain = load_collection_protocol()["recording"][
+            post_landing_drain = protocol_for_plan(plan)["recording"][
                 "default_post_landing_drain_s"
             ]
         result = asyncio.run(

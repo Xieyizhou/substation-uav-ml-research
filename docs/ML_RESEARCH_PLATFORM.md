@@ -289,6 +289,23 @@ available as an explicit retry. After every planned recording passes,
 DatasetIdentity artifacts with globally unique `recording_id:frame_id`
 membership. Aggregate class and no-target coverage are mandatory per split.
 
+Protocol v2 adds ten split-isolated Gazebo layouts and five routes per layout:
+four equipment-centered routes plus a verified-no-target background transit.
+Its tracked plan and layout manifests live under
+`benchmarks/visual_static_v2/`. Equipment routes retain two views separated by
+90 degrees and use explicit target-facing yaw, including the close-range
+-30/0/+30 degree sweep. Straight A* segments are represented by their turning
+cells rather than every grid cell. Flight timeouts are derived from route
+distance, holds, and waypoint settling, bounded to 180--360 seconds; an
+explicit CLI override remains available for diagnosis.
+
+Every v2 recording must contain at least 1,000 target frames, at least 150
+small, medium, and large target frames, two seconds of valid target visibility
+in every required phase, and no more than 50 percent truncated target frames.
+Background routes must contain only verified-no-target frames. Blind layouts
+may be collected and integrity-checked, but predictions remain locked until a
+model package is frozen.
+
 `visual training-view-materialize` derives a path-independent, hash-bound
 training view from the development identity. It performs deterministic
 recording-proportional temporal thinning, retains minority classes, limits

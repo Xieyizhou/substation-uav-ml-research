@@ -1,0 +1,163 @@
+{
+  "camera_noise_stddev": 0.007963370480903844,
+  "generator_version": "gazebo-sdf-v3",
+  "height_m": 40.0,
+  "layout_id": "development-04",
+  "layout_identity_sha256": "deb30a4db1480daafa62f529baab87c70ea06ec62da07e636c9bbc33927d0c83",
+  "layout_schema_version": 1,
+  "layout_seed": 3016,
+  "light_intensity": 0.7569570664082798,
+  "objects": [
+    {
+      "east_m": 17.75813939157681,
+      "height_m": 2.2622931619213125,
+      "material_age": 0.9711485203207695,
+      "north_m": 7.439788777399272,
+      "object_id": "transformer_a",
+      "simulator_label": 1,
+      "size_east_m": 1.939108424503982,
+      "size_north_m": 1.939108424503982,
+      "visual_category": "transformer",
+      "yaw_deg": 0.0
+    },
+    {
+      "east_m": 33.87567650027134,
+      "height_m": 2.0651553907969737,
+      "material_age": 0.10588174018870189,
+      "north_m": 31.773248351677054,
+      "object_id": "transformer_b",
+      "simulator_label": 1,
+      "size_east_m": 2.1549447556142334,
+      "size_north_m": 2.1549447556142334,
+      "visual_category": "transformer",
+      "yaw_deg": 180.0
+    },
+    {
+      "east_m": 26.535276884971537,
+      "height_m": 1.8025440582207048,
+      "material_age": 0.17155737788077496,
+      "north_m": 8.030429665399474,
+      "object_id": "switchgear_a",
+      "simulator_label": 2,
+      "size_east_m": 1.6965120547959576,
+      "size_north_m": 1.4844480479464628,
+      "visual_category": "switchgear",
+      "yaw_deg": 90.0
+    },
+    {
+      "east_m": 25.981182079494896,
+      "height_m": 1.5647433494823269,
+      "material_age": 0.5611252052853247,
+      "north_m": 31.503439504705145,
+      "object_id": "switchgear_b",
+      "simulator_label": 2,
+      "size_east_m": 1.8118080888742736,
+      "size_north_m": 1.4823884363516782,
+      "visual_category": "switchgear",
+      "yaw_deg": 90.0
+    },
+    {
+      "east_m": 33.55816889686053,
+      "height_m": 2.1794841143523724,
+      "material_age": 0.2666830731262162,
+      "north_m": 7.59614083245136,
+      "object_id": "capacitor_bank_a",
+      "simulator_label": 3,
+      "size_east_m": 1.950064733894228,
+      "size_north_m": 1.950064733894228,
+      "visual_category": "capacitor_bank",
+      "yaw_deg": 0.0
+    },
+    {
+      "east_m": 17.861904246820323,
+      "height_m": 2.352233771248523,
+      "material_age": 0.3292583072656118,
+      "north_m": 31.7182361754777,
+      "object_id": "capacitor_bank_b",
+      "simulator_label": 3,
+      "size_east_m": 2.5762560351769532,
+      "size_north_m": 2.5762560351769532,
+      "visual_category": "capacitor_bank",
+      "yaw_deg": 0.0
+    },
+    {
+      "east_m": 33.947049067698536,
+      "height_m": 2.053661502193071,
+      "material_age": 0.3531706131112695,
+      "north_m": 19.794294519038658,
+      "object_id": "reactor_a",
+      "simulator_label": 4,
+      "size_east_m": 1.4286340884821367,
+      "size_north_m": 1.4286340884821367,
+      "visual_category": "reactor",
+      "yaw_deg": 0.0
+    },
+    {
+      "east_m": 18.414249370196867,
+      "height_m": 2.718583968333594,
+      "material_age": 0.9688699348931672,
+      "north_m": 19.48748164357295,
+      "object_id": "reactor_b",
+      "simulator_label": 4,
+      "size_east_m": 2.392353892133563,
+      "size_north_m": 2.392353892133563,
+      "visual_category": "reactor",
+      "yaw_deg": 90.0
+    },
+    {
+      "east_m": 22.0,
+      "height_m": 1.5,
+      "material_age": 0.4754499945724445,
+      "north_m": 20.0,
+      "object_id": "cabinet",
+      "simulator_label": null,
+      "size_east_m": 1.5,
+      "size_north_m": 2.0,
+      "visual_category": "cabinet",
+      "yaw_deg": 0.0
+    },
+    {
+      "east_m": 30.0,
+      "height_m": 4.8,
+      "material_age": 0.4991122272567341,
+      "north_m": 20.0,
+      "object_id": "pole",
+      "simulator_label": null,
+      "size_east_m": 0.5,
+      "size_north_m": 0.5,
+      "visual_category": "pole",
+      "yaw_deg": 0.0
+    },
+    {
+      "east_m": 8.0,
+      "height_m": 3.0,
+      "material_age": 0.4349469508508945,
+      "north_m": 20.0,
+      "object_id": "control_building",
+      "simulator_label": null,
+      "size_east_m": 2.0,
+      "size_north_m": 32.0,
+      "visual_category": "control_building",
+      "yaw_deg": 180.0
+    },
+    {
+      "east_m": 12.0,
+      "height_m": 2.119285349751925,
+      "material_age": 0.9439707693058584,
+      "north_m": 6.0,
+      "object_id": "unknown_obstacle_01",
+      "simulator_label": null,
+      "size_east_m": 0.9175718435123272,
+      "size_north_m": 0.9175718435123272,
+      "visual_category": "unknown_obstacle",
+      "yaw_deg": 0.0
+    }
+  ],
+  "split": "development",
+  "start_cell": [
+    2,
+    2
+  ],
+  "weather": "mist",
+  "width_m": 40.0
+}

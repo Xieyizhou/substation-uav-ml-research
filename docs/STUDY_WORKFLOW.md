@@ -195,6 +195,39 @@ identities differ, or scenario/recording/seed identity overlaps. It writes
 separate development and held-out-test identities; the held-out identity must
 not be used for fitting or model selection.
 
+### Visual collection v2
+
+Protocol v2 uses tracked frozen layouts and equipment-centered yaw routes.
+Materialize or verify the frozen 50-recording plan with:
+
+```bash
+python main.py visual collection-plan \
+  --protocol v2 \
+  --output benchmarks/visual_static_v2/collection_plan.json
+python main.py visual collection-audit \
+  --plan benchmarks/visual_static_v2/collection_plan.json
+```
+
+For experiment outputs, copy the frozen plan to the collection root, then run
+the resumable collector:
+
+```bash
+mkdir -p data/research/visual_collection_v2
+cp benchmarks/visual_static_v2/collection_plan.json \
+  data/research/visual_collection_v2/collection_plan.json
+python main.py visual collection-run \
+  --plan data/research/visual_collection_v2/collection_plan.json \
+  --output-root data/research/visual_collection_v2
+```
+
+`collection-status` defaults to the `recordings/` directory beside the plan.
+The v2 runner computes a route-specific 180--360 second flight timeout; pass
+`--flight-timeout` only as an explicit diagnostic override. Each target route
+must pass target-count, phase-visibility, size-bin, truncation, synchronization,
+and landing gates before the next scenario starts. The blind split is eligible
+for collection integrity checks only; do not create predictions or a training
+view from it before package freeze.
+
 ### Visual baseline training
 
 Create the deterministic YOLO view only from the development identity:

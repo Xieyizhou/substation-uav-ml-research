@@ -101,7 +101,11 @@ collection plan
 Public workflow entry points are grouped by responsibility:
 
 - Collection: `collection/plan.py`, `collection/batch.py`, and
-  `collection/dataset.py`.
+  `collection/dataset.py`. Version-specific materialization is isolated in
+  `collection/v1_recording.py` and `collection/v2_recording.py`; route timing
+  and per-recording coverage gates remain independent services. One-scenario
+  process ownership lives in `collection/scenario_runner.py`, while
+  `collection/batch.py` only controls ordering and retries.
 - Training: `training/view.py` and `training/yolo_training.py`.
 - Package freeze and held-out evaluation: `evaluation/yolo_package.py`,
   `evaluation/heldout_view.py`, and `evaluation/yolo_evaluation.py`.

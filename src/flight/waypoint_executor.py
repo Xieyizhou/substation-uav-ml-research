@@ -104,7 +104,7 @@ def takeoff_climb_waypoint(latest, target_down_m):
     }
 
 
-def velocity_command_from_error(error, speed_scale=1.0):
+def velocity_command_from_error(error, speed_scale=1.0, yaw_deg=0.0):
     north_velocity = POSITION_GAIN * error["north_m"]
     east_velocity = POSITION_GAIN * error["east_m"]
     horizontal_speed = sqrt(north_velocity**2 + east_velocity**2)
@@ -118,7 +118,7 @@ def velocity_command_from_error(error, speed_scale=1.0):
         -MAX_VERTICAL_SPEED_M_S,
         MAX_VERTICAL_SPEED_M_S,
     )
-    return VelocityNedYaw(north_velocity, east_velocity, down_velocity, 0.0)
+    return VelocityNedYaw(north_velocity, east_velocity, down_velocity, float(yaw_deg))
 
 
 def risk_adjusted_speed_scale(base_speed_scale, risk_level, risk_action):
@@ -312,7 +312,11 @@ async def fly_to_waypoint(
         adjusted_speed_scale = risk_adjusted_speed_scale(
             speed_scale, risk_level, risk_action
         )
-        last_command = velocity_command_from_error(error, adjusted_speed_scale)
+        last_command = velocity_command_from_error(
+            error,
+            adjusted_speed_scale,
+            waypoint.get("yaw_deg", 0.0),
+        )
         await drone.offboard.set_velocity_ned(last_command)
         await asyncio.sleep(0.2)
     print_waypoint_timeout_debug(
@@ -376,7 +380,9 @@ async def fly_waypoint_route(
 async def hover_at_waypoint(drone, phase_state, target_state, waypoint, phase_name, hover_s):
     set_phase(phase_state, phase_name)
     target_state.update(waypoint)
-    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await drone.offboard.set_velocity_ned(
+        VelocityNedYaw(0.0, 0.0, 0.0, float(waypoint.get("yaw_deg", 0.0)))
+    )
     await asyncio.sleep(hover_s)
 
 

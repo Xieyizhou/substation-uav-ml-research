@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
-from src.ml.artifacts import file_sha256, object_sha256, write_json
-from src.ml.domain_randomization import load_ranges, sample_manifest
+from src.ml.artifacts import object_sha256
 from src.vision.collection.plan import (
-    DEFAULT_PROTOCOL,
     load_collection_protocol,
-    visual_randomization_identity,
 )
+from src.vision.contracts.protocol import V2_PROTOCOL_ID, protocol_for_plan
 from src.vision.collection.pilot import (
     PilotRecordingError,
     REQUIRED_MANIFESTS,
@@ -24,8 +21,6 @@ from src.vision.collection.pilot_validation import (
     _load_and_validate_linkage,
     _validate_recording_identity,
 )
-from src.maps.map_catalog import map_by_id, project_path, spawn_pose_text
-from src.study.runner import _materialize_reachable_scenario
 
 
 def scenario_by_id(plan, scenario_id):
@@ -40,98 +35,21 @@ def prepare_collection_scenario(
     scenario_id,
     output_root,
     *,
-    protocol_path=DEFAULT_PROTOCOL,
+    protocol_path=None,
 ):
-    protocol = load_collection_protocol(protocol_path)
+    protocol = (
+        protocol_for_plan(plan)
+        if protocol_path is None
+        else load_collection_protocol(protocol_path)
+    )
     row = scenario_by_id(plan, scenario_id)
-    entry = map_by_id(row["map_id"])
-    randomization = load_ranges(
-        project_path(protocol["randomization"]["configuration"])
-    )
-    manifest = sample_manifest(
-        randomization,
-        map_id=row["map_id"],
-        seed=row["seed"],
-    )
-    if (
-        visual_randomization_identity(manifest, protocol)
-        != row["base_scenario_config_hash"]
-    ):
-        raise ValueError("scenario randomization does not match collection plan")
-    root = Path(output_root) / "scenarios" / scenario_id
-    world_path = root / "world.sdf"
-    report_path = root / "scenario.json"
-    planner_path = root / "planner.json"
-    _materialize_reachable_scenario(
-        manifest,
-        entry,
-        row["target_id"],
-        world_path,
-        report_path,
-        planner_path,
-    )
-    report = json.loads(report_path.read_text(encoding="utf-8"))
-    report.update(
-        {
-            "collection_plan_identity_sha256": plan[
-                "collection_plan_identity_sha256"
-            ],
-            "collection_protocol_id": protocol["protocol_id"],
-            "scenario_id": row["scenario_id"],
-            "target_id": row["target_id"],
-            "route_id": row["route_id"],
-            "split": row["split"],
-            "base_scenario_config_hash": row["base_scenario_config_hash"],
-            "applied_visual_randomization_fields": protocol["randomization"][
-                "applied_visual_fields"
-            ],
-            "randomization_fields_not_applied_to_visuals": protocol[
-                "randomization"
-            ]["explicitly_not_applied"],
-        }
-    )
-    report["visual_scenario_config_hash"] = object_sha256(
-        {
-            "applied_visual_randomization_fields": report[
-                "applied_visual_randomization_fields"
-            ],
-            "equipment_changes": report["equipment_changes"],
-            "light_intensity": report["light_intensity"],
-            "unknown_obstacles": report["unknown_obstacles"],
-            "feasibility_adjustments": report.get("feasibility_adjustments", []),
-        }
-    )
-    report["world_sha256"] = file_sha256(world_path)
-    report["planner_config_sha256"] = file_sha256(planner_path)
-    write_json(report_path, report)
-    recording_directory = (
-        Path(output_root) / "recordings" / row["recording_id"]
-    )
-    flight_events_path = recording_directory / "flight_events.jsonl"
-    launcher_environment = {
-        "MAP_ID": "custom",
-        "WORLD_NAME": entry["world_name"],
-        "WORLD_SRC": str(world_path.resolve()),
-        "PX4_GZ_MODEL_POSE": spawn_pose_text(entry),
-        "SIM_MODEL": "x500_research",
-        "HEADLESS": "1",
-    }
-    return {
-        "scenario": row,
-        "scenario_report": str(report_path),
-        "world_path": str(world_path),
-        "planner_path": str(planner_path),
-        "recording_directory": str(recording_directory),
-        "launcher_environment": launcher_environment,
-        "launcher_command": ["bash", "scripts/flight/start_px4_substation.sh"],
-        "flight_command": [
-            "python", "main.py", "task", "run", "fly_round_trip", "--",
-            "--obstacle-config", str(planner_path),
-            "--visual-mission-events",
-            str(flight_events_path),
-        ],
-        "flight_events_path": str(flight_events_path),
-    }
+    if protocol.protocol_id == V2_PROTOCOL_ID:
+        from src.vision.collection.v2_recording import prepare_v2_collection_scenario
+
+        return prepare_v2_collection_scenario(plan, row, output_root, protocol)
+    from src.vision.collection.v1_recording import prepare_v1_collection_scenario
+
+    return prepare_v1_collection_scenario(plan, row, output_root, protocol)
 
 
 def collection_recording_context(plan, scenario_id, scenario_report):
@@ -157,9 +75,9 @@ def collection_recording_context(plan, scenario_id, scenario_report):
             "scenario report differs from collection plan: "
             + ", ".join(mismatched)
         )
-    return {
+    context = {
         "recording_type": "labelled_visual_collection",
-        "protocol_id": "visual-multiscenario-png-v1",
+        "protocol_id": plan["protocol_id"],
         "dataset_role": row["dataset_role"],
         "map_id": row["map_id"],
         "target_id": row["target_id"],
@@ -175,6 +93,16 @@ def collection_recording_context(plan, scenario_id, scenario_report):
         "world_sha256": report["world_sha256"],
         "planner_config_sha256": report["planner_config_sha256"],
     }
+    for name in (
+        "layout_id",
+        "layout_identity_sha256",
+        "route_identity_sha256",
+        "route_manifest_sha256",
+        "camera_model_sha256",
+    ):
+        if name in report:
+            context[name] = report[name]
+    return context
 
 
 def _acceptance_protocol(protocol):
@@ -197,10 +125,14 @@ def validate_collection_recording(
     recording_directory,
     plan,
     *,
-    protocol_path=DEFAULT_PROTOCOL,
+    protocol_path=None,
 ):
     root = Path(recording_directory)
-    protocol = load_collection_protocol(protocol_path)
+    protocol = (
+        protocol_for_plan(plan)
+        if protocol_path is None
+        else load_collection_protocol(protocol_path)
+    )
     for relative in REQUIRED_MANIFESTS:
         if not (root / relative).is_file():
             raise PilotRecordingError(
@@ -276,6 +208,17 @@ def validate_collection_recording(
         summary=summary,
         protocol=_acceptance_protocol(protocol),
     )
+    route_quality = None
+    if protocol.protocol_id == V2_PROTOCOL_ID:
+        from src.vision.collection.quality import route_quality_failures
+
+        route_quality, quality_failures = route_quality_failures(
+            annotations,
+            frames_by_id,
+            row,
+            protocol,
+        )
+        failures.extend(quality_failures)
     if failures:
         raise PilotRecordingError("; ".join(failures))
     return {
@@ -287,6 +230,7 @@ def validate_collection_recording(
         "source_frame_count": len(frames),
         "dataset_frame_count": len(annotations),
         "mission_phase_duration_s": phase_durations,
+        "route_quality": route_quality,
         "recording_identity_sha256": identity_sha256,
         "scenario_identity_sha256": object_sha256(
             {

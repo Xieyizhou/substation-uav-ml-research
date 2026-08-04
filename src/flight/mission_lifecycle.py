@@ -99,8 +99,11 @@ async def execute_flight(
             name="telemetry-logger",
         )
         services["write_run_status"](log_path, "running", phase_state["phase"])
+        mission_runner = services.get(
+            "mission_runner", services["fly_astar_waypoints"]
+        )
         mission_task = asyncio.create_task(
-            services["fly_astar_waypoints"](
+            mission_runner(
                 drone,
                 latest,
                 phase_state,

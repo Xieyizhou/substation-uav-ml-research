@@ -1,0 +1,78 @@
+{
+  "collection_plan_identity_sha256": "4954bc8711ddc4abbd28bbac7256a0ffa6ee34b36971dffcf004c9fc4d20a4cf",
+  "layout_count": 10,
+  "layout_index_identity_sha256": "dd33e88022a99a2154791e21642e0079568d892a6228f21d8afd5343993648d9",
+  "layouts": [
+    {
+      "layout_id": "development-01",
+      "layout_identity_sha256": "c82ea160063d8cc7feae640b100ef30d33272ea8aea59febd5a8c90454202936",
+      "layout_seed": 3001,
+      "path": "layouts/development-01.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-02",
+      "layout_identity_sha256": "18e1788415f612d161955c9173f9845feb6c591e682d2afff48f1459efeea93e",
+      "layout_seed": 3006,
+      "path": "layouts/development-02.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-03",
+      "layout_identity_sha256": "9c07cc979265ebc402b00ec7e5235ed1c3f6f5f3008e6fe19869af5f7d6bd0c3",
+      "layout_seed": 3011,
+      "path": "layouts/development-03.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-04",
+      "layout_identity_sha256": "deb30a4db1480daafa62f529baab87c70ea06ec62da07e636c9bbc33927d0c83",
+      "layout_seed": 3016,
+      "path": "layouts/development-04.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-05",
+      "layout_identity_sha256": "79d75f6283a59e789c3eee2e1679d9168359b09d998429d113f6d6d986b9e609",
+      "layout_seed": 3021,
+      "path": "layouts/development-05.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-06",
+      "layout_identity_sha256": "9e11b2400b4075b9dc0f1401f7351140872b5b8ab752e3e42a36384a3687d5e6",
+      "layout_seed": 3026,
+      "path": "layouts/development-06.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "validation-01",
+      "layout_identity_sha256": "20e7635b3610057b3e8c2c31f2e1d27e72c5e4a7aed6d577b521120c0c7ef627",
+      "layout_seed": 3031,
+      "path": "layouts/validation-01.json",
+      "split": "validation"
+    },
+    {
+      "layout_id": "validation-02",
+      "layout_identity_sha256": "f1e76e2bca7b1e9f4c61bec19abb16e1f327ee9b8fbf35654ed86be5cfab0050",
+      "layout_seed": 3036,
+      "path": "layouts/validation-02.json",
+      "split": "validation"
+    },
+    {
+      "layout_id": "blind-01",
+      "layout_identity_sha256": "b1343e15bd70b8fc7a2b0c3d825913bbb1949fc8d74c2e69f4e2821ed69db67b",
+      "layout_seed": 3041,
+      "path": "layouts/blind-01.json",
+      "split": "blind"
+    },
+    {
+      "layout_id": "blind-02",
+      "layout_identity_sha256": "e4e4e3c9796cc4d42a895aa4d25791a15bce5562f7b1b1dd691a143264e9e51e",
+      "layout_seed": 3046,
+      "path": "layouts/blind-02.json",
+      "split": "blind"
+    }
+  ],
+  "protocol_identity_sha256": "6b370071e9bbe498390fe2e885e758d43bfe647105b07352046eb62f40de264d"
+}

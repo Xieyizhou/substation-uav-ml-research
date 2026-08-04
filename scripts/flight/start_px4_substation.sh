@@ -103,7 +103,8 @@ if [[ "$MAP_ID" != "custom" ]]; then
     "target world preparer could not be loaded"
 fi
 if [[ "$SIM_MODEL" == "x500_research" ]]; then
-  [[ -f "$PROJECT_ROOT/simulation/models/x500_research/model.sdf" ]] || fail \
+  RESEARCH_MODEL_SRC="${RESEARCH_MODEL_SRC:-$PROJECT_ROOT/simulation/models/x500_research/model.sdf}"
+  [[ -f "$RESEARCH_MODEL_SRC" ]] || fail \
     "research vehicle model is missing"
   [[ -f "$VEHICLE_PREPARER" ]] || fail "research vehicle preparer is missing"
 fi
@@ -220,7 +221,7 @@ cp "$WORLD_COPY_SRC" "$WORLD_DST"
 if [[ "$SIM_MODEL" == "x500_research" ]]; then
   RESEARCH_MODEL_DST="$PX4_ROOT/Tools/simulation/gz/models/x500_research"
   mkdir -p "$RESEARCH_MODEL_DST"
-  cp "$PROJECT_ROOT/simulation/models/x500_research/model.sdf" "$RESEARCH_MODEL_DST/model.sdf"
+  cp "$RESEARCH_MODEL_SRC" "$RESEARCH_MODEL_DST/model.sdf"
   cp "$PROJECT_ROOT/simulation/models/x500_research/model.config" "$RESEARCH_MODEL_DST/model.config"
 fi
 

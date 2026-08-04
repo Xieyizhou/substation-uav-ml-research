@@ -9,13 +9,18 @@ from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import object_sha256, write_json
 from src.ml.domain_randomization import load_ranges, sample_manifest
 from src.ml.scenarios import EVALUATION_SEEDS, split_for
-from src.maps.map_catalog import PROJECT_ROOT, map_by_id, project_path
+from src.maps.map_catalog import map_by_id, project_path
 from src.maps.target_catalog import target_by_id
-
-
-DEFAULT_PROTOCOL = (
-    PROJECT_ROOT / "benchmarks/visual_static_v1/collection_protocol.json"
+from src.vision.contracts.protocol import (
+    PROTOCOL_PATHS,
+    V1_PROTOCOL_ID,
+    V2_PROTOCOL_ID,
+    load_protocol,
+    protocol_for_plan,
 )
+
+
+DEFAULT_PROTOCOL = PROTOCOL_PATHS[V1_PROTOCOL_ID]
 PLAN_SCHEMA_VERSION = 1
 SPLIT_ORDER = ("train", "validation", "test")
 
@@ -30,44 +35,7 @@ def _read_json(path):
 
 
 def load_collection_protocol(path=DEFAULT_PROTOCOL):
-    protocol = _read_json(path)
-    if (
-        protocol.get("collection_protocol_schema_version") != 1
-        or protocol.get("protocol_id") != "visual-multiscenario-png-v1"
-        or protocol.get("canonical_payload_format") != "png"
-        or protocol.get("canonical_pixel_format") != "rgb8"
-    ):
-        raise ValueError("unsupported visual collection protocol")
-    allocation = protocol.get("scenario_allocation") or {}
-    if set(allocation) != set(SPLIT_ORDER):
-        raise ValueError("visual collection must define train, validation, and test")
-    recording = protocol.get("recording") or {}
-    if (
-        recording.get("recordings_per_scenario") != 1
-        or not recording.get("retain_every_valid_source_frame")
-        or recording.get("automatic_downsampling") is not False
-        or recording.get("default_phase_source") != "flight_lifecycle"
-        or recording.get("automatic_stop_condition")
-        != "completed_landed_and_landing_confirmed"
-    ):
-        raise ValueError("visual collection recording policy is invalid")
-    required = tuple(
-        protocol.get("aggregate_gate", {}).get("required_classes_per_split", [])
-    )
-    if required != tuple(EQUIPMENT_CLASSES):
-        raise ValueError("visual collection class order is not locked")
-    randomization = protocol.get("randomization") or {}
-    applied = tuple(randomization.get("applied_visual_fields", []))
-    if applied != (
-        "equipment_scale",
-        "equipment_position_jitter_m",
-        "light_intensity",
-        "unknown_obstacles",
-    ):
-        raise ValueError("visual collection applied randomization is not frozen")
-    if set(applied).intersection(randomization.get("explicitly_not_applied", [])):
-        raise ValueError("visual randomization fields cannot be both applied and excluded")
-    return protocol
+    return load_protocol(path)
 
 
 def _map_class_inventory(map_id):
@@ -133,6 +101,10 @@ def visual_randomization_identity(manifest, protocol):
 
 def build_collection_plan(protocol_path=DEFAULT_PROTOCOL):
     protocol = load_collection_protocol(protocol_path)
+    if protocol.protocol_id == V2_PROTOCOL_ID:
+        from src.vision.collection.v2_plan import build_v2_collection_plan
+
+        return build_v2_collection_plan(protocol)
     randomization_path = project_path(protocol["randomization"]["configuration"])
     randomization = load_ranges(randomization_path)
     rows = []
@@ -163,8 +135,16 @@ def build_collection_plan(protocol_path=DEFAULT_PROTOCOL):
     return plan
 
 
-def validate_collection_plan(plan, *, protocol_path=DEFAULT_PROTOCOL):
-    protocol = load_collection_protocol(protocol_path)
+def validate_collection_plan(plan, *, protocol_path=None):
+    protocol = (
+        protocol_for_plan(plan)
+        if protocol_path is None
+        else load_collection_protocol(protocol_path)
+    )
+    if protocol.protocol_id == V2_PROTOCOL_ID:
+        from src.vision.collection.v2_plan import validate_v2_collection_plan
+
+        return validate_v2_collection_plan(plan, protocol)
     supplied = plan.get("collection_plan_identity_sha256")
     unsigned = {
         key: value
@@ -207,13 +187,22 @@ def validate_collection_plan(plan, *, protocol_path=DEFAULT_PROTOCOL):
 def write_collection_plan(output, protocol_path=DEFAULT_PROTOCOL):
     plan = build_collection_plan(protocol_path)
     validate_collection_plan(plan, protocol_path=protocol_path)
-    write_json(output, plan)
+    if plan["protocol_id"] == V2_PROTOCOL_ID:
+        from src.vision.collection.v2_plan import write_v2_plan_bundle
+
+        write_v2_plan_bundle(output, plan, load_collection_protocol(protocol_path))
+    else:
+        write_json(output, plan)
     return plan
 
 
-def load_collection_plan(path, *, protocol_path=DEFAULT_PROTOCOL):
+def load_collection_plan(path, *, protocol_path=None):
     plan = _read_json(path)
     validate_collection_plan(plan, protocol_path=protocol_path)
+    if plan.get("protocol_id") == V2_PROTOCOL_ID:
+        from src.vision.collection.v2_plan import validate_v2_plan_bundle
+
+        validate_v2_plan_bundle(path, plan, protocol_for_plan(plan))
     return plan
 
 
