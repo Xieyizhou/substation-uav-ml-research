@@ -12,19 +12,19 @@ from src.vision.collection.pilot_metrics import (
     summarize_source_health,
     summarize_synchronization,
 )
+from src.vision.collection.pilot_materialization import (
+    materialize_recording_annotations,
+)
 from src.vision.contracts.pilot import (
     DEFAULT_PROTOCOL,
     load_pilot_protocol,
-    mission_phase as _mission_phase,
     recording_context,
     validate_mission_events as _validate_mission_events,
 )
 from src.vision.collection.synchronization import (
     DEFAULT_MAX_SKEW_MS,
-    materialize_frame_annotation,
     synchronize_visual_frames,
 )
-from src.sensors.camera_decoder import decode_camera_payload
 from src.sensors.types import CameraFrame
 
 
@@ -168,32 +168,18 @@ def write_pilot_recording(
     synchronized = synchronize_visual_frames(
         frames, truths, maximum_skew_ms=maximum_skew_ms
     )
-    annotations = []
-    decoder_configuration_id = None
-    for index, item in enumerate(synchronized):
-        if item.truth is None:
-            annotations.append(None)
-            continue
-        decoded = decode_camera_payload(item.frame, output)
-        decoded_image = decoded.image
-        if (
-            decoder_configuration_id is not None
-            and decoded_image.decoder_configuration_id != decoder_configuration_id
-        ):
-            raise PilotRecordingError("pilot frames used multiple decoder identities")
-        decoder_configuration_id = decoded_image.decoder_configuration_id
-        annotations.append(
-            materialize_frame_annotation(
-                item,
-                decoded_image,
-                recording_id=recording_id,
-                scenario_id=context["scenario_id"],
-                map_id=context["map_id"],
-                seed=context["seed"],
-                mission_phase=_mission_phase(item.frame, events),
-                frame_order_reference=index,
-            )
-        )
+    annotations, decoder_ids = materialize_recording_annotations(
+        synchronized,
+        output,
+        recording_id=recording_id,
+        scenario_id=context["scenario_id"],
+        map_id=context["map_id"],
+        seed=context["seed"],
+        events=events,
+    )
+    if len(decoder_ids) > 1:
+        raise PilotRecordingError("pilot frames used multiple decoder identities")
+    decoder_configuration_id = next(iter(decoder_ids), None)
     annotation_records = [
         annotation.to_record() for annotation in annotations if annotation is not None
     ]

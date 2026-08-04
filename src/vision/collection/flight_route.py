@@ -3,18 +3,20 @@
 from __future__ import annotations
 
 import asyncio
+from dataclasses import replace
 import json
 from pathlib import Path
 
 from mavsdk.offboard import VelocityNedYaw
 
-from src.flight.flight_state import set_phase
+from src.flight.flight_state import publish_mission_event, set_phase
 from src.flight.landing_manager import wait_until_landed
 from src.flight.mavsdk_preflight import wait_for_local_position
 from src.flight.waypoint_executor import (
     fly_to_waypoint,
     fly_waypoint_route,
     hover_at_waypoint,
+    normalize_yaw_deg,
     takeoff_climb_waypoint,
     validate_takeoff_stability,
 )
@@ -50,6 +52,48 @@ def _observation_waypoint(observation):
         "down_m": -observation.altitude_m,
         "yaw_deg": observation.yaw_deg,
     }
+
+
+def _yaw_error_deg(current, target):
+    return (float(target) - float(current) + 180.0) % 360.0 - 180.0
+
+
+async def _settle_observation_yaw(drone, latest, phase_state, observation, route):
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + route.yaw_acquisition_timeout_s
+    stable_since = None
+    while loop.time() < deadline:
+        await drone.offboard.set_velocity_ned(
+            VelocityNedYaw(0.0, 0.0, 0.0, normalize_yaw_deg(observation.yaw_deg))
+        )
+        attitude = latest.get("attitude")
+        settled = (
+            attitude is not None
+            and abs(_yaw_error_deg(attitude.yaw_deg, observation.yaw_deg))
+            <= route.yaw_tolerance_deg
+            and abs(float(attitude.roll_deg)) <= route.level_tolerance_deg
+            and abs(float(attitude.pitch_deg)) <= route.level_tolerance_deg
+        )
+        if settled:
+            stable_since = stable_since or loop.time()
+            if loop.time() - stable_since >= route.yaw_settle_duration_s:
+                publish_mission_event(
+                    phase_state,
+                    "yaw_settled",
+                    phase=observation.mission_phase,
+                    waypoint_name=observation.waypoint_id,
+                    target_yaw_deg=observation.yaw_deg,
+                    observed_yaw_deg=float(attitude.yaw_deg),
+                    observed_roll_deg=float(attitude.roll_deg),
+                    observed_pitch_deg=float(attitude.pitch_deg),
+                )
+                return
+        else:
+            stable_since = None
+        await asyncio.sleep(0.2)
+    raise TimeoutError(
+        f"Timed out waiting for yaw at {observation.waypoint_id}"
+    )
 
 
 async def _takeoff(drone, latest, phase_state, target_state, route, configs):
@@ -94,6 +138,13 @@ async def _fly_observations(drone, latest, phase_state, target_state, route, con
             "outbound",
             *configs,
         )
+        await _settle_observation_yaw(
+            drone,
+            latest,
+            phase_state,
+            observation,
+            route,
+        )
         await hover_at_waypoint(
             drone,
             phase_state,
@@ -104,6 +155,20 @@ async def _fly_observations(drone, latest, phase_state, target_state, route, con
         )
         traversed.extend(transit[:-1])
     return traversed
+
+
+async def _settle_departure_yaw(drone, latest, phase_state, route):
+    departure = replace(
+        route.waypoints[0],
+        waypoint_id=f"departure_{route.waypoints[0].waypoint_id}",
+    )
+    await _settle_observation_yaw(
+        drone,
+        latest,
+        phase_state,
+        departure,
+        route,
+    )
 
 
 async def _return_and_land(drone, latest, phase_state, target_state, route, traversed, configs):
@@ -150,5 +215,6 @@ async def fly_visual_observation_route(
         raise TypeError("visual mission requires a VisualRoute")
     configs = (perception_config, perception_detector, replan_config, replan_state)
     await _takeoff(drone, latest, phase_state, target_state, route, configs)
+    await _settle_departure_yaw(drone, latest, phase_state, route)
     traversed = await _fly_observations(drone, latest, phase_state, target_state, route, configs)
     await _return_and_land(drone, latest, phase_state, target_state, route, traversed, configs)

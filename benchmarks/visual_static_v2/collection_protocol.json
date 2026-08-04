@@ -68,6 +68,9 @@
     "default_post_landing_drain_s": 1.0,
     "manual_phase_fallback_allowed": false,
     "altitude_m": 1.5,
+    "camera_pitch_down_deg": 5.0,
+    "camera_intrinsics_policy": "horizontal_fov_square_pixels_centered_v1",
+    "camera_heading_offset_deg": 341.0,
     "distant_range_m": [8.0, 12.0],
     "approach_range_m": [4.0, 6.0],
     "close_range_m": [2.5, 3.5],
@@ -87,6 +90,7 @@
   "flight_timeout_policy": {
     "nominal_horizontal_speed_m_s": 0.8,
     "waypoint_settle_s": 1.0,
+    "yaw_acquisition_allowance_s_per_observation": 4.0,
     "fixed_overhead_s": 30.0,
     "timeout_multiplier": 1.2,
     "minimum_timeout_s": 180.0,

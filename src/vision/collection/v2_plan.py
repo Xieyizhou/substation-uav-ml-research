@@ -35,6 +35,7 @@ def _layout_rows(protocol, split, allocation):
                 layout,
                 route_spec["route_id"],
                 route_spec["target_class"],
+                camera_heading_offset_deg=protocol["recording"]["camera_heading_offset_deg"],
             )
             scenario_id = f"{layout_id}-{route_spec['route_id']}-{seed}"
             rows.append(

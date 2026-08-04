@@ -72,15 +72,31 @@ def _add_geometry(link, item):
             _box(element, (item.size_east_m, item.size_north_m, height))
         if kind == "visual":
             _material(element, item.visual_category, item.material_age)
+            if item.simulator_label is not None:
+                plugin = ET.SubElement(
+                    element,
+                    "plugin",
+                    filename="gz-sim-label-system",
+                    name="gz::sim::systems::Label",
+                )
+                _text(plugin, "label", item.simulator_label)
 
 
-def _add_object(parent, item):
+def _add_object(parent, item, *, origin_east_m=0.0, origin_north_m=0.0):
     model = ET.SubElement(parent, "model", name=item.object_id)
     _text(model, "static", "true")
-    _text(model, "pose", _pose(item.east_m, item.north_m, 0, 0, 0, math.radians(item.yaw_deg)))
-    if item.simulator_label is not None:
-        plugin = ET.SubElement(model, "plugin", filename="gz-sim-label-system", name="gz::sim::systems::Label")
-        _text(plugin, "label", item.simulator_label)
+    _text(
+        model,
+        "pose",
+        _pose(
+            item.east_m + origin_east_m,
+            item.north_m + origin_north_m,
+            0,
+            0,
+            0,
+            math.radians(item.yaw_deg),
+        ),
+    )
     link = ET.SubElement(model, "link", name="link")
     _add_geometry(link, item)
 
@@ -129,7 +145,12 @@ def build_layout_world(manifest):
     _box(visual, (manifest.width_m, manifest.height_m, 0.02))
     _material(visual, "control_building", 0.3)
     for item in manifest.objects:
-        _add_object(station, item)
+        _add_object(
+            world,
+            item,
+            origin_east_m=-manifest.width_m / 2,
+            origin_north_m=-manifest.height_m / 2,
+        )
     return ET.ElementTree(sdf)
 
 
@@ -142,11 +163,56 @@ def write_layout_world(path, manifest):
     return path
 
 
-def materialize_camera_model(source_path, output_path, noise_stddev):
+def _set_camera_pitch(tree, pitch_down_deg):
+    camera_link = tree.find(".//link[@name='research_camera_link']")
+    if camera_link is None:
+        raise ValueError("research camera link was not found")
+    link_pose = camera_link.find("pose")
+    pose_values = [] if link_pose is None else link_pose.text.split()
+    if len(pose_values) != 6:
+        raise ValueError("research camera link pose is invalid")
+    pose_values[4] = f"{math.radians(float(pitch_down_deg)):.8g}"
+    link_pose.text = " ".join(pose_values)
+
+
+def _set_camera_intrinsics(camera):
+    width = int(camera.findtext("image/width"))
+    height = int(camera.findtext("image/height"))
+    horizontal_fov = float(camera.findtext("horizontal_fov"))
+    focal_length = width / (2.0 * math.tan(horizontal_fov / 2.0))
+    lens = camera.find("lens")
+    if lens is None:
+        lens = ET.SubElement(camera, "lens")
+    existing = lens.find("intrinsics")
+    if existing is not None:
+        lens.remove(existing)
+    intrinsics = ET.SubElement(lens, "intrinsics")
+    values = (
+        ("fx", focal_length), ("fy", focal_length),
+        ("cx", width / 2.0), ("cy", height / 2.0), ("s", 0.0),
+    )
+    for tag, value in values:
+        _text(intrinsics, tag, f"{value:.8g}")
+
+
+def materialize_camera_model(
+    source_path,
+    output_path,
+    noise_stddev,
+    *,
+    pitch_down_deg=0.0,
+):
     tree = ET.parse(source_path)
-    camera = tree.find(".//sensor[@name='research_rgb']/camera")
-    if camera is None:
-        raise ValueError("research RGB camera was not found")
+    _set_camera_pitch(tree, pitch_down_deg)
+    cameras = [
+        tree.find(f".//sensor[@name='{name}']/camera")
+        for name in ("research_rgb", "research_boxes")
+    ]
+    if any(camera is None for camera in cameras):
+        raise ValueError("research RGB and truth cameras were not found")
+    for camera in cameras:
+        _set_camera_intrinsics(camera)
+    camera = cameras[0]
     existing = camera.find("noise")
     if existing is not None:
         camera.remove(existing)
@@ -166,12 +232,22 @@ def validate_world_matches_layout(tree, manifest):
     station = root.find("./world/model[@name='substation_map']")
     if station is None:
         raise ValueError("visual world has no substation_map")
-    models = {model.get("name"): model for model in station.findall("./model")}
+    models = {model.get("name"): model for model in root.findall("./world/model")}
     for item in manifest.objects:
         model = models.get(item.object_id)
         if model is None:
             raise ValueError(f"visual world is missing {item.object_id}")
-        label = model.findtext("./plugin/label")
+        pose = [float(value) for value in model.findtext("./pose").split()]
+        expected_xy = (
+            item.east_m - manifest.width_m / 2,
+            item.north_m - manifest.height_m / 2,
+        )
+        if len(pose) != 6 or any(
+            not math.isclose(actual, expected, abs_tol=1e-4)
+            for actual, expected in zip(pose[:2], expected_xy)
+        ):
+            raise ValueError(f"visual world pose mismatch for {item.object_id}")
+        label = model.findtext("./link/visual/plugin/label")
         expected = LABEL_BY_CLASS.get(item.visual_category)
         if label != (None if expected is None else str(expected)):
             raise ValueError(f"visual world label mismatch for {item.object_id}")

@@ -11,7 +11,7 @@ from src.planner.obstacle_config import build_obstacle_map
 from src.vision.collection.layout import LayoutManifest, layout_obstacle_config
 
 
-ROUTE_SCHEMA_VERSION = 1
+ROUTE_SCHEMA_VERSION = 2
 PHASES = ("cruise_distant", "approach", "close_inspection", "target_transition")
 
 
@@ -36,7 +36,23 @@ class VisualRoute:
     target_object_id: str | None
     start_cell: tuple[int, int]
     waypoints: tuple[ObservationWaypoint, ...]
+    yaw_tolerance_deg: float = 5.0
+    level_tolerance_deg: float = 5.0
+    yaw_settle_duration_s: float = 0.5
+    yaw_acquisition_timeout_s: float = 15.0
     route_schema_version: int = ROUTE_SCHEMA_VERSION
+
+    def __post_init__(self):
+        if self.route_schema_version != ROUTE_SCHEMA_VERSION:
+            raise ValueError("unsupported visual route schema")
+        if not 0.0 < self.yaw_tolerance_deg < 180.0:
+            raise ValueError("visual route yaw tolerance is invalid")
+        if not 0.0 < self.level_tolerance_deg < 90.0:
+            raise ValueError("visual route level tolerance is invalid")
+        if self.yaw_settle_duration_s <= 0.0:
+            raise ValueError("visual route yaw settle duration is invalid")
+        if self.yaw_acquisition_timeout_s <= self.yaw_settle_duration_s:
+            raise ValueError("visual route yaw acquisition timeout is invalid")
 
     def identity_record(self):
         return asdict(self)
@@ -65,7 +81,9 @@ class VisualRoute:
 
 
 def _yaw_to_target(east, north, target_east, target_north):
-    return math.degrees(math.atan2(target_east - east, target_north - north)) % 360.0
+    return math.degrees(
+        math.atan2(target_east - east, target_north - north)
+    ) % 360.0
 
 
 def _point(target, bearing_deg, distance_m):
@@ -95,7 +113,27 @@ def _reachable_sequence(manifest, points):
     return tuple(paths)
 
 
-def _target_waypoints(manifest, target):
+def _heading(yaw_deg, camera_heading_offset_deg):
+    return (float(yaw_deg) + float(camera_heading_offset_deg)) % 360.0
+
+
+def _yaw_scan(prefix, point, target, transit_path, camera_heading_offset_deg):
+    center_yaw = _yaw_to_target(
+        *point,
+        target.east_m,
+        target.north_m,
+    )
+    return [
+        ObservationWaypoint(
+            f"{prefix}_{index}", PHASES[2], *point, 1.5,
+            _heading(center_yaw + offset, camera_heading_offset_deg),
+            2.5, "labelled_target", transit_path if index == 1 else (),
+        )
+        for index, offset in enumerate((-30.0, 0.0, 30.0), start=1)
+    ]
+
+
+def _target_waypoints(manifest, target, camera_heading_offset_deg):
     rotations = tuple(float(value) for value in range(0, 360, 45))
     start = (manifest.layout_seed - 3001) % len(rotations)
     for offset in range(len(rotations)):
@@ -112,22 +150,45 @@ def _target_waypoints(manifest, target):
         paths = _reachable_sequence(manifest, points)
         if paths is None:
             continue
+        distant_yaw = _heading(
+            _yaw_to_target(*distant, target.east_m, target.north_m),
+            camera_heading_offset_deg,
+        )
+        approach_yaw = _heading(
+            _yaw_to_target(*approach, target.east_m, target.north_m),
+            camera_heading_offset_deg,
+        )
         waypoints = [
-            ObservationWaypoint("distant", PHASES[0], *distant, 1.5, _yaw_to_target(*distant, target.east_m, target.north_m), 5.0, "labelled_target", paths[0]),
-            ObservationWaypoint("approach", PHASES[1], *approach, 1.5, _yaw_to_target(*approach, target.east_m, target.north_m), 2.0, "labelled_target", paths[1]),
+            ObservationWaypoint(
+                "distant", PHASES[0], *distant, 1.5, distant_yaw,
+                10.0, "labelled_target", paths[0],
+            ),
+            ObservationWaypoint(
+                "approach", PHASES[1], *approach, 1.5, approach_yaw,
+                5.0, "labelled_target", paths[1],
+            ),
         ]
-        for index, yaw_offset in enumerate((-30.0, 0.0, 30.0), start=1):
-            yaw = (_yaw_to_target(*close_first, target.east_m, target.north_m) + yaw_offset) % 360.0
-            waypoints.append(ObservationWaypoint(f"close_a_{index}", PHASES[2], *close_first, 1.5, yaw, 1.5, "labelled_target", paths[2] if index == 1 else ()))
-        waypoints.append(ObservationWaypoint("transition", PHASES[3], *transition, 1.5, _yaw_to_target(*transition, target.east_m, target.north_m), 2.0, "labelled_target", paths[3]))
-        for index, yaw_offset in enumerate((-30.0, 0.0, 30.0), start=1):
-            yaw = (_yaw_to_target(*close_second, target.east_m, target.north_m) + yaw_offset) % 360.0
-            waypoints.append(ObservationWaypoint(f"close_b_{index}", PHASES[2], *close_second, 1.5, yaw, 1.5, "labelled_target", paths[4] if index == 1 else ()))
+        waypoints.extend(_yaw_scan(
+            "close_a", close_first, target, paths[2],
+            camera_heading_offset_deg,
+        ))
+        transition_yaw = _heading(
+            _yaw_to_target(*transition, target.east_m, target.north_m),
+            camera_heading_offset_deg,
+        )
+        waypoints.append(ObservationWaypoint(
+            "transition", PHASES[3], *transition, 1.5, transition_yaw,
+            5.0, "labelled_target", paths[3],
+        ))
+        waypoints.extend(_yaw_scan(
+            "close_b", close_second, target, paths[4],
+            camera_heading_offset_deg,
+        ))
         return tuple(waypoints)
     raise ValueError(f"no reachable observation route for {target.object_id}")
 
 
-def _background_waypoints(manifest):
+def _background_waypoints(manifest, camera_heading_offset_deg):
     points = ((3.5, 8.5), (3.5, 16.5), (3.5, 24.5), (3.5, 32.5))
     paths = _reachable_sequence(manifest, points)
     if paths is None:
@@ -137,18 +198,27 @@ def _background_waypoints(manifest):
     previous = (manifest.start_cell[0] + 0.5, manifest.start_cell[1] + 0.5)
     for index, (point, phase) in enumerate(zip(points, phases), start=1):
         east, north = point
-        yaw = math.degrees(math.atan2(east - previous[0], north - previous[1])) % 360.0
+        yaw = _heading(
+            math.degrees(math.atan2(east - previous[0], north - previous[1])),
+            camera_heading_offset_deg,
+        )
         waypoints.append(ObservationWaypoint(f"background_{index}", phase, east, north, 1.5, yaw, 2.0, "verified_no_target", paths[index - 1]))
         previous = point
     return tuple(waypoints)
 
 
-def build_visual_route(manifest, route_id, target_class):
+def build_visual_route(
+    manifest,
+    route_id,
+    target_class,
+    *,
+    camera_heading_offset_deg=0.0,
+):
     if not isinstance(manifest, LayoutManifest):
         raise TypeError("manifest must be a LayoutManifest")
     if target_class is None:
         target = None
-        waypoints = _background_waypoints(manifest)
+        waypoints = _background_waypoints(manifest, camera_heading_offset_deg)
     else:
         targets = [item for item in manifest.objects if item.visual_category == target_class]
         if manifest.layout_seed % 2 == 0:
@@ -158,7 +228,11 @@ def build_visual_route(manifest, route_id, target_class):
         target = None
         for candidate in targets:
             try:
-                waypoints = _target_waypoints(manifest, candidate)
+                waypoints = _target_waypoints(
+                    manifest,
+                    candidate,
+                    camera_heading_offset_deg,
+                )
                 target = candidate
                 break
             except ValueError:

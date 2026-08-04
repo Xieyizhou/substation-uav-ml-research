@@ -21,7 +21,7 @@ def _scenario_paths(output_root, row):
     }
 
 
-def _write_scenario_inputs(paths, layout, route):
+def _write_scenario_inputs(paths, layout, route, camera_pitch_down_deg):
     write_layout_world(paths["world"], layout)
     write_json(paths["planner"], layout_obstacle_config(layout))
     write_json(paths["route"], route.to_record())
@@ -30,6 +30,7 @@ def _write_scenario_inputs(paths, layout, route):
         Path("simulation/models/x500_research/model.sdf"),
         paths["camera"],
         layout.camera_noise_stddev,
+        pitch_down_deg=camera_pitch_down_deg,
     )
 
 
@@ -54,6 +55,9 @@ def _write_scenario_report(paths, plan, row, protocol, layout, route, timing):
         "weather": layout.weather,
         "light_intensity": layout.light_intensity,
         "camera_noise_stddev": layout.camera_noise_stddev,
+        "camera_pitch_down_deg": protocol["recording"]["camera_pitch_down_deg"],
+        "camera_intrinsics_policy": protocol["recording"]["camera_intrinsics_policy"],
+        "camera_heading_offset_deg": protocol["recording"]["camera_heading_offset_deg"],
         **timing,
     }
     report["visual_scenario_config_hash"] = object_sha256(report)
@@ -103,13 +107,23 @@ def prepare_v2_collection_scenario(plan, row, output_root, protocol):
         row["layout_seed"],
         protocol["randomization"]["configuration"],
     )
-    route = build_visual_route(layout, row["route_id"], row["target_class"])
+    route = build_visual_route(
+        layout,
+        row["route_id"],
+        row["target_class"],
+        camera_heading_offset_deg=protocol["recording"]["camera_heading_offset_deg"],
+    )
     timing = route_timing(route, protocol["flight_timeout_policy"])
     if layout.layout_identity_sha256 != row["layout_identity_sha256"]:
         raise ValueError("scenario layout does not match collection plan")
     if route.route_identity_sha256 != row["route_identity_sha256"]:
         raise ValueError("scenario route does not match collection plan")
     paths = _scenario_paths(output_root, row)
-    _write_scenario_inputs(paths, layout, route)
+    _write_scenario_inputs(
+        paths,
+        layout,
+        route,
+        protocol["recording"]["camera_pitch_down_deg"],
+    )
     _write_scenario_report(paths, plan, row, protocol, layout, route, timing)
     return _runtime_record(output_root, row, paths, timing)

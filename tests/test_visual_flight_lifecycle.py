@@ -171,6 +171,49 @@ class FlightLifecycleMonitorTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(stop.is_set())
             self.assertEqual(outcome["event_type"], "mission_failed")
 
+    async def test_event_waits_until_rgb_receive_clock_reaches_it(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            flight_path = root / "flight.jsonl"
+            visual_path = root / "visual.jsonl"
+            live_path = root / "live.json"
+            writer = MissionEventWriter(flight_path)
+            stop = asyncio.Event()
+            monitor = asyncio.create_task(
+                monitor_flight_lifecycle(
+                    flight_path,
+                    live_path,
+                    visual_path,
+                    stop,
+                    {},
+                    poll_interval_s=0.005,
+                )
+            )
+            writer.publish("phase_changed", phase="approach")
+            event = json.loads(flight_path.read_text().splitlines()[0])
+            host_s = event["host_monotonic_ns"] / 1_000_000_000.0
+            write_live_status(
+                live_path,
+                {
+                    "last_simulation_timestamp": 10.0,
+                    "last_receive_monotonic_timestamp": host_s - 1.0,
+                },
+            )
+            await asyncio.sleep(0.03)
+            self.assertFalse(visual_path.exists())
+            write_live_status(
+                live_path,
+                {
+                    "last_simulation_timestamp": 12.0,
+                    "last_receive_monotonic_timestamp": host_s + 0.01,
+                },
+            )
+            await self._wait_for_rows(visual_path, 1)
+            row = json.loads(visual_path.read_text().splitlines()[0])
+            self.assertEqual(row["simulation_timestamp"], 12.0)
+            monitor.cancel()
+            await asyncio.gather(monitor, return_exceptions=True)
+
 
 if __name__ == "__main__":
     unittest.main()

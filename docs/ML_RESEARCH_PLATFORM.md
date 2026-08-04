@@ -292,12 +292,22 @@ membership. Aggregate class and no-target coverage are mandatory per split.
 Protocol v2 adds ten split-isolated Gazebo layouts and five routes per layout:
 four equipment-centered routes plus a verified-no-target background transit.
 Its tracked plan and layout manifests live under
-`benchmarks/visual_static_v2/`. Equipment routes retain two views separated by
-90 degrees and use explicit target-facing yaw, including the close-range
--30/0/+30 degree sweep. Straight A* segments are represented by their turning
-cells rather than every grid cell. Flight timeouts are derived from route
-distance, holds, and waypoint settling, bounded to 180--360 seconds; an
-explicit CLI override remains available for diagnosis.
+`benchmarks/visual_static_v2/`. Labelled equipment models are world-level
+entities and each label plugin is attached to the equipment's own visual;
+unlabelled infrastructure remains background. Equipment routes retain two
+views separated by 90 degrees and use the measured PX4-to-Gazebo yaw mapping
+for explicit target-facing yaw, including the close-range -30/0/+30 degree
+sweep. The protocol binds the x500 camera installation: a
+5-degree downward pitch, a measured 341-degree heading offset from PX4 body
+heading,
+and centered square-pixel intrinsics derived from the configured horizontal
+field of view for both RGB and truth cameras. A visual hold starts only after
+yaw is within tolerance and roll/pitch are level for the required settling
+interval; the flight event log records that boundary. Straight A* segments
+are represented by their turning cells rather than every grid cell. Flight
+timeouts are derived from route distance, holds, and waypoint settling,
+bounded to 180--360 seconds; an explicit CLI override remains available for
+diagnosis.
 
 Every v2 recording must contain at least 1,000 target frames, at least 150
 small, medium, and large target frames, two seconds of valid target visibility

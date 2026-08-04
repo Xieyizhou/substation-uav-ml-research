@@ -114,7 +114,7 @@ def run_collection_scenario(
         )
         timeout_s = (
             float(flight_timeout_s) if flight_timeout_s is not None
-            else float(prepared.get("flight_timeout_s", 600.0))
+            else float(prepared.get("flight_timeout_s", 360.0))
         )
         wait_for_flight(flight, recorder, timeout_s)
         wait_process(recorder, recorder_timeout_s)

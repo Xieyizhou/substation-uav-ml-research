@@ -32,6 +32,8 @@ def route_timing(route, policy):
         distance_m / float(policy["nominal_horizontal_speed_m_s"])
         + sum(waypoint.hold_s for waypoint in route.waypoints)
         + movement_waypoint_count * float(policy["waypoint_settle_s"])
+        + len(route.waypoints)
+        * float(policy["yaw_acquisition_allowance_s_per_observation"])
         + float(policy["fixed_overhead_s"])
     )
     timeout_s = min(

@@ -2,6 +2,8 @@
 
 from collections import Counter, defaultdict
 
+from src.vision.collection.route import PHASES
+
 
 SIZE_BINS = ("small", "medium", "large")
 
@@ -29,6 +31,8 @@ def summarize_target_route(annotations, frames_by_id, target_class):
     target_frame_count = 0
     truncated_frame_count = 0
     for annotation in annotations:
+        if annotation.mission_phase not in PHASES:
+            continue
         targets = [item for item in annotation.objects if item.class_name == target_class]
         if not targets:
             continue
@@ -60,8 +64,18 @@ def summarize_target_route(annotations, frames_by_id, target_class):
 
 
 def summarize_background_route(annotations):
-    labelled = sum(annotation.annotation_status == "labelled" for annotation in annotations)
-    no_target = sum(annotation.annotation_status == "verified_no_target" for annotation in annotations)
+    dataset_annotations = [
+        annotation for annotation in annotations
+        if annotation.mission_phase in PHASES
+    ]
+    labelled = sum(
+        annotation.annotation_status == "labelled"
+        for annotation in dataset_annotations
+    )
+    no_target = sum(
+        annotation.annotation_status == "verified_no_target"
+        for annotation in dataset_annotations
+    )
     return {
         "target_class": None,
         "verified_no_target_frame_count": no_target,

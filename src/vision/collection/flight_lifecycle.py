@@ -81,12 +81,29 @@ def visual_phase_for_flight_event(event):
 
 
 def _latest_simulation_timestamp(live_status_path):
+    clock = _latest_frame_clock(live_status_path)
+    return None if clock is None else clock[0]
+
+
+def _latest_frame_clock(live_status_path):
     try:
         status = json.loads(Path(live_status_path).read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError, OSError):
         return None
     value = status.get("last_simulation_timestamp")
-    return None if value is None else float(value)
+    if value is None:
+        return None
+    received = status.get("last_receive_monotonic_timestamp")
+    return float(value), None if received is None else float(received)
+
+
+def _event_reached_frame(event, frame_clock):
+    if frame_clock is None:
+        return False
+    received = frame_clock[1]
+    if received is None:
+        return True
+    return received >= float(event["host_monotonic_ns"]) / 1_000_000_000.0
 
 
 def _append_visual_event(path, event, mission_phase, timestamp):
@@ -132,6 +149,7 @@ async def monitor_flight_lifecycle(
     offset = 0
     previous_sequence = 0
     pending = []
+    completed_event = None
     while True:
         path = Path(flight_events_path)
         if path.is_file():
@@ -156,22 +174,34 @@ async def monitor_flight_lifecycle(
                     ):
                         raise ValueError("invalid completed flight mission event")
                     outcome.update(event)
+                    completed_event = event
                 elif event_type == "mission_failed":
                     outcome.update(event)
-            timestamp = _latest_simulation_timestamp(live_status_path)
-            if timestamp is not None:
-                for event, mission_phase in pending:
+            frame_clock = _latest_frame_clock(live_status_path)
+            ready = []
+            waiting = []
+            for event, mission_phase in pending:
+                if _event_reached_frame(event, frame_clock):
+                    ready.append((event, mission_phase))
+                else:
+                    waiting.append((event, mission_phase))
+            if frame_clock is not None:
+                for event, mission_phase in ready:
                     _append_visual_event(
                         visual_events_path,
                         event,
                         mission_phase,
-                        timestamp,
+                        frame_clock[0],
                     )
-                pending.clear()
+            pending = waiting
             if outcome.get("event_type") == "mission_failed":
                 stop_event.set()
                 return
-            if outcome.get("event_type") == "mission_completed" and not pending:
+            completed_reached = (
+                completed_event is not None
+                and _event_reached_frame(completed_event, frame_clock)
+            )
+            if completed_reached and not pending:
                 await asyncio.sleep(post_landing_drain_s)
                 stop_event.set()
                 return

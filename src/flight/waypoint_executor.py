@@ -118,7 +118,17 @@ def velocity_command_from_error(error, speed_scale=1.0, yaw_deg=0.0):
         -MAX_VERTICAL_SPEED_M_S,
         MAX_VERTICAL_SPEED_M_S,
     )
-    return VelocityNedYaw(north_velocity, east_velocity, down_velocity, float(yaw_deg))
+    return VelocityNedYaw(
+        north_velocity,
+        east_velocity,
+        down_velocity,
+        normalize_yaw_deg(yaw_deg),
+    )
+
+
+def normalize_yaw_deg(yaw_deg):
+    normalized = (float(yaw_deg) + 180.0) % 360.0 - 180.0
+    return 180.0 if normalized == -180.0 else normalized
 
 
 def risk_adjusted_speed_scale(base_speed_scale, risk_level, risk_action):
@@ -381,7 +391,12 @@ async def hover_at_waypoint(drone, phase_state, target_state, waypoint, phase_na
     set_phase(phase_state, phase_name)
     target_state.update(waypoint)
     await drone.offboard.set_velocity_ned(
-        VelocityNedYaw(0.0, 0.0, 0.0, float(waypoint.get("yaw_deg", 0.0)))
+        VelocityNedYaw(
+            0.0,
+            0.0,
+            0.0,
+            normalize_yaw_deg(waypoint.get("yaw_deg", 0.0)),
+        )
     )
     await asyncio.sleep(hover_s)
 

@@ -44,7 +44,12 @@ def audit_collection_plan(plan):
         world_count += 1
         category_counts.update(item.visual_category for item in layout.objects)
         for row in rows:
-            route = build_visual_route(layout, row["route_id"], row["target_class"])
+            route = build_visual_route(
+                layout,
+                row["route_id"],
+                row["target_class"],
+                camera_heading_offset_deg=protocol["recording"]["camera_heading_offset_deg"],
+            )
             if route.route_identity_sha256 != row["route_identity_sha256"]:
                 raise ValueError(f"route identity mismatch: {row['scenario_id']}")
             route_counts[row["route_id"]] += 1

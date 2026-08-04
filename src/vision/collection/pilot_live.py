@@ -151,6 +151,9 @@ async def record_live_visual_pilot(
                         "recording_id": recording_id,
                         "accepted_frame_count": len(frames),
                         "last_simulation_timestamp": event.frame.capture_timestamp,
+                        "last_receive_monotonic_timestamp": (
+                            event.frame.receive_monotonic_timestamp
+                        ),
                     },
                 )
                 if frame_limit is not None and len(frames) >= frame_limit:

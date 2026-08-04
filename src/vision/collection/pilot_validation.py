@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from src.ml.artifacts import object_sha256
@@ -40,6 +41,28 @@ def inspect_pilot_recording(recording_directory):
     }
 
 
+def _validate_payload(root, frame):
+    payload = root / frame.payload_relative_path
+    if not payload.is_file() or _sha256(payload) != frame.payload_sha256:
+        raise PilotRecordingError(f"invalid pilot payload: {frame.frame_id}")
+
+
+def _validate_annotation(root, metadata, frames_by_id, annotation):
+    frame = frames_by_id.get(annotation.frame_id)
+    if frame is None:
+        raise PilotRecordingError("annotation references an unknown RGB frame")
+    annotation.validate_linkage(
+        frame, decode_camera_payload(frame, root).image
+    )
+    if annotation.recording_id != metadata["recording_id"]:
+        raise PilotRecordingError("annotation recording identity mismatch")
+
+
+def _parallel_validate(items, function):
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        tuple(executor.map(function, items))
+
+
 def _load_and_validate_linkage(root, metadata):
     frames = [
         CameraFrame.from_record(row) for row in _read_jsonl(root / "frames.jsonl")
@@ -62,21 +85,16 @@ def _load_and_validate_linkage(root, metadata):
             or sync.rgb_simulation_timestamp != frame.capture_timestamp
         ):
             raise PilotRecordingError("synchronization manifest is not frame-ordered")
-        payload = root / frame.payload_relative_path
-        if not payload.is_file() or _sha256(payload) != frame.payload_sha256:
-            raise PilotRecordingError(f"invalid pilot payload: {frame.frame_id}")
+    _parallel_validate(frames, lambda frame: _validate_payload(root, frame))
     frames_by_id = {frame.frame_id: frame for frame in frames}
     if len(frames_by_id) != len(frames):
         raise PilotRecordingError("pilot frame IDs must be unique")
-    for annotation in annotations:
-        frame = frames_by_id.get(annotation.frame_id)
-        if frame is None:
-            raise PilotRecordingError("annotation references an unknown RGB frame")
-        annotation.validate_linkage(
-            frame, decode_camera_payload(frame, root).image
-        )
-        if annotation.recording_id != metadata["recording_id"]:
-            raise PilotRecordingError("annotation recording identity mismatch")
+    _parallel_validate(
+        annotations,
+        lambda annotation: _validate_annotation(
+            root, metadata, frames_by_id, annotation
+        ),
+    )
     annotation_ids = [annotation.frame_id for annotation in annotations]
     if len(annotation_ids) != len(set(annotation_ids)):
         raise PilotRecordingError("pilot has duplicate annotation frame linkage")

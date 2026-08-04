@@ -125,6 +125,8 @@ def _validate_v2(data):
     timing = data.get("flight_timeout_policy") or {}
     if (
         float(timing.get("nominal_horizontal_speed_m_s", 0.0)) <= 0.0
+        or float(timing.get("yaw_acquisition_allowance_s_per_observation", -1.0))
+        < 0.0
         or float(timing.get("timeout_multiplier", 0.0)) < 1.0
         or float(timing.get("minimum_timeout_s", 0.0)) <= 0.0
         or float(timing.get("maximum_timeout_s", 0.0))
