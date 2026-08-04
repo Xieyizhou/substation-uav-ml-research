@@ -56,10 +56,10 @@ class ModuleBoundaryTests(unittest.TestCase):
             "src/logging/summary_collection.py",
             "src/logging/summary_outputs.py",
             "src/logging/summary_values.py",
-            "src/ml/visual_annotations.py",
-            "src/ml/visual_benchmark.py",
-            "src/ml/visual_benchmark_matrix.py",
-            "src/ml/visual_identity.py",
+            "src/vision/contracts/annotations.py",
+            "src/vision/contracts/benchmark.py",
+            "src/vision/contracts/identity.py",
+            "src/vision/replay/benchmark_matrix.py",
             "src/sensors/camera_decoded.py",
             "src/sensors/camera_decoder.py",
         ):
@@ -77,6 +77,15 @@ class ModuleBoundaryTests(unittest.TestCase):
                 self.assertLessEqual(
                     len(path.read_text(encoding="utf-8").splitlines()),
                     500,
+                )
+
+    def test_visual_domain_files_stay_below_three_hundred_lines(self):
+        paths = sorted((PROJECT_ROOT / "src" / "vision").rglob("*.py"))
+        for path in paths:
+            with self.subTest(path=path.relative_to(PROJECT_ROOT)):
+                self.assertLessEqual(
+                    len(path.read_text(encoding="utf-8").splitlines()),
+                    300,
                 )
 
 

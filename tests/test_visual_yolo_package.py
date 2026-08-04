@@ -6,9 +6,9 @@ from unittest.mock import patch
 
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import file_sha256, object_sha256, write_json
-from src.ml.visual_identity import ModelIdentity, class_order_identity
-from src.ml.visual_training_identity import TrainingViewIdentity
-from src.ml.visual_yolo_package import (
+from src.vision.contracts.identity import ModelIdentity, class_order_identity
+from src.vision.contracts.training_identity import TrainingViewIdentity
+from src.vision.evaluation.yolo_package import (
     EXPORT_SIZES,
     export_yolo_package,
     preprocessing_identity,
@@ -229,7 +229,7 @@ class VisualYoloPackageTests(unittest.TestCase):
 
             output = root / "package"
             with patch("ultralytics.YOLO", _FakeYolo), patch(
-                "src.ml.visual_yolo_package.validate_onnx_equivalence",
+                "src.vision.evaluation.yolo_package.validate_onnx_equivalence",
                 side_effect=gate,
             ):
                 with self.assertRaisesRegex(ValueError, "input size 416"):

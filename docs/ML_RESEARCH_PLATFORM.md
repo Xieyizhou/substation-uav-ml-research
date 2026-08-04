@@ -390,9 +390,9 @@ conversion, or padded/typed raw support.
 
 ### Frozen visual research identities
 
-The versioned contracts in `src/ml/visual_identity.py`,
-`src/ml/visual_annotations.py`, `src/ml/visual_benchmark.py`, and
-`src/ml/visual_benchmark_matrix.py` keep six different identities separate:
+The versioned contracts in `src/vision/contracts/` and the static matrix
+validation in `src/vision/replay/benchmark_matrix.py` keep six different
+identities separate:
 
 1. `DatasetIdentity` binds ordered recording membership, payload hashes through
    the recording manifest, annotations, scenarios, splits, decoder

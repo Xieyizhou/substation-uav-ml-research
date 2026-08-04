@@ -1,7 +1,7 @@
 from dataclasses import replace
 import unittest
 
-from src.ml.visual_identity import (
+from src.vision.contracts.identity import (
     DatasetIdentity,
     ModelIdentity,
     PreprocessingIdentity,

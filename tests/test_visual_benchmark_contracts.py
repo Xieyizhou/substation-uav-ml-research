@@ -6,17 +6,17 @@ import unittest
 
 import numpy as np
 
-from src.ml.visual_annotations import (
+from src.vision.contracts.annotations import (
     VisualFrameAnnotation,
     VisualObjectAnnotation,
 )
-from src.ml.visual_benchmark import (
+from src.vision.contracts.benchmark import (
     TIMING_STAGES,
     VisualBenchmarkCondition,
     VisualBenchmarkResult,
 )
-from src.ml.visual_benchmark_matrix import validate_static_benchmark_directory
-from src.ml.visual_identity import class_order_identity
+from src.vision.replay.benchmark_matrix import validate_static_benchmark_directory
+from src.vision.contracts.identity import class_order_identity
 from src.sensors.camera_decoded import (
     DecodedImage,
     decoded_content_sha256,

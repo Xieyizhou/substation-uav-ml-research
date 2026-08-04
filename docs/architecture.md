@@ -33,8 +33,10 @@ PX4/Gazebo simulation
 - `src/sensors/`: Gazebo/replay sources, scan parsing, health, and stable data contracts.
 - `src/perception/`: map-oracle baseline, LiDAR detector, rolling costmap,
   safety state, BEV, and semantic fusion.
-- `src/ml/`: dataset schemas, split isolation, metrics, ONNX risk, LiDAR
-  training, domain randomization, and YOLO label boundaries.
+- `src/ml/`: shared dataset schemas, split isolation, ONNX risk, LiDAR
+  training, and domain randomization.
+- `src/vision/`: deterministic camera collection, visual contracts, YOLO
+  training, evaluation, model packaging, and static replay.
 - `src/backends/`: vendor-neutral flight protocol, MAVSDK adapter, and future
   DJI PSDK boundary.
 - `src/flight/fly_astar_path.py`: thin CLI and backward-compatible exports.
@@ -66,6 +68,48 @@ PX4/Gazebo simulation
 - `scripts/flight/experiments/`: repeatable staged experiment runners.
 - `config/maps/`: synchronized map-specific planner configurations.
 - `config/perception/`: research protocol, equipment classes, and domain randomization.
+
+## Visual Workflow Architecture
+
+Visual research code follows one-way domain layers. JSON dictionaries enter
+and leave at serialization boundaries; workflow code passes validated records
+and identity objects internally.
+
+| Layer | Input | Output | Invariant |
+|---|---|---|---|
+| `src/vision/contracts/` | Serialized records and explicit fields | Validated camera, annotation, identity, protocol, and benchmark records | Content identity and schema validation contain no workflow decisions |
+| `src/vision/collection/` | Protocol, layout, route, and simulator streams | Recordings, audit reports, and dataset identities | Truth status remains distinct from synchronization failure |
+| `src/vision/training/` | Development identity and sampling configuration | Ordered YOLO view and training artifacts | Selected membership and labels are reproducible and hash-bound |
+| `src/vision/evaluation/` | Frozen model, validation or held-out receipt | Metrics, ONNX gates, and package manifest | Held-out settings cannot be selected from held-out predictions |
+| `src/vision/replay/` | Frozen package, dataset identity, and replay condition | Ordered timing and accuracy results | Conditions share source order unless the condition explicitly changes frame cadence |
+| `src/cli/visual*.py` | Command-line arguments | Application-service calls and formatted output | No experiment policy or identity rule lives in the parser |
+
+The principal data flow is:
+
+```text
+collection plan
+  -> recording + annotation manifests
+  -> dataset identity
+  -> deterministic training view
+  -> trained weights
+  -> validation threshold + ONNX equivalence gates
+  -> frozen model package
+  -> held-out receipt and saved predictions
+  -> static replay conditions and results
+```
+
+Public workflow entry points are grouped by responsibility:
+
+- Collection: `collection/plan.py`, `collection/batch.py`, and
+  `collection/dataset.py`.
+- Training: `training/view.py` and `training/yolo_training.py`.
+- Package freeze and held-out evaluation: `evaluation/yolo_package.py`,
+  `evaluation/heldout_view.py`, and `evaluation/yolo_evaluation.py`.
+- Static replay: `replay/static_replay.py`.
+
+Versioned protocols may share validated contracts, but a newer protocol does
+not change the meaning or hashes of existing artifacts. Protocol selection is
+persisted in the collection plan and consumed from that plan by later stages.
 
 ## Formal Experiment Runners
 

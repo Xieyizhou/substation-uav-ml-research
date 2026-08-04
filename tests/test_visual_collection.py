@@ -10,25 +10,25 @@ from tests.test_gazebo_visual_pilot import (
 )
 from src.flight.mission_events import MissionEventWriter
 from src.ml.artifacts import object_sha256
-from src.ml.gazebo_visual_truth import parse_gazebo_truth_message
-from src.ml.visual_collection import (
+from src.vision.collection.gazebo_truth import parse_gazebo_truth_message
+from src.vision.collection.plan import (
     build_collection_plan,
     collection_status,
     load_collection_protocol,
 )
-from src.ml.visual_collection_recording import (
+from src.vision.collection.recording import (
     collection_recording_context,
     prepare_collection_scenario,
     validate_collection_recording,
 )
-from src.ml.visual_collection_dataset import (
+from src.vision.collection.dataset import (
     materialize_collection_datasets,
     validate_aggregate_coverage,
 )
-from src.ml.visual_collection_receipt import (
+from src.vision.collection.receipt import (
     write_collection_validation_receipt,
 )
-from src.ml.visual_pilot import write_pilot_recording
+from src.vision.collection.pilot import write_pilot_recording
 from src.sensors.gazebo_camera import parse_gazebo_image_message
 
 

@@ -5,15 +5,15 @@ import unittest
 from unittest.mock import patch
 
 from src.ml.artifacts import file_sha256, write_json
-from src.ml.visual_benchmark import VisualBenchmarkCondition
-from src.ml.visual_static_replay import materialize_static_replay
-from src.ml.visual_static_runtime import timing_summary
-from src.ml.visual_static_source import (
+from src.vision.contracts.benchmark import VisualBenchmarkCondition
+from src.vision.replay.static_replay import materialize_static_replay
+from src.vision.replay.static_runtime import timing_summary
+from src.vision.replay.static_source import (
     ordered_replay_sources,
     static_predict_options,
     write_source_list,
 )
-from src.ml.visual_yolo_dataset import _write_jsonl
+from src.vision.training.yolo_dataset import _write_jsonl
 from tests.test_visual_identity import dataset_identity
 from tests.test_visual_yolo_package import VisualYoloPackageTests
 
@@ -82,7 +82,7 @@ class StaticReplayTests(unittest.TestCase):
                 },
             )
             with patch(
-                "src.ml.visual_static_replay._clean_commit",
+                "src.vision.replay.static_replay._clean_commit",
                 return_value="commit",
             ):
                 result = materialize_static_replay(

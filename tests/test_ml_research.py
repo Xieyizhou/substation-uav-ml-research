@@ -10,7 +10,7 @@ from src.ml.domain_randomization import load_ranges, sample_manifest
 from src.ml.metrics import binary_iou, classification_report, latency_summary
 from src.ml.protocol import experiment_matrix, load_protocol
 from src.ml.research_recorder import ResearchDatasetWriter
-from src.ml.yolo_labels import BoundingBoxLabel
+from src.vision.training.labels import BoundingBoxLabel
 from src.perception.bev import point_cloud_to_bev
 from src.perception.semantic_fusion import associate_equipment_with_lidar
 from src.planner.astar_25d import astar_25d

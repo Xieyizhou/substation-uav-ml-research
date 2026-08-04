@@ -10,18 +10,18 @@ from unittest.mock import Mock, patch
 from src.cli.visual import build_parser
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import file_sha256, object_sha256, write_json
-from src.ml.visual_identity import DatasetIdentity, class_order_identity
-from src.ml.visual_heldout_view import _heldout_dataset_yaml
-from src.ml.visual_training_identity import TrainingViewIdentity
-from src.ml.visual_training_view import (
+from src.vision.contracts.identity import DatasetIdentity, class_order_identity
+from src.vision.evaluation.heldout_view import _heldout_dataset_yaml
+from src.vision.contracts.training_identity import TrainingViewIdentity
+from src.vision.training.view import (
     evenly_select,
     materialize_training_view,
     proportional_quotas,
     select_partition,
 )
-from src.ml.visual_yolo_dataset import link_image, yolo_label_text
-from src.ml.visual_yolo_training import load_training_config
-from src.ml.visual_yolo_evaluation import (
+from src.vision.training.yolo_dataset import link_image, yolo_label_text
+from src.vision.training.yolo_training import load_training_config
+from src.vision.evaluation.yolo_evaluation import (
     _standard_metrics,
     collect_predictions,
     evaluate_yolo,
@@ -173,7 +173,7 @@ class YoloDatasetTests(unittest.TestCase):
             destination = root / "nested/image.png"
             source.write_bytes(b"png")
             with patch(
-                "src.ml.visual_yolo_dataset.os.link",
+                "src.vision.training.yolo_dataset.os.link",
                 side_effect=OSError(errno.EXDEV, "cross-device"),
             ):
                 mode = link_image(source, destination)
@@ -371,16 +371,16 @@ class TrainingCliTests(unittest.TestCase):
             ]
             output = root / "result.json"
             with patch(
-                "src.ml.visual_yolo_evaluation._formal_commit",
+                "src.vision.evaluation.yolo_evaluation._formal_commit",
                 return_value="commit",
             ), patch(
-                "src.ml.visual_yolo_evaluation._standard_metrics",
+                "src.vision.evaluation.yolo_evaluation._standard_metrics",
                 return_value={"mAP50_95": 0.5},
             ), patch(
-                "src.ml.visual_yolo_evaluation.collect_predictions",
+                "src.vision.evaluation.yolo_evaluation.collect_predictions",
                 return_value=frames,
             ), patch(
-                "src.ml.visual_yolo_evaluation.select_confidence_threshold"
+                "src.vision.evaluation.yolo_evaluation.select_confidence_threshold"
             ) as search:
                 result = evaluate_yolo(
                     model,
@@ -429,13 +429,13 @@ class TrainingCliTests(unittest.TestCase):
             )
             frames = [{"sample_id": "sample", "truth": [], "predictions": []}]
             with patch(
-                "src.ml.visual_yolo_evaluation._formal_commit",
+                "src.vision.evaluation.yolo_evaluation._formal_commit",
                 return_value="evaluation-commit",
             ), patch(
-                "src.ml.visual_yolo_evaluation._standard_metrics",
+                "src.vision.evaluation.yolo_evaluation._standard_metrics",
                 return_value={"mAP50_95": 0.5},
             ), patch(
-                "src.ml.visual_yolo_evaluation.collect_predictions",
+                "src.vision.evaluation.yolo_evaluation.collect_predictions",
                 return_value=frames,
             ):
                 result = evaluate_yolo(

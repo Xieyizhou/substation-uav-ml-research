@@ -7,9 +7,9 @@ from unittest.mock import patch
 
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import file_sha256, write_json
-from src.ml.visual_identity import class_order_identity
-from src.ml.visual_training_identity import TrainingViewIdentity
-from src.ml.visual_yolo_training import train_yolo
+from src.vision.contracts.identity import class_order_identity
+from src.vision.contracts.training_identity import TrainingViewIdentity
+from src.vision.training.yolo_training import train_yolo
 
 
 class _FakeYolo:
@@ -68,7 +68,7 @@ class VisualYoloTrainingTests(unittest.TestCase):
             write_json(config_path, config)
             _FakeYolo.calls.clear()
             with patch("ultralytics.YOLO", _FakeYolo), patch(
-                "src.ml.visual_yolo_training._require_clean_commit",
+                "src.vision.training.yolo_training._require_clean_commit",
                 return_value="commit-sha",
             ):
                 result = train_yolo(config_path, dataset, output)
@@ -97,7 +97,7 @@ class VisualYoloTrainingTests(unittest.TestCase):
             checkpoint.parent.mkdir(parents=True)
             checkpoint.write_bytes(b"last")
             with patch(
-                "src.ml.visual_yolo_training._require_clean_commit",
+                "src.vision.training.yolo_training._require_clean_commit",
                 return_value="commit-sha",
             ):
                 with self.assertRaisesRegex(ValueError, "--resume"):

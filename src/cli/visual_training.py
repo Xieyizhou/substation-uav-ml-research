@@ -4,16 +4,16 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from src.ml.visual_heldout_view import materialize_heldout_view
-from src.ml.visual_onnx_gate import validate_onnx_equivalence
-from src.ml.visual_training_view import materialize_training_view
-from src.ml.visual_static_replay import (
+from src.vision.evaluation.heldout_view import materialize_heldout_view
+from src.vision.evaluation.onnx_gate import validate_onnx_equivalence
+from src.vision.training.view import materialize_training_view
+from src.vision.replay.static_replay import (
     materialize_static_replay,
     run_static_replay,
 )
-from src.ml.visual_yolo_evaluation import evaluate_yolo
-from src.ml.visual_yolo_package import export_yolo_package, validate_yolo_package
-from src.ml.visual_yolo_training import train_yolo
+from src.vision.evaluation.yolo_evaluation import evaluate_yolo
+from src.vision.evaluation.yolo_package import export_yolo_package, validate_yolo_package
+from src.vision.training.yolo_training import train_yolo
 
 
 DEFAULT_COLLECTION = Path("data/research/visual_collection_v1")

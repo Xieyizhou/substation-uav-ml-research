@@ -6,7 +6,7 @@ import unittest
 
 from src.flight.flight_state import set_phase
 from src.flight.mission_events import MissionEventWriter
-from src.ml.visual_flight_lifecycle import (
+from src.vision.collection.flight_lifecycle import (
     monitor_flight_lifecycle,
     visual_phase_for_flight_event,
     write_live_status,

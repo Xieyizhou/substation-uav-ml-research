@@ -15,26 +15,26 @@ from scripts.maps.generate_test_maps import (
     build_world,
 )
 from src.cli import visual
-from src.ml.gazebo_visual_truth import (
+from src.vision.collection.gazebo_truth import (
     parse_gazebo_truth_message,
 )
-from src.ml.visual_pilot import (
+from src.vision.collection.pilot import (
     PilotRecordingError,
     load_pilot_protocol,
     write_pilot_recording,
 )
-from src.ml.visual_pilot_validation import (
+from src.vision.collection.pilot_validation import (
     inspect_pilot_recording,
     materialize_pilot_dataset_identity,
     validate_pilot_recording,
 )
-from src.ml.visual_pilot_metrics import summarize_source_health
+from src.vision.collection.pilot_metrics import summarize_source_health
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-from src.ml.visual_pilot_acceptance import invalid_truth_acceptance_failures
-from src.ml.visual_pilot_live import prepare_pilot_output_directory
-from src.ml.visual_synchronization import synchronize_visual_frames
+from src.vision.collection.pilot_acceptance import invalid_truth_acceptance_failures
+from src.vision.collection.pilot_live import prepare_pilot_output_directory
+from src.vision.collection.synchronization import synchronize_visual_frames
 from src.sensors.gazebo_camera import GazeboCameraSource, parse_gazebo_image_message
 from src.sensors.gazebo_visual_transport import (
     GAZEBO_SIM_CLOCK,
@@ -474,7 +474,7 @@ class SynchronizationTests(unittest.TestCase):
             for index in range(2000)
         ]
         with mock.patch(
-            "src.ml.visual_synchronization._candidate_key",
+            "src.vision.collection.synchronization._candidate_key",
             wraps=lambda frame, truth: (
                 abs(truth.simulation_timestamp - frame.capture_timestamp),
                 truth.simulation_timestamp,
@@ -583,7 +583,7 @@ class PilotRecordingTests(unittest.TestCase):
             protocol = load_pilot_protocol()
             protocol["recording"]["maximum_invalid_truth_rgb_fraction"] = 0.2
             with mock.patch(
-                "src.ml.visual_pilot_validation.load_pilot_protocol",
+                "src.vision.collection.pilot_validation.load_pilot_protocol",
                 return_value=protocol,
             ):
                 validation = validate_pilot_recording(directory)

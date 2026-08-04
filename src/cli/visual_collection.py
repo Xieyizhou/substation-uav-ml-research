@@ -5,25 +5,25 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
-from src.ml.visual_collection import (
+from src.vision.collection.plan import (
     collection_status,
     load_collection_plan,
     load_collection_protocol,
     validate_collection_plan,
     write_collection_plan,
 )
-from src.ml.visual_collection_recording import (
+from src.vision.collection.recording import (
     collection_recording_context,
     prepare_collection_scenario,
     scenario_by_id,
     validate_collection_recording,
 )
-from src.ml.visual_collection_dataset import materialize_collection_datasets
-from src.ml.visual_collection_batch import run_collection_batch
-from src.ml.visual_collection_receipt import (
+from src.vision.collection.dataset import materialize_collection_datasets
+from src.vision.collection.batch import run_collection_batch
+from src.vision.collection.receipt import (
     write_collection_validation_receipt,
 )
-from src.ml.visual_pilot_live import (
+from src.vision.collection.pilot_live import (
     append_live_phase_event,
     record_live_visual_pilot,
 )

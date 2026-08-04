@@ -7,24 +7,24 @@ import asyncio
 import json
 from pathlib import Path
 
-from src.ml.visual_benchmark import (
+from src.vision.contracts.benchmark import (
     VisualBenchmarkResult,
 )
-from src.ml.visual_benchmark_matrix import (
+from src.vision.replay.benchmark_matrix import (
     load_json,
     validate_static_benchmark_directory,
 )
-from src.ml.visual_identity import (
+from src.vision.contracts.identity import (
     DatasetIdentity,
     ModelIdentity,
     PreprocessingIdentity,
 )
-from src.ml.visual_pilot_validation import (
+from src.vision.collection.pilot_validation import (
     inspect_pilot_recording,
     materialize_pilot_dataset_identity,
     validate_pilot_recording,
 )
-from src.ml.visual_pilot_live import (
+from src.vision.collection.pilot_live import (
     append_live_phase_event,
     probe_live_visual_sources,
     record_live_visual_pilot,

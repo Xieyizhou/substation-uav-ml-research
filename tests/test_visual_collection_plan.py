@@ -6,7 +6,7 @@ import unittest
 
 from src.cli import visual
 from src.ml.artifacts import object_sha256
-from src.ml.visual_collection import (
+from src.vision.collection.plan import (
     build_collection_plan,
     collection_status,
     load_collection_plan,

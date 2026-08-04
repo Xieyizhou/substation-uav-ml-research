@@ -5,7 +5,7 @@ import unittest
 import numpy as np
 
 from src.ml import EQUIPMENT_CLASSES
-from src.ml.equipment_detector import EquipmentDetector
+from src.vision.evaluation.detector import EquipmentDetector
 from src.sensors.types import (
     CameraFrame,
     LOCAL_MONOTONIC_CLOCK,

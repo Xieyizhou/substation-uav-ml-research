@@ -4,12 +4,12 @@ import unittest
 from unittest.mock import Mock, patch
 
 from src.cli import visual
-from src.ml.visual_collection import build_collection_plan
-from src.ml.visual_collection_batch import (
+from src.vision.collection.plan import build_collection_plan
+from src.vision.collection.batch import (
     archive_failed_attempt,
     run_collection_batch,
 )
-from src.ml.visual_collection_process import (
+from src.vision.collection.process import (
     CollectionProcessError,
     ensure_process_running,
     wait_for_flight,
@@ -38,7 +38,7 @@ class VisualCollectionBatchTests(unittest.TestCase):
         managed.name = "PX4/Gazebo launcher"
         managed.log_path = Path("simulator.log")
         managed.process.poll.return_value = 1
-        with patch("src.ml.visual_collection_process.time.sleep"):
+        with patch("src.vision.collection.process.time.sleep"):
             with self.assertRaisesRegex(
                 CollectionProcessError,
                 "exited with code 1",

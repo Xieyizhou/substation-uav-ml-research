@@ -2,14 +2,14 @@ import unittest
 from pathlib import Path
 import tempfile
 
-from src.ml.visual_detection_metrics import (
+from src.vision.evaluation.detection_metrics import (
     box_iou,
     match_detections,
     onnx_equivalence,
     select_confidence_threshold,
     threshold_metrics,
 )
-from src.ml.visual_onnx_gate import _calibration_dataset, calibration_members
+from src.vision.evaluation.onnx_gate import _calibration_dataset, calibration_members
 
 
 def truth(class_name="transformer", *, small=False):
