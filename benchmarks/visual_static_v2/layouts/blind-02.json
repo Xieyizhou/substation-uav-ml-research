@@ -3,7 +3,7 @@
   "generator_version": "gazebo-sdf-v3",
   "height_m": 40.0,
   "layout_id": "blind-02",
-  "layout_identity_sha256": "e4e4e3c9796cc4d42a895aa4d25791a15bce5562f7b1b1dd691a143264e9e51e",
+  "layout_identity_sha256": "4652a7dac4a6f31d53638c6ed9599d79af4502c070db6252444a6d0ecd9930b9",
   "layout_schema_version": 1,
   "layout_seed": 3046,
   "light_intensity": 1.2804909590403832,
@@ -114,7 +114,7 @@
       "size_east_m": 1.5,
       "size_north_m": 2.0,
       "visual_category": "cabinet",
-      "yaw_deg": 90.0
+      "yaw_deg": 0.0
     },
     {
       "east_m": 30.0,
@@ -138,7 +138,7 @@
       "size_east_m": 2.0,
       "size_north_m": 32.0,
       "visual_category": "control_building",
-      "yaw_deg": 90.0
+      "yaw_deg": 0.0
     },
     {
       "east_m": 12.0,

@@ -292,7 +292,11 @@ four equipment-centered routes plus a verified-no-target background transit.
 Its tracked plan and layout manifests live under
 `benchmarks/visual_static_v2/`. Labelled equipment models are world-level
 entities and each label plugin is attached to the equipment's own visual;
-unlabelled infrastructure remains background. Equipment routes retain two
+unlabelled infrastructure remains background. Target equipment orientation
+is randomized, while elongated fixed infrastructure retains its declared map
+orientation. Planner footprints use the yaw-rotated world geometry, so route
+clearance and Gazebo collision geometry share the same axis-aligned bounds.
+Equipment routes retain two
 views separated by 90 degrees and use the measured PX4-to-Gazebo yaw mapping
 for explicit target-facing yaw, including the close-range -30/0/+30 degree
 sweep. The protocol binds the x500 camera installation: a

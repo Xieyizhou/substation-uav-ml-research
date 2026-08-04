@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
+import math
 import random
 from pathlib import Path
 
@@ -83,16 +84,20 @@ def _sample_object(generator, ranges, specification):
     is_target = category in EQUIPMENT_CLASSES
     jitter = abs(float(ranges["equipment_position_jitter_m"][1])) if is_target else 0.0
     scale = generator.uniform(*map(float, ranges["equipment_scale"])) if is_target else 1.0
+    sampled_east_m = east + generator.uniform(-jitter, jitter)
+    sampled_north_m = north + generator.uniform(-jitter, jitter)
+    sampled_yaw_deg = float(generator.choice(ranges["equipment_yaw_deg"]))
+    material_age = generator.uniform(*map(float, ranges["material_age"]))
     return LayoutObject(
         object_id=object_id,
         visual_category=category,
-        east_m=east + generator.uniform(-jitter, jitter),
-        north_m=north + generator.uniform(-jitter, jitter),
+        east_m=sampled_east_m,
+        north_m=sampled_north_m,
         size_east_m=size_east * scale,
         size_north_m=size_north * scale,
         height_m=height * scale,
-        yaw_deg=float(generator.choice(ranges["equipment_yaw_deg"])),
-        material_age=generator.uniform(*map(float, ranges["material_age"])),
+        yaw_deg=sampled_yaw_deg if is_target else 0.0,
+        material_age=material_age,
         simulator_label=LABEL_BY_CLASS.get(category),
     )
 
@@ -143,11 +148,22 @@ def build_layout_manifest(layout_id, split, layout_seed, randomization_path):
 
 
 def _bounds(item, margin=0.0):
+    angle = math.radians(item.yaw_deg)
+    cosine = abs(math.cos(angle))
+    sine = abs(math.sin(angle))
+    cosine = 0.0 if cosine < 1e-12 else cosine
+    sine = 0.0 if sine < 1e-12 else sine
+    half_east = (
+        cosine * item.size_east_m + sine * item.size_north_m
+    ) / 2
+    half_north = (
+        sine * item.size_east_m + cosine * item.size_north_m
+    ) / 2
     return (
-        item.east_m - item.size_east_m / 2 - margin,
-        item.north_m - item.size_north_m / 2 - margin,
-        item.east_m + item.size_east_m / 2 + margin,
-        item.north_m + item.size_north_m / 2 + margin,
+        item.east_m - half_east - margin,
+        item.north_m - half_north - margin,
+        item.east_m + half_east + margin,
+        item.north_m + half_north + margin,
     )
 
 
@@ -183,16 +199,15 @@ def validate_layout_manifest(manifest):
 def layout_obstacle_config(manifest):
     obstacles = []
     for item in manifest.objects:
-        half_east = item.size_east_m / 2
-        half_north = item.size_north_m / 2
+        x_min, y_min, x_max, y_max = _bounds(item)
         obstacles.append(
             {
                 "name": item.object_id,
                 "type": "rect",
-                "x_min": int(item.east_m - half_east),
-                "x_max": int(item.east_m + half_east),
-                "y_min": int(item.north_m - half_north),
-                "y_max": int(item.north_m + half_north),
+                "x_min": int(x_min),
+                "x_max": int(x_max),
+                "y_min": int(y_min),
+                "y_max": int(y_max),
                 "z_min_m": 0.0,
                 "z_max_m": item.height_m,
                 "visual_category": item.visual_category,

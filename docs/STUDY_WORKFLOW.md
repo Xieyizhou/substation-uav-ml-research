@@ -198,6 +198,8 @@ not be used for fitting or model selection.
 ### Visual collection v2
 
 Protocol v2 uses tracked frozen layouts and equipment-centered yaw routes.
+The planner derives obstacle footprints from the same yaw-rotated geometry
+used by Gazebo; fixed infrastructure does not receive equipment randomization.
 Materialize or verify the frozen 50-recording plan with:
 
 ```bash

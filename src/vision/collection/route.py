@@ -173,7 +173,7 @@ def _yaw_scan(prefix, point, target, transit_path, camera_heading_offset_deg):
 
 
 def _target_waypoints(manifest, target, camera_heading_offset_deg):
-    rotations = tuple(float(value) for value in range(0, 360, 45))
+    rotations = tuple(float(value) for value in range(0, 360, 15))
     start = (manifest.layout_seed - 3001) % len(rotations)
     for offset in range(len(rotations)):
         first_bearing = rotations[(start + offset) % len(rotations)]
