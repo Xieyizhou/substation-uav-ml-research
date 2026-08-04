@@ -223,10 +223,12 @@ python main.py visual collection-run \
 `collection-status` defaults to the `recordings/` directory beside the plan.
 The v2 runner computes a route-specific 180--360 second flight timeout; pass
 `--flight-timeout` only as an explicit diagnostic override. Each target route
-must pass target-count, phase-visibility, size-bin, truncation, synchronization,
-and landing gates before the next scenario starts. The blind split is eligible
-for collection integrity checks only; do not create predictions or a training
-view from it before package freeze.
+contains an identity-bound A* return path generated from the final observation
+cell to the start cell; it is not a reversal of accumulated outbound segments.
+It must pass target-count, phase-visibility, size-bin, truncation,
+synchronization, and landing gates before the next scenario starts. The blind
+split is eligible for collection integrity checks only; do not create
+predictions or a training view from it before package freeze.
 
 ### Visual baseline training
 

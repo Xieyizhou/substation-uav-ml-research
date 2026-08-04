@@ -121,7 +121,6 @@ async def _takeoff(drone, latest, phase_state, target_state, route, configs):
 
 
 async def _fly_observations(drone, latest, phase_state, target_state, route, configs):
-    traversed = []
     for observation in route.waypoints:
         transit = [
             _cell_waypoint(cell, observation.altitude_m, observation.yaw_deg, f"{observation.waypoint_id}_path_{index:03d}")
@@ -153,8 +152,6 @@ async def _fly_observations(drone, latest, phase_state, target_state, route, con
             observation.mission_phase,
             observation.hold_s,
         )
-        traversed.extend(transit[:-1])
-    return traversed
 
 
 async def _settle_departure_yaw(drone, latest, phase_state, route):
@@ -171,16 +168,24 @@ async def _settle_departure_yaw(drone, latest, phase_state, route):
     )
 
 
-async def _return_and_land(drone, latest, phase_state, target_state, route, traversed, configs):
-    return_route = [dict(waypoint, name=f"return_{index:03d}") for index, waypoint in enumerate(reversed(traversed), start=1)]
-    return_route.append(
+def _return_waypoints(route):
+    return [
         _cell_waypoint(
-            route.start_cell,
+            cell,
             route.waypoints[0].altitude_m,
             route.waypoints[-1].yaw_deg,
-            "return_start",
+            (
+                "return_start"
+                if index == len(route.return_transit_cells)
+                else f"return_{index:03d}"
+            ),
         )
-    )
+        for index, cell in enumerate(route.return_transit_cells, start=1)
+    ]
+
+
+async def _return_and_land(drone, latest, phase_state, target_state, route, configs):
+    return_route = _return_waypoints(route)
     if return_route:
         await fly_waypoint_route(
             drone,
@@ -216,5 +221,5 @@ async def fly_visual_observation_route(
     configs = (perception_config, perception_detector, replan_config, replan_state)
     await _takeoff(drone, latest, phase_state, target_state, route, configs)
     await _settle_departure_yaw(drone, latest, phase_state, route)
-    traversed = await _fly_observations(drone, latest, phase_state, target_state, route, configs)
-    await _return_and_land(drone, latest, phase_state, target_state, route, traversed, configs)
+    await _fly_observations(drone, latest, phase_state, target_state, route, configs)
+    await _return_and_land(drone, latest, phase_state, target_state, route, configs)

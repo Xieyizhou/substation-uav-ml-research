@@ -60,6 +60,7 @@
   "recording": {
     "recordings_per_scenario": 1,
     "route": "visual_centered_yaw_v2",
+    "route_schema_version": 3,
     "required_mission_phases": ["cruise_distant", "approach", "close_inspection", "target_transition"],
     "retain_every_valid_source_frame": true,
     "automatic_downsampling": false,

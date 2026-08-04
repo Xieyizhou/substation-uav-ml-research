@@ -11,7 +11,7 @@ from src.planner.obstacle_config import build_obstacle_map
 from src.vision.collection.layout import LayoutManifest, layout_obstacle_config
 
 
-ROUTE_SCHEMA_VERSION = 2
+ROUTE_SCHEMA_VERSION = 3
 PHASES = ("cruise_distant", "approach", "close_inspection", "target_transition")
 
 
@@ -36,6 +36,7 @@ class VisualRoute:
     target_object_id: str | None
     start_cell: tuple[int, int]
     waypoints: tuple[ObservationWaypoint, ...]
+    return_transit_cells: tuple[tuple[int, int], ...]
     yaw_tolerance_deg: float = 5.0
     level_tolerance_deg: float = 5.0
     yaw_settle_duration_s: float = 0.5
@@ -45,6 +46,10 @@ class VisualRoute:
     def __post_init__(self):
         if self.route_schema_version != ROUTE_SCHEMA_VERSION:
             raise ValueError("unsupported visual route schema")
+        if not self.return_transit_cells:
+            raise ValueError("visual route requires a frozen return path")
+        if self.return_transit_cells[-1] != self.start_cell:
+            raise ValueError("visual return path must end at the start cell")
         if not 0.0 < self.yaw_tolerance_deg < 180.0:
             raise ValueError("visual route yaw tolerance is invalid")
         if not 0.0 < self.level_tolerance_deg < 90.0:
@@ -74,6 +79,9 @@ class VisualRoute:
             item["transit_cells"] = tuple(tuple(cell) for cell in item["transit_cells"])
             waypoints.append(ObservationWaypoint(**item))
         values["start_cell"] = tuple(values["start_cell"])
+        values["return_transit_cells"] = tuple(
+            tuple(cell) for cell in values["return_transit_cells"]
+        )
         route = cls(waypoints=tuple(waypoints), **values)
         if supplied != route.route_identity_sha256:
             raise ValueError("visual route identity mismatch")
@@ -95,22 +103,53 @@ def _cell(east, north):
     return int(math.floor(east)), int(math.floor(north))
 
 
-def _reachable_sequence(manifest, points):
+def _navigation(manifest):
     source = layout_obstacle_config(manifest)
-    config = build_obstacle_map(source)
+    return source, build_obstacle_map(source)
+
+
+def _path_cells(source, config, start, destination):
+    if destination in config["inflated_blocking_cells"]:
+        return None
+    try:
+        path = astar(
+            start,
+            destination,
+            config["inflated_blocking_cells"],
+            source["width"],
+            source["height"],
+        )
+    except ValueError:
+        return None
+    return tuple(simplify_grid_path(path)[1:])
+
+
+def _reachable_sequence(manifest, points):
+    source, config = _navigation(manifest)
     current = tuple(source["start_cell"])
     paths = []
     for east, north in points:
         destination = _cell(east, north)
-        if destination in config["inflated_blocking_cells"]:
+        path = _path_cells(source, config, current, destination)
+        if path is None:
             return None
-        try:
-            path = astar(current, destination, config["inflated_blocking_cells"], source["width"], source["height"])
-        except ValueError:
-            return None
-        paths.append(tuple(simplify_grid_path(path)[1:]))
+        paths.append(path)
         current = destination
     return tuple(paths)
+
+
+def _return_path(manifest, waypoints):
+    source, config = _navigation(manifest)
+    final = waypoints[-1]
+    path = _path_cells(
+        source,
+        config,
+        _cell(final.east_m, final.north_m),
+        tuple(source["start_cell"]),
+    )
+    if not path:
+        raise ValueError("visual route has no non-empty return path")
+    return path
 
 
 def _heading(yaw_deg, camera_heading_offset_deg):
@@ -246,4 +285,5 @@ def build_visual_route(
         target_object_id=None if target is None else target.object_id,
         start_cell=manifest.start_cell,
         waypoints=waypoints,
+        return_transit_cells=_return_path(manifest, waypoints),
     )

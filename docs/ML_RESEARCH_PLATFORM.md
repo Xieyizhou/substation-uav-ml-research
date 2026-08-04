@@ -302,10 +302,12 @@ and centered square-pixel intrinsics derived from the configured horizontal
 field of view for both RGB and truth cameras. A visual hold starts only after
 yaw is within tolerance and roll/pitch are level for the required settling
 interval; the flight event log records that boundary. Straight A* segments
-are represented by their turning cells rather than every grid cell. Flight
-timeouts are derived from route distance, holds, and waypoint settling,
-bounded to 180--360 seconds; an explicit CLI override remains available for
-diagnosis.
+are represented by their turning cells rather than every grid cell. Each
+route manifest also freezes a separately planned, collision-checked A* path
+from the final observation cell to the start cell; runtime flight never
+reconstructs return motion by reversing outbound segments. Flight timeouts
+are derived from route distance, holds, and waypoint settling, bounded to
+180--360 seconds; an explicit CLI override remains available for diagnosis.
 
 Every v2 recording must contain at least 1,000 target frames, at least 150
 small, medium, and large target frames, two seconds of valid target visibility

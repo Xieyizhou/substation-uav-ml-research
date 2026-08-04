@@ -1,7 +1,7 @@
 {
-  "collection_plan_identity_sha256": "9abb4ae6ada3f97b4103c564b70448c3784b03047fa37d2ec276e67cc3647381",
+  "collection_plan_identity_sha256": "f6f3696a4da6778c1eccd56cc0071c17437ca6c97700a34ae058128a35ba8235",
   "layout_count": 10,
-  "layout_index_identity_sha256": "b8fd6df7b46975aa7044049b8e11246b54404e54a0af7c1ee724e3f671a81b38",
+  "layout_index_identity_sha256": "9eb5bb4cb5a7d194f8d522a62e0523465f6212bb9d19d1b4cc9f0b3a8359f187",
   "layouts": [
     {
       "layout_id": "development-01",
@@ -74,5 +74,5 @@
       "split": "blind"
     }
   ],
-  "protocol_identity_sha256": "a8e3b6339b46f9e0ab63da0ca9c02196b173f4c54929d24db333e44ca0a6fdf8"
+  "protocol_identity_sha256": "eaba1fe0f1c2192012edc7f097bfeffbeb956af1330f8e453b468bda63f50d60"
 }

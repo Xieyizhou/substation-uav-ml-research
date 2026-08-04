@@ -238,6 +238,7 @@ class VisualV2CollectionTests(unittest.TestCase):
                 None,
                 layout.start_cell,
                 route.waypoints,
+                route.return_transit_cells,
                 yaw_tolerance_deg=0.0,
             )
         with self.assertRaisesRegex(ValueError, "acquisition timeout"):
@@ -248,6 +249,7 @@ class VisualV2CollectionTests(unittest.TestCase):
                 None,
                 layout.start_cell,
                 route.waypoints,
+                route.return_transit_cells,
                 yaw_settle_duration_s=2.0,
                 yaw_acquisition_timeout_s=1.0,
             )

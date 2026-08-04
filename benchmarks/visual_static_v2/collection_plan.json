@@ -1,12 +1,12 @@
 {
-  "collection_plan_identity_sha256": "9abb4ae6ada3f97b4103c564b70448c3784b03047fa37d2ec276e67cc3647381",
+  "collection_plan_identity_sha256": "f6f3696a4da6778c1eccd56cc0071c17437ca6c97700a34ae058128a35ba8235",
   "collection_plan_schema_version": 2,
   "protocol_id": "visual-multiscenario-png-v2",
-  "protocol_identity_sha256": "a8e3b6339b46f9e0ab63da0ca9c02196b173f4c54929d24db333e44ca0a6fdf8",
+  "protocol_identity_sha256": "eaba1fe0f1c2192012edc7f097bfeffbeb956af1330f8e453b468bda63f50d60",
   "scenario_count": 50,
   "scenarios": [
     {
-      "base_scenario_config_hash": "732965e2c7245b882a50db321a8f1a4053cca05c50020c34fa12969019c60f7c",
+      "base_scenario_config_hash": "a98c1c0d7ac5a2ea39ab5d36c5541f632b4c0b7671ca9cd8cc227eb96d9307c1",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -20,7 +20,7 @@
       "map_id": "visual-development-01",
       "recording_id": "visual-v2-development-development-01-transformer_centered_v2-3001-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "d8038a4307928b5ec3eef1b4681df7fd59b8f1fdbb0d2c046f84b6d65f89aa7d",
+      "route_identity_sha256": "3383f07e41ed4ceebf132e05d4ccb23aee8dbf9e1fb065b66d0d184595516c70",
       "scenario_id": "development-01-transformer_centered_v2-3001",
       "seed": 3001,
       "split": "development",
@@ -28,7 +28,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "a8a7d2ab3bcad3f4ca029184a02ed863347f72fdbba518b3aa5834674793135f",
+      "base_scenario_config_hash": "06b4fcff26c6342efee60477afe3addaff2012924e71fea6181d0701017eb454",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -42,7 +42,7 @@
       "map_id": "visual-development-01",
       "recording_id": "visual-v2-development-development-01-switchgear_centered_v2-3002-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "60a91a5d8356caa43caf1e4871822a9fd52e6ec4f66efbb9af0d8d5645562688",
+      "route_identity_sha256": "7db5f26aaa46094304b10b1d9db9ea6a0992843ca044d725da74364e00562dc9",
       "scenario_id": "development-01-switchgear_centered_v2-3002",
       "seed": 3002,
       "split": "development",
@@ -50,7 +50,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "9a67f25b1cb2aab574aac9531ec3f45dd95ad54e48452f2beee6dcc6608bcf91",
+      "base_scenario_config_hash": "8b13d760ed8d13514b6ba92b769f73512ac31748ba8f80760c1bcb6b8f919d63",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -64,7 +64,7 @@
       "map_id": "visual-development-01",
       "recording_id": "visual-v2-development-development-01-capacitor_bank_centered_v2-3003-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "b2d7f08d5b92a69834d11ce2d20c1a7947e3eda9f234de20dedd570ee72f0325",
+      "route_identity_sha256": "082b50d4e3f9dc90f4779adaae284bd8f17252ce7c34723281a649ec0a1592b5",
       "scenario_id": "development-01-capacitor_bank_centered_v2-3003",
       "seed": 3003,
       "split": "development",
@@ -72,7 +72,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "8943fb6942c67968d8ad80592554dd9ec3b9c61eb8aa56c3e79af88ded3ddb34",
+      "base_scenario_config_hash": "05510aab789e864603141c8388cf98e5a991a76c42a3e5e6370f03a0d7ef6446",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -86,7 +86,7 @@
       "map_id": "visual-development-01",
       "recording_id": "visual-v2-development-development-01-reactor_centered_v2-3004-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "dcf4b1a03f5bf46ea6f888df6490661db324731ad544d1285a0991dbdab80fe1",
+      "route_identity_sha256": "8673bba9cbc9816189066836c92b336b59b491bf62e31ab6b0a03fabf00c58af",
       "scenario_id": "development-01-reactor_centered_v2-3004",
       "seed": 3004,
       "split": "development",
@@ -94,7 +94,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "38c254d1a3f6bb097f78aa4cd24cb5eef2bc6e17e7e1766ff01457d2aed6a8d9",
+      "base_scenario_config_hash": "4491c406907f7860507bd78db6ac853232f05b604bf8ec33fc2564d7a976da06",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -108,7 +108,7 @@
       "map_id": "visual-development-01",
       "recording_id": "visual-v2-development-development-01-background_transit_v2-3005-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "a5691ac178a8682d74d2b97a57653f0a0d49e2a10f4e84eb575b79904e00960f",
+      "route_identity_sha256": "ed12528258d8daa7873e9b9819cf5f8db31bb0976ae5559a2cb2c926b59bb35a",
       "scenario_id": "development-01-background_transit_v2-3005",
       "seed": 3005,
       "split": "development",
@@ -116,7 +116,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "bc3321b1f94105734490f8210ae64ca19c0b9eed7d1aef8d28ea3a0af457a604",
+      "base_scenario_config_hash": "d52daf06df875634e6925d5cd03690dbc55dd578ed16265f947bb1b39ffbb902",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -130,7 +130,7 @@
       "map_id": "visual-development-02",
       "recording_id": "visual-v2-development-development-02-transformer_centered_v2-3006-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "e5818be2043c40cbe27c37e375a50a74e46c47f8732285599ae49a3863bfbb54",
+      "route_identity_sha256": "bb171e14ae16cec948b15984347566cc5e47e833a02a14196c056a8b5f212e4b",
       "scenario_id": "development-02-transformer_centered_v2-3006",
       "seed": 3006,
       "split": "development",
@@ -138,7 +138,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "73bff4342bab533d39702c06e0ecdb606599ce1d30888fa1a93ff57d8d405f6d",
+      "base_scenario_config_hash": "e3043ad2329c91201207b7f294432a4a60ce8b7df5c8e7dd376f574e4660128a",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -152,7 +152,7 @@
       "map_id": "visual-development-02",
       "recording_id": "visual-v2-development-development-02-switchgear_centered_v2-3007-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "4ab60413c609d672060af0ce727c75596910fa6bc17d3da9823ac9537427aef3",
+      "route_identity_sha256": "fa7489ce94c184ac201377847510473905ee59b03870cb81e76503841fba7b16",
       "scenario_id": "development-02-switchgear_centered_v2-3007",
       "seed": 3007,
       "split": "development",
@@ -160,7 +160,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "f95679a2491af352fd2c029d0be5beb041112f426c458defb942fcd3f36921ac",
+      "base_scenario_config_hash": "8ccb7a3dcc471749364b73800eacedff0fbdeaba484bbebdfb86a47a89082b7e",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -174,7 +174,7 @@
       "map_id": "visual-development-02",
       "recording_id": "visual-v2-development-development-02-capacitor_bank_centered_v2-3008-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "d36ee4289b0267b74fff960657404215d38bcfeeb0dcbb4e6b1a5143325cbe1a",
+      "route_identity_sha256": "9a9e0f24356eb39a8e870fb5fcbd3343e39f2e7a45d6c8e2360f143690581fb9",
       "scenario_id": "development-02-capacitor_bank_centered_v2-3008",
       "seed": 3008,
       "split": "development",
@@ -182,7 +182,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "e634e20096b583a80c76beca83248d2a71345995b1415f6a4524c4658bfef3f1",
+      "base_scenario_config_hash": "9366e52b92427154e1e76a3dcb6a4e551c29d12170882aea1abcca1943ebfaad",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -196,7 +196,7 @@
       "map_id": "visual-development-02",
       "recording_id": "visual-v2-development-development-02-reactor_centered_v2-3009-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "91969b662d2b7b4823a69769b1512ab8a76570f9afa04400e155af22355326f7",
+      "route_identity_sha256": "e6dd8c02418b4d173a1a64c69dacb0a748a87f08bfc9be9364a2ce20b6c56954",
       "scenario_id": "development-02-reactor_centered_v2-3009",
       "seed": 3009,
       "split": "development",
@@ -204,7 +204,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "ea8f2acced84d57d490465c5547b338ff262a607f47671de8b64c1a3eda69eaa",
+      "base_scenario_config_hash": "08cd0273895276fa07826362603f4c4e9bd3b8e5d2e801bc4dc494c3c1b3bdd8",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -218,7 +218,7 @@
       "map_id": "visual-development-02",
       "recording_id": "visual-v2-development-development-02-background_transit_v2-3010-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "2cd255f295852daf33210af344020ed5dbb55959ef9cbfd1be9de39f2c693801",
+      "route_identity_sha256": "cb56597daa407484f77d1a7849bd2c80068115c86d76c9efd1d6c45fa8be33fc",
       "scenario_id": "development-02-background_transit_v2-3010",
       "seed": 3010,
       "split": "development",
@@ -226,7 +226,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "9e73384daaf431120379a681aaf98ed6f9fbf9efd77df977e28cea1a96ea8022",
+      "base_scenario_config_hash": "1414711e480ac5c177b79014099e7ac68bceb07cb43a82e9fe2fe15e37a2153a",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -240,7 +240,7 @@
       "map_id": "visual-development-03",
       "recording_id": "visual-v2-development-development-03-transformer_centered_v2-3011-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "bbd3de4fc6435e303d90d8afb941cd47db1a68cd85e0dcad96f7bf3e7ed63778",
+      "route_identity_sha256": "fd5d41b49d1640bae764c239de97fe6d40ddb240f1c03e30e76927dad827af65",
       "scenario_id": "development-03-transformer_centered_v2-3011",
       "seed": 3011,
       "split": "development",
@@ -248,7 +248,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "5213064863c2c397749c30276433f2fe803cdc4c669db77c745a69526ffbdd4d",
+      "base_scenario_config_hash": "2643ed3136f1ea766e4e5ddc397f763da25d1b7a82a5979dda756aa88ea805a3",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -262,7 +262,7 @@
       "map_id": "visual-development-03",
       "recording_id": "visual-v2-development-development-03-switchgear_centered_v2-3012-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "de9c2b11f0f7c284517799bcf951feff158ef33b03b91e4f78e6c77338fcc461",
+      "route_identity_sha256": "d77970e859b2c61e140f20c139c76c5b316715682410f3072b2368d24057b49a",
       "scenario_id": "development-03-switchgear_centered_v2-3012",
       "seed": 3012,
       "split": "development",
@@ -270,7 +270,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "b48a6618d6322a99ca8ae2a9ce61fddc70e40155f501c948e1d3720f03234392",
+      "base_scenario_config_hash": "d3734b0b76bf318b533baeb2ff0b1fe4b77ecc68e03bec5d72575d2764c97636",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -284,7 +284,7 @@
       "map_id": "visual-development-03",
       "recording_id": "visual-v2-development-development-03-capacitor_bank_centered_v2-3013-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "e64a0fd430cb575f3b2930fe1d7869a327eddee8a3257974ccd17a37223f0ff6",
+      "route_identity_sha256": "ebbfb8bcad45054562271e4e7980ef1f32d602519c15ecb35105dfbc9489cb8c",
       "scenario_id": "development-03-capacitor_bank_centered_v2-3013",
       "seed": 3013,
       "split": "development",
@@ -292,7 +292,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "f42df42e24167da69813fb0d9b267fedaeb5a64b5a37e7a428ccf2e0027b3053",
+      "base_scenario_config_hash": "b5edb34351c4f0468e085b298fd8470a34e18047047ddb757397ce749aec5b21",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -306,7 +306,7 @@
       "map_id": "visual-development-03",
       "recording_id": "visual-v2-development-development-03-reactor_centered_v2-3014-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "c5e97c89ec9629667e6ad9010bff193a315e10cbf64639a637b98405d4b345e1",
+      "route_identity_sha256": "d4a9da41c966b132b5a343919a442a21c46b9d0b43f7ba86c4b57a106a38b20f",
       "scenario_id": "development-03-reactor_centered_v2-3014",
       "seed": 3014,
       "split": "development",
@@ -314,7 +314,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "87b1d7b13f0fef83059d2b886e0610db32354ce706699018690d92c3b9f8a75c",
+      "base_scenario_config_hash": "61b7b1714b3f4988af516a40efc9494f310e0bfb43722edfddf387eb5b66afe2",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -328,7 +328,7 @@
       "map_id": "visual-development-03",
       "recording_id": "visual-v2-development-development-03-background_transit_v2-3015-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "ffdac139ba4b13918fb026427342a04167e81fdd86d55e23525e5e85b741a1f6",
+      "route_identity_sha256": "4e9a6c0cadc70d4d517811c85a1b091d5c68c2098019c41a43ec9fff46d43ff0",
       "scenario_id": "development-03-background_transit_v2-3015",
       "seed": 3015,
       "split": "development",
@@ -336,7 +336,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "49c2e7aa0bb8e3cbbfc291c449006ac49930f1d8b73e03306ee85d052d3ff4c8",
+      "base_scenario_config_hash": "48e2da80df2c30d73c3a6c922a6651cd7052b989388438bb0fecd6eb8b098013",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -350,7 +350,7 @@
       "map_id": "visual-development-04",
       "recording_id": "visual-v2-development-development-04-transformer_centered_v2-3016-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "f227710db220828bb5e221af52900f9208c6fa49172164fb12460d59015585d9",
+      "route_identity_sha256": "274ba08e6edd9fba59f0568fe92da50641d6e085acab380a5debfd50e73e0f51",
       "scenario_id": "development-04-transformer_centered_v2-3016",
       "seed": 3016,
       "split": "development",
@@ -358,7 +358,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "a74796885dcf7b0fe35dbf3a5ab7d72bf40e3f7d47b2a65a3e96a9d1944faa1e",
+      "base_scenario_config_hash": "d08cf6aa394e2c16de81f1b949d274a9e0c5340e86a64201d7f24d053449ea84",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -372,7 +372,7 @@
       "map_id": "visual-development-04",
       "recording_id": "visual-v2-development-development-04-switchgear_centered_v2-3017-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "7dde094218febd0c35958f7140fef48c26944c8cc1ee0e4bfe84f23937893af3",
+      "route_identity_sha256": "13ba6507dcb967ea7903932f3e000928475208d118857106c9c41698a71ec49a",
       "scenario_id": "development-04-switchgear_centered_v2-3017",
       "seed": 3017,
       "split": "development",
@@ -380,7 +380,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "a42bc0702c9cb31b2a92f347403336dfad837e11d8a20e27aed5bec475414357",
+      "base_scenario_config_hash": "e07cee9fef34c6c3318ae83628e46eb004241fe1a24248e83cd6bfea7ae39eca",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -394,7 +394,7 @@
       "map_id": "visual-development-04",
       "recording_id": "visual-v2-development-development-04-capacitor_bank_centered_v2-3018-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "3213a5a9456c99dd3ac24f5d699a3e58aedf0f6ea10e3e2b27a123f82394ddfb",
+      "route_identity_sha256": "495609f5e3e169f084c09aa867515b0e4078dd02d121668bad1483698b9db13f",
       "scenario_id": "development-04-capacitor_bank_centered_v2-3018",
       "seed": 3018,
       "split": "development",
@@ -402,7 +402,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "5e0f3b9d9ddfaaa47ce91f74d74990acc702622753863c1cebbb45bd11366361",
+      "base_scenario_config_hash": "106fe00cb9d5e7e8455c6188795d1065ccc4a62b5ff085d5dd397d493c08dd2c",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -416,7 +416,7 @@
       "map_id": "visual-development-04",
       "recording_id": "visual-v2-development-development-04-reactor_centered_v2-3019-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "14d0ab893432f3570e3ffe45d94f7b0ca2573a4846f17a52d4c507c3e18b1e49",
+      "route_identity_sha256": "3c56b252a915a4d6353a6e64375a44f1236030c7052e9fb3c8a23285cfff48ce",
       "scenario_id": "development-04-reactor_centered_v2-3019",
       "seed": 3019,
       "split": "development",
@@ -424,7 +424,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "33d1ee4634846c70100a711a6658f04eb5becc8628d344e700bde9d9673e65ba",
+      "base_scenario_config_hash": "772918a2e014f3b40f0d5983d82b811b69b4f577a3445ec9bba914a3586e91f4",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -438,7 +438,7 @@
       "map_id": "visual-development-04",
       "recording_id": "visual-v2-development-development-04-background_transit_v2-3020-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "b6523677c94b8a9490a174d3a72d1a180ad75df5c5df817801250009ce9d5ee6",
+      "route_identity_sha256": "f6552374c418f4fe5918a64fdfd01d7e5299e813e94360a5a0fcddd25caaea10",
       "scenario_id": "development-04-background_transit_v2-3020",
       "seed": 3020,
       "split": "development",
@@ -446,7 +446,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "2a0e8a09dd0d7f6919e5a9ca57d7af523340a20664caab37d98833b4b00e8b74",
+      "base_scenario_config_hash": "e5118eb3a2331d1cdd37c9a414e4c8c768dd66f75f2597031b1031a6243c3f20",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -460,7 +460,7 @@
       "map_id": "visual-development-05",
       "recording_id": "visual-v2-development-development-05-transformer_centered_v2-3021-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "f6f35750cb69f18e103a8dafa0de698c4ad682d2aab5512e07d8aeaf36adac3a",
+      "route_identity_sha256": "7bf4a109ecb514e508935012296cacdb08de3534915fb1c57205f8e216a3f279",
       "scenario_id": "development-05-transformer_centered_v2-3021",
       "seed": 3021,
       "split": "development",
@@ -468,7 +468,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "58303f73528ea51d86b0e8295abaab6950b38b5ec2114dec046cea6b18b2a968",
+      "base_scenario_config_hash": "b89e98afae6b9115a016391b824df6e26962600acabff63094b1b66da044b5f2",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -482,7 +482,7 @@
       "map_id": "visual-development-05",
       "recording_id": "visual-v2-development-development-05-switchgear_centered_v2-3022-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "1f3a29c432c6797f2799725d6f113742b72bbc06c329979bc7ec99669a950f00",
+      "route_identity_sha256": "4b88c3533a17844c7eede9ceec51177572d06eb086a91383e51e2c5dc7ecfb3a",
       "scenario_id": "development-05-switchgear_centered_v2-3022",
       "seed": 3022,
       "split": "development",
@@ -490,7 +490,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "2b38083e564755299f2e73fad83e5d1dfd1f355f80a576c43f1ea0f195975a37",
+      "base_scenario_config_hash": "828e1ae8455058de644c628e70d0d538f934b748abef88364c9e2f1ad3627ba7",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -504,7 +504,7 @@
       "map_id": "visual-development-05",
       "recording_id": "visual-v2-development-development-05-capacitor_bank_centered_v2-3023-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "ac34a19716d51460035027abe8a3154c84829bb18e30a0e5276b27b1f4402475",
+      "route_identity_sha256": "1647e9bccd29f85111ac37d6cc7da2cceda472e95b8bc4a6498566969532715c",
       "scenario_id": "development-05-capacitor_bank_centered_v2-3023",
       "seed": 3023,
       "split": "development",
@@ -512,7 +512,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "35646e6a4f82976db87bcd69a06f5118531acf9364cbdb452329e8d41c7288d9",
+      "base_scenario_config_hash": "ea17a38fd05ee6821a0edca82d2c0e1059527adea4b6337edc7e30150f133afb",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -526,7 +526,7 @@
       "map_id": "visual-development-05",
       "recording_id": "visual-v2-development-development-05-reactor_centered_v2-3024-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "9e9444d1424a43eb0df40aa10f14280874b3fff9faea8c651c9c98081f4d06e0",
+      "route_identity_sha256": "0f758ca17b14c2f4746c1fe58b421979b6106aceaa99235b56fdaf71e49bd3d0",
       "scenario_id": "development-05-reactor_centered_v2-3024",
       "seed": 3024,
       "split": "development",
@@ -534,7 +534,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "6e70320fbf642025153cd2f68d317e9c54b87cc6c512b297e1313deea6b0bda0",
+      "base_scenario_config_hash": "b2289e28343e1034a7c2177a98e98d51423eb1a20a3ba01c7ea4c28ef1f9afe4",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -548,7 +548,7 @@
       "map_id": "visual-development-05",
       "recording_id": "visual-v2-development-development-05-background_transit_v2-3025-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "c930b7b27d38726710fd8fbdd4116c2483ca58742d6a3738864602b93656a815",
+      "route_identity_sha256": "63477c105f40ab53ead46e8335681a90febe7d11ab73e6d21aaf31fe8abccdd7",
       "scenario_id": "development-05-background_transit_v2-3025",
       "seed": 3025,
       "split": "development",
@@ -556,7 +556,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "f7da3063b6883604f820307928df48ea3d714333855e87381db9aee43cf02724",
+      "base_scenario_config_hash": "b5ca8dcfdb0ef4b944a2f2fe3dd967c73c0d0b6808beeb17150dda21d8c543ef",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -570,7 +570,7 @@
       "map_id": "visual-development-06",
       "recording_id": "visual-v2-development-development-06-transformer_centered_v2-3026-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "475a948e8969d6204c7d49c656479aa41f5d9480dc886debb733737114bce0e9",
+      "route_identity_sha256": "1aaf39c71113114281df8e9c12c6df52f93aeb24cbec7064b79cd1bfc5c35aa5",
       "scenario_id": "development-06-transformer_centered_v2-3026",
       "seed": 3026,
       "split": "development",
@@ -578,7 +578,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "522dfcaeee76edbafd64b696ec3774e9a8f98eb111b80eb3defc839617cfa38b",
+      "base_scenario_config_hash": "7122424ebd20e8b1125221f15e35e9a923c3209e04709eda2acf430b140b4eeb",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -592,7 +592,7 @@
       "map_id": "visual-development-06",
       "recording_id": "visual-v2-development-development-06-switchgear_centered_v2-3027-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "66b1a341071479220ab32af3498bef5118fb98a228c793761a42c6aaafd4fabf",
+      "route_identity_sha256": "bfbe820f9098bb3f7536009d2b52556b80b2d56bd0f706296dfb7df06c2f5300",
       "scenario_id": "development-06-switchgear_centered_v2-3027",
       "seed": 3027,
       "split": "development",
@@ -600,7 +600,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "1d65aab494057ddb47cebea50e812cd3e13aacb955163b69fe12070e4b7a2db4",
+      "base_scenario_config_hash": "9173510a547a4c29d16ba7346b5bde269b8e3149e8481323b1986c5a081d8f41",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -614,7 +614,7 @@
       "map_id": "visual-development-06",
       "recording_id": "visual-v2-development-development-06-capacitor_bank_centered_v2-3028-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "e7c4460ccc3f8743eba34b302afcaeeb9a72027ee9cda7490c633e5096909ea5",
+      "route_identity_sha256": "9b3e622387e451f6a202e777fb8080bf87600096eb7daf1c1f34266a60120cb6",
       "scenario_id": "development-06-capacitor_bank_centered_v2-3028",
       "seed": 3028,
       "split": "development",
@@ -622,7 +622,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "7a02f89a41d07f9100d60965e307bf44077647103ed6b16f4a4e7bcc98e3d02a",
+      "base_scenario_config_hash": "355a23ef44b5ea34efdc57cd0343a37771bcf378c7ea38b4e5dbd9e969633c9b",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -636,7 +636,7 @@
       "map_id": "visual-development-06",
       "recording_id": "visual-v2-development-development-06-reactor_centered_v2-3029-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "5015dc88fb09460b6703d4a1c4933ee310399e2e10d6bea34a3dbfe590b3eefe",
+      "route_identity_sha256": "8c1c88b7465678d15a0b925016e6d6e93a417757588d6e0c84afcd94e63ee054",
       "scenario_id": "development-06-reactor_centered_v2-3029",
       "seed": 3029,
       "split": "development",
@@ -644,7 +644,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "80ca735feabcd3284e0bbfb0f454b5ff93e2680239725305c59faebc87e1f3b2",
+      "base_scenario_config_hash": "13f8645b6442571d713fc1a4a8a3ab34e5ec87a2e70986e7836d8f8d90caf2cf",
       "dataset_role": "development",
       "expected_map_class_inventory": [
         "transformer",
@@ -658,7 +658,7 @@
       "map_id": "visual-development-06",
       "recording_id": "visual-v2-development-development-06-background_transit_v2-3030-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "aa6bef664d3aaca7f5239fe12d3e26abf1eda86eda1098b4df5b8cf949519cc1",
+      "route_identity_sha256": "7299983707fe680b5949991b8082b2938584d616fae2a82d126f67f77133b5ae",
       "scenario_id": "development-06-background_transit_v2-3030",
       "seed": 3030,
       "split": "development",
@@ -666,7 +666,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "821f6fe989bb34d779d032151b13752d93d1952da81a69bc96fb77c5aed544a5",
+      "base_scenario_config_hash": "79144952c815aa440cbd36a50a28b8e24ca01b4aa6ab30548c0d47029152585a",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -680,7 +680,7 @@
       "map_id": "visual-validation-01",
       "recording_id": "visual-v2-validation-validation-01-transformer_centered_v2-3031-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "628001417ef7bfe2a90c6d2e34346ffe8a1e18ab8092e4d86048e5ea0c34bda1",
+      "route_identity_sha256": "fd50d45636236a015099ce68593d59bed031df9d358c4b89b9003ba5336eab48",
       "scenario_id": "validation-01-transformer_centered_v2-3031",
       "seed": 3031,
       "split": "validation",
@@ -688,7 +688,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "d588106e48e6703954a8b276bc6c1826bbbc3b6a76de3e429291ad4c29cad60f",
+      "base_scenario_config_hash": "90252869ac7c5e815ce65a989ba5434aaee3e615a4d297ceec6c061ffad92000",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -702,7 +702,7 @@
       "map_id": "visual-validation-01",
       "recording_id": "visual-v2-validation-validation-01-switchgear_centered_v2-3032-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "a065c03ea6f041d34c6dee9110ff881f122f1186068ffa3b4877d4ecc132fada",
+      "route_identity_sha256": "21b42366e4760e542a7f3103322517f1112940f20ef89f108a1b0ebbdd353069",
       "scenario_id": "validation-01-switchgear_centered_v2-3032",
       "seed": 3032,
       "split": "validation",
@@ -710,7 +710,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "1e0994622998f1f21f12c35eee88eda9c2357dc0e5c80bed301c433bbba95220",
+      "base_scenario_config_hash": "2ec5430e5193974b0c6cdb7cbe791f58ba711bfa9c2516b0b86c81570fb7c22f",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -724,7 +724,7 @@
       "map_id": "visual-validation-01",
       "recording_id": "visual-v2-validation-validation-01-capacitor_bank_centered_v2-3033-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "ea837d21d850bb37b2b2b7f91d149bc8b9967c2b69e46f31746d1ccd84bb48cb",
+      "route_identity_sha256": "e0474c890ce016e97fa61ba07fffe112c40eadea2d0c016d6e56950a3b14439d",
       "scenario_id": "validation-01-capacitor_bank_centered_v2-3033",
       "seed": 3033,
       "split": "validation",
@@ -732,7 +732,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "5034eecc69ff359900a3f7e35911b41e1c24caef6a97b660abdad1f5acafdaac",
+      "base_scenario_config_hash": "c809dedca3f8ce8daaaaeb50c9b90ff6da206911b0b825f7f562adb73cfb9776",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -746,7 +746,7 @@
       "map_id": "visual-validation-01",
       "recording_id": "visual-v2-validation-validation-01-reactor_centered_v2-3034-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "b2545031f1d20f0cd06160b19d40b1e75962225b16b5a6a2ce2b9e8d8962585b",
+      "route_identity_sha256": "8911f7eb9a1844f47f2137b51bd9af51841398b8dbc65dc177a5f0ca65276588",
       "scenario_id": "validation-01-reactor_centered_v2-3034",
       "seed": 3034,
       "split": "validation",
@@ -754,7 +754,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "e6aabadb335840e548754954bc80cdcc8a3bf315bc7f11a65daebe12c2e45877",
+      "base_scenario_config_hash": "fdb78596a9c3eb35d12faaef93aca839a707e172af4770aa6dfe656b4a573760",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -768,7 +768,7 @@
       "map_id": "visual-validation-01",
       "recording_id": "visual-v2-validation-validation-01-background_transit_v2-3035-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "b824bbbbd417faff6ad671807aa9a862efcd0935b16f7614c2e2d7e0e430ddd3",
+      "route_identity_sha256": "96c4fa359739d2b2bb5f237ba477222153f5fc1dc6d178eeb0a1568910493403",
       "scenario_id": "validation-01-background_transit_v2-3035",
       "seed": 3035,
       "split": "validation",
@@ -776,7 +776,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "59b758350dd5c9b8e42d84b0f0a4abc7443854eb91a14d3a973b7ad86cc7e2b3",
+      "base_scenario_config_hash": "ba57b7df5bfbbce8a73235a1ec558d33d0fd1007d346b20c62874b2de7c95245",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -790,7 +790,7 @@
       "map_id": "visual-validation-02",
       "recording_id": "visual-v2-validation-validation-02-transformer_centered_v2-3036-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "ba97725d9aa7a53a910b4a17f4cb04ce6204d698f9a07e9990e5ff84428e7dca",
+      "route_identity_sha256": "a314bf266b85a2a3c1220cd9012c6288ae6911fbe0307eb96ea442f9a64bd7b0",
       "scenario_id": "validation-02-transformer_centered_v2-3036",
       "seed": 3036,
       "split": "validation",
@@ -798,7 +798,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "9f6ef923be3750e87c8a91bc2ef677a510c7cf9c0b6faca0381941bcb51e393e",
+      "base_scenario_config_hash": "49d8674406add735f259614689e83adb908aecccce2c241965aeb40945ef2638",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -812,7 +812,7 @@
       "map_id": "visual-validation-02",
       "recording_id": "visual-v2-validation-validation-02-switchgear_centered_v2-3037-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "950bb0d1d5b722615b25dc7141c8701235c5e808b95e8916f35893d69aa60bad",
+      "route_identity_sha256": "b442483a77465611f7ea5c282fcd5f815523477154621f179c049a4cbaaf8fd3",
       "scenario_id": "validation-02-switchgear_centered_v2-3037",
       "seed": 3037,
       "split": "validation",
@@ -820,7 +820,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "fbf62c62bc607081de92f52948bff6b390d58dab4477fd78265b936506d57330",
+      "base_scenario_config_hash": "9332ff7bbd39f19d29a01c62e43db146244cd59eec1424a2b9c12c5a6d852235",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -834,7 +834,7 @@
       "map_id": "visual-validation-02",
       "recording_id": "visual-v2-validation-validation-02-capacitor_bank_centered_v2-3038-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "5d8cb660c3f576fb7cda17923c7914b28e366b10d4cfff6e825c357ebc783aa1",
+      "route_identity_sha256": "a5c0048b3193c259a0e924597e2b54bd4ef80e86ef029dceaf0f01e245ff2b69",
       "scenario_id": "validation-02-capacitor_bank_centered_v2-3038",
       "seed": 3038,
       "split": "validation",
@@ -842,7 +842,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "6a38dbbf18668435642ca8f41a5ff75606cc2d0b42922934a865ac185008b2fe",
+      "base_scenario_config_hash": "a36286ec73ec15c8fba957a8868725b051325e9e0b6f7397daa79e73e0437cf2",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -856,7 +856,7 @@
       "map_id": "visual-validation-02",
       "recording_id": "visual-v2-validation-validation-02-reactor_centered_v2-3039-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "53a5f19683d62fc7c262100eb8d687f6400836714c80fb0948b86e19141f11b7",
+      "route_identity_sha256": "2108ca00bd9c50c26f7b2b2954c7823ff43d565fed1b4c1e376d6195a377a30e",
       "scenario_id": "validation-02-reactor_centered_v2-3039",
       "seed": 3039,
       "split": "validation",
@@ -864,7 +864,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "c13f7a3eea48ef87499e57c2996cb13d65f9cf3b18fa47c4a1e82581ffd8d56c",
+      "base_scenario_config_hash": "6cd7d936763212b61a7deafb478c0f156ef52beb3260e3d37c08054022ff46e2",
       "dataset_role": "validation",
       "expected_map_class_inventory": [
         "transformer",
@@ -878,7 +878,7 @@
       "map_id": "visual-validation-02",
       "recording_id": "visual-v2-validation-validation-02-background_transit_v2-3040-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "e41e14def91118d87a8ea5c48af39dd3f323b7842595fcbf14d4cb060c15c496",
+      "route_identity_sha256": "5c6c476b19d84b8f03e3620d96d21077a9acb80c883319e41a601bf734caa9f6",
       "scenario_id": "validation-02-background_transit_v2-3040",
       "seed": 3040,
       "split": "validation",
@@ -886,7 +886,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "199f77825c13e1fcb6b654ec1b14ab7f3f1e0434ed6597ca695cca221b044cf9",
+      "base_scenario_config_hash": "00efc346940512de6430e064dc9793879b73040b126f7171cec8427cda93ac74",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -900,7 +900,7 @@
       "map_id": "visual-blind-01",
       "recording_id": "visual-v2-blind-blind-01-transformer_centered_v2-3041-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "fe36a413b030e6f75c11ac485f550015c6e448c75313910345703914962bb0db",
+      "route_identity_sha256": "0e51e1b96e8c2efb0d3a81168e362d271fb66c36b72a8e520542169c9a0dcf68",
       "scenario_id": "blind-01-transformer_centered_v2-3041",
       "seed": 3041,
       "split": "blind",
@@ -908,7 +908,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "894f03b2a22b00d334914d1abc42146d403880d07b09a15d99d86f33ba48df25",
+      "base_scenario_config_hash": "e9159a31dca3398adc310ddbabc2605ad7843ea550cce27ebc7d53e96dd2befb",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -922,7 +922,7 @@
       "map_id": "visual-blind-01",
       "recording_id": "visual-v2-blind-blind-01-switchgear_centered_v2-3042-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "d78306dcbdbee598b23e68587e07a6cf22bb073a1b98e038cab36e2cafd1da9b",
+      "route_identity_sha256": "8971ed0941e29c7e609d28d140255d7c62ac2e3cd1c360d461653e2aed0e787b",
       "scenario_id": "blind-01-switchgear_centered_v2-3042",
       "seed": 3042,
       "split": "blind",
@@ -930,7 +930,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "4757309370ce489d1c2b26c29408d42577ae75e205d81e9ef3ac4e2a31041a3e",
+      "base_scenario_config_hash": "892ac1782bf21c8cc938b56d122f4c5dc2574eb044b86b275eb0f52da104f96b",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -944,7 +944,7 @@
       "map_id": "visual-blind-01",
       "recording_id": "visual-v2-blind-blind-01-capacitor_bank_centered_v2-3043-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "1c26e367dd7276a2e494c298bfb31808e7cd0c12d74a93b1f703ada28d4febc1",
+      "route_identity_sha256": "1a60160dc50745075babc1692a6610bce842f2ec6b38eb8448d2960f2103997f",
       "scenario_id": "blind-01-capacitor_bank_centered_v2-3043",
       "seed": 3043,
       "split": "blind",
@@ -952,7 +952,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "06c3fcff155d3bae0bc31ae6b1edcedc3b038adce59bd5fc8a15628e040e06d9",
+      "base_scenario_config_hash": "8a4fab9e7670042d176c9f2a248edb12c3d349b950d848ad103ef24a688d3342",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -966,7 +966,7 @@
       "map_id": "visual-blind-01",
       "recording_id": "visual-v2-blind-blind-01-reactor_centered_v2-3044-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "0c50788785528d3f45cf8efa25792aae9526c1821bb3afe56914e954810fe78e",
+      "route_identity_sha256": "82a0fcac6351fa67b59cfc63fad3b1997171e638f96e09c83c249899a6f83b62",
       "scenario_id": "blind-01-reactor_centered_v2-3044",
       "seed": 3044,
       "split": "blind",
@@ -974,7 +974,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "b3edadfff247072a87fdf8d100ffc2cfd88430e47ccc3deca1d542421ad14b38",
+      "base_scenario_config_hash": "a20fdfbddbf715f6de3fc3ea1961c573dae2898465f10a8cfc901949bdc9d8f7",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -988,7 +988,7 @@
       "map_id": "visual-blind-01",
       "recording_id": "visual-v2-blind-blind-01-background_transit_v2-3045-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "4566a3d8eb10591dd3194c32f788176db9278de2beda93b9fa56426c3c3b67dd",
+      "route_identity_sha256": "e6697c7e61cc8917e3896db780984941719e1856ae9a69c3279ad0043d40fae0",
       "scenario_id": "blind-01-background_transit_v2-3045",
       "seed": 3045,
       "split": "blind",
@@ -996,7 +996,7 @@
       "target_id": "background"
     },
     {
-      "base_scenario_config_hash": "84de5cfb8e1e728d184dd613434b1c21d15578a39ba29254be957106db054ca3",
+      "base_scenario_config_hash": "bdd26977b8c3e300bf5f05ae56e650192b47f4b5d8428b29d5baddc0fcfc8217",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -1010,7 +1010,7 @@
       "map_id": "visual-blind-02",
       "recording_id": "visual-v2-blind-blind-02-transformer_centered_v2-3046-r01",
       "route_id": "transformer_centered_v2",
-      "route_identity_sha256": "bbdb73fc8569abafa8e2d957ad4e0890525d80bb84687de578d493fd98efa473",
+      "route_identity_sha256": "deadec97a0bd641cfc0937c3580b32c703488f8c2db6f371fe48985271e11f65",
       "scenario_id": "blind-02-transformer_centered_v2-3046",
       "seed": 3046,
       "split": "blind",
@@ -1018,7 +1018,7 @@
       "target_id": "transformer"
     },
     {
-      "base_scenario_config_hash": "0b62fb732bc8899adf5a23d9dbd8e1191c31df2ae71af2491fe3f0b70390d0b4",
+      "base_scenario_config_hash": "b0be1c51f2aefc90c6b3df0cefd7a1e228dac91ce153087209c3a7d0332d7773",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -1032,7 +1032,7 @@
       "map_id": "visual-blind-02",
       "recording_id": "visual-v2-blind-blind-02-switchgear_centered_v2-3047-r01",
       "route_id": "switchgear_centered_v2",
-      "route_identity_sha256": "3cb80d933317bfc05dad385be4300776e85739c3b806eba5c2269c3d7ad9aba8",
+      "route_identity_sha256": "609a81e89458df07c075b78ef5953a98628ba852dbb177047a0a8432e4b03456",
       "scenario_id": "blind-02-switchgear_centered_v2-3047",
       "seed": 3047,
       "split": "blind",
@@ -1040,7 +1040,7 @@
       "target_id": "switchgear"
     },
     {
-      "base_scenario_config_hash": "3bb8ad8c76b52ada46d63f277458203097d9a079ee066ed5cc11809ec755b888",
+      "base_scenario_config_hash": "6a1191777fbca6f6ba2ac3d2b1bf42c879666e08e4444f873d7366881968c625",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -1054,7 +1054,7 @@
       "map_id": "visual-blind-02",
       "recording_id": "visual-v2-blind-blind-02-capacitor_bank_centered_v2-3048-r01",
       "route_id": "capacitor_bank_centered_v2",
-      "route_identity_sha256": "f559b13d4d51cec5f780964a60e1d9fd0e1e5e71c9582a6c779ee69f4cdff80f",
+      "route_identity_sha256": "fbd1ec2f7f545ecad4907664bc6a0ddb884019bd38b01b9de9f1f67c64e3dcec",
       "scenario_id": "blind-02-capacitor_bank_centered_v2-3048",
       "seed": 3048,
       "split": "blind",
@@ -1062,7 +1062,7 @@
       "target_id": "capacitor_bank"
     },
     {
-      "base_scenario_config_hash": "2d8d3ac03f15923746c55bd22fd20c1c8b601db629f3b49a0ba0a7a9013e5d0d",
+      "base_scenario_config_hash": "d37f318c9e52decc18d3f2bcd97e92dba5337e052e16da60c3e5122785bd4d2b",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -1076,7 +1076,7 @@
       "map_id": "visual-blind-02",
       "recording_id": "visual-v2-blind-blind-02-reactor_centered_v2-3049-r01",
       "route_id": "reactor_centered_v2",
-      "route_identity_sha256": "d01aa25bf557f360799a8425b6d6534e480eb38fe94d66bc2d4176be9accb9c0",
+      "route_identity_sha256": "4557795965b32ac1c58ca694719b5932700bd26e2831890497d15022808c2c63",
       "scenario_id": "blind-02-reactor_centered_v2-3049",
       "seed": 3049,
       "split": "blind",
@@ -1084,7 +1084,7 @@
       "target_id": "reactor"
     },
     {
-      "base_scenario_config_hash": "024d2c1a3ca993daba863cc46a9984b2b89c32a45ebbef689f43384001397566",
+      "base_scenario_config_hash": "c96da23497024b1de728ec77747c5f7e905a9a7f7e6648308b6982bcfeefd30b",
       "dataset_role": "held_out_test",
       "expected_map_class_inventory": [
         "transformer",
@@ -1098,7 +1098,7 @@
       "map_id": "visual-blind-02",
       "recording_id": "visual-v2-blind-blind-02-background_transit_v2-3050-r01",
       "route_id": "background_transit_v2",
-      "route_identity_sha256": "2de6e04554e07299174aae55d2651034c0f5463bc1c177428d58f669d82b8313",
+      "route_identity_sha256": "e84438c54996c3bf0510ccca808adfe5fd40b97da9e6dcd995cb9796d0fc186e",
       "scenario_id": "blind-02-background_transit_v2-3050",
       "seed": 3050,
       "split": "blind",

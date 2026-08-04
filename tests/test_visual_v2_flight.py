@@ -5,6 +5,8 @@ from unittest.mock import AsyncMock, Mock, patch
 
 from src.flight.waypoint_executor import hover_at_waypoint
 from src.vision.collection.flight_route import (
+    _return_and_land,
+    _return_waypoints,
     _settle_departure_yaw,
     _settle_observation_yaw,
     _yaw_error_deg,
@@ -70,6 +72,53 @@ class VisualYawSettlingTests(unittest.IsolatedAsyncioTestCase):
     def test_yaw_error_wraps_at_signed_boundary(self):
         self.assertEqual(_yaw_error_deg(-179.0, 180.0), -1.0)
         self.assertEqual(_yaw_error_deg(179.0, -179.0), 2.0)
+
+    def test_return_waypoints_only_use_frozen_astar_path(self):
+        route = self.route()
+        waypoints = _return_waypoints(route)
+        self.assertEqual(len(waypoints), len(route.return_transit_cells))
+        self.assertEqual(waypoints[-1]["name"], "return_start")
+        self.assertEqual(
+            (waypoints[-1]["east_m"], waypoints[-1]["north_m"]),
+            (route.start_cell[0] + 0.5, route.start_cell[1] + 0.5),
+        )
+        self.assertEqual(
+            [
+                (waypoint["east_m"] - 0.5, waypoint["north_m"] - 0.5)
+                for waypoint in waypoints
+            ],
+            [tuple(map(float, cell)) for cell in route.return_transit_cells],
+        )
+
+    async def test_return_execution_consumes_frozen_path_then_lands(self):
+        route = self.route()
+        drone = Mock()
+        drone.offboard.stop = AsyncMock()
+        drone.action.land = AsyncMock()
+        configs = ({}, None, {"mode": "disabled"}, {})
+        with (
+            patch(
+                "src.vision.collection.flight_route.fly_waypoint_route",
+                AsyncMock(),
+            ) as fly_route,
+            patch(
+                "src.vision.collection.flight_route.wait_until_landed",
+                AsyncMock(),
+            ),
+        ):
+            await _return_and_land(
+                drone,
+                {},
+                {},
+                {},
+                route,
+                configs,
+            )
+        executed = fly_route.await_args.args[4]
+        self.assertEqual(executed, _return_waypoints(route))
+        self.assertEqual(fly_route.await_args.args[6], "return")
+        drone.offboard.stop.assert_awaited_once()
+        drone.action.land.assert_awaited_once()
 
     async def test_hover_normalizes_unsigned_yaw(self):
         drone = Mock()
