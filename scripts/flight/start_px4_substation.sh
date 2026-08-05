@@ -120,8 +120,8 @@ if [[ -f "$PX4_PID_FILE" ]]; then
   if [[ "$previous_pid" =~ ^[0-9]+$ ]] && kill -0 "$previous_pid" 2>/dev/null; then
     previous_command="$(ps -p "$previous_pid" -o command= 2>/dev/null || true)"
     if [[ "$previous_command" == *"start_px4_substation.sh"* ]]; then
-      echo "ERROR: this project already has a PX4 launcher running as PID $previous_pid."
-      echo "Stop that launcher before starting another one."
+      echo "ERROR: this project already has a PX4 launcher running as PID $previous_pid." >&2
+      echo "Stop that launcher before starting another one." >&2
       exit 1
     fi
   fi

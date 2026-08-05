@@ -40,12 +40,14 @@ def telemetry_age_s(latest, key):
 
 
 def ensure_critical_telemetry_fresh(latest, timeout_s):
-    if latest.get("connected") is False:
-        raise ConnectionError("PX4 connection was lost during flight")
     age_s = telemetry_age_s(latest, "position_velocity")
     if age_s is None:
         raise TimeoutError("Local position telemetry has not been received")
     if age_s > timeout_s:
+        if latest.get("connected") is False:
+            raise ConnectionError(
+                "PX4 connection was lost and position telemetry became stale"
+            )
         raise TimeoutError(
             f"Local position telemetry is stale ({age_s:.1f}s > {timeout_s:.1f}s)"
         )
