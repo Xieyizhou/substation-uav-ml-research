@@ -122,8 +122,8 @@ def _validate_v2(data):
         raise ValueError("v2 minimum split unit must be layout")
     if data.get("randomization", {}).get("generator_version") != "gazebo-sdf-v3":
         raise ValueError("v2 requires gazebo-sdf-v3")
-    if data.get("recording", {}).get("route_schema_version") != 3:
-        raise ValueError("v2 requires frozen return route schema 3")
+    if data.get("recording", {}).get("route_schema_version") != 4:
+        raise ValueError("v2 requires frozen return route schema 4")
     timing = data.get("flight_timeout_policy") or {}
     if (
         float(timing.get("nominal_horizontal_speed_m_s", 0.0)) <= 0.0

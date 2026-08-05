@@ -100,26 +100,31 @@ async def _settle_observation_yaw(drone, latest, phase_state, observation, route
 
 async def _takeoff(drone, latest, phase_state, target_state, route, configs):
     altitude_m = route.waypoints[0].altitude_m
-    await drone.action.set_takeoff_altitude(altitude_m)
+    await wait_for_local_position(latest, waypoint_executor.TELEMETRY_TIMEOUT_S)
+    attitude = latest.get("attitude")
+    if attitude is None:
+        raise RuntimeError("Visual takeoff requires attitude telemetry")
+    validate_takeoff_stability(latest, altitude_m)
+    takeoff_waypoint = takeoff_climb_waypoint(latest, -altitude_m)
+    takeoff_waypoint["yaw_deg"] = float(attitude.yaw_deg)
     set_phase(phase_state, "takeoff")
     await drone.action.arm()
-    await drone.action.takeoff()
-    await asyncio.sleep(8)
-    await wait_for_local_position(latest, waypoint_executor.TELEMETRY_TIMEOUT_S)
-    validate_takeoff_stability(latest, altitude_m)
-    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await drone.offboard.set_velocity_ned(
+        VelocityNedYaw(0.0, 0.0, 0.0, normalize_yaw_deg(attitude.yaw_deg))
+    )
     await drone.offboard.start()
     await fly_to_waypoint(
         drone,
         latest,
         phase_state,
         target_state,
-        takeoff_climb_waypoint(latest, -altitude_m),
+        takeoff_waypoint,
         "takeoff",
         "none",
         1.0,
         *configs,
     )
+    validate_takeoff_stability(latest, altitude_m)
 
 
 async def _fly_observations(drone, latest, phase_state, target_state, route, configs):
@@ -168,6 +173,7 @@ async def _settle_departure_yaw(drone, latest, phase_state, route):
         route.waypoints[0],
         waypoint_id=f"departure_{route.waypoints[0].waypoint_id}",
     )
+    set_phase(phase_state, departure.mission_phase)
     await _settle_observation_yaw(
         drone,
         latest,

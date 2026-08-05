@@ -52,7 +52,7 @@ class VisualV2ReturnRouteTests(unittest.TestCase):
 
     def test_return_path_is_identity_bound_and_ends_at_start(self):
         route = self.route()
-        self.assertEqual(route.route_schema_version, 3)
+        self.assertEqual(route.route_schema_version, 4)
         self.assertEqual(route.return_transit_cells[-1], route.start_cell)
         self.assertEqual(VisualRoute.from_record(route.to_record()), route)
 

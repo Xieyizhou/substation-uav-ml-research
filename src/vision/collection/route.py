@@ -11,7 +11,7 @@ from src.planner.obstacle_config import build_obstacle_map
 from src.vision.collection.layout import LayoutManifest, layout_obstacle_config
 
 
-ROUTE_SCHEMA_VERSION = 3
+ROUTE_SCHEMA_VERSION = 4
 PHASES = ("cruise_distant", "approach", "close_inspection", "target_transition")
 
 
@@ -178,17 +178,24 @@ def _target_waypoints(manifest, target, camera_heading_offset_deg):
     for offset in range(len(rotations)):
         first_bearing = rotations[(start + offset) % len(rotations)]
         second_bearing = (first_bearing + 90.0) % 360.0
+        small_scale = _point(target, first_bearing, 18.0)
         distant = _point(target, first_bearing, 12.0)
         approach = _point(target, first_bearing, 5.0)
         close_first = _point(target, first_bearing, 3.5)
         transition = _point(target, second_bearing, 5.0)
         close_second = _point(target, second_bearing, 3.5)
-        points = (distant, approach, close_first, transition, close_second)
+        points = (
+            small_scale, distant, approach, close_first, transition, close_second,
+        )
         if any(east <= 11.0 for east, _ in points):
             continue
         paths = _reachable_sequence(manifest, points)
         if paths is None:
             continue
+        small_scale_yaw = _heading(
+            _yaw_to_target(*small_scale, target.east_m, target.north_m),
+            camera_heading_offset_deg,
+        )
         distant_yaw = _heading(
             _yaw_to_target(*distant, target.east_m, target.north_m),
             camera_heading_offset_deg,
@@ -199,16 +206,20 @@ def _target_waypoints(manifest, target, camera_heading_offset_deg):
         )
         waypoints = [
             ObservationWaypoint(
+                "small_scale", PHASES[0], *small_scale, 1.5, small_scale_yaw,
+                6.0, "labelled_target", paths[0],
+            ),
+            ObservationWaypoint(
                 "distant", PHASES[0], *distant, 1.5, distant_yaw,
-                10.0, "labelled_target", paths[0],
+                10.0, "labelled_target", paths[1],
             ),
             ObservationWaypoint(
                 "approach", PHASES[1], *approach, 1.5, approach_yaw,
-                5.0, "labelled_target", paths[1],
+                5.0, "labelled_target", paths[2],
             ),
         ]
         waypoints.extend(_yaw_scan(
-            "close_a", close_first, target, paths[2],
+            "close_a", close_first, target, paths[3],
             camera_heading_offset_deg,
         ))
         transition_yaw = _heading(
@@ -217,10 +228,10 @@ def _target_waypoints(manifest, target, camera_heading_offset_deg):
         )
         waypoints.append(ObservationWaypoint(
             "transition", PHASES[3], *transition, 1.5, transition_yaw,
-            5.0, "labelled_target", paths[3],
+            5.0, "labelled_target", paths[4],
         ))
         waypoints.extend(_yaw_scan(
-            "close_b", close_second, target, paths[4],
+            "close_b", close_second, target, paths[5],
             camera_heading_offset_deg,
         ))
         return tuple(waypoints)

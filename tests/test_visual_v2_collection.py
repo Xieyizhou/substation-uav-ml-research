@@ -194,8 +194,20 @@ class VisualV2CollectionTests(unittest.TestCase):
             close = [waypoint for waypoint in route.waypoints if waypoint.mission_phase == "close_inspection"]
             self.assertEqual(len(close), 6)
             self.assertTrue(all(waypoint.hold_s >= 2.5 for waypoint in close))
-            self.assertEqual(route.waypoints[0].hold_s, 10.0)
-            self.assertEqual(route.waypoints[1].hold_s, 5.0)
+            self.assertEqual(route.waypoints[0].waypoint_id, "small_scale")
+            self.assertEqual(route.waypoints[0].hold_s, 6.0)
+            target = next(
+                item
+                for item in layout.objects
+                if item.object_id == route.target_object_id
+            )
+            small_scale_distance = math.hypot(
+                route.waypoints[0].east_m - target.east_m,
+                route.waypoints[0].north_m - target.north_m,
+            )
+            self.assertAlmostEqual(small_scale_distance, 18.0)
+            self.assertEqual(route.waypoints[1].hold_s, 10.0)
+            self.assertEqual(route.waypoints[2].hold_s, 5.0)
             first_yaws = [waypoint.yaw_deg for waypoint in close[:3]]
             second_yaws = [waypoint.yaw_deg for waypoint in close[3:]]
             self.assertAlmostEqual((first_yaws[1] - first_yaws[0]) % 360, 30.0)

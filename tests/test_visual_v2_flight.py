@@ -10,6 +10,7 @@ from src.vision.collection.flight_route import (
     _return_waypoints,
     _settle_departure_yaw,
     _settle_observation_yaw,
+    _takeoff,
     _yaw_error_deg,
 )
 from src.vision.collection.layout import build_layout_manifest
@@ -58,21 +59,57 @@ class VisualYawSettlingTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_departure_heading_settles_before_route_phase_begins(self):
         route = self.route()
+        phase_state = {}
         with patch(
             "src.vision.collection.flight_route._settle_observation_yaw",
             AsyncMock(),
         ) as settle:
-            await _settle_departure_yaw(Mock(), {}, {}, route)
+            await _settle_departure_yaw(Mock(), {}, phase_state, route)
         departure = settle.await_args.args[3]
         self.assertEqual(departure.yaw_deg, route.waypoints[0].yaw_deg)
         self.assertEqual(
             departure.waypoint_id,
             f"departure_{route.waypoints[0].waypoint_id}",
         )
+        self.assertEqual(phase_state["phase"], "cruise_distant")
 
     def test_yaw_error_wraps_at_signed_boundary(self):
         self.assertEqual(_yaw_error_deg(-179.0, 180.0), -1.0)
         self.assertEqual(_yaw_error_deg(179.0, -179.0), 2.0)
+
+    async def test_visual_takeoff_uses_offboard_and_holds_initial_heading(self):
+        route = self.route()
+        drone = Mock()
+        drone.action.arm = AsyncMock()
+        drone.action.takeoff = AsyncMock()
+        drone.action.set_takeoff_altitude = AsyncMock()
+        drone.offboard.set_velocity_ned = AsyncMock()
+        drone.offboard.start = AsyncMock()
+        latest = {
+            "position_velocity": SimpleNamespace(
+                position=SimpleNamespace(north_m=0.1, east_m=-0.2, down_m=0.0)
+            ),
+            "attitude": SimpleNamespace(
+                yaw_deg=96.0, roll_deg=0.0, pitch_deg=0.0
+            ),
+        }
+        configs = ({}, None, {"mode": "disabled"}, {})
+        with patch(
+            "src.vision.collection.flight_route.fly_to_waypoint",
+            AsyncMock(),
+        ) as fly_to:
+            await _takeoff(drone, latest, {}, {}, route, configs)
+        drone.action.arm.assert_awaited_once()
+        drone.action.takeoff.assert_not_awaited()
+        drone.action.set_takeoff_altitude.assert_not_awaited()
+        drone.offboard.start.assert_awaited_once()
+        initial_setpoint = drone.offboard.set_velocity_ned.await_args.args[0]
+        self.assertEqual(initial_setpoint.yaw_deg, 96.0)
+        takeoff_waypoint = fly_to.await_args.args[4]
+        self.assertEqual(takeoff_waypoint["north_m"], 0.1)
+        self.assertEqual(takeoff_waypoint["east_m"], -0.2)
+        self.assertEqual(takeoff_waypoint["down_m"], -1.5)
+        self.assertEqual(takeoff_waypoint["yaw_deg"], 96.0)
 
     def test_return_waypoints_only_use_frozen_astar_path(self):
         route = self.route()
