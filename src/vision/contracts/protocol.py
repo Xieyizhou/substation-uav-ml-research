@@ -124,6 +124,8 @@ def _validate_v2(data):
         raise ValueError("v2 requires gazebo-sdf-v3")
     if data.get("recording", {}).get("route_schema_version") != 4:
         raise ValueError("v2 requires frozen return route schema 4")
+    if data.get("recording", {}).get("vehicle_spawn_clearance_m") != 0.1:
+        raise ValueError("v2 requires 0.1 m vehicle spawn clearance")
     timing = data.get("flight_timeout_policy") or {}
     if (
         float(timing.get("nominal_horizontal_speed_m_s", 0.0)) <= 0.0

@@ -239,7 +239,7 @@ class VisualV2CollectionTests(unittest.TestCase):
 
     def test_v2_spawn_pose_is_center_of_planner_start_cell(self):
         layout = self.layout()
-        self.assertEqual(_spawn_pose(layout), "-17.5,-17.5,0,0,0,0")
+        self.assertEqual(_spawn_pose(layout, 0.1), "-17.5,-17.5,0.1,0,0,0")
 
         route = build_visual_route(
             layout,
@@ -352,7 +352,7 @@ class VisualV2CollectionTests(unittest.TestCase):
             self.assertTrue(Path(prepared["launcher_environment"]["RESEARCH_MODEL_SRC"]).is_file())
             self.assertEqual(
                 prepared["launcher_environment"]["PX4_GZ_MODEL_POSE"],
-                "-17.5,-17.5,0,0,0,0",
+                "-17.5,-17.5,0.1,0,0,0",
             )
             self.assertIn("--visual-route", prepared["flight_command"])
             self.assertLess(prepared["flight_timeout_s"], 600.0)

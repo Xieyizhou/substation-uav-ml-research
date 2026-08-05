@@ -58,6 +58,7 @@ def _write_scenario_report(paths, plan, row, protocol, layout, route, timing):
         "camera_pitch_down_deg": protocol["recording"]["camera_pitch_down_deg"],
         "camera_intrinsics_policy": protocol["recording"]["camera_intrinsics_policy"],
         "camera_heading_offset_deg": protocol["recording"]["camera_heading_offset_deg"],
+        "vehicle_spawn_clearance_m": protocol["recording"]["vehicle_spawn_clearance_m"],
         **timing,
     }
     report["visual_scenario_config_hash"] = object_sha256(report)
@@ -68,13 +69,13 @@ def _write_scenario_report(paths, plan, row, protocol, layout, route, timing):
     write_json(paths["report"], report)
 
 
-def _spawn_pose(layout):
+def _spawn_pose(layout, clearance_m):
     east_m = -layout.width_m / 2 + layout.start_cell[0] + 0.5
     north_m = -layout.height_m / 2 + layout.start_cell[1] + 0.5
-    return f"{east_m:g},{north_m:g},0,0,0,0"
+    return f"{east_m:g},{north_m:g},{float(clearance_m):g},0,0,0"
 
 
-def _runtime_record(output_root, row, paths, timing, layout):
+def _runtime_record(output_root, row, paths, timing, layout, protocol):
     recording_directory = Path(output_root) / "recordings" / row["recording_id"]
     flight_events_path = recording_directory / "flight_events.jsonl"
     return {
@@ -88,7 +89,9 @@ def _runtime_record(output_root, row, paths, timing, layout):
             "MAP_ID": "custom",
             "WORLD_NAME": f"visual_{row['layout_id']}",
             "WORLD_SRC": str(paths["world"].resolve()),
-            "PX4_GZ_MODEL_POSE": _spawn_pose(layout),
+            "PX4_GZ_MODEL_POSE": _spawn_pose(
+                layout, protocol["recording"]["vehicle_spawn_clearance_m"]
+            ),
             "SIM_MODEL": "x500_research",
             "RESEARCH_MODEL_SRC": str(paths["camera"].resolve()),
             "HEADLESS": "1",
@@ -132,4 +135,4 @@ def prepare_v2_collection_scenario(plan, row, output_root, protocol):
         protocol["recording"]["camera_pitch_down_deg"],
     )
     _write_scenario_report(paths, plan, row, protocol, layout, route, timing)
-    return _runtime_record(output_root, row, paths, timing, layout)
+    return _runtime_record(output_root, row, paths, timing, layout, protocol)
