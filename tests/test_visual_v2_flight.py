@@ -77,7 +77,7 @@ class VisualYawSettlingTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(_yaw_error_deg(-179.0, 180.0), -1.0)
         self.assertEqual(_yaw_error_deg(179.0, -179.0), 2.0)
 
-    async def test_visual_takeoff_uses_offboard_and_holds_initial_heading(self):
+    async def test_visual_takeoff_uses_action_before_offboard_descent(self):
         route = self.route()
         drone = Mock()
         drone.action.arm = AsyncMock()
@@ -97,11 +97,14 @@ class VisualYawSettlingTests(unittest.IsolatedAsyncioTestCase):
         with patch(
             "src.vision.collection.flight_route.fly_to_waypoint",
             AsyncMock(),
-        ) as fly_to:
+        ) as fly_to, patch(
+            "src.vision.collection.flight_route.asyncio.sleep",
+            AsyncMock(),
+        ):
             await _takeoff(drone, latest, {}, {}, route, configs)
+        drone.action.set_takeoff_altitude.assert_awaited_once_with(2.5)
         drone.action.arm.assert_awaited_once()
-        drone.action.takeoff.assert_not_awaited()
-        drone.action.set_takeoff_altitude.assert_not_awaited()
+        drone.action.takeoff.assert_awaited_once()
         drone.offboard.start.assert_awaited_once()
         initial_setpoint = drone.offboard.set_velocity_ned.await_args.args[0]
         self.assertEqual(initial_setpoint.yaw_deg, 96.0)

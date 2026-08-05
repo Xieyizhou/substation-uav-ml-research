@@ -24,6 +24,9 @@ from src.flight import waypoint_executor
 from src.vision.collection.route import VisualRoute
 
 
+ACTION_TAKEOFF_ALTITUDE_M = 2.5
+
+
 def load_visual_route(path):
     try:
         record = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -99,16 +102,23 @@ async def _settle_observation_yaw(drone, latest, phase_state, observation, route
 
 
 async def _takeoff(drone, latest, phase_state, target_state, route, configs):
-    altitude_m = route.waypoints[0].altitude_m
+    route_altitude_m = route.waypoints[0].altitude_m
+    action_altitude_m = max(ACTION_TAKEOFF_ALTITUDE_M, route_altitude_m)
     await wait_for_local_position(latest, waypoint_executor.TELEMETRY_TIMEOUT_S)
     attitude = latest.get("attitude")
     if attitude is None:
         raise RuntimeError("Visual takeoff requires attitude telemetry")
-    validate_takeoff_stability(latest, altitude_m)
-    takeoff_waypoint = takeoff_climb_waypoint(latest, -altitude_m)
-    takeoff_waypoint["yaw_deg"] = float(attitude.yaw_deg)
+    validate_takeoff_stability(latest, action_altitude_m)
     set_phase(phase_state, "takeoff")
+    await drone.action.set_takeoff_altitude(action_altitude_m)
     await drone.action.arm()
+    await drone.action.takeoff()
+    await asyncio.sleep(8)
+    await wait_for_local_position(latest, waypoint_executor.TELEMETRY_TIMEOUT_S)
+    validate_takeoff_stability(latest, action_altitude_m)
+    attitude = latest.get("attitude")
+    takeoff_waypoint = takeoff_climb_waypoint(latest, -route_altitude_m)
+    takeoff_waypoint["yaw_deg"] = float(attitude.yaw_deg)
     await drone.offboard.set_velocity_ned(
         VelocityNedYaw(0.0, 0.0, 0.0, normalize_yaw_deg(attitude.yaw_deg))
     )
@@ -124,7 +134,7 @@ async def _takeoff(drone, latest, phase_state, target_state, route, configs):
         1.0,
         *configs,
     )
-    validate_takeoff_stability(latest, altitude_m)
+    validate_takeoff_stability(latest, route_altitude_m)
 
 
 async def _fly_observations(drone, latest, phase_state, target_state, route, configs):
