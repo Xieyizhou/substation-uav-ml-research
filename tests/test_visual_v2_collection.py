@@ -150,8 +150,23 @@ class VisualV2CollectionTests(unittest.TestCase):
                 for sensor in tree.findall(".//sensor")
                 if sensor.get("name") in {"research_rgb", "research_boxes"}
             }
+            sensor_masses = {
+                link.get("name"): float(link.findtext("inertial/mass"))
+                for link in tree.findall(".//link")
+                if link.get("name") in {
+                    "research_camera_link",
+                    "research_lidar_link",
+                }
+            }
         self.assertAlmostEqual(float(stddev), layout.camera_noise_stddev)
         self.assertAlmostEqual(float(pose.split()[4]), math.radians(5.0))
+        self.assertEqual(
+            sensor_masses,
+            {
+                "research_camera_link": 0.001,
+                "research_lidar_link": 0.001,
+            },
+        )
         for camera in cameras.values():
             self.assertAlmostEqual(
                 float(camera.findtext("lens/intrinsics/cx")),
