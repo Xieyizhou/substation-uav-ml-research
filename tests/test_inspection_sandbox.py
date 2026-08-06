@@ -3,13 +3,15 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from src.inspection.config import AccessDenied, InspectionConfig
 from src.inspection.dashboard import dashboard
 from src.inspection.frames import frame_page, frame_path, scenario_progress
 from src.inspection.logs import log_tail
-from src.inspection.runtime import ProcessRecord, runtime_status
+from src.inspection.runtime import LocalProcessAdapter, ProcessRecord, runtime_status
 from src.inspection.service import InspectionService
+from src.cli import sandbox
 
 
 HASH = "a" * 64
@@ -168,6 +170,10 @@ class LogAndRuntimeTests(InspectionFixture):
         self.assertIn('"pid": 42', rendered)
         self.assertNotIn("private-value", rendered)
 
+    def test_process_inspection_failure_is_reported_as_unavailable(self):
+        with patch("src.inspection.runtime.subprocess.run", side_effect=OSError):
+            self.assertEqual(LocalProcessAdapter().processes(), ())
+
 
 class FrameTests(InspectionFixture):
     def test_frame_pages_follow_manifest_without_loading_all_pngs(self):
@@ -239,6 +245,21 @@ class BoundaryTests(InspectionFixture):
         service.frames("dev-r", 1, 1); service.progress("dev-r")
         after = {path: (path.stat().st_mtime_ns, path.read_bytes()) for path in paths}
         self.assertEqual(before, after)
+
+
+class SandboxCliTests(InspectionFixture):
+    def test_doctor_and_status_are_read_only(self):
+        self.make_frames(count=1)
+        with patch.object(
+            sandbox.InspectionConfig, "defaults", return_value=self.config
+        ), patch("builtins.print"):
+            self.assertEqual(sandbox.main(["doctor"]), 0)
+            self.assertEqual(sandbox.main(["status"]), 0)
+
+    def test_help_exposes_local_inspection_workflow(self):
+        help_text = sandbox.build_parser().format_help()
+        for command in ("doctor", "status", "serve"):
+            self.assertIn(command, help_text)
 
 
 if __name__ == "__main__":

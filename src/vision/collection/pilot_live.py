@@ -22,12 +22,18 @@ from src.sensors.gazebo_visual_transport import (
 
 
 def prepare_pilot_output_directory(output_directory):
-    """Create an empty directory without mixing separate recording attempts."""
+    """Create a clean directory, allowing only a live flight event stream."""
     output = Path(output_directory)
     if output.exists():
         if not output.is_dir():
             raise ValueError(f"pilot output path is not a directory: {output}")
-        if next(output.iterdir(), None) is not None:
+        existing = tuple(output.iterdir())
+        allowed = (
+            len(existing) == 1
+            and existing[0].name == "flight_events.jsonl"
+            and existing[0].is_file()
+        )
+        if existing and not allowed:
             raise ValueError(
                 f"pilot output directory is not empty: {output}; "
                 "choose a new recording directory"

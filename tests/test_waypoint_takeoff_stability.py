@@ -1,20 +1,33 @@
 from types import SimpleNamespace
 import unittest
+from unittest.mock import AsyncMock, patch
 
+from src.flight.takeoff_stability import (
+    wait_for_ground_stability,
+    wait_for_takeoff_hover,
+)
 from src.flight.waypoint_executor import (
     takeoff_climb_waypoint,
     validate_takeoff_stability,
 )
 
 
-def _latest(*, north=0.0, east=0.0, down=-1.5, roll=0.0, pitch=0.0):
+def _latest(
+    *, north=0.0, east=0.0, down=-1.5, roll=0.0, pitch=0.0,
+    velocity_north=0.0, velocity_east=0.0, velocity_down=0.0,
+):
     return {
         "position_velocity": SimpleNamespace(
             position=SimpleNamespace(
                 north_m=north,
                 east_m=east,
                 down_m=down,
-            )
+            ),
+            velocity=SimpleNamespace(
+                north_m_s=velocity_north,
+                east_m_s=velocity_east,
+                down_m_s=velocity_down,
+            ),
         ),
         "attitude": SimpleNamespace(roll_deg=roll, pitch_deg=pitch),
     }
@@ -51,6 +64,30 @@ class TakeoffStabilityTests(unittest.TestCase):
                 "down_m": -1.5,
             },
         )
+
+
+class ContinuousStabilityTests(unittest.IsolatedAsyncioTestCase):
+    async def test_ground_gate_requires_level_stationary_vehicle(self):
+        latest = _latest(down=0.0)
+        with patch(
+            "src.flight.takeoff_stability._wait_for_stable_window",
+            AsyncMock(),
+        ) as wait:
+            await wait_for_ground_stability(latest, 10.0)
+        self.assertTrue(wait.await_args.args[1]())
+        latest["position_velocity"].velocity.east_m_s = 0.2
+        self.assertFalse(wait.await_args.args[1]())
+
+    async def test_hover_gate_requires_altitude_and_low_velocity(self):
+        latest = _latest(down=-2.0)
+        with patch(
+            "src.flight.takeoff_stability._wait_for_stable_window",
+            AsyncMock(),
+        ) as wait:
+            await wait_for_takeoff_hover(latest, 2.5, 10.0)
+        self.assertTrue(wait.await_args.args[1]())
+        latest["position_velocity"].position.down_m = -0.5
+        self.assertFalse(wait.await_args.args[1]())
 
 
 if __name__ == "__main__":

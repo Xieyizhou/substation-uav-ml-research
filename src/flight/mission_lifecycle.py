@@ -209,6 +209,15 @@ async def execute_flight(
                     pending_error = RuntimeError(
                         f"Perception source did not stop cleanly: {error}"
                     )
+        close_system = services.get("close_system")
+        if close_system is not None:
+            try:
+                close_system(drone)
+            except Exception as error:
+                if pending_error is None:
+                    pending_error = RuntimeError(
+                        f"MAVSDK system did not stop cleanly: {error}"
+                    )
     if pending_error is not None:
         raise pending_error
     print("Done.")

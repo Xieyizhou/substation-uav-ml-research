@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+import json
 from pathlib import Path
 import signal
 import subprocess
@@ -157,4 +158,38 @@ def probe_until_ready(
     raise CollectionProcessError(
         f"Gazebo visual topics were not ready within {startup_timeout_s:.0f}s; "
         f"inspect {log_path}"
+    )
+
+
+def wait_for_jsonl_event(path, event_type, required_process, timeout_s):
+    path = Path(path)
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        code = required_process.process.poll()
+        if code is not None:
+            required_process.close_log()
+            raise CollectionProcessError(
+                f"{required_process.name} exited with code {code} before "
+                f"{event_type}; inspect {required_process.log_path}"
+            )
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            lines = ()
+        for line in reversed(lines):
+            try:
+                event = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if event.get("event_type") == event_type:
+                return event
+            if event.get("event_type") == "mission_failed":
+                raise CollectionProcessError(
+                    f"{required_process.name} failed before {event_type}: "
+                    f"{event.get('message', 'unknown failure')}"
+                )
+        time.sleep(0.2)
+    raise CollectionProcessError(
+        f"{required_process.name} did not publish {event_type} within "
+        f"{timeout_s:.0f}s; inspect {required_process.log_path}"
     )

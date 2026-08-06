@@ -713,6 +713,12 @@ class VisualPilotCliTests(unittest.TestCase):
             self.assertEqual(
                 prepare_pilot_output_directory(empty_output), empty_output
             )
+            events = Path(empty_output, "flight_events.jsonl")
+            events.write_text("{}\n")
+            self.assertEqual(
+                prepare_pilot_output_directory(empty_output), empty_output
+            )
+            events.unlink()
             Path(empty_output, "live_status.json").write_text("{}")
             with self.assertRaisesRegex(ValueError, "not empty"):
                 prepare_pilot_output_directory(empty_output)

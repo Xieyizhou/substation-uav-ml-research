@@ -21,10 +21,13 @@ class ProcessAdapter(Protocol):
 
 class LocalProcessAdapter:
     def processes(self) -> tuple[ProcessRecord, ...]:
-        result = subprocess.run(
-            ["ps", "-axo", "pid=,args="], check=False, capture_output=True,
-            text=True, timeout=3,
-        )
+        try:
+            result = subprocess.run(
+                ["ps", "-axo", "pid=,args="], check=False, capture_output=True,
+                text=True, timeout=3,
+            )
+        except (OSError, subprocess.SubprocessError):
+            return ()
         records = []
         for line in result.stdout.splitlines():
             fields = line.strip().split(maxsplit=1)

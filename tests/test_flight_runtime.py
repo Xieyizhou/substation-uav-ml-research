@@ -64,8 +64,14 @@ class RunStatusTests(unittest.TestCase):
 
 
 class FakeDrone:
+    def __init__(self):
+        self.server_stopped = False
+
     async def connect(self, system_address):
         self.system_address = system_address
+
+    def _stop_mavsdk_server(self):
+        self.server_stopped = True
 
 
 class HangingConnectDrone:
@@ -134,8 +140,9 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as directory:
             log_path = Path(directory) / "astar_20260715_120001.csv"
             mission_events = Path(directory) / "mission_events.jsonl"
+            drone = FakeDrone()
             with (
-                patch.object(fly_astar_path, "System", return_value=FakeDrone()),
+                patch.object(fly_astar_path, "System", return_value=drone),
                 patch.object(fly_astar_path, "make_log_path", return_value=log_path),
                 patch.object(fly_astar_path, "wait_for_connection", new=AsyncMock()),
                 patch.object(fly_astar_path, "wait_for_position_ready", new=AsyncMock()),
@@ -150,6 +157,7 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
                     {},
                     visual_mission_events=mission_events,
                 )
+            self.assertTrue(drone.server_stopped)
             payload = json.loads(status_path_for_log(log_path).read_text())
             self.assertEqual(payload["status"], "completed")
             self.assertTrue(payload["landing_confirmed"])
@@ -165,8 +173,9 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as directory:
             log_path = Path(directory) / "astar_20260715_120002.csv"
             mission_events = Path(directory) / "mission_events.jsonl"
+            drone = FakeDrone()
             with (
-                patch.object(fly_astar_path, "System", return_value=FakeDrone()),
+                patch.object(fly_astar_path, "System", return_value=drone),
                 patch.object(fly_astar_path, "make_log_path", return_value=log_path),
                 patch.object(fly_astar_path, "wait_for_connection", new=AsyncMock()),
                 patch.object(fly_astar_path, "wait_for_position_ready", new=AsyncMock()),
@@ -187,6 +196,7 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
                         {},
                         visual_mission_events=mission_events,
                     )
+            self.assertTrue(drone.server_stopped)
             payload = json.loads(status_path_for_log(log_path).read_text())
             self.assertEqual(payload["status"], "failed")
             self.assertFalse(payload["landing_confirmed"])

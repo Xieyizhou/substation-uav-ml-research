@@ -19,6 +19,7 @@ class RootCliTests(unittest.TestCase):
             "astar",
             "experiment",
             "report",
+            "sandbox",
             "check",
             "sensor",
             "data",

@@ -14,6 +14,7 @@ from src.vision.collection.process import (
     probe_until_ready,
     start_process,
     stop_process,
+    wait_for_jsonl_event,
     wait_for_flight,
     wait_process,
 )
@@ -91,7 +92,8 @@ def _start_recorder(prepared, plan_path, scenario_id, output_root, log_root):
 def run_collection_scenario(
     plan, plan_path, scenario_id, output_root, *,
     simulator_startup_timeout_s=180.0, probe_timeout_s=5.0,
-    first_frame_timeout_s=30.0, flight_timeout_s=None,
+    takeoff_ready_timeout_s=45.0, first_frame_timeout_s=30.0,
+    flight_timeout_s=None,
     recorder_timeout_s=900.0,
 ):
     prepared = prepare_collection_scenario(plan, scenario_id, output_root)
@@ -103,15 +105,21 @@ def run_collection_scenario(
         launcher = _start_simulator(
             prepared, log_root, simulator_startup_timeout_s, probe_timeout_s
         )
-        recorder = _start_recorder(
-            prepared, plan_path, scenario_id, output_root, log_root
-        )
-        _wait_for_first_frame(recording_directory, recorder, first_frame_timeout_s)
         flight = start_process(
             "flight task",
             [sys.executable, *prepared["flight_command"][1:]],
             log_root / "flight.log",
         )
+        wait_for_jsonl_event(
+            prepared["flight_events_path"],
+            "takeoff_completed",
+            flight,
+            takeoff_ready_timeout_s,
+        )
+        recorder = _start_recorder(
+            prepared, plan_path, scenario_id, output_root, log_root
+        )
+        _wait_for_first_frame(recording_directory, recorder, first_frame_timeout_s)
         timeout_s = (
             float(flight_timeout_s) if flight_timeout_s is not None
             else float(prepared.get("flight_timeout_s", 360.0))

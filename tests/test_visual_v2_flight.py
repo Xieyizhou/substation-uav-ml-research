@@ -57,6 +57,42 @@ class VisualYawSettlingTests(unittest.IsolatedAsyncioTestCase):
         publisher.publish.assert_called_once()
         self.assertEqual(publisher.publish.call_args.args[0], "yaw_settled")
 
+    async def test_yaw_slew_progresses_when_attitude_response_lags(self):
+        route = replace(
+            self.route(),
+            yaw_acquisition_timeout_s=1.0,
+            yaw_settle_duration_s=0.001,
+        )
+        observation = replace(route.waypoints[0], yaw_deg=40.0)
+        drone = Mock()
+        latest = {
+            "attitude": SimpleNamespace(
+                yaw_deg=0.0, roll_deg=0.0, pitch_deg=0.0,
+            )
+        }
+        command_count = 0
+
+        async def accept_after_lag(_command):
+            nonlocal command_count
+            command_count += 1
+            if command_count >= 3:
+                latest["attitude"].yaw_deg = 40.0
+
+        drone.offboard.set_velocity_ned = AsyncMock(side_effect=accept_after_lag)
+        with patch(
+            "src.vision.collection.flight_route.YAW_COMMAND_INTERVAL_S",
+            0.001,
+        ):
+            await _settle_observation_yaw(
+                drone, latest, {}, observation, route,
+            )
+        commands = [
+            call.args[0].yaw_deg
+            for call in drone.offboard.set_velocity_ned.await_args_list
+        ]
+        self.assertGreaterEqual(len(commands), 2)
+        self.assertGreater(commands[1], commands[0])
+
     async def test_departure_heading_settles_before_route_phase_begins(self):
         route = self.route()
         phase_state = {}
@@ -83,6 +119,7 @@ class VisualYawSettlingTests(unittest.IsolatedAsyncioTestCase):
         drone.action.arm = AsyncMock()
         drone.action.takeoff = AsyncMock()
         drone.action.set_takeoff_altitude = AsyncMock()
+        drone.param.set_param_float = AsyncMock()
         drone.offboard.set_velocity_ned = AsyncMock()
         drone.offboard.start = AsyncMock()
         latest = {
@@ -98,10 +135,16 @@ class VisualYawSettlingTests(unittest.IsolatedAsyncioTestCase):
             "src.vision.collection.flight_route.fly_to_waypoint",
             AsyncMock(),
         ) as fly_to, patch(
-            "src.vision.collection.flight_route.asyncio.sleep",
+            "src.vision.collection.flight_route.wait_for_ground_stability",
             AsyncMock(),
-        ):
+        ) as ground_stable, patch(
+            "src.vision.collection.flight_route.wait_for_takeoff_hover",
+            AsyncMock(),
+        ) as hover_stable:
             await _takeoff(drone, latest, {}, {}, route, configs)
+        ground_stable.assert_awaited_once()
+        hover_stable.assert_awaited_once()
+        drone.param.set_param_float.assert_awaited_once_with("MPC_TKO_SPEED", 0.5)
         drone.action.set_takeoff_altitude.assert_awaited_once_with(2.5)
         drone.action.arm.assert_awaited_once()
         drone.action.takeoff.assert_awaited_once()

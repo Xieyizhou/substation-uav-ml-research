@@ -12,11 +12,50 @@ from src.vision.collection.batch import (
 from src.vision.collection.process import (
     CollectionProcessError,
     ensure_process_running,
+    wait_for_jsonl_event,
     wait_for_flight,
 )
+from src.vision.collection.scenario_runner import run_collection_scenario
 
 
 class VisualCollectionBatchTests(unittest.TestCase):
+    @patch("src.vision.collection.scenario_runner.ensure_validated_receipt")
+    @patch("src.vision.collection.scenario_runner.wait_process")
+    @patch("src.vision.collection.scenario_runner.wait_for_flight")
+    @patch("src.vision.collection.scenario_runner._wait_for_first_frame")
+    @patch("src.vision.collection.scenario_runner._start_recorder")
+    @patch("src.vision.collection.scenario_runner.wait_for_jsonl_event")
+    @patch("src.vision.collection.scenario_runner.start_process")
+    @patch("src.vision.collection.scenario_runner._start_simulator")
+    @patch("src.vision.collection.scenario_runner.stop_process")
+    @patch("src.vision.collection.scenario_runner.scenario_by_id")
+    @patch("src.vision.collection.scenario_runner.prepare_collection_scenario")
+    def test_recording_starts_only_after_takeoff_is_stable(
+        self, prepare, scenario, stop, simulator, start, wait_event,
+        start_recorder, first_frame, wait_flight, wait_recorder, receipt,
+    ):
+        order = []
+        prepare.return_value = {
+            "recording_directory": "recordings/r1",
+            "launcher_environment": {},
+            "launcher_command": ["launcher"],
+            "flight_command": ["python", "flight"],
+            "flight_events_path": "recordings/r1/flight_events.jsonl",
+            "flight_timeout_s": 10.0,
+        }
+        scenario.return_value = {"recording_id": "r1"}
+        simulator.return_value = Mock()
+        start.return_value = Mock()
+        start_recorder.return_value = Mock()
+        wait_event.side_effect = lambda *args: order.append("takeoff")
+        start_recorder.side_effect = lambda *args: order.append("recorder") or Mock()
+        with tempfile.TemporaryDirectory() as directory:
+            result = run_collection_scenario(
+                {"scenarios": []}, "plan.json", "scenario-1", directory
+            )
+        self.assertEqual(order, ["takeoff", "recorder"])
+        self.assertEqual(result["state"], "complete")
+
     def test_recorder_failure_interrupts_flight_wait(self):
         flight = Mock()
         flight.name = "flight task"
@@ -64,6 +103,20 @@ class VisualCollectionBatchTests(unittest.TestCase):
         self.assertEqual(args.max_attempts, 3)
         self.assertEqual(args.recorder_timeout, 900.0)
         self.assertIsNone(args.flight_timeout)
+        self.assertEqual(args.takeoff_ready_timeout, 45.0)
+
+    def test_event_wait_rejects_failed_flight_before_recording(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory, "events.jsonl")
+            path.write_text(
+                '{"event_type":"mission_failed","message":"unstable"}\n'
+            )
+            flight = Mock()
+            flight.name = "flight task"
+            flight.log_path = Path("flight.log")
+            flight.process.poll.return_value = None
+            with self.assertRaisesRegex(CollectionProcessError, "unstable"):
+                wait_for_jsonl_event(path, "takeoff_completed", flight, 1.0)
 
     def test_failed_attempt_is_archived_without_deleting_evidence(self):
         with tempfile.TemporaryDirectory() as directory:

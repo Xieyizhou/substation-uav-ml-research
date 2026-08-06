@@ -51,6 +51,7 @@ from src.flight.landing_manager import (
     wait_until_landed,
 )
 from src.flight.mavsdk_preflight import (
+    close_mavsdk_system,
     health_status_text,
     wait_for_connection as _wait_for_connection,
     wait_for_local_position as _wait_for_local_position,
@@ -181,6 +182,7 @@ async def run_flight(
         "log_telemetry": log_telemetry,
         "fly_astar_waypoints": fly_astar_waypoints,
         "attempt_safe_landing": attempt_safe_landing,
+        "close_system": close_mavsdk_system,
     }
     if mission_runner is not None:
         services["mission_runner"] = mission_runner

@@ -152,6 +152,7 @@ def add_collection_parsers(commands):
     batch.add_argument("--dry-run", action="store_true")
     batch.add_argument("--simulator-startup-timeout", type=float, default=180.0)
     batch.add_argument("--probe-timeout", type=float, default=5.0)
+    batch.add_argument("--takeoff-ready-timeout", type=float, default=45.0)
     batch.add_argument("--first-frame-timeout", type=float, default=30.0)
     batch.add_argument(
         "--flight-timeout",
@@ -305,6 +306,7 @@ def handle_collection_command(args):
             dry_run=args.dry_run,
             simulator_startup_timeout_s=args.simulator_startup_timeout,
             probe_timeout_s=args.probe_timeout,
+            takeoff_ready_timeout_s=args.takeoff_ready_timeout,
             first_frame_timeout_s=args.first_frame_timeout,
             flight_timeout_s=args.flight_timeout,
             recorder_timeout_s=args.recorder_timeout,

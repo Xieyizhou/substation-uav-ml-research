@@ -42,6 +42,10 @@ from src.flight.replanning_controller import (
 )
 from src.flight.route_planning import reversed_waypoints
 from src.flight.safety_supervisor import SafetySupervisor
+from src.flight.takeoff_stability import (
+    takeoff_climb_waypoint,
+    validate_takeoff_stability,
+)
 
 
 def configure_runtime(settings):
@@ -65,43 +69,6 @@ def configure_runtime(settings):
 
 def clamp(value, min_value, max_value):
     return max(min_value, min(max_value, value))
-
-
-def validate_takeoff_stability(latest, target_altitude_m):
-    position = local_position(latest)
-    attitude = latest.get("attitude")
-    if position is None or attitude is None:
-        raise RuntimeError("Takeoff stability check requires position and attitude")
-    roll_deg = abs(float(attitude.roll_deg))
-    pitch_deg = abs(float(attitude.pitch_deg))
-    horizontal_drift_m = sqrt(position.north_m**2 + position.east_m**2)
-    altitude_m = -float(position.down_m)
-    if roll_deg > 30.0 or pitch_deg > 30.0:
-        raise RuntimeError(
-            "Takeoff is unstable: "
-            f"roll={roll_deg:.1f} deg, pitch={pitch_deg:.1f} deg"
-        )
-    if horizontal_drift_m > 2.5:
-        raise RuntimeError(
-            f"Takeoff drifted {horizontal_drift_m:.1f} m before Offboard start"
-        )
-    if altitude_m < -0.5 or altitude_m > target_altitude_m + 1.5:
-        raise RuntimeError(
-            "Takeoff altitude is outside the stability envelope: "
-            f"{altitude_m:.1f} m"
-        )
-
-
-def takeoff_climb_waypoint(latest, target_down_m):
-    position = local_position(latest)
-    if position is None:
-        raise RuntimeError("Takeoff climb requires local position")
-    return {
-        "name": "TAKEOFF_CLIMB",
-        "north_m": float(position.north_m),
-        "east_m": float(position.east_m),
-        "down_m": float(target_down_m),
-    }
 
 
 def velocity_command_from_error(error, speed_scale=1.0, yaw_deg=0.0):
