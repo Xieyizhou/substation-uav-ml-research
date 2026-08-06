@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Research Inspector</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <div><span class="eyebrow">LOCAL · READ ONLY</span><h1>Research Inspector</h1></div>
+    <button id="refresh">Refresh observations</button>
+  </header>
+  <nav>
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="doctor">Sandbox doctor</button>
+    <button class="tab" data-tab="logs">Live logs</button>
+    <button class="tab" data-tab="frames">Recordings</button>
+  </nav>
+  <main>
+    <section id="overview" class="panel active">
+      <div class="section-head"><div><p class="kicker">COLLECTION</p><h2>Experiment overview</h2></div><p id="updated"></p></div>
+      <div id="progress" class="progress-card"></div>
+      <div id="counts" class="metric-grid"></div>
+      <div class="two-col"><article><h3>Scenario queue</h3><div id="scenario"></div></article><article><h3>Runtime status</h3><div id="runtime"></div></article></div>
+      <article><h3>Dataset boundaries</h3><div id="roles" class="role-grid"></div></article>
+    </section>
+    <section id="doctor" class="panel"><div class="section-head"><div><p class="kicker">ENVIRONMENT</p><h2>Sandbox doctor</h2></div></div><div id="checks"></div></section>
+    <section id="logs" class="panel">
+      <div class="section-head"><div><p class="kicker">BOUNDED TAIL</p><h2>Live logs</h2></div></div>
+      <div class="controls"><select id="log-scenario"></select><select id="log-kind"><option>recorder</option><option>flight</option><option>simulator</option><option>probe</option></select><button id="load-log">Load last 200 lines</button></div>
+      <pre id="log-output" aria-live="polite">Select a recorded scenario.</pre>
+    </section>
+    <section id="frames" class="panel">
+      <div class="section-head"><div><p class="kicker">ON DEMAND</p><h2>Recording frame browser</h2></div></div>
+      <div class="controls"><select id="recording"></select><button id="load-frames">Inspect recording</button></div>
+      <div id="recording-progress"></div><div id="frame-grid" class="frame-grid"></div><div id="pager"></div>
+    </section>
+  </main>
+  <dialog id="viewer"><button id="close-viewer">Close</button><div class="canvas-wrap"><img id="full-image"><canvas id="overlay"></canvas></div><div id="frame-detail"></div></dialog>
+  <footer>No controls are provided for flight, collection, validation, or artifact mutation.</footer>
+  <script src="/app.js"></script>
+</body>
+</html>
