@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 import sys
 
@@ -72,6 +73,7 @@ def _training_view_command(config):
 
 
 def _training_smoke_command():
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     return (
         sys.executable,
         "main.py",
@@ -82,7 +84,7 @@ def _training_smoke_command():
         "--dataset",
         "data/research/visual_yolo_v2",
         "--output",
-        "models/equipment/visual-yolo11n-baseline-v2",
+        f"outputs/sandbox/training_smoke/visual-yolo11n-v2-{stamp}",
         "--smoke",
     )
 

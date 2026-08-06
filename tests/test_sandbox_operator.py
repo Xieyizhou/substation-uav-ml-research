@@ -104,6 +104,16 @@ class SandboxOperatorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "materialize the v2 training view"):
             build_command(self.config, "training-smoke-v2")
 
+    def test_training_smoke_uses_a_new_managed_output_directory(self):
+        identity = self.root / (
+            "data/research/visual_yolo_v2/identity/training_view_identity.json"
+        )
+        identity.parent.mkdir(parents=True)
+        identity.write_text("{}", encoding="utf-8")
+        command = build_command(self.config, "training-smoke-v2")
+        output = command.argv[command.argv.index("--output") + 1]
+        self.assertTrue(output.startswith("outputs/sandbox/training_smoke/"))
+
     def test_job_store_detects_record_tampering(self):
         store = SandboxJobStore(self.config.sandbox_jobs_root)
         job = SandboxJob("job-1", "doctor", "complete", utc_now(), 5.0)
