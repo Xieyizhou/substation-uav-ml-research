@@ -1,13 +1,19 @@
+import json
 import math
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
+from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 from src.cli.visual import build_parser
 from src.flight.waypoint_executor import normalize_yaw_deg, velocity_command_from_error
 from src.ml import EQUIPMENT_CLASSES
 from src.vision.collection.audit import audit_collection_plan
+from src.vision.collection.dataset import (
+    materialize_collection_datasets,
+    validate_aggregate_coverage,
+)
 from src.vision.collection.layout import (
     LABEL_BY_CLASS,
     build_layout_manifest,
@@ -103,6 +109,86 @@ class VisualV2CollectionTests(unittest.TestCase):
             layout_path.write_text("{}\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "layout bundle mismatch"):
                 load_collection_plan(path)
+
+    def test_dataset_materialization_resolves_v2_protocol_from_plan(self):
+        plan = build_collection_plan("v2")
+        split_counts = {
+            split: {
+                "recording_count": 0,
+                "dataset_frame_count": 0,
+                "labelled_frames": 0,
+                "verified_no_target_frames": 0,
+                "classes": {name: 0 for name in EQUIPMENT_CLASSES},
+            }
+            for split in ("train", "validation", "test")
+        }
+        recordings = []
+        for split in ("development", "validation", "blind"):
+            row = next(row for row in plan["scenarios"] if row["split"] == split)
+            frame_id = f"{row['recording_id']}:frame"
+            recordings.append(
+                {
+                    "row": row,
+                    "annotations": [
+                        {
+                            "frame_id": frame_id,
+                            "sequence_number": 1,
+                            "payload_sha256": "a" * 64,
+                            "annotation_status": "verified_no_target",
+                            "objects": [],
+                        }
+                    ],
+                    "frames": {
+                        frame_id: {"payload_relative_path": "frames/000001.png"}
+                    },
+                }
+            )
+        with TemporaryDirectory() as directory:
+            with patch(
+                "src.vision.collection.dataset._aggregate_recordings",
+                return_value=(recordings, "d" * 64, split_counts),
+            ) as aggregate, patch(
+                "src.vision.collection.dataset.validate_aggregate_coverage"
+            ):
+                result = materialize_collection_datasets(
+                    plan,
+                    Path(directory) / "recordings",
+                    directory,
+                )
+            development = json.loads(
+                Path(result["datasets"]["development"]["path"]).read_text()
+            )
+        observed_protocol = aggregate.call_args.args[2]
+        self.assertEqual(observed_protocol.path, self.protocol.path)
+        self.assertEqual(
+            development["dataset_name"],
+            "visual_collection_v2_development",
+        )
+
+    def test_v2_aggregate_gate_checks_split_size_and_background_coverage(self):
+        gate = self.protocol["aggregate_gate"]
+        counts = {}
+        for split in ("development", "validation", "blind"):
+            counts[split] = {
+                "classes": {
+                    name: gate["minimum_labelled_frames_per_class"][split]
+                    for name in EQUIPMENT_CLASSES
+                },
+                "class_size_bins": {
+                    name: {
+                        size: gate["minimum_frames_per_class_size_bin"][split]
+                        for size in ("small", "medium", "large")
+                    }
+                    for name in EQUIPMENT_CLASSES
+                },
+                "verified_no_target_frames": gate[
+                    "minimum_verified_no_target_frames"
+                ][split],
+            }
+        validate_aggregate_coverage(counts, self.protocol)
+        counts["blind"]["class_size_bins"]["reactor"]["small"] -= 1
+        with self.assertRaisesRegex(ValueError, "blind reactor small"):
+            validate_aggregate_coverage(counts, self.protocol)
 
     def test_layout_inventory_labels_bounds_and_collisions(self):
         layout = self.layout()

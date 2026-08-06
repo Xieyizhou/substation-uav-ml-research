@@ -2,46 +2,19 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from pathlib import Path
 
-from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import git_commit, object_sha256
-from src.vision.collection.plan import DEFAULT_PROTOCOL, load_collection_protocol
+from src.vision.collection.plan import load_collection_protocol
 from src.vision.collection.recording import validate_collection_recording
+from src.vision.collection.dataset_coverage import (
+    aggregate_split_counts,
+    dataset_groups,
+    validate_aggregate_coverage,
+)
 from src.vision.contracts.identity import DatasetIdentity, class_order_identity
+from src.vision.contracts.protocol import V2_PROTOCOL_ID, protocol_for_plan
 from src.vision.collection.pilot import _read_json, _read_jsonl, _sha256, _write_json, _write_jsonl
-
-
-DATASET_GROUPS = {
-    "development": ("train", "validation"),
-    "held_out_test": ("test",),
-}
-
-
-def validate_aggregate_coverage(split_counts, protocol):
-    gate = protocol["aggregate_gate"]
-    failures = []
-    minimum = int(gate["minimum_labelled_frames_per_class_per_split"])
-    for split in ("train", "validation", "test"):
-        counts = split_counts.get(split, {})
-        for class_name in gate["required_classes_per_split"]:
-            observed = int(counts.get("classes", {}).get(class_name, 0))
-            if observed < minimum:
-                failures.append(
-                    f"{split} {class_name} labelled frames {observed} below {minimum}"
-                )
-        no_target = int(counts.get("verified_no_target_frames", 0))
-        required_no_target = int(
-            gate["minimum_verified_no_target_frames_per_split"]
-        )
-        if no_target < required_no_target:
-            failures.append(
-                f"{split} verified no-target frames {no_target} "
-                f"below {required_no_target}"
-            )
-    if failures:
-        raise ValueError("; ".join(failures))
 
 
 def _load_recording(root, row, plan, protocol_path):
@@ -68,7 +41,7 @@ def _load_recording(root, row, plan, protocol_path):
     }
 
 
-def _aggregate_recordings(plan, recordings_root, protocol_path):
+def _aggregate_recordings(plan, recordings_root, protocol):
     recordings = []
     missing = []
     for row in plan["scenarios"]:
@@ -76,7 +49,12 @@ def _aggregate_recordings(plan, recordings_root, protocol_path):
         if not root.is_dir():
             missing.append(row["recording_id"])
             continue
-        recordings.append(_load_recording(root, row, plan, protocol_path))
+        try:
+            recordings.append(_load_recording(root, row, plan, protocol.path))
+        except ValueError as error:
+            raise ValueError(
+                f"collection recording {row['recording_id']} is invalid: {error}"
+            ) from error
     if missing:
         raise ValueError(
             f"visual collection is missing {len(missing)} recordings; "
@@ -87,37 +65,7 @@ def _aggregate_recordings(plan, recordings_root, protocol_path):
     }
     if len(decoder_ids) != 1:
         raise ValueError("visual collection recordings use multiple decoders")
-    split_counts = {}
-    for split in ("train", "validation", "test"):
-        selected = [item for item in recordings if item["row"]["split"] == split]
-        classes = Counter(
-            class_name
-            for item in selected
-            for annotation in item["annotations"]
-            for class_name in {
-                obj["class_name"] for obj in annotation["objects"]
-            }
-        )
-        split_counts[split] = {
-            "recording_count": len(selected),
-            "dataset_frame_count": sum(
-                len(item["annotations"]) for item in selected
-            ),
-            "labelled_frames": sum(
-                annotation["annotation_status"] == "labelled"
-                for item in selected
-                for annotation in item["annotations"]
-            ),
-            "verified_no_target_frames": sum(
-                annotation["annotation_status"] == "verified_no_target"
-                for item in selected
-                for annotation in item["annotations"]
-            ),
-            "classes": {
-                class_name: classes[class_name]
-                for class_name in EQUIPMENT_CLASSES
-            },
-        }
+    split_counts = aggregate_split_counts(recordings, protocol)
     return recordings, decoder_ids.pop(), split_counts
 
 
@@ -171,8 +119,11 @@ def _materialize_group(
         }
         for row in rows
     ]
+    collection_version = (
+        "v2" if protocol["protocol_id"] == V2_PROTOCOL_ID else "v1"
+    )
     identity = DatasetIdentity(
-        dataset_name=f"visual_collection_v1_{name}",
+        dataset_name=f"visual_collection_{collection_version}_{name}",
         dataset_version=protocol["protocol_id"],
         dataset_role=name,
         recording_schema_version=2,
@@ -205,10 +156,14 @@ def materialize_collection_datasets(
     recordings_root,
     output_root,
     *,
-    protocol_path=DEFAULT_PROTOCOL,
+    protocol_path=None,
     creation_commit_sha=None,
 ):
-    protocol = load_collection_protocol(protocol_path)
+    protocol = (
+        protocol_for_plan(plan)
+        if protocol_path is None
+        else load_collection_protocol(protocol_path)
+    )
     if creation_commit_sha is None:
         observed_commit = git_commit()
         creation_commit_sha = (
@@ -219,11 +174,11 @@ def materialize_collection_datasets(
     recordings, decoder_id, split_counts = _aggregate_recordings(
         plan,
         recordings_root,
-        protocol_path,
+        protocol,
     )
     validate_aggregate_coverage(split_counts, protocol)
     identities = {}
-    for name, splits in DATASET_GROUPS.items():
+    for name, splits in dataset_groups(protocol).items():
         identity, path = _materialize_group(
             name,
             splits,

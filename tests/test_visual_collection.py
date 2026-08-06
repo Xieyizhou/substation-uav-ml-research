@@ -215,6 +215,19 @@ class VisualCollectionRecordingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "validation reactor"):
             validate_aggregate_coverage(complete, protocol)
 
+    def test_materialization_identifies_invalid_recording(self):
+        plan = build_collection_plan()
+        first = plan["scenarios"][0]
+        with tempfile.TemporaryDirectory() as temporary:
+            recordings = Path(temporary) / "recordings"
+            (recordings / first["recording_id"]).mkdir(parents=True)
+            with self.assertRaisesRegex(ValueError, first["recording_id"]):
+                materialize_collection_datasets(
+                    plan,
+                    recordings,
+                    temporary,
+                )
+
     def test_materialization_creates_isolated_development_and_test_identities(self):
         plan = build_collection_plan()
         with tempfile.TemporaryDirectory() as temporary:
@@ -250,6 +263,10 @@ class VisualCollectionRecordingTests(unittest.TestCase):
             self.assertEqual(held_out["ordered_frame_count"], 100)
             held_out_identity = json.loads(
                 Path(held_out["path"]).read_text()
+            )
+            self.assertEqual(
+                held_out_identity["dataset_name"],
+                "visual_collection_v1_held_out_test",
             )
             self.assertEqual(held_out_identity["dataset_role"], "held_out_test")
             self.assertEqual(held_out_identity["seed_ids"], list(range(2051, 2061)))
