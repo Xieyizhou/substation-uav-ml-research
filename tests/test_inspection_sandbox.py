@@ -160,6 +160,7 @@ class LogAndRuntimeTests(InspectionFixture):
 
     def test_missing_processes_are_reported_without_commands(self):
         missing = runtime_status(EmptyProcesses())
+        self.assertTrue(all(item.available for item in missing))
         self.assertTrue(all(not item.alive and item.pid is None for item in missing))
         self.assertTrue(all("no restart" in item.detail for item in missing))
 
@@ -172,7 +173,9 @@ class LogAndRuntimeTests(InspectionFixture):
 
     def test_process_inspection_failure_is_reported_as_unavailable(self):
         with patch("src.inspection.runtime.subprocess.run", side_effect=OSError):
-            self.assertEqual(LocalProcessAdapter().processes(), ())
+            items = runtime_status(LocalProcessAdapter())
+        self.assertTrue(all(not item.available for item in items))
+        self.assertTrue(all("unavailable" in item.detail for item in items))
 
 
 class FrameTests(InspectionFixture):

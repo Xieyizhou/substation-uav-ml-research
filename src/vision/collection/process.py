@@ -50,29 +50,59 @@ def start_process(name, command, log_path, *, env=None, discard_stdout=False):
     return ManagedProcess(name, process, handle, log_path)
 
 
-def stop_process(managed, *, grace_s=10.0):
+def _process_group_exists(process_group_id):
+    try:
+        os.killpg(process_group_id, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
+def _wait_for_process_group_exit(process, process_group_id, timeout_s):
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        process.poll()
+        if not _process_group_exists(process_group_id):
+            return True
+        time.sleep(0.1)
+    process.poll()
+    return not _process_group_exists(process_group_id)
+
+
+def _signal_process_group(process_group_id, signal_number):
+    try:
+        os.killpg(process_group_id, signal_number)
+    except ProcessLookupError:
+        pass
+
+
+def stop_process(managed, *, grace_s=10.0, kill_grace_s=5.0):
     if managed is None:
         return
     process = managed.process
-    if process.poll() is None:
-        try:
-            os.killpg(process.pid, signal.SIGINT)
-        except ProcessLookupError:
-            pass
-        try:
-            process.wait(timeout=grace_s)
-        except subprocess.TimeoutExpired:
-            try:
-                os.killpg(process.pid, signal.SIGTERM)
-            except ProcessLookupError:
-                pass
-            try:
-                process.wait(timeout=grace_s)
-            except subprocess.TimeoutExpired as error:
-                raise CollectionProcessError(
-                    f"{managed.name} did not stop; inspect {managed.log_path}"
-                ) from error
-    managed.close_log()
+    process_group_id = process.pid
+    try:
+        if not _process_group_exists(process_group_id):
+            process.poll()
+            return
+        _signal_process_group(process_group_id, signal.SIGINT)
+        if _wait_for_process_group_exit(process, process_group_id, grace_s):
+            return
+        _signal_process_group(process_group_id, signal.SIGTERM)
+        if _wait_for_process_group_exit(process, process_group_id, grace_s):
+            return
+        _signal_process_group(process_group_id, signal.SIGKILL)
+        if not _wait_for_process_group_exit(
+            process, process_group_id, kill_grace_s
+        ):
+            raise CollectionProcessError(
+                f"{managed.name} process group did not stop; "
+                f"inspect {managed.log_path}"
+            )
+    finally:
+        managed.close_log()
 
 
 def wait_process(managed, timeout_s):

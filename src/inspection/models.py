@@ -47,6 +47,7 @@ class DashboardView(ReadModel):
 @dataclass(frozen=True)
 class RuntimeItem(ReadModel):
     name: str
+    available: bool
     alive: bool
     pid: int | None
     detail: str

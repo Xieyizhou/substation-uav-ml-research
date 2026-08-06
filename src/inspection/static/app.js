@@ -13,7 +13,7 @@ function renderDashboard(d,runtime){
   $('#counts').innerHTML=Object.entries(d.counts).map(([k,v])=>`<div class="metric"><b>${v}</b><span>${esc(k)}</span></div>`).join('');
   const scenario=d.current||d.next;
   $('#scenario').innerHTML=scenario?Object.entries({Status:scenario.state,Scenario:scenario.scenario_id,Role:scenario.dataset_role,Layout:scenario.layout,Route:scenario.route,Seed:scenario.seed,Target:scenario.target_class}).map(([k,v])=>`<div class="scenario-row"><span>${k}</span><strong>${esc(v)}</strong></div>`).join(''):'<p>All scenarios are complete.</p>';
-  $('#runtime').innerHTML=runtime.map(x=>`<div class="status-row"><span><i class="dot ${x.alive?'alive':''}"></i> ${esc(x.name)}</span><span>${x.alive?`PID ${x.pid}`:'not detected'}</span></div>`).join('');
+  $('#runtime').innerHTML=runtime.map(x=>`<div class="status-row"><span><i class="dot ${x.alive?'alive':''}"></i> ${esc(x.name)}</span><span>${!x.available?'unavailable':x.alive?`PID ${x.pid}`:'not detected'}</span></div>`).join('');
   $('#roles').innerHTML=Object.entries(d.role_counts).map(([k,v])=>`<span class="role"><b>${v}</b> ${esc(k)}</span>`).join('');
 }
 function renderDoctor(checks){

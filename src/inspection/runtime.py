@@ -19,6 +19,10 @@ class ProcessAdapter(Protocol):
     def processes(self) -> tuple[ProcessRecord, ...]: ...
 
 
+class ProcessInspectionUnavailable(RuntimeError):
+    """Raised when the host does not permit read-only process inspection."""
+
+
 class LocalProcessAdapter:
     def processes(self) -> tuple[ProcessRecord, ...]:
         try:
@@ -26,8 +30,10 @@ class LocalProcessAdapter:
                 ["ps", "-axo", "pid=,args="], check=False, capture_output=True,
                 text=True, timeout=3,
             )
-        except (OSError, subprocess.SubprocessError):
-            return ()
+        except (OSError, subprocess.SubprocessError) as exc:
+            raise ProcessInspectionUnavailable from exc
+        if result.returncode != 0:
+            raise ProcessInspectionUnavailable
         records = []
         for line in result.stdout.splitlines():
             fields = line.strip().split(maxsplit=1)
@@ -46,14 +52,21 @@ PROCESS_MARKERS = {
 
 
 def runtime_status(adapter: ProcessAdapter) -> tuple[RuntimeItem, ...]:
-    processes = adapter.processes()
+    try:
+        processes = adapter.processes()
+    except ProcessInspectionUnavailable:
+        return tuple(RuntimeItem(
+            name=name, available=False, alive=False, pid=None,
+            detail="process inspection unavailable; no restart attempted",
+        ) for name in PROCESS_MARKERS)
     views = []
     for name, markers in PROCESS_MARKERS.items():
         match = next((item for item in processes if any(
             marker.lower() in item.command.lower() for marker in markers
         )), None)
         views.append(RuntimeItem(
-            name, match is not None, None if match is None else match.pid,
-            "appears alive" if match else "not detected; no restart attempted",
+            name=name, available=True, alive=match is not None,
+            pid=None if match is None else match.pid,
+            detail="appears alive" if match else "not detected; no restart attempted",
         ))
     return tuple(views)
