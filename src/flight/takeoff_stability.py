@@ -64,7 +64,8 @@ def _motion_is_stable(latest, *, max_level_deg, max_horizontal_speed, max_vertic
 
 
 async def _wait_for_stable_window(
-    latest, predicate, *, telemetry_timeout_s, timeout_s, stable_duration_s
+    latest, predicate, *, telemetry_timeout_s, timeout_s, stable_duration_s,
+    stage,
 ):
     loop = asyncio.get_running_loop()
     deadline = loop.time() + timeout_s
@@ -78,7 +79,9 @@ async def _wait_for_stable_window(
         else:
             stable_since = None
         await asyncio.sleep(0.2)
-    raise TimeoutError("Vehicle did not reach a continuous stable flight window")
+    raise TimeoutError(
+        f"Vehicle did not reach a continuous stable {stage} window"
+    )
 
 
 async def wait_for_ground_stability(latest, telemetry_timeout_s, *, timeout_s=10.0):
@@ -95,12 +98,12 @@ async def wait_for_ground_stability(latest, telemetry_timeout_s, *, timeout_s=10
 
     await _wait_for_stable_window(
         latest, ready, telemetry_timeout_s=telemetry_timeout_s,
-        timeout_s=timeout_s, stable_duration_s=2.0,
+        timeout_s=timeout_s, stable_duration_s=2.0, stage="ground",
     )
 
 
 async def wait_for_takeoff_hover(
-    latest, target_altitude_m, telemetry_timeout_s, *, timeout_s=20.0
+    latest, target_altitude_m, telemetry_timeout_s, *, timeout_s=30.0
 ):
     minimum_altitude_m = max(0.75, target_altitude_m * 0.6)
 
@@ -117,5 +120,5 @@ async def wait_for_takeoff_hover(
 
     await _wait_for_stable_window(
         latest, ready, telemetry_timeout_s=telemetry_timeout_s,
-        timeout_s=timeout_s, stable_duration_s=2.0,
+        timeout_s=timeout_s, stable_duration_s=2.0, stage="takeoff hover",
     )
