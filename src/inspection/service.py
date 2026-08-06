@@ -23,9 +23,10 @@ def serialize(value):
 
 
 class InspectionService:
-    def __init__(self, config: InspectionConfig, process_adapter=None):
+    def __init__(self, config: InspectionConfig, process_adapter=None, operator=None):
         self.config = config
         self.process_adapter = process_adapter or LocalProcessAdapter()
+        self.operator = operator
 
     def doctor(self):
         return serialize(run_doctor(self.config))
@@ -52,6 +53,17 @@ class InspectionService:
             })
         return results
 
+    def scenarios(self):
+        return [
+            {
+                "scenario_id": row["scenario_id"],
+                "dataset_role": row.get("dataset_role", row.get("split")),
+                "target_class": row.get("target_class", row.get("target_id")),
+            }
+            for row in load_plan(self.config)["scenarios"]
+            if not is_blind(row)
+        ]
+
     def logs(self, scenario_id, kind, limit):
         row = self._scenario(scenario_id)
         if is_blind(row):
@@ -66,6 +78,23 @@ class InspectionService:
 
     def frame_file(self, recording_id, frame_id):
         return frame_path(self.config, recording_id, frame_id)
+
+    def operator_status(self):
+        return self._operator().status()
+
+    def operator_start(self, action, scenario_id=None):
+        return self._operator().start(action, scenario_id)
+
+    def operator_stop(self, job_id):
+        return self._operator().stop(job_id)
+
+    def operator_log(self, job_id, limit):
+        return self._operator().log(job_id, limit)
+
+    def _operator(self):
+        if self.operator is None:
+            raise AccessDenied("sandbox operator is not configured")
+        return self.operator
 
     def _scenario(self, scenario_id):
         row = next((row for row in load_plan(self.config)["scenarios"]

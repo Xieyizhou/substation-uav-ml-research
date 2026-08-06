@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import shutil
 
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import file_sha256
@@ -64,7 +65,17 @@ def yolo_label_text(annotation):
     return "\n".join(lines) + "\n"
 
 
+def _clear_partition(name, output_root):
+    if not name or Path(name).name != name:
+        raise ValueError("invalid YOLO partition name")
+    for category in ("images", "labels"):
+        partition = Path(output_root) / category / name
+        if partition.exists():
+            shutil.rmtree(partition)
+
+
 def materialize_yolo_partition(name, rows, collection_root, output_root):
+    _clear_partition(name, output_root)
     membership, labels_manifest = [], []
     link_modes, class_counts = Counter(), Counter()
     no_target = 0

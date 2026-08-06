@@ -1,11 +1,12 @@
-const $=s=>document.querySelector(s);let recordings=[],page=1;
+const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,operatorToken='';
 const api=async path=>{const r=await fetch(path,{cache:'no-store'});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
+const post=async(path,value)=>{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Sandbox-Token':operatorToken},body:JSON.stringify(value)});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active')});
 
 async function refresh(){
-  const [dash,runtime,doctor,recs]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings')]);
-  recordings=recs; renderDashboard(dash,runtime); renderDoctor(doctor); renderSelectors();
+  const [dash,runtime,doctor,recs,available,operator]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator')]);
+  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderDashboard(dash,runtime);renderDoctor(doctor);renderSelectors();renderOperator(operator);
   $('#updated').textContent=`Observed ${new Date().toLocaleTimeString()}`;
 }
 function renderDashboard(d,runtime){
@@ -26,6 +27,22 @@ function renderSelectors(){
   $('#load-frames').disabled=!recordings.length;$('#load-log').disabled=!recordings.length;
   if(!recordings.length){$('#recording-progress').innerHTML='<div class="summary">No non-blind recordings are present in the configured collection root.</div>';$('#log-output').textContent='No non-blind recorded scenarios are present.'}
 }
+
+function renderOperator(value){
+  const active=value.active_job;
+  $('#operator-state').innerHTML=active?`<span class="badge warning">${esc(active.state)}</span><strong>${esc(active.action)}</strong><span>${esc(active.job_id)}</span>`:'<span class="badge pass">idle</span><strong>Ready for one managed job</strong>';
+  $('#operator-start').disabled=Boolean(active);$('#operator-stop').disabled=!active;$('#operator-stop').dataset.job=active?.job_id||'';
+  $('#job-history').innerHTML=value.history.length?value.history.map(job=>`<button class="job-row" data-job="${esc(job.job_id)}" ${job.sensitive?'data-sensitive="true"':''}><span><b>${esc(job.action)}</b><small>${esc(job.created_at)}</small></span><span class="badge ${job.state==='complete'?'pass':job.state==='failed'?'failure':'warning'}">${esc(job.state)}</span></button>`).join(''):'<p>No managed jobs have run.</p>';
+  document.querySelectorAll('.job-row').forEach(row=>row.onclick=()=>loadJobLog(row.dataset.job,row.dataset.sensitive==='true'));
+  $('#operator-scenario').innerHTML=scenarios.map(row=>`<option value="${esc(row.scenario_id)}">${esc(row.scenario_id)} · ${esc(row.dataset_role)}</option>`).join('');
+  updateOperatorInputs();
+}
+function updateOperatorInputs(){const smoke=$('#operator-action').value==='flight-smoke';$('#operator-scenario').disabled=!smoke;$('#operator-scenario').hidden=!smoke}
+async function refreshOperator(){try{const value=await api('/api/operator');operatorToken=value.operator_token;renderOperator(value)}catch(e){$('#operator-state').textContent=e.message}}
+async function loadJobLog(job,sensitive){if(sensitive){$('#job-log').textContent='Blind collection job logs are sealed.';return}try{$('#job-log').innerHTML=(await api(`/api/operator/log/${encodeURIComponent(job)}?limit=300`)).join('\n')||'Log is empty.'}catch(e){$('#job-log').textContent=e.message}}
+$('#operator-action').onchange=updateOperatorInputs;
+$('#operator-start').onclick=async()=>{const action=$('#operator-action').value,scenario=action==='flight-smoke'?$('#operator-scenario').value:null;if(!confirm(`Start ${action}? Only one sandbox job may run.`))return;try{await post('/api/operator/start',{action,scenario_id:scenario});await refreshOperator()}catch(e){alert(e.message)}};
+$('#operator-stop').onclick=async()=>{const job=$('#operator-stop').dataset.job;if(!job||!confirm('Stop this job and its managed process groups?'))return;try{await post('/api/operator/stop',{job_id:job});await refreshOperator()}catch(e){alert(e.message)}};
 
 $('#load-log').onclick=async()=>{
   const scenario=encodeURIComponent($('#log-scenario').value),kind=encodeURIComponent($('#log-kind').value);
@@ -54,3 +71,4 @@ function showFrame(f){
 }
 $('#close-viewer').onclick=()=>$('#viewer').close();$('#refresh').onclick=refresh;
 refresh().catch(e=>{document.querySelector('main').textContent=`Inspector unavailable: ${e.message}`});
+setInterval(refreshOperator,3000);

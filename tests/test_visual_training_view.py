@@ -181,6 +181,18 @@ class YoloDatasetTests(unittest.TestCase):
             self.assertTrue(destination.is_symlink())
             self.assertEqual(destination.read_bytes(), b"png")
 
+    def test_partition_rematerialization_removes_stale_files(self):
+        from src.vision.training.yolo_dataset import materialize_yolo_partition
+
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            stale = root / "output/images/train/stale.png"
+            stale.parent.mkdir(parents=True)
+            stale.write_bytes(b"stale")
+            (root / "output/labels/train").mkdir(parents=True)
+            materialize_yolo_partition("train", [], root / "source", root / "output")
+            self.assertFalse(stale.exists())
+
 
 class TrainingIdentityTests(unittest.TestCase):
     def test_identity_detects_changed_membership(self):
@@ -211,6 +223,13 @@ class TrainingIdentityTests(unittest.TestCase):
         )
         self.assertEqual(
             TrainingViewIdentity.from_record(first.to_record()), first
+        )
+        with_validation = TrainingViewIdentity(
+            **{**values, "source_validation_dataset_identity": "f" * 64}
+        )
+        self.assertNotEqual(
+            first.training_view_identity_sha256,
+            with_validation.training_view_identity_sha256,
         )
         with self.assertRaisesRegex(ValueError, "locked class order"):
             TrainingViewIdentity(

@@ -1,4 +1,4 @@
-"""Dependency-free local HTTP application for read-only project inspection."""
+"""Dependency-free local HTTP application for safe sandbox operation."""
 
 from __future__ import annotations
 
@@ -7,17 +7,21 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import mimetypes
 from pathlib import Path
+import secrets
 from urllib.parse import parse_qs, unquote, urlparse
 
 from src.inspection import InspectionConfig, InspectionService
 from src.inspection.config import AccessDenied
+from src.sandbox.operator import OperatorBusy, SandboxOperator
 
 
 STATIC_ROOT = Path(__file__).with_name("static")
+LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
 
 class InspectionHandler(BaseHTTPRequestHandler):
     service: InspectionService
+    operator_token: str
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -32,7 +36,29 @@ class InspectionHandler(BaseHTTPRequestHandler):
             self._json({"error": str(error)}, 404)
 
     def do_POST(self):
-        self._json({"error": "read-only application"}, 405)
+        if self.headers.get("X-Sandbox-Token") != self.operator_token:
+            return self._json({"error": "invalid sandbox operator token"}, 403)
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if length < 2 or length > 4096:
+                raise ValueError("invalid JSON request size")
+            body = json.loads(self.rfile.read(length).decode("utf-8"))
+            if not isinstance(body, dict):
+                raise ValueError("JSON request must be an object")
+            if self.path == "/api/operator/start":
+                return self._json(
+                    self.service.operator_start(
+                        body.get("action"), body.get("scenario_id")
+                    ),
+                    202,
+                )
+            if self.path == "/api/operator/stop":
+                return self._json(self.service.operator_stop(body.get("job_id")))
+            self._json({"error": "unknown endpoint"}, 404)
+        except OperatorBusy as error:
+            self._json({"error": str(error)}, 409)
+        except (AccessDenied, ValueError, json.JSONDecodeError) as error:
+            self._json({"error": str(error)}, 400)
 
     def log_message(self, message, *args):
         print(f"inspection: {message % args}")
@@ -46,7 +72,17 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.runtime())
         if path == "/api/recordings":
             return self._json(self.service.recordings())
+        if path == "/api/scenarios":
+            return self._json(self.service.scenarios())
+        if path == "/api/operator":
+            return self._json({
+                **self.service.operator_status(),
+                "operator_token": self.operator_token,
+            })
         parts = [unquote(item) for item in path.split("/") if item]
+        if len(parts) == 4 and parts[1:3] == ["operator", "log"]:
+            limit = int(query.get("limit", ["200"])[0])
+            return self._json(self.service.operator_log(parts[3], limit))
         if len(parts) == 4 and parts[1] == "logs":
             limit = int(query.get("limit", ["200"])[0])
             return self._json(self.service.logs(parts[2], parts[3], limit))
@@ -62,7 +98,7 @@ class InspectionHandler(BaseHTTPRequestHandler):
 
     def _static(self, path):
         name = "index.html" if path == "/" else path.lstrip("/")
-        if name not in {"index.html", "app.js", "style.css"}:
+        if name not in {"index.html", "app.js", "style.css", "operator.css"}:
             return self._json({"error": "not found"}, 404)
         self._file(STATIC_ROOT / name)
 
@@ -87,22 +123,39 @@ class InspectionHandler(BaseHTTPRequestHandler):
         self.wfile.write(payload)
 
 
-def create_server(config, host="127.0.0.1", port=8765, adapter=None):
+class SandboxHTTPServer(ThreadingHTTPServer):
+    def __init__(self, address, handler, operator):
+        self.operator = operator
+        super().__init__(address, handler)
+
+    def server_close(self):
+        self.operator.shutdown()
+        super().server_close()
+
+
+def create_server(
+    config, host="127.0.0.1", port=8765, adapter=None, operator=None
+):
+    if host not in LOOPBACK_HOSTS:
+        raise ValueError("sandbox app must bind to a loopback host")
+    operator = operator or SandboxOperator(config, adapter)
+    token = secrets.token_urlsafe(24)
     handler = type("ConfiguredInspectionHandler", (InspectionHandler,), {
-        "service": InspectionService(config, adapter)
+        "service": InspectionService(config, adapter, operator),
+        "operator_token": token,
     })
-    return ThreadingHTTPServer((host, port), handler)
+    return SandboxHTTPServer((host, port), handler, operator)
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="Run the read-only research inspector")
+    parser = argparse.ArgumentParser(description="Run the local research sandbox app")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     args = parser.parse_args(argv)
     config = InspectionConfig.defaults(args.project_root)
     server = create_server(config, args.host, args.port)
-    print(f"Read-only research inspector: http://{args.host}:{args.port}")
+    print(f"Research sandbox app: http://{args.host}:{args.port}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

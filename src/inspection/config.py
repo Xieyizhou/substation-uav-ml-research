@@ -42,6 +42,14 @@ class InspectionConfig:
     def recordings_root(self) -> Path:
         return self.collection_root / "recordings"
 
+    @property
+    def sandbox_operator_root(self) -> Path:
+        return self.project_root / "outputs/sandbox/operator"
+
+    @property
+    def sandbox_jobs_root(self) -> Path:
+        return self.sandbox_operator_root / "jobs"
+
     def recording(self, recording_id: str) -> Path:
         if not recording_id or Path(recording_id).name != recording_id:
             raise AccessDenied("invalid recording identifier")

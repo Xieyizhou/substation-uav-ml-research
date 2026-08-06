@@ -17,6 +17,7 @@ interfaces, deterministic camera collection, and visual model evaluation.
 [Demo video](https://github.com/Xieyizhou/uav-path-planning-demo/releases/tag/v0.1-demo)
 · [Command reference](docs/CLI_REFERENCE.md)
 · [Architecture](docs/architecture.md)
+· [Local sandbox app](docs/RESEARCH_INSPECTOR.md)
 · [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
 · [ML research platform](docs/ML_RESEARCH_PLATFORM.md)
 · [ML study workflow](docs/STUDY_WORKFLOW.md)

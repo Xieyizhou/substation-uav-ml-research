@@ -3,17 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Research Inspector</title>
+  <title>UAV Research Sandbox</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/operator.css">
 </head>
 <body>
   <header>
-    <div><span class="eyebrow">LOCAL · READ ONLY</span><h1>Research Inspector</h1></div>
+    <div><span class="eyebrow">LOCAL · CONTROLLED</span><h1>UAV Research Sandbox</h1></div>
     <button id="refresh">Refresh observations</button>
   </header>
   <nav>
     <button class="tab active" data-tab="overview">Overview</button>
     <button class="tab" data-tab="doctor">Sandbox doctor</button>
+    <button class="tab" data-tab="operator">Operator</button>
     <button class="tab" data-tab="logs">Live logs</button>
     <button class="tab" data-tab="frames">Recordings</button>
   </nav>
@@ -26,6 +28,30 @@
       <article><h3>Dataset boundaries</h3><div id="roles" class="role-grid"></div></article>
     </section>
     <section id="doctor" class="panel"><div class="section-head"><div><p class="kicker">ENVIRONMENT</p><h2>Sandbox doctor</h2></div></div><div id="checks"></div></section>
+    <section id="operator" class="panel">
+      <div class="section-head"><div><p class="kicker">CONTROLLED EXECUTION</p><h2>Sandbox operator</h2></div><p>One managed job at a time</p></div>
+      <article class="operator-card">
+        <div id="operator-state" class="operator-state"></div>
+        <div class="controls">
+          <select id="operator-action">
+            <option value="doctor">Run doctor</option>
+            <option value="flight-smoke">Run flight smoke</option>
+            <option value="collection-single">Collect one scenario</option>
+            <option value="collection-gate">Run five-scenario gate</option>
+            <option value="training-view-v2">Materialize v2 training view</option>
+            <option value="training-smoke-v2">Run v2 smoke training</option>
+          </select>
+          <select id="operator-scenario"></select>
+          <button id="operator-start">Start managed job</button>
+          <button id="operator-stop" class="danger" disabled>Stop safely</button>
+        </div>
+        <p class="operator-note">Flight, collection, and training actions use fixed inputs after environment and single-instance checks. Blind data and logs remain sealed.</p>
+      </article>
+      <div class="two-col operator-grid">
+        <article><h3>Job history</h3><div id="job-history"></div></article>
+        <article><h3>Selected job log</h3><pre id="job-log">No job selected.</pre></article>
+      </div>
+    </section>
     <section id="logs" class="panel">
       <div class="section-head"><div><p class="kicker">BOUNDED TAIL</p><h2>Live logs</h2></div></div>
       <div class="controls"><select id="log-scenario"></select><select id="log-kind"><option>recorder</option><option>flight</option><option>simulator</option><option>probe</option></select><button id="load-log">Load last 200 lines</button></div>
@@ -38,7 +64,7 @@
     </section>
   </main>
   <dialog id="viewer"><button id="close-viewer">Close</button><div class="canvas-wrap"><img id="full-image"><canvas id="overlay"></canvas></div><div id="frame-detail"></div></dialog>
-  <footer>No controls are provided for flight, collection, validation, or artifact mutation.</footer>
+  <footer>Local actions use fixed commands, one-job locking, bounded timeouts, and process-group cleanup.</footer>
   <script src="/app.js"></script>
 </body>
 </html>

@@ -14,13 +14,13 @@ from src.sandbox.flight_smoke import run_flight_smoke
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="python main.py sandbox",
-        description="Inspect the local UAV research sandbox without changing it.",
+        description="Inspect and safely operate the local UAV research sandbox.",
     )
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("doctor", help="Check dependencies, paths, and disk space")
     commands.add_parser("status", help="Show collection and runtime status")
-    serve = commands.add_parser("serve", help="Run the read-only local web inspector")
+    serve = commands.add_parser("serve", help="Run the controlled local sandbox app")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8765)
     smoke = commands.add_parser(

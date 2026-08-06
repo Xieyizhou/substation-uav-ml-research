@@ -3,15 +3,11 @@
 from __future__ import annotations
 
 from collections import defaultdict
-import json
 import math
 from pathlib import Path
 
 from src.ml import EQUIPMENT_CLASSES
-from src.ml.artifacts import file_sha256, write_json
-from src.vision.contracts.identity import DatasetIdentity, class_order_identity
-from src.vision.contracts.training_identity import TrainingViewIdentity
-from src.vision.training.yolo_dataset import materialize_yolo_partition
+from src.vision.training.view_source import load_training_sources
 
 
 SAMPLING_ALGORITHM = "recording_proportional_even_v1"
@@ -19,11 +15,6 @@ TRAIN_CLASS_CAP = 5_000
 TRAIN_NEGATIVE_CAP = 8_000
 VALIDATION_CLASS_CAP = 2_000
 VALIDATION_NEGATIVE_CAP = 4_000
-
-
-def _read_jsonl(path):
-    with Path(path).open(encoding="utf-8") as source:
-        return [json.loads(line) for line in source if line.strip()]
 
 
 def proportional_quotas(counts, target):
@@ -140,111 +131,41 @@ def materialize_training_view(collection_root, output_root, *, seed=7):
     if seed != 7:
         raise ValueError("visual training view v1 requires sampling seed 7")
     collection_root, output_root = Path(collection_root), Path(output_root)
-    identity_root = collection_root / "identity"
-    development = DatasetIdentity.from_record(
-        json.loads((identity_root / "development_dataset_identity.json").read_text())
+    development, source_validation, train_rows, validation_rows = (
+        load_training_sources(collection_root)
     )
-    membership = {
-        row["sample_id"]: row
-        for row in _read_jsonl(identity_root / "development_membership.jsonl")
-    }
-    annotations = _read_jsonl(identity_root / "development_annotations.jsonl")
-    rows = []
-    for item in annotations:
-        member = membership[item["sample_id"]]
-        rows.append({**member, **item})
-    train_rows = [row for row in rows if row["split"] == "train"]
-    validation_rows = [row for row in rows if row["split"] == "validation"]
-    if len(train_rows) + len(validation_rows) != len(rows):
-        raise ValueError("development identity contains a non-development split")
-    train = select_partition(
-        train_rows, class_cap=TRAIN_CLASS_CAP, negative_cap=TRAIN_NEGATIVE_CAP
+    selection_summary = None
+    if source_validation is None:
+        algorithm = SAMPLING_ALGORITHM
+        train = select_partition(
+            train_rows, class_cap=TRAIN_CLASS_CAP, negative_cap=TRAIN_NEGATIVE_CAP
+        )
+        validation = select_partition(
+            validation_rows,
+            class_cap=VALIDATION_CLASS_CAP,
+            negative_cap=VALIDATION_NEGATIVE_CAP,
+        )
+    else:
+        from src.vision.training.v2_sampling import (
+            ALGORITHM,
+            TRAIN_SIZE_TARGETS,
+            VALIDATION_SIZE_TARGETS,
+            select_v2_partition,
+        )
+
+        algorithm = ALGORITHM
+        train, train_summary = select_v2_partition(
+            train_rows, size_targets=TRAIN_SIZE_TARGETS, negative_cap=8_000
+        )
+        validation, validation_summary = select_v2_partition(
+            validation_rows,
+            size_targets=VALIDATION_SIZE_TARGETS,
+            negative_cap=4_000,
+        )
+        selection_summary = {"train": train_summary, "validation": validation_summary}
+    from src.vision.training.view_output import materialize_view_output
+
+    return materialize_view_output(
+        collection_root, output_root, development, source_validation,
+        train, validation, validation_rows, algorithm, seed, selection_summary,
     )
-    validation = select_partition(
-        validation_rows,
-        class_cap=VALIDATION_CLASS_CAP,
-        negative_cap=VALIDATION_NEGATIVE_CAP,
-    )
-    train_result = materialize_yolo_partition(
-        "train", train, collection_root, output_root
-    )
-    validation_result = materialize_yolo_partition(
-        "validation", validation, collection_root, output_root
-    )
-    full_validation_result = materialize_yolo_partition(
-        "full_validation", validation_rows, collection_root, output_root
-    )
-    smoke_train_result = materialize_yolo_partition(
-        "smoke_train",
-        evenly_select(train, min(256, len(train))),
-        collection_root,
-        output_root,
-    )
-    smoke_validation_result = materialize_yolo_partition(
-        "smoke_validation",
-        evenly_select(validation, min(64, len(validation))),
-        collection_root,
-        output_root,
-    )
-    labels_path = output_root / "identity/labels_manifest.json"
-    write_json(
-        labels_path,
-        {
-            "train": train_result["labels_manifest"],
-            "validation": validation_result["labels_manifest"],
-            "full_validation": full_validation_result["labels_manifest"],
-        },
-    )
-    identity = TrainingViewIdentity(
-        source_development_dataset_identity=development.dataset_identity_sha256,
-        sampling_algorithm=SAMPLING_ALGORITHM,
-        sampling_seed=seed,
-        train_membership_sha256=train_result["membership_sha256"],
-        validation_membership_sha256=validation_result["membership_sha256"],
-        full_validation_membership_sha256=full_validation_result[
-            "membership_sha256"
-        ],
-        labels_manifest_sha256=file_sha256(labels_path),
-        class_order_identity=class_order_identity(),
-        train_frame_count=train_result["frame_count"],
-        validation_frame_count=validation_result["frame_count"],
-        full_validation_frame_count=full_validation_result["frame_count"],
-        train_class_counts=train_result["class_counts"],
-        validation_class_counts=validation_result["class_counts"],
-        train_no_target_count=train_result["no_target_count"],
-        validation_no_target_count=validation_result["no_target_count"],
-    )
-    identity_path = output_root / "identity/training_view_identity.json"
-    write_json(identity_path, identity.to_record())
-    yaml_path = output_root / "dataset.yaml"
-    yaml_path.write_text(
-        f"path: {output_root.resolve()}\n"
-        "train: images/train\nval: images/validation\ntest: images/full_validation\n"
-        "names:\n"
-        + "".join(f"  {index}: {name}\n" for index, name in enumerate(EQUIPMENT_CLASSES)),
-        encoding="utf-8",
-    )
-    smoke_yaml_path = output_root / "dataset-smoke.yaml"
-    smoke_yaml_path.write_text(
-        f"path: {output_root.resolve()}\n"
-        "train: images/smoke_train\nval: images/smoke_validation\n"
-        "names:\n"
-        + "".join(
-            f"  {index}: {name}\n"
-            for index, name in enumerate(EQUIPMENT_CLASSES)
-        ),
-        encoding="utf-8",
-    )
-    return {
-        "identity": identity.to_record(),
-        "identity_path": str(identity_path),
-        "dataset_yaml": str(yaml_path),
-        "smoke_dataset_yaml": str(smoke_yaml_path),
-        "link_modes": {
-            "train": train_result["link_modes"],
-            "validation": validation_result["link_modes"],
-            "full_validation": full_validation_result["link_modes"],
-            "smoke_train": smoke_train_result["link_modes"],
-            "smoke_validation": smoke_validation_result["link_modes"],
-        },
-    }

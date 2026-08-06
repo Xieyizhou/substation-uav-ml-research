@@ -42,6 +42,7 @@ class TrainingViewIdentity:
     validation_class_counts: dict[str, int]
     train_no_target_count: int
     validation_no_target_count: int
+    source_validation_dataset_identity: str | None = None
     identity_schema_version: int = 1
 
     def __post_init__(self):
@@ -56,6 +57,15 @@ class TrainingViewIdentity:
             "class_order_identity",
         ):
             object.__setattr__(self, name, _digest(getattr(self, name), name))
+        if self.source_validation_dataset_identity is not None:
+            object.__setattr__(
+                self,
+                "source_validation_dataset_identity",
+                _digest(
+                    self.source_validation_dataset_identity,
+                    "source_validation_dataset_identity",
+                ),
+            )
         if not str(self.sampling_algorithm).strip():
             raise ValueError("sampling_algorithm must not be empty")
         if isinstance(self.sampling_seed, bool) or not isinstance(
@@ -79,7 +89,10 @@ class TrainingViewIdentity:
             object.__setattr__(self, name, dict(sorted(counts.items())))
 
     def identity_record(self):
-        return asdict(self)
+        record = asdict(self)
+        if self.source_validation_dataset_identity is None:
+            record.pop("source_validation_dataset_identity")
+        return record
 
     @property
     def training_view_identity_sha256(self):
