@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 
 from src.flight.async_runtime import cancel_tasks
+from src.flight.mavsdk_connection import connect_mavsdk
 from src.flight.mission_events import MissionEventWriter
 from src.flight.perception_response import DangerObstacleDetected
 from src.flight.replanning_controller import empty_replan_state
@@ -21,7 +22,7 @@ async def execute_flight(
     return_home=False,
     visual_mission_events=None,
 ):
-    drone = services["system_factory"]()
+    drone = None
     log_path = services["make_log_path"]()
     latest = {
         "connected": None,
@@ -67,17 +68,15 @@ async def execute_flight(
                 perception_config.get("sensor_startup_timeout_s", 5.0)
             )
         print(f"Connecting to PX4 SITL with MAVSDK at {system_address}...")
-        try:
-            await asyncio.wait_for(
-                drone.connect(system_address=system_address),
-                timeout=settings.connection_timeout_s,
-            )
-        except asyncio.TimeoutError as error:
-            raise TimeoutError(
-                f"Timed out waiting {settings.connection_timeout_s:g}s "
-                "for MAVSDK connection startup"
-            ) from error
-        await services["wait_for_connection"](drone, settings.connection_timeout_s)
+        drone = await connect_mavsdk(
+            services["system_factory"],
+            system_address,
+            settings.connection_timeout_s,
+            services["wait_for_connection"],
+            services["close_system"],
+            attempts=services.get("connection_attempts", 2),
+            retry_delay_s=services.get("connection_retry_delay_s", 2.0),
+        )
         await services["wait_for_position_ready"](
             drone, settings.position_ready_timeout_s
         )
@@ -210,7 +209,7 @@ async def execute_flight(
                         f"Perception source did not stop cleanly: {error}"
                     )
         close_system = services.get("close_system")
-        if close_system is not None:
+        if close_system is not None and drone is not None:
             try:
                 close_system(drone)
             except Exception as error:

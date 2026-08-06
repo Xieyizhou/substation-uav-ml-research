@@ -124,7 +124,9 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
                 patch.object(fly_astar_path, "make_log_path", return_value=log_path),
                 patch.object(fly_astar_path, "CONNECTION_TIMEOUT_S", 0.01),
             ):
-                with self.assertRaisesRegex(TimeoutError, "MAVSDK connection startup"):
+                with self.assertRaisesRegex(
+                    TimeoutError, "MAVSDK connection failed after 2 attempts"
+                ):
                     await run_flight(
                         "udp://test",
                         [{"name": "WP01", "north_m": 0.0, "east_m": 0.0, "down_m": -1.0}],
