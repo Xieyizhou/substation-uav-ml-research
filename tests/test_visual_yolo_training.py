@@ -28,7 +28,7 @@ class _FakeYolo:
         best.write_bytes(b"best")
         last.write_bytes(b"last")
         (root / "results.csv").write_text("epoch,metric\n0,1\n")
-        self.trainer = SimpleNamespace(best=best, last=last)
+        self.trainer = SimpleNamespace(best=best, last=last, device="mps:0")
         return SimpleNamespace(results_dict={"mAP50-95": 0.5})
 
 
@@ -79,6 +79,7 @@ class VisualYoloTrainingTests(unittest.TestCase):
                 provenance["training_code_commit_sha"], "commit-sha"
             )
             self.assertEqual(provenance["resolved_config"]["batch"], 8)
+            self.assertEqual(provenance["actual_device"], "mps:0")
             self.assertEqual(_FakeYolo.calls[0]["device"], "mps")
             self.assertEqual(
                 Path(_FakeYolo.calls[0]["project"]),

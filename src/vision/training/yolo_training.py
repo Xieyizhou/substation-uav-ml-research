@@ -216,6 +216,7 @@ def train_yolo(
                 ],
             }
         ),
+        "actual_device": str(trainer.device),
         "environment": environment_record(),
         "best_weights": str(best),
         "best_weights_sha256": file_sha256(best),
