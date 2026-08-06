@@ -5,6 +5,7 @@ import io
 import json
 from pathlib import Path
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 import xml.etree.ElementTree as ET
@@ -32,7 +33,10 @@ from src.vision.collection.pilot_metrics import summarize_source_health
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-from src.vision.collection.pilot_acceptance import invalid_truth_acceptance_failures
+from src.vision.collection.pilot_acceptance import (
+    invalid_truth_acceptance_failures,
+    pilot_acceptance_failures,
+)
 from src.vision.collection.pilot_live import prepare_pilot_output_directory
 from src.vision.collection.synchronization import synchronize_visual_frames
 from src.sensors.gazebo_camera import GazeboCameraSource, parse_gazebo_image_message
@@ -98,6 +102,52 @@ def box(label, x1, y1, x2, y2):
 
 
 class GazeboConfigurationTests(unittest.TestCase):
+    def test_no_target_only_collection_requires_explicit_background_policy(self):
+        frames = [SimpleNamespace(frame_id="frame-1")]
+        synchronization = [SimpleNamespace(
+            synchronization_status="exact",
+            rgb_frame_id="frame-1",
+        )]
+        annotations = [SimpleNamespace(
+            frame_id="frame-1",
+            mission_phase="cruise_distant",
+        )]
+        frames_by_id = {
+            "frame-1": SimpleNamespace(capture_timestamp=1.0),
+        }
+        protocol = {
+            "recording": {
+                "maximum_unmatched_rgb_frames": 0,
+                "maximum_ambiguous_rgb_frames": 0,
+                "maximum_invalid_truth_rgb_fraction": 0.0,
+                "maximum_consecutive_invalid_truth_rgb_frames": 0,
+            },
+            "coverage": {
+                "required_mission_phases": [],
+                "mission_phase_minimum_duration_s": {},
+                "minimum_no_target_fraction": 0.0,
+            },
+        }
+        arguments = {
+            "frames": frames,
+            "synchronization": synchronization,
+            "annotations": annotations,
+            "frames_by_id": frames_by_id,
+            "metadata": {"invalid_frames": []},
+            "summary": {"synchronization": {
+                "labelled_target_frame_count": 0,
+                "no_target_frame_count": 1,
+            }},
+            "protocol": protocol,
+        }
+        target_failures, _ = pilot_acceptance_failures(**arguments)
+        background_failures, _ = pilot_acceptance_failures(
+            **arguments,
+            require_labelled_target=False,
+        )
+        self.assertIn("pilot has no labelled target frame", target_failures)
+        self.assertEqual(background_failures, [])
+
     def test_v3_accepts_observed_boundary_event_but_rejects_larger_failures(self):
         recording = load_pilot_protocol()["recording"]
         observed = ["exact"] * 2851 + ["invalid_truth"] * 2

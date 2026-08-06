@@ -97,6 +97,7 @@ def pilot_acceptance_failures(
     metadata,
     summary,
     protocol,
+    require_labelled_target=True,
 ):
     failures = []
     statuses = [item.synchronization_status for item in synchronization]
@@ -147,7 +148,10 @@ def pilot_acceptance_failures(
             )
 
     sync_summary = summary.get("synchronization") or {}
-    if not sync_summary.get("labelled_target_frame_count"):
+    if (
+        require_labelled_target
+        and not sync_summary.get("labelled_target_frame_count")
+    ):
         failures.append("pilot has no labelled target frame")
     valid_count = len(annotations)
     no_target_fraction = (

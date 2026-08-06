@@ -207,6 +207,7 @@ def validate_collection_recording(
         metadata=metadata,
         summary=summary,
         protocol=_acceptance_protocol(protocol),
+        require_labelled_target=row.get("target_class") is not None,
     )
     route_quality = None
     if protocol.protocol_id == V2_PROTOCOL_ID:
