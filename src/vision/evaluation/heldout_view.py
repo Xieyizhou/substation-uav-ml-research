@@ -27,6 +27,30 @@ def _heldout_dataset_yaml(output_root):
     )
 
 
+def load_heldout_source(collection_root):
+    collection_root = Path(collection_root)
+    identity_root = collection_root / "identity"
+    heldout = DatasetIdentity.from_record(
+        json.loads((identity_root / "held_out_test_dataset_identity.json").read_text())
+    )
+    membership = {
+        row["sample_id"]: row
+        for row in _read_jsonl(identity_root / "held_out_test_membership.jsonl")
+    }
+    annotations = _read_jsonl(identity_root / "held_out_test_annotations.jsonl")
+    rows = [{**membership[item["sample_id"]], **item} for item in annotations]
+    expected_split = (
+        "blind"
+        if heldout.dataset_version == "visual-multiscenario-png-v2"
+        else "test"
+    )
+    if any(row["split"] != expected_split for row in rows):
+        raise ValueError(
+            f"held-out identity contains a non-{expected_split} split"
+        )
+    return heldout, rows
+
+
 def materialize_heldout_view(collection_root, package_root, output_root):
     collection_root, output_root = Path(collection_root), Path(output_root)
     package = validate_yolo_package(package_root)
@@ -40,18 +64,7 @@ def materialize_heldout_view(collection_root, package_root, output_root):
             raise ValueError(
                 "held-out view was already unlocked for a different package"
             )
-    identity_root = collection_root / "identity"
-    heldout = DatasetIdentity.from_record(
-        json.loads((identity_root / "held_out_test_dataset_identity.json").read_text())
-    )
-    membership = {
-        row["sample_id"]: row
-        for row in _read_jsonl(identity_root / "held_out_test_membership.jsonl")
-    }
-    annotations = _read_jsonl(identity_root / "held_out_test_annotations.jsonl")
-    rows = [{**membership[item["sample_id"]], **item} for item in annotations]
-    if any(row["split"] != "test" for row in rows):
-        raise ValueError("held-out identity contains a non-test split")
+    heldout, rows = load_heldout_source(collection_root)
     result = materialize_yolo_partition(
         "heldout_test", rows, collection_root, output_root
     )

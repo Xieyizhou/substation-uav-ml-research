@@ -11,7 +11,15 @@ from src.cli.visual import build_parser
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import file_sha256, object_sha256, write_json
 from src.vision.contracts.identity import DatasetIdentity, class_order_identity
-from src.vision.evaluation.heldout_view import _heldout_dataset_yaml
+from src.vision.evaluation.heldout_view import (
+    _heldout_dataset_yaml,
+    load_heldout_source,
+)
+from src.vision.evaluation.paired_heldout import (
+    _paired_bootstrap,
+    evaluate_paired_heldout,
+    materialize_paired_heldout_view,
+)
 from src.vision.contracts.training_identity import TrainingViewIdentity
 from src.vision.training.view import (
     evenly_select,
@@ -130,6 +138,25 @@ class SamplingTests(unittest.TestCase):
             [row["annotation"]["sequence_number"] for row in selected],
             [1, 5, 8],
         )
+
+    def test_paired_bootstrap_is_deterministic_and_recording_based(self):
+        counts = {}
+        for candidate, true_positives in (("v1", 1), ("v2", 2)):
+            counts[candidate] = {}
+            for recording in ("a", "b"):
+                counts[candidate][recording] = {
+                    name: {
+                        "tp": true_positives,
+                        "fp": 0,
+                        "fn": 2 - true_positives,
+                    }
+                    for name in EQUIPMENT_CLASSES
+                }
+        first = _paired_bootstrap(counts)
+        self.assertEqual(first, _paired_bootstrap(counts))
+        self.assertEqual(first["unit"], "recording")
+        self.assertEqual(first["repetitions"], 2000)
+        self.assertEqual(first["probability_v2_improves"], 1.0)
 
     def test_class_and_negative_caps_are_independent(self):
         rows = []
@@ -330,6 +357,97 @@ class MaterializationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "sampling seed 7"):
             materialize_training_view("unused", "unused", seed=8)
 
+    def test_v2_heldout_contract_accepts_blind_but_not_test(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            identity_root = root / "identity"
+            identity_root.mkdir()
+            identity = DatasetIdentity(
+                dataset_name="blind",
+                dataset_version="visual-multiscenario-png-v2",
+                dataset_role="held_out_test",
+                recording_schema_version=2,
+                annotation_schema_version=1,
+                decoder_configuration_id=HASH,
+                recording_manifest_sha256="b" * 64,
+                scenario_manifest_sha256="c" * 64,
+                split_manifest_sha256="d" * 64,
+                ordered_frame_count=1,
+                labelled_frame_count=0,
+                source_recording_ids=("r",),
+                scenario_ids=("s",),
+                map_ids=("m",),
+                seed_ids=(1,),
+                class_order_identity=class_order_identity(),
+                annotation_manifest_sha256="e" * 64,
+            )
+            write_json(
+                identity_root / "held_out_test_dataset_identity.json",
+                identity.to_record(),
+            )
+            membership = {
+                "sample_id": "sample",
+                "recording_id": "r",
+                "split": "blind",
+            }
+            annotation_row = {
+                "sample_id": "sample",
+                "recording_id": "r",
+                "annotation": {},
+            }
+            membership_path = identity_root / "held_out_test_membership.jsonl"
+            annotation_path = identity_root / "held_out_test_annotations.jsonl"
+            membership_path.write_text(json.dumps(membership) + "\n")
+            annotation_path.write_text(json.dumps(annotation_row) + "\n")
+            loaded, rows = load_heldout_source(root)
+            self.assertEqual(loaded.dataset_version, identity.dataset_version)
+            self.assertEqual(rows[0]["split"], "blind")
+            membership["split"] = "test"
+            membership_path.write_text(json.dumps(membership) + "\n")
+            with self.assertRaisesRegex(ValueError, "non-blind split"):
+                load_heldout_source(root)
+
+    def test_paired_materialization_binds_both_frozen_packages(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "view"
+            heldout = types.SimpleNamespace(
+                dataset_version="visual-multiscenario-png-v2",
+                dataset_identity_sha256="d" * 64,
+                to_record=lambda: {"dataset": "blind"},
+            )
+            candidates = [
+                {
+                    "package_root": f"/{name}",
+                    "package_identity_sha256": char * 64,
+                    "canonical_model_relative_path": "onnx/model_640.onnx",
+                    "canonical_model_sha256": char.upper() * 64,
+                    "frozen_confidence_threshold": threshold,
+                }
+                for name, char, threshold in (("v1", "a", 0.65), ("v2", "b", 0.37))
+            ]
+            partition = {
+                "membership_sha256": "c" * 64,
+                "frame_count": 10,
+                "link_modes": {"hardlink": 10},
+            }
+            with patch(
+                "src.vision.evaluation.paired_heldout._candidate",
+                side_effect=candidates,
+            ), patch(
+                "src.vision.evaluation.paired_heldout.load_heldout_source",
+                return_value=(heldout, []),
+            ), patch(
+                "src.vision.evaluation.paired_heldout.materialize_yolo_partition",
+                return_value=partition,
+            ):
+                result = materialize_paired_heldout_view(
+                    "collection", "v1", "v2", output
+                )
+            receipt = result["receipt"]
+            self.assertEqual(receipt["candidate_order"], ["v1", "v2"])
+            self.assertEqual(receipt["candidates"]["v1"]["frozen_confidence_threshold"], 0.65)
+            self.assertEqual(receipt["candidates"]["v2"]["frozen_confidence_threshold"], 0.37)
+
 
 class TrainingCliTests(unittest.TestCase):
     def test_cli_exposes_training_and_heldout_gates(self):
@@ -340,6 +458,20 @@ class TrainingCliTests(unittest.TestCase):
             ["heldout-view-materialize", "--package", "model", "--output", "test"]
         )
         self.assertEqual(heldout.command, "heldout-view-materialize")
+        paired = parser.parse_args(
+            [
+                "paired-heldout-materialize",
+                "--collection-root", "collection",
+                "--v1-package", "v1",
+                "--v2-package", "v2",
+                "--output", "blind",
+            ]
+        )
+        self.assertEqual(paired.command, "paired-heldout-materialize")
+        paired_evaluate = parser.parse_args(
+            ["paired-heldout-evaluate", "--dataset", "blind", "--output", "out"]
+        )
+        self.assertEqual(paired_evaluate.command, "paired-heldout-evaluate")
         static = parser.parse_args(
             [
                 "static-replay-materialize", "--package", "model",
@@ -420,6 +552,83 @@ class TrainingCliTests(unittest.TestCase):
                     output,
                     partition="heldout_test",
                 )
+
+    def test_paired_heldout_uses_fixed_models_thresholds_and_order(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            models = {}
+            candidates = {}
+            for name, threshold in (("v1", 0.65), ("v2", 0.37)):
+                package = root / name
+                model = package / "onnx/model_640.onnx"
+                model.parent.mkdir(parents=True)
+                model.write_bytes(name.encode())
+                models[name] = model
+                candidates[name] = {
+                    "package_root": str(package),
+                    "package_identity_sha256": name[1] * 64,
+                    "canonical_model_relative_path": "onnx/model_640.onnx",
+                    "canonical_model_sha256": file_sha256(model),
+                    "frozen_confidence_threshold": threshold,
+                }
+            dataset = root / "dataset"
+            membership = dataset / "identity/heldout_test_membership.jsonl"
+            membership.parent.mkdir(parents=True)
+            membership.write_text(
+                json.dumps(
+                    {
+                        "image_relative_path": "images/heldout_test/sample.png",
+                        "recording_id": "recording",
+                    }
+                )
+                + "\n"
+            )
+            receipt = {
+                "paired_heldout_access_schema_version": 1,
+                "candidate_order": ["v1", "v2"],
+                "heldout_dataset_identity_sha256": "d" * 64,
+                "membership_sha256": "e" * 64,
+                "frame_count": 1,
+                "canonical_input_size": 640,
+                "candidates": candidates,
+            }
+            receipt["paired_heldout_access_identity_sha256"] = object_sha256(receipt)
+            write_json(
+                dataset / "identity/paired_heldout_access_receipt.json", receipt
+            )
+            truth = [{"class_name": "transformer", "bbox": [0, 0, 10, 10]}]
+            v1_frames = [{"sample_id": "sample", "truth": truth, "predictions": []}]
+            v2_frames = [
+                {
+                    "sample_id": "sample",
+                    "truth": truth,
+                    "predictions": [
+                        {
+                            "class_name": "transformer",
+                            "bbox": [0, 0, 10, 10],
+                            "confidence": 0.9,
+                        }
+                    ],
+                }
+            ]
+            with patch(
+                "src.vision.evaluation.paired_heldout._formal_commit",
+                return_value="commit",
+            ), patch(
+                "src.vision.evaluation.paired_heldout._standard_metrics",
+                side_effect=[{"mAP50_95": 0.1}, {"mAP50_95": 0.5}],
+            ), patch(
+                "src.vision.evaluation.paired_heldout.collect_predictions",
+                side_effect=[v1_frames, v2_frames],
+            ):
+                output = root / "results"
+                result = evaluate_paired_heldout(dataset, output)
+            self.assertEqual(result["candidate_order"], ["v1", "v2"])
+            self.assertEqual(result["comparison"]["mAP50_95_delta_v2_minus_v1"], 0.4)
+            self.assertGreater(result["comparison"]["macro_f1_delta_v2_minus_v1"], 0)
+            self.assertTrue((output / "predictions/v1.jsonl").is_file())
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                evaluate_paired_heldout(dataset, output)
 
     def test_full_validation_binds_training_view_and_selects_threshold(self):
         with tempfile.TemporaryDirectory() as directory:

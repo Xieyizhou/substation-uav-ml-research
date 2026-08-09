@@ -5,6 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from src.vision.evaluation.heldout_view import materialize_heldout_view
+from src.vision.evaluation.paired_heldout import (
+    evaluate_paired_heldout,
+    materialize_paired_heldout_view,
+)
 from src.vision.evaluation.onnx_gate import validate_onnx_equivalence
 from src.vision.training.view import materialize_training_view
 from src.vision.replay.static_replay import (
@@ -91,6 +95,23 @@ def add_training_parsers(commands):
     heldout.add_argument("--package", type=Path, required=True)
     heldout.add_argument("--output", type=Path, required=True)
 
+    paired = commands.add_parser(
+        "paired-heldout-materialize",
+        help="Unlock one v1/v2 comparison on the frozen v2 blind dataset",
+    )
+    paired.add_argument("--collection-root", type=Path, required=True)
+    paired.add_argument("--v1-package", type=Path, required=True)
+    paired.add_argument("--v2-package", type=Path, required=True)
+    paired.add_argument("--output", type=Path, required=True)
+
+    paired_evaluate = commands.add_parser(
+        "paired-heldout-evaluate",
+        help="Run the identity-bound v1/v2 blind comparison exactly once",
+    )
+    paired_evaluate.add_argument("--dataset", type=Path, required=True)
+    paired_evaluate.add_argument("--output", type=Path, required=True)
+    paired_evaluate.add_argument("--device", default="cpu")
+
     static_materialize = commands.add_parser(
         "static-replay-materialize",
         help="Bind the nine static replay templates to frozen identities",
@@ -157,6 +178,12 @@ def handle_training_command(args):
         return materialize_heldout_view(
             args.collection_root, args.package, args.output
         )
+    if args.command == "paired-heldout-materialize":
+        return materialize_paired_heldout_view(
+            args.collection_root, args.v1_package, args.v2_package, args.output
+        )
+    if args.command == "paired-heldout-evaluate":
+        return evaluate_paired_heldout(args.dataset, args.output, device=args.device)
     if args.command == "static-replay-materialize":
         return materialize_static_replay(
             args.package, args.dataset, args.benchmark, args.output

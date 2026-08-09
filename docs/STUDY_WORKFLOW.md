@@ -288,6 +288,27 @@ finalized package and writes a receipt containing the canonical 640 model and
 the full-validation confidence threshold. Held-out evaluation cannot search
 or override that threshold.
 
+For the v2 comparison, keep the new blind split sealed until both packages
+are finalized. Materialize one shared view and an identity-bound access
+receipt, then run both canonical 640 ONNX models in the fixed order:
+
+```bash
+python main.py visual paired-heldout-materialize \
+  --collection-root data/research/visual_collection_v2 \
+  --v1-package models/equipment/visual-yolo11n-baseline-v1-package \
+  --v2-package models/equipment/visual-yolo11n-baseline-v2-package \
+  --output data/research/visual_yolo_v2_blind
+python main.py visual paired-heldout-evaluate \
+  --dataset data/research/visual_yolo_v2_blind \
+  --output outputs/visual_yolo_v2/paired_blind \
+  --device cpu
+```
+
+The evaluator rejects package or model hash changes, uses each package's
+frozen validation threshold, saves predictions for later analysis, and
+computes a 2,000-repeat paired bootstrap over recording units. A completed
+result cannot be overwritten or rerun.
+
 ### Static replay gate before adaptive scheduling
 
 `benchmarks/visual_static_v1/conditions.json` freezes nine unmaterialized
