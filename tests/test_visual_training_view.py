@@ -479,6 +479,13 @@ class TrainingCliTests(unittest.TestCase):
             ]
         )
         self.assertEqual(static.command, "static-replay-materialize")
+        static_run = parser.parse_args(
+            [
+                "static-replay-run", "--input", "run", "--package", "model",
+                "--dataset", "test", "--condition", "one",
+            ]
+        )
+        self.assertEqual(static_run.condition_ids, ["one"])
 
     def test_frozen_training_configuration_is_valid(self):
         config = load_training_config(

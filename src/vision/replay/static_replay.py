@@ -232,7 +232,21 @@ def _run_condition(condition, rows, ordered_paths, source_root, heldout_root,
     return result, environment
 
 
-def run_static_replay(matrix_root, package_root, heldout_root):
+def select_manifest_conditions(manifest, condition_ids=()):
+    items = manifest["conditions"]
+    if not condition_ids:
+        return items
+    requested = set(condition_ids)
+    known = {item["condition_id"] for item in items}
+    unknown = requested - known
+    if unknown:
+        raise ValueError(f"unknown static replay condition: {sorted(unknown)}")
+    return [item for item in items if item["condition_id"] in requested]
+
+
+def run_static_replay(
+    matrix_root, package_root, heldout_root, *, condition_ids=()
+):
     matrix_root = Path(matrix_root)
     manifest = json.loads((matrix_root / "manifest.json").read_text())
     supplied = manifest.pop("static_replay_manifest_sha256", None)
@@ -244,7 +258,7 @@ def run_static_replay(matrix_root, package_root, heldout_root):
     completed = []
     commit = _clean_commit()
     with ordered_replay_sources(rows, heldout_root) as (source_root, paths):
-        for item in manifest["conditions"]:
+        for item in select_manifest_conditions(manifest, condition_ids):
             condition = VisualBenchmarkCondition.from_record(
                 json.loads((matrix_root / item["path"]).read_text())
             )

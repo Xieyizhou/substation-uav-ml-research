@@ -6,7 +6,10 @@ from unittest.mock import patch
 
 from src.ml.artifacts import file_sha256, write_json
 from src.vision.contracts.benchmark import VisualBenchmarkCondition
-from src.vision.replay.static_replay import materialize_static_replay
+from src.vision.replay.static_replay import (
+    materialize_static_replay,
+    select_manifest_conditions,
+)
 from src.vision.replay.static_runtime import timing_summary
 from src.vision.replay.static_source import (
     ordered_replay_sources,
@@ -19,6 +22,21 @@ from tests.test_visual_yolo_package import VisualYoloPackageTests
 
 
 class StaticReplayTests(unittest.TestCase):
+    def test_condition_filter_is_explicit_and_preserves_manifest_order(self):
+        manifest = {
+            "conditions": [
+                {"condition_id": "first"},
+                {"condition_id": "second"},
+                {"condition_id": "third"},
+            ]
+        }
+        selected = select_manifest_conditions(manifest, ("third", "first"))
+        self.assertEqual(
+            [item["condition_id"] for item in selected], ["first", "third"]
+        )
+        with self.assertRaisesRegex(ValueError, "unknown static replay condition"):
+            select_manifest_conditions(manifest, ("missing",))
+
     def test_ordered_source_is_batch_one_and_preserves_membership_order(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

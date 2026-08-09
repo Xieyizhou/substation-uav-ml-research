@@ -129,6 +129,13 @@ def add_training_parsers(commands):
     static_run.add_argument("--input", type=Path, required=True)
     static_run.add_argument("--package", type=Path, required=True)
     static_run.add_argument("--dataset", type=Path, required=True)
+    static_run.add_argument(
+        "--condition",
+        dest="condition_ids",
+        action="append",
+        default=[],
+        help="Run only this materialized condition; repeat to select more",
+    )
 
 
 def handle_training_command(args):
@@ -189,5 +196,10 @@ def handle_training_command(args):
             args.package, args.dataset, args.benchmark, args.output
         )
     if args.command == "static-replay-run":
-        return run_static_replay(args.input, args.package, args.dataset)
+        return run_static_replay(
+            args.input,
+            args.package,
+            args.dataset,
+            condition_ids=args.condition_ids,
+        )
     return None
