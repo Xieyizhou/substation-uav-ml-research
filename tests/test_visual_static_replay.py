@@ -102,6 +102,55 @@ class StaticReplayTests(unittest.TestCase):
                 identities.add(condition.condition_identity_sha256)
             self.assertEqual(len(identities), 9)
 
+    def test_materialization_accepts_matching_paired_receipt_candidate(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            package, heldout, output = root / "package", root / "heldout", root / "out"
+            VisualYoloPackageTests()._package(package)
+            package_record = json.loads((package / "manifest.json").read_text())
+            identity = dataset_identity(dataset_role="held_out_test")
+            write_json(
+                heldout / "identity/held_out_test_dataset_identity.json",
+                identity.to_record(),
+            )
+            membership = heldout / "identity/heldout_test_membership.jsonl"
+            _write_jsonl(
+                membership,
+                [{"sample_id": "sample", "image_relative_path": "image.png"}],
+            )
+            write_json(
+                heldout / "identity/paired_heldout_access_receipt.json",
+                {
+                    "paired_heldout_access_identity_sha256": "e" * 64,
+                    "membership_sha256": file_sha256(membership),
+                    "candidates": {
+                        "v1": {
+                            "package_identity_sha256": "0" * 64,
+                            "frozen_confidence_threshold": 0.65,
+                        },
+                        "v2": {
+                            "package_identity_sha256": package_record[
+                                "package_identity_sha256"
+                            ],
+                            "frozen_confidence_threshold": 0.37,
+                        },
+                    },
+                },
+            )
+            with patch(
+                "src.vision.replay.static_replay._clean_commit",
+                return_value="commit",
+            ):
+                result = materialize_static_replay(
+                    package,
+                    heldout,
+                    "benchmarks/visual_static_v1",
+                    output,
+                )
+            self.assertEqual(result["heldout_access_identity_sha256"], "e" * 64)
+            first = json.loads((output / result["conditions"][0]["path"]).read_text())
+            self.assertEqual(first["confidence_threshold"], 0.37)
+
 
 if __name__ == "__main__":
     unittest.main()

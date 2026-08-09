@@ -13,6 +13,7 @@ from src.vision.contracts.benchmark import (
     VisualBenchmarkResult,
 )
 from src.vision.replay.benchmark_matrix import validate_static_benchmark_directory
+from src.vision.replay.access_receipt import load_replay_access_receipt
 from src.vision.evaluation.detection_metrics import threshold_metrics
 from src.vision.contracts.identity import DatasetIdentity, ModelIdentity, PreprocessingIdentity
 from src.vision.collection.pilot import _read_jsonl, _write_jsonl
@@ -36,13 +37,7 @@ def _clean_commit():
 def _load_inputs(package_root, heldout_root):
     package_root, heldout_root = Path(package_root), Path(heldout_root)
     package = validate_yolo_package(package_root)
-    receipt = json.loads(
-        (heldout_root / "identity/heldout_access_receipt.json").read_text()
-    )
-    if receipt.get("model_package_identity_sha256") != package[
-        "package_identity_sha256"
-    ]:
-        raise ValueError("held-out receipt references a different model package")
+    receipt = load_replay_access_receipt(heldout_root, package)
     dataset = DatasetIdentity.from_record(
         json.loads(
             (heldout_root / "identity/held_out_test_dataset_identity.json").read_text()
