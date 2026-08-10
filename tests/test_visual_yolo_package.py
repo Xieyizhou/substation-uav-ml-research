@@ -1,5 +1,7 @@
 import json
 from pathlib import Path
+import sys
+from types import ModuleType
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -30,6 +32,11 @@ class _FakeYolo:
 
 
 class VisualYoloPackageTests(unittest.TestCase):
+    def _ultralytics(self):
+        module = ModuleType("ultralytics")
+        module.YOLO = _FakeYolo
+        return patch.dict(sys.modules, {"ultralytics": module})
+
     def _export_inputs(self, root):
         identity = TrainingViewIdentity(
             source_development_dataset_identity="1" * 64,
@@ -228,7 +235,7 @@ class VisualYoloPackageTests(unittest.TestCase):
                 return result
 
             output = root / "package"
-            with patch("ultralytics.YOLO", _FakeYolo), patch(
+            with self._ultralytics(), patch(
                 "src.vision.evaluation.yolo_package.validate_onnx_equivalence",
                 side_effect=gate,
             ):

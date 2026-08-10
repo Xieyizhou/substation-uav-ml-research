@@ -117,10 +117,6 @@ def train_yolo(
     smoke=False,
     project_root=None,
 ):
-    try:
-        from ultralytics import YOLO
-    except ImportError as error:
-        raise RuntimeError("visual training requires requirements-ml.txt") from error
     config = load_training_config(config_path)
     dataset_root = Path(dataset_root)
     output_root = Path(output_root).resolve()
@@ -130,11 +126,17 @@ def train_yolo(
         )
     )
     pretrained_path = Path(config["pretrained_weights"])
+    if project_root is not None and not pretrained_path.is_absolute():
+        pretrained_path = Path(project_root) / pretrained_path
     if not pretrained_path.is_file():
         raise FileNotFoundError(pretrained_path)
     if file_sha256(pretrained_path) != config["pretrained_weights_sha256"]:
         raise ValueError("pretrained YOLO11n weights SHA256 mismatch")
     commit = _require_clean_commit(project_root)
+    try:
+        from ultralytics import YOLO
+    except ImportError as error:
+        raise RuntimeError("visual training requires requirements-ml.txt") from error
     resolved = {key: config[key] for key in CONFIG_FIELDS}
     resolved.update(
         {

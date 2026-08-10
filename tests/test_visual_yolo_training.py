@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
+import sys
 from types import SimpleNamespace
+from types import ModuleType
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -33,6 +35,11 @@ class _FakeYolo:
 
 
 class VisualYoloTrainingTests(unittest.TestCase):
+    def _ultralytics(self):
+        module = ModuleType("ultralytics")
+        module.YOLO = _FakeYolo
+        return patch.dict(sys.modules, {"ultralytics": module})
+
     def _dataset(self, root):
         identity = TrainingViewIdentity(
             source_development_dataset_identity="a" * 64,
@@ -59,7 +66,9 @@ class VisualYoloTrainingTests(unittest.TestCase):
             root = Path(directory)
             dataset, output = root / "dataset", root / "runs/baseline"
             self._dataset(dataset)
-            actual_hash = file_sha256(Path("yolo11n.pt"))
+            weights = root / "yolo11n.pt"
+            weights.write_bytes(b"pretrained")
+            actual_hash = file_sha256(weights)
             config = json.loads(
                 Path("config/perception/visual_yolo11n_baseline.json").read_text()
             )
@@ -67,11 +76,13 @@ class VisualYoloTrainingTests(unittest.TestCase):
             config_path = root / "config.json"
             write_json(config_path, config)
             _FakeYolo.calls.clear()
-            with patch("ultralytics.YOLO", _FakeYolo), patch(
+            with self._ultralytics(), patch(
                 "src.vision.training.yolo_training._require_clean_commit",
                 return_value="commit-sha",
             ):
-                result = train_yolo(config_path, dataset, output)
+                result = train_yolo(
+                    config_path, dataset, output, project_root=root
+                )
             provenance = json.loads(
                 Path(result["training_provenance"]).read_text()
             )

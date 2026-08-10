@@ -3,20 +3,16 @@
 from __future__ import annotations
 
 import argparse
+from importlib import import_module
 import json
 from pathlib import Path
 
-from src.inspection import InspectionConfig, InspectionService
-from src.inspection.app import main as serve_inspector
-from src.sandbox.acceptance import inspect_acceptance, run_acceptance
-from src.sandbox.bootstrap import bootstrap_sandbox, inspect_bootstrap
-from src.sandbox.demo_workflow import inspect_demo, run_demo
-from src.sandbox.experiment_recipe import inspect_recipe, materialize_recipe
-from src.sandbox.experiment_runner import inspect_result, run_recipe
-from src.sandbox.flight_smoke import run_flight_smoke
+from src.inspection.config import InspectionConfig
 from src.sandbox.profiles import PROFILE_NAMES
-from src.sandbox.release_gate import inspect_release_gate, run_release_gate
-from src.sandbox.supervisor_gate import inspect_supervisor_gate, run_supervisor_gate
+
+
+def _command(module, name):
+    return getattr(import_module(module), name)
 
 
 def build_parser():
@@ -128,8 +124,8 @@ def _print(value):
 def main(argv=None):
     args = build_parser().parse_args(argv)
     config = InspectionConfig.for_profile(args.project_root, args.profile)
-    service = InspectionService(config)
     if args.command == "bootstrap":
+        bootstrap_sandbox = _command("src.sandbox.bootstrap", "bootstrap_sandbox")
         try:
             _print(bootstrap_sandbox(config, args.output))
         except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
@@ -137,6 +133,7 @@ def main(argv=None):
             return 1
         return 0
     if args.command == "bootstrap-inspect":
+        inspect_bootstrap = _command("src.sandbox.bootstrap", "inspect_bootstrap")
         try:
             _print(inspect_bootstrap(args.input))
         except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
@@ -144,13 +141,18 @@ def main(argv=None):
             return 1
         return 0
     if args.command == "doctor":
+        InspectionService = _command("src.inspection.service", "InspectionService")
+        service = InspectionService(config)
         checks = service.doctor()
         _print(checks)
         return 1 if any(item["status"] == "failure" for item in checks) else 0
     if args.command == "status":
+        InspectionService = _command("src.inspection.service", "InspectionService")
+        service = InspectionService(config)
         _print({"collection": service.dashboard(), "runtime": service.runtime()})
         return 0
     if args.command == "flight-smoke":
+        run_flight_smoke = _command("src.sandbox.flight_smoke", "run_flight_smoke")
         try:
             root = run_flight_smoke(
                 args.plan,
@@ -167,6 +169,9 @@ def main(argv=None):
         _print({"status": "complete", "run_root": str(root)})
         return 0
     if args.command == "recipe-create":
+        materialize_recipe = _command(
+            "src.sandbox.experiment_recipe", "materialize_recipe"
+        )
         try:
             recipe, output = materialize_recipe(
                 config.project_root,
@@ -182,6 +187,7 @@ def main(argv=None):
         _print({"path": str(output / "recipe.json"), "recipe": recipe.to_record()})
         return 0
     if args.command == "recipe-inspect":
+        inspect_recipe = _command("src.sandbox.experiment_recipe", "inspect_recipe")
         try:
             result = inspect_recipe(args.input)
         except (FileNotFoundError, TypeError, ValueError) as error:
@@ -190,6 +196,7 @@ def main(argv=None):
         _print(result)
         return 0
     if args.command == "experiment-run":
+        run_recipe = _command("src.sandbox.experiment_runner", "run_recipe")
         try:
             result = run_recipe(config.project_root, args.recipe)
         except (FileNotFoundError, KeyError, RuntimeError, TypeError, ValueError) as error:
@@ -198,6 +205,7 @@ def main(argv=None):
         _print(result)
         return 0
     if args.command == "experiment-inspect":
+        inspect_result = _command("src.sandbox.experiment_runner", "inspect_result")
         try:
             result = inspect_result(args.input)
         except (FileNotFoundError, TypeError, ValueError) as error:
@@ -206,6 +214,9 @@ def main(argv=None):
         _print(result)
         return 0
     if args.command == "supervisor-gate":
+        run_supervisor_gate = _command(
+            "src.sandbox.supervisor_gate", "run_supervisor_gate"
+        )
         try:
             result = run_supervisor_gate(config.project_root, args.output)
         except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
@@ -214,6 +225,9 @@ def main(argv=None):
         _print(result)
         return 0 if result["passed"] else 1
     if args.command == "supervisor-gate-inspect":
+        inspect_supervisor_gate = _command(
+            "src.sandbox.supervisor_gate", "inspect_supervisor_gate"
+        )
         try:
             result = inspect_supervisor_gate(args.input)
         except (FileNotFoundError, OSError, TypeError, ValueError) as error:
@@ -222,6 +236,7 @@ def main(argv=None):
         _print(result)
         return 0 if result["passed"] else 1
     if args.command == "acceptance-run":
+        run_acceptance = _command("src.sandbox.acceptance", "run_acceptance")
         try:
             result = run_acceptance(config.project_root, args.output)
         except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
@@ -230,6 +245,7 @@ def main(argv=None):
         _print(result)
         return 0 if result["passed"] else 1
     if args.command == "acceptance-inspect":
+        inspect_acceptance = _command("src.sandbox.acceptance", "inspect_acceptance")
         try:
             result = inspect_acceptance(args.input)
         except (FileNotFoundError, OSError, TypeError, ValueError) as error:
@@ -238,6 +254,7 @@ def main(argv=None):
         _print(result)
         return 0 if result["passed"] else 1
     if args.command == "demo-run":
+        run_demo = _command("src.sandbox.demo_workflow", "run_demo")
         try:
             result = run_demo(config.project_root, args.output)
         except (FileNotFoundError, OSError, TypeError, ValueError) as error:
@@ -246,6 +263,7 @@ def main(argv=None):
         _print(result)
         return 0 if result["result"]["passed"] else 1
     if args.command == "demo-inspect":
+        inspect_demo = _command("src.sandbox.demo_workflow", "inspect_demo")
         try:
             result = inspect_demo(args.input)
         except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
@@ -254,6 +272,7 @@ def main(argv=None):
         _print(result)
         return 0 if result["passed"] else 1
     if args.command == "release-gate":
+        run_release_gate = _command("src.sandbox.release_gate", "run_release_gate")
         try:
             result = run_release_gate(config, args.output)
         except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
@@ -262,6 +281,9 @@ def main(argv=None):
         _print(result)
         return 0 if result["passed"] else 1
     if args.command == "release-gate-inspect":
+        inspect_release_gate = _command(
+            "src.sandbox.release_gate", "inspect_release_gate"
+        )
         try:
             result = inspect_release_gate(args.input)
         except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
@@ -269,6 +291,7 @@ def main(argv=None):
             return 1
         _print(result)
         return 0 if result["passed"] else 1
+    serve_inspector = _command("src.inspection.app", "main")
     return serve_inspector([
         "--host", args.host,
         "--port", str(args.port),

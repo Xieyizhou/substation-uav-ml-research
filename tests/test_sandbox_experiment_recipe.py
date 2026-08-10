@@ -129,7 +129,7 @@ class SandboxExperimentRecipeTests(unittest.TestCase):
         self.assertEqual(args.frame_skip, 3)
         self.assertEqual(args.frame_limit, 256)
 
-    @patch("src.cli.sandbox.materialize_recipe")
+    @patch("src.sandbox.experiment_recipe.materialize_recipe")
     def test_cli_recipe_create_reports_materialized_identity(self, materialize):
         recipe = Mock()
         recipe.to_record.return_value = {"recipe_identity_sha256": HASH}
