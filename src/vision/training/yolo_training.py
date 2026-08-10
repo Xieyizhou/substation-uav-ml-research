@@ -120,6 +120,13 @@ def train_yolo(
     config = load_training_config(config_path)
     dataset_root = Path(dataset_root)
     output_root = Path(output_root).resolve()
+    run_name = f"{output_root.name}-smoke" if smoke else output_root.name
+    run_directory = output_root.parent / run_name
+    checkpoint = run_directory / "weights/last.pt"
+    if resume and not checkpoint.is_file():
+        raise FileNotFoundError(checkpoint)
+    if not resume and checkpoint.exists():
+        raise ValueError("training output already contains a checkpoint; use --resume")
     identity = TrainingViewIdentity.from_record(
         json.loads(
             (dataset_root / "identity/training_view_identity.json").read_text()
@@ -159,20 +166,11 @@ def train_yolo(
                 "name": f"{output_root.name}-smoke",
             }
         )
-    run_name = resolved["name"]
-    run_directory = output_root.parent / run_name
-    last = run_directory / "weights/last.pt"
     if resume:
-        if not last.is_file():
-            raise FileNotFoundError(last)
-        model = YOLO(str(last))
+        model = YOLO(str(checkpoint))
         result = model.train(resume=True)
     else:
-        if last.exists():
-            raise ValueError(
-                "training output already contains a checkpoint; use --resume"
-            )
-        model = YOLO(config["pretrained_weights"])
+        model = YOLO(str(pretrained_path))
         try:
             result = model.train(**resolved)
         except RuntimeError as error:
@@ -193,7 +191,7 @@ def train_yolo(
             except (AttributeError, ImportError):
                 pass
             resolved["batch"] = config["oom_fallback_batch"]
-            model = YOLO(config["pretrained_weights"])
+            model = YOLO(str(pretrained_path))
             result = model.train(**resolved)
     trainer = model.trainer
     best = Path(trainer.best)
