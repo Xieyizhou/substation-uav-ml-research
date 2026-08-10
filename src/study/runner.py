@@ -20,15 +20,15 @@ from src.study.matrix import tier_matrix
 
 ROOT = Path(__file__).resolve().parents[2]
 RANDOMIZATION_CONFIG = ROOT / "config/perception/domain_randomization.json"
+
+
 def result_root(results_dir, study_id, tier):
     return Path(results_dir) / study_id / tier / "results"
 
 
 def schedule_tier(registry, study_id, tier):
     study = registry.get_study(study_id)
-    matrix = tier_matrix(
-        tier, include_champion=bool(study.get("champion_model"))
-    )
+    matrix = tier_matrix(tier, include_champion=bool(study.get("champion_model")))
     return registry.ensure_runs(
         study_id,
         tier,
@@ -44,6 +44,7 @@ def _flight_arguments(
     common = [
         "--scenario-manifest",
         str(scenario_manifest),
+        "--sensor-startup-timeout", "20",
         "--enable-local-replan",
         "--replan-mode",
         "active",

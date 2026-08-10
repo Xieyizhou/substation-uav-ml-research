@@ -8,6 +8,7 @@ from src.cli.studies import build_parser
 from src.ml.artifacts import write_json
 from src.study.closed_loop_worker import _attempt_root, execute_closed_loop
 from src.study.registry import ResearchRegistry
+from src.study.runner import _flight_arguments
 
 
 class ClosedLoopWorkerTests(unittest.TestCase):
@@ -65,6 +66,13 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(args.command, "execute-closed-loop")
         self.assertEqual(args.max_runs, 1)
         self.assertEqual(args.flight_timeout, 120.0)
+
+    def test_flight_queue_allows_transport_subscription_to_settle(self):
+        arguments = _flight_arguments(
+            "geometric_lidar", "model.onnx", "scenario.json"
+        )
+        timeout_index = arguments.index("--sensor-startup-timeout")
+        self.assertEqual(arguments[timeout_index + 1], "20")
 
     def test_attempt_directories_preserve_previous_evidence(self):
         run_root = self.root / "run"
