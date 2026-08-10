@@ -72,8 +72,7 @@ class SandboxOperator:
     def _runtime_conflicts(self):
         return [item.name for item in runtime_status(self.process_adapter) if item.alive]
 
-    def start(self, action, scenario_id=None):
-        command = build_command(self.config, action, scenario_id)
+    def start(self, action, scenario_id=None, parameters=None):
         with self._guard:
             if self._active is not None:
                 raise OperatorBusy(f"sandbox job {self._active.job_id} is active")
@@ -85,7 +84,7 @@ class SandboxOperator:
                     "an interrupted sandbox job is still alive; inspect PID "
                     + ", ".join(str(pid) for pid in self._orphan_pids)
                 )
-            offline_actions = {"doctor", "package-inspect-v2"}
+            offline_actions = {"doctor", "package-inspect-v2", "experiment-run"}
             conflicts = (
                 self._runtime_conflicts() if action not in offline_actions else []
             )
@@ -93,6 +92,7 @@ class SandboxOperator:
                 raise OperatorBusy(
                     "runtime processes already exist: " + ", ".join(conflicts)
                 )
+            command = build_command(self.config, action, scenario_id, parameters)
             self._acquire_lock()
             job = SandboxJob(
                 job_id=new_job_id(action),

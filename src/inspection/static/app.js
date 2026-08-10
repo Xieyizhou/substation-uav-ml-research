@@ -5,8 +5,8 @@ const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active')});
 
 async function refresh(){
-  const [dash,runtime,doctor,recs,available,operator,research]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research')]);
-  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderDashboard(dash,runtime);renderResearch(research);renderDoctor(doctor);renderSelectors();renderOperator(operator);
+  const [dash,runtime,doctor,recs,available,operator,research,experiments]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments')]);
+  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderDashboard(dash,runtime);renderResearch(research);renderExperiments(experiments);renderDoctor(doctor);renderSelectors();renderOperator(operator);
   $('#updated').textContent=`Observed ${new Date().toLocaleTimeString()}`;
 }
 const pct=v=>v==null?'—':`${(Number(v)*100).toFixed(2)}%`;
@@ -25,6 +25,11 @@ function renderResearch(r){
   const replay=r.static_replay;$('#replay-status').textContent=`${replay.completed} / ${replay.total} completed`;
   $('#replay-rows').innerHTML=replay.rows.map(x=>`<tr><td><b>${x.input_size}</b></td><td>${esc(x.policy)}</td><td><span class="source-tag ${x.source==='controlled_replicate'?'selected':''}">${esc(x.source)}</span></td><td>${fixed(x.throughput_fps)}</td><td>${fixed(x.p50_ms)} ms</td><td>${fixed(x.p95_ms)} ms</td><td>${pct(x.precision)}</td><td>${pct(x.recall)}</td><td>${pct(x.small_recall)}</td></tr>`).join('');
   $('#replay-note').textContent=replay.note||'';
+}
+function defaultExperimentName(){const d=new Date(),part=n=>String(n).padStart(2,'0');return `validation-416-${d.getFullYear()}${part(d.getMonth()+1)}${part(d.getDate())}-${part(d.getHours())}${part(d.getMinutes())}${part(d.getSeconds())}`}
+function renderExperiments(rows){
+  if(!$('#experiment-name').value)$('#experiment-name').value=defaultExperimentName();
+  $('#experiment-history').innerHTML=rows.length?rows.map(x=>{const complete=x.state==='complete',m=x.metrics||{},timing=x.timing||{},resources=x.resources||{};return `<article class="experiment-card"><header><span class="badge ${complete?'pass':x.state==='failed'||x.state==='invalid'?'failure':'warning'}">${esc(x.state)}</span><div><h3>${esc(x.experiment_id)}</h3><small>${esc(x.partition||'unavailable')} · ${esc(x.input_size||'—')} px · every ${esc(x.frame_skip_interval||'—')}</small></div></header>${complete?`<div class="experiment-facts"><span>Precision<b>${pct(m.precision)}</b></span><span>Recall<b>${pct(m.recall)}</b></span><span>Small recall<b>${pct(m.small_object_recall)}</b></span><span>No-target FPR<b>${pct(m.no_target_false_positive_rate)}</b></span><span>P95 latency<b>${fixed(timing.p95_ms)} ms</b></span><span>Throughput<b>${fixed(resources.throughput_fps)} FPS</b></span></div>`:`<div class="experiment-facts"><span>Source frames<b>${esc(x.source_frame_count||'—')}</b></span><span>Inference frames<b>${esc(x.inference_frame_count||'—')}</b></span><span>Threshold<b>${fixed(x.confidence_threshold)}</b></span></div>`}${x.error?`<p class="experiment-error">${esc(x.error)}</p>`:''}</article>`}).join(''):'<article class="experiment-empty">No sandbox evaluation recipes have run yet.</article>';
 }
 function renderDashboard(d,runtime){
   $('#progress').innerHTML=`<div class="progress-row"><div><span class="kicker">OVERALL PROGRESS</span><br><strong>${d.completed} / ${d.total}</strong></div><div>${d.remaining} scenarios remaining</div></div><div class="progress-track"><div class="progress-fill" style="width:${d.progress_percent}%"></div></div>`;
@@ -52,14 +57,16 @@ function renderOperator(value){
   $('#job-history').innerHTML=value.history.length?value.history.map(job=>`<button class="job-row" data-job="${esc(job.job_id)}" ${job.sensitive?'data-sensitive="true"':''}><span><b>${esc(job.action)}</b><small>${esc(job.created_at)}</small></span><span class="badge ${job.state==='complete'?'pass':job.state==='failed'?'failure':'warning'}">${esc(job.state)}</span></button>`).join(''):'<p>No managed jobs have run.</p>';
   document.querySelectorAll('.job-row').forEach(row=>row.onclick=()=>loadJobLog(row.dataset.job,row.dataset.sensitive==='true'));
   $('#operator-scenario').innerHTML=scenarios.map(row=>`<option value="${esc(row.scenario_id)}">${esc(row.scenario_id)} · ${esc(row.dataset_role)}</option>`).join('');
+  $('#experiment-start').disabled=Boolean(active);
   updateOperatorInputs();
 }
 function updateOperatorInputs(){const smoke=$('#operator-action').value==='flight-smoke';$('#operator-scenario').disabled=!smoke;$('#operator-scenario').hidden=!smoke}
-async function refreshOperator(){try{const value=await api('/api/operator');operatorToken=value.operator_token;renderOperator(value)}catch(e){$('#operator-state').textContent=e.message}}
+async function refreshOperator(){try{const [value,experiments]=await Promise.all([api('/api/operator'),api('/api/experiments')]);operatorToken=value.operator_token;renderOperator(value);renderExperiments(experiments)}catch(e){$('#operator-state').textContent=e.message}}
 async function loadJobLog(job,sensitive){if(sensitive){$('#job-log').textContent='Blind collection job logs are sealed.';return}try{$('#job-log').innerHTML=(await api(`/api/operator/log/${encodeURIComponent(job)}?limit=300`)).join('\n')||'Log is empty.'}catch(e){$('#job-log').textContent=e.message}}
 $('#operator-action').onchange=updateOperatorInputs;
 $('#operator-start').onclick=async()=>{const action=$('#operator-action').value,scenario=action==='flight-smoke'?$('#operator-scenario').value:null;if(!confirm(`Start ${action}? Only one sandbox job may run.`))return;try{await post('/api/operator/start',{action,scenario_id:scenario});await refreshOperator()}catch(e){alert(e.message)}};
 $('#operator-stop').onclick=async()=>{const job=$('#operator-stop').dataset.job;if(!job||!confirm('Stop this job and its managed process groups?'))return;try{await post('/api/operator/stop',{job_id:job});await refreshOperator()}catch(e){alert(e.message)}};
+$('#experiment-start').onclick=async()=>{const name=$('#experiment-name').value.trim(),limit=$('#experiment-limit').value,parameters={name,partition:$('#experiment-partition').value,input_size:Number($('#experiment-size').value),frame_skip_interval:Number($('#experiment-skip').value),frame_limit:limit==='all'?null:Number(limit)};if(!confirm(`Create and run ${name}? This uses non-blind validation data only.`))return;try{await post('/api/operator/start',{action:'experiment-run',parameters});$('#experiment-name').value='';await refreshOperator()}catch(e){alert(e.message)}};
 
 $('#load-log').onclick=async()=>{
   const scenario=encodeURIComponent($('#log-scenario').value),kind=encodeURIComponent($('#log-kind').value);

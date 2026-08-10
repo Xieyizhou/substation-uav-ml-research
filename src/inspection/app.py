@@ -48,7 +48,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             if self.path == "/api/operator/start":
                 return self._json(
                     self.service.operator_start(
-                        body.get("action"), body.get("scenario_id")
+                        body.get("action"), body.get("scenario_id"),
+                        body.get("parameters"),
                     ),
                     202,
                 )
@@ -72,6 +73,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.runtime())
         if path == "/api/research":
             return self._json(self.service.research())
+        if path == "/api/experiments":
+            return self._json(self.service.experiments())
         if path == "/api/recordings":
             return self._json(self.service.recordings())
         if path == "/api/scenarios":
@@ -101,7 +104,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
     def _static(self, path):
         name = "index.html" if path == "/" else path.lstrip("/")
         if name not in {
-            "index.html", "app.js", "style.css", "operator.css", "research.css"
+            "index.html", "app.js", "style.css", "operator.css", "research.css",
+            "experiments.css",
         }:
             return self._json({"error": "not found"}, 404)
         self._file(STATIC_ROOT / name)

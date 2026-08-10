@@ -6,7 +6,7 @@ import tempfile
 import threading
 import time
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 from src.inspection.config import InspectionConfig
 from src.inspection.app import create_server
@@ -31,8 +31,8 @@ class FakeOperator:
     def status(self):
         return {"state": "idle", "active_job": None, "history": []}
 
-    def start(self, action, scenario_id=None):
-        self.started.append((action, scenario_id))
+    def start(self, action, scenario_id=None, parameters=None):
+        self.started.append((action, scenario_id, parameters))
         return {"job_id": "job-1", "state": "preparing"}
 
     def stop(self, job_id):
@@ -125,6 +125,28 @@ class SandboxOperatorTests(unittest.TestCase):
         self.assertEqual(command.argv[-1], str(package))
         self.assertEqual(command.timeout_s, 120.0)
 
+    @patch("src.sandbox.job_commands.materialize_recipe")
+    def test_experiment_command_uses_validated_recipe_and_fixed_cli(self, materialize):
+        recipe = Mock(source_frame_count=64)
+        output = self.root / "outputs/sandbox/experiments/validation-416"
+        materialize.return_value = (recipe, output)
+        parameters = {
+            "name": "validation-416", "partition": "validation",
+            "input_size": 416, "frame_skip_interval": 1, "frame_limit": 64,
+        }
+        command = build_command(
+            self.config, "experiment-run", parameters=parameters
+        )
+        self.assertEqual(command.action, "experiment-run")
+        self.assertEqual(command.timeout_s, 900.0)
+        self.assertEqual(command.argv[-1], str(output / "recipe.json"))
+        materialize.assert_called_once()
+        with self.assertRaisesRegex(ValueError, "unsupported experiment parameter"):
+            build_command(
+                self.config, "experiment-run",
+                parameters={**parameters, "model_path": "/tmp/model.onnx"},
+            )
+
     def test_job_store_detects_record_tampering(self):
         store = SandboxJobStore(self.config.sandbox_jobs_root)
         job = SandboxJob("job-1", "doctor", "complete", utc_now(), 5.0)
@@ -206,6 +228,10 @@ class SandboxOperatorTests(unittest.TestCase):
             payload = json.loads(research.read())
             self.assertEqual(research.status, 200)
             self.assertEqual(payload["stage_count"], 4)
+            connection.request("GET", "/api/experiments")
+            experiments = connection.getresponse()
+            self.assertEqual(experiments.status, 200)
+            self.assertEqual(json.loads(experiments.read()), [])
             connection.request(
                 "POST",
                 "/api/operator/start",
@@ -225,7 +251,20 @@ class SandboxOperatorTests(unittest.TestCase):
             accepted = connection.getresponse()
             accepted.read()
             self.assertEqual(accepted.status, 202)
-            self.assertEqual(fake.started, [("doctor", None)])
+            self.assertEqual(fake.started, [("doctor", None, None)])
+            parameters = {
+                "name": "validation-416-test", "partition": "validation",
+                "input_size": 416, "frame_skip_interval": 1, "frame_limit": 64,
+            }
+            connection.request(
+                "POST", "/api/operator/start",
+                json.dumps({"action": "experiment-run", "parameters": parameters}),
+                {"Content-Type": "application/json", "X-Sandbox-Token": token},
+            )
+            experiment = connection.getresponse()
+            experiment.read()
+            self.assertEqual(experiment.status, 202)
+            self.assertEqual(fake.started[-1], ("experiment-run", None, parameters))
         finally:
             connection.close()
             server.shutdown()

@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 
 from src.inspection.dashboard import is_blind, load_plan
+from src.sandbox.experiment_recipe import materialize_recipe
 from src.vision.collection.plan import collection_status
 from src.vision.collection.recording import scenario_by_id
 
@@ -89,7 +90,35 @@ def _training_smoke_command():
     )
 
 
-def build_command(config, action, scenario_id=None):
+def _experiment_command(config, parameters):
+    if not isinstance(parameters, dict):
+        raise ValueError("experiment parameters must be an object")
+    allowed = {"name", "partition", "input_size", "frame_skip_interval", "frame_limit"}
+    if set(parameters) - allowed:
+        raise ValueError("unsupported experiment parameter")
+    recipe, output = materialize_recipe(
+        config.project_root,
+        parameters.get("name"),
+        partition=parameters.get("partition", "validation"),
+        input_size=parameters.get("input_size", 416),
+        frame_skip_interval=parameters.get("frame_skip_interval", 1),
+        frame_limit=parameters.get("frame_limit"),
+    )
+    timeout = 900.0 if recipe.source_frame_count <= 256 else (
+        1_800.0 if recipe.source_frame_count <= 1_024 else 7_200.0
+    )
+    return SandboxCommand(
+        "experiment-run",
+        (
+            sys.executable, "main.py", "sandbox", "--project-root",
+            str(config.project_root), "experiment-run", "--recipe",
+            str(output / "recipe.json"),
+        ),
+        timeout,
+    )
+
+
+def build_command(config, action, scenario_id=None, parameters=None):
     if action == "doctor":
         return SandboxCommand(
             action,
@@ -144,6 +173,8 @@ def build_command(config, action, scenario_id=None):
             ),
             120.0,
         )
+    if action == "experiment-run":
+        return _experiment_command(config, parameters)
     counts = {"collection-single": 1, "collection-gate": 5}
     if action in counts:
         count = counts[action]

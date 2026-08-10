@@ -35,12 +35,39 @@ The Operator tab exposes fixed actions:
 - a one-epoch v2 training, checkpoint reload, ONNX export, and inference smoke
   gate.
 - offline integrity verification of the frozen v2 model package.
+- identity-bound visual evaluation recipes on selection or full validation;
+- bounded 320/416/640 ONNX evaluation with every-frame, every-second-frame,
+  or every-third-frame scheduling.
 
 The ML Results tab is read-only. It exposes aggregate identities and metrics,
 including the controlled 416-pixel latency replicate, but does not expose
 blind images, per-frame predictions, labels, or scenario details. Formal blind
 evaluation remains unavailable as an App action and cannot be rerun from the
 browser.
+
+The Experiments tab creates and runs a recipe in one managed job. A recipe
+binds the training view, exact membership, frozen package, selected ONNX
+identity, preprocessing identity, frozen confidence threshold, frame budget,
+schedule, CPU runtime, and clean source commit. Completed cards report fixed-
+threshold precision, recall, per-size behavior, latency, throughput, small-
+object recall, and no-target false-positive rate. These are diagnostic
+development results; AP and formal held-out claims are intentionally absent.
+
+Recipe and result commands are also available without the browser:
+
+```bash
+python main.py sandbox recipe-create \
+  --name validation-416-every-frame \
+  --partition validation --input-size 416 --frame-skip 1 --frame-limit 256
+python main.py sandbox experiment-run \
+  --recipe outputs/sandbox/experiments/validation-416-every-frame/recipe.json
+python main.py sandbox experiment-inspect \
+  --input outputs/sandbox/experiments/validation-416-every-frame/result.json
+```
+
+Each experiment directory contains `recipe.json`, `status.json`, a hashed raw
+prediction artifact, and `result.json`. The App exposes only the recipe state
+and aggregate result.
 
 Jobs follow `preparing → running → stopping → complete/failed`. Metadata,
 diagnostics, and logs are stored under `outputs/sandbox/operator/jobs`. A file
@@ -59,6 +86,8 @@ the process groups descended from that job.
   non-PNG payloads are rejected.
 - Blind scenario details, recordings, logs, frames, predictions, and training
   access remain sealed. Aggregate blind counts may be displayed.
+- Experiment parameters cannot provide file paths, model paths, thresholds,
+  devices, class orders, or arbitrary commands.
 - Process status returns roles and PIDs, never command lines or environment
   values.
 - Interrupted jobs are preserved as failed history. The app does not silently
@@ -75,6 +104,8 @@ dataset identities, model freezing, held-out evaluation, and replay studies.
 4. Pass a five-scenario gate.
 5. Materialize the v2 training view.
 6. Pass the v2 smoke training gate.
+7. Run a 64-frame validation recipe, then increase the frame budget only when
+   the diagnostic result and runtime are healthy.
 
 Formal training should begin only from a clean tracked commit after these
 checks pass. Generated datasets, weights, job histories, and training outputs

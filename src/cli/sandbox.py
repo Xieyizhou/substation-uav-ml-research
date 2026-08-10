@@ -9,6 +9,7 @@ from pathlib import Path
 from src.inspection import InspectionConfig, InspectionService
 from src.inspection.app import main as serve_inspector
 from src.sandbox.experiment_recipe import inspect_recipe, materialize_recipe
+from src.sandbox.experiment_runner import inspect_result, run_recipe
 from src.sandbox.flight_smoke import run_flight_smoke
 
 
@@ -62,6 +63,14 @@ def build_parser():
         "recipe-inspect", help="Validate a sandbox visual experiment recipe"
     )
     inspect.add_argument("--input", type=Path, required=True)
+    run = commands.add_parser(
+        "experiment-run", help="Run one identity-bound non-blind visual recipe"
+    )
+    run.add_argument("--recipe", type=Path, required=True)
+    result = commands.add_parser(
+        "experiment-inspect", help="Validate a completed sandbox experiment result"
+    )
+    result.add_argument("--input", type=Path, required=True)
     return parser
 
 
@@ -116,6 +125,22 @@ def main(argv=None):
             result = inspect_recipe(args.input)
         except (FileNotFoundError, TypeError, ValueError) as error:
             print(f"Sandbox recipe failed: {error}")
+            return 1
+        _print(result)
+        return 0
+    if args.command == "experiment-run":
+        try:
+            result = run_recipe(config.project_root, args.recipe)
+        except (FileNotFoundError, KeyError, RuntimeError, TypeError, ValueError) as error:
+            print(f"Sandbox experiment failed: {error}")
+            return 1
+        _print(result)
+        return 0
+    if args.command == "experiment-inspect":
+        try:
+            result = inspect_result(args.input)
+        except (FileNotFoundError, TypeError, ValueError) as error:
+            print(f"Sandbox experiment failed: {error}")
             return 1
         _print(result)
         return 0

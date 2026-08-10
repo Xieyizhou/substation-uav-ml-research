@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/operator.css">
   <link rel="stylesheet" href="/research.css">
+  <link rel="stylesheet" href="/experiments.css">
 </head>
 <body>
   <header>
@@ -16,6 +17,7 @@
   <nav>
     <button class="tab active" data-tab="overview">Overview</button>
     <button class="tab" data-tab="research">ML results</button>
+    <button class="tab" data-tab="experiments">Experiments</button>
     <button class="tab" data-tab="doctor">Sandbox doctor</button>
     <button class="tab" data-tab="operator">Operator</button>
     <button class="tab" data-tab="logs">Live logs</button>
@@ -38,6 +40,22 @@
       </div>
       <article class="blind-card"><div class="section-head"><div><p class="kicker">PAIRED BLIND</p><h2>Generalization result</h2></div><p id="blind-commit"></p></div><div id="blind-metrics" class="metric-grid research-metrics"></div><div id="class-recall" class="class-grid"></div><div id="blind-comparison" class="result-callout"></div></article>
       <article><div class="section-head"><div><p class="kicker">STATIC ONNX REPLAY</p><h2>Resolution and scheduling matrix</h2></div><p id="replay-status"></p></div><div class="table-wrap"><table><thead><tr><th>Input</th><th>Policy</th><th>Source</th><th>FPS</th><th>P50</th><th>P95</th><th>Precision</th><th>Recall</th><th>Small recall</th></tr></thead><tbody id="replay-rows"></tbody></table></div><p id="replay-note" class="research-note"></p></article>
+    </section>
+    <section id="experiments" class="panel">
+      <div class="section-head"><div><p class="kicker">NON-BLIND WORKBENCH</p><h2>Visual experiment recipes</h2></div><p>Frozen package · fixed threshold</p></div>
+      <article class="experiment-launch">
+        <h3>New development experiment</h3>
+        <div class="experiment-form">
+          <label>Name<input id="experiment-name" maxlength="64" autocomplete="off"></label>
+          <label>Partition<select id="experiment-partition"><option value="validation">Selection validation</option><option value="full_validation">Full validation</option></select></label>
+          <label>ONNX input<select id="experiment-size"><option>320</option><option selected>416</option><option>640</option></select></label>
+          <label>Schedule<select id="experiment-skip"><option value="1">Every frame</option><option value="2">Every 2nd frame</option><option value="3">Every 3rd frame</option></select></label>
+          <label>Frame budget<select id="experiment-limit"><option value="64">64 · quick gate</option><option value="256">256</option><option value="1024">1,024</option><option value="all">All partition frames</option></select></label>
+          <button id="experiment-start">Create and run</button>
+        </div>
+        <p class="operator-note">Only validation views are available. The model package and confidence threshold cannot be overridden, and blind data is not accessible from this workflow.</p>
+      </article>
+      <div id="experiment-history" class="experiment-history"></div>
     </section>
     <section id="doctor" class="panel"><div class="section-head"><div><p class="kicker">ENVIRONMENT</p><h2>Sandbox doctor</h2></div></div><div id="checks"></div></section>
     <section id="operator" class="panel">

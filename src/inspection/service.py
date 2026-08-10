@@ -7,6 +7,7 @@ from dataclasses import asdict, is_dataclass
 from src.inspection.config import AccessDenied, InspectionConfig
 from src.inspection.dashboard import dashboard, is_blind, load_plan
 from src.inspection.doctor import run_doctor
+from src.inspection.experiments import experiment_summaries
 from src.inspection.frames import frame_page, frame_path, scenario_progress
 from src.inspection.logs import log_tail
 from src.inspection.runtime import LocalProcessAdapter, runtime_status
@@ -40,6 +41,9 @@ class InspectionService:
 
     def research(self):
         return serialize(research_summary(self.config))
+
+    def experiments(self):
+        return serialize(experiment_summaries(self.config))
 
     def recordings(self):
         results = []
@@ -86,8 +90,8 @@ class InspectionService:
     def operator_status(self):
         return self._operator().status()
 
-    def operator_start(self, action, scenario_id=None):
-        return self._operator().start(action, scenario_id)
+    def operator_start(self, action, scenario_id=None, parameters=None):
+        return self._operator().start(action, scenario_id, parameters)
 
     def operator_stop(self, job_id):
         return self._operator().stop(job_id)
