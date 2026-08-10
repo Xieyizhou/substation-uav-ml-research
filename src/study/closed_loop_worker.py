@@ -12,9 +12,12 @@ import time
 from src.logging.analysis_summaries import perception_summary, replan_summary
 from src.logging.collision_checks import obstacle_collision_report
 from src.logging.log_io import prepare_dataframe
-from src.ml.artifacts import file_sha256, git_commit, write_json
+from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
 from src.planner.obstacle_config import build_obstacle_map
 from src.study.flight_budget import closed_loop_timeout_s
+from src.study.formal_spec import DEFAULT_FORMAL_SPEC, freeze_formal_study
+from src.study.comparison import closed_loop_gate
+from src.study.quality_metrics import lidar_quality_metrics
 from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results
 from src.vision.collection.process import (
@@ -25,6 +28,7 @@ from src.vision.collection.process import (
     wait_process,
 )
 ROOT = Path(__file__).resolve().parents[2]
+FLIGHT_TIERS = frozenset({"closed-loop", "formal"})
 
 
 def _attempt_root(run_root):
@@ -113,6 +117,7 @@ def _metrics(log_path, planner_path):
         "replan_attempt_count": replanning.get("total_replan_attempts"),
         "successful_replan_count": replanning.get("successful_replan_attempts"),
         "active_replan_count": replanning.get("active_route_replacement_count"),
+        **lidar_quality_metrics(frame),
     }
 
 
@@ -147,54 +152,153 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
         stop_process(launcher)
 
 
-def execute_closed_loop(
-    registry_path, study_id, results_dir, *, max_runs=None,
-    startup_timeout_s=180.0, probe_timeout_s=5.0, flight_timeout_s=None,
+def _verify_replay_receipt(
+    registry, study_id, path, qualification_study_id=None
 ):
-    """Execute pending runs sequentially; stop immediately on the first failure."""
+    receipt = json.loads(Path(path).read_text(encoding="utf-8"))
+    supplied = receipt.pop("replay_gate_identity_sha256", None)
+    if supplied != object_sha256(receipt):
+        raise ValueError("replay gate identity mismatch")
+    receipt["replay_gate_identity_sha256"] = supplied
+    study = registry.get_study(study_id)
+    qualification_study_id = qualification_study_id or study_id
+    qualification = registry.get_study(qualification_study_id)
+    if qualification["candidate_model"] != study["candidate_model"]:
+        raise ValueError("qualification study candidate does not match formal study")
+    model = registry.get_model(study["candidate_model"])
+    manifest = json.loads(model["manifest_json"])
+    if receipt.get("passed") is not True:
+        raise ValueError("formal execution requires a passed replay gate")
+    if receipt.get("model_id") != study["candidate_model"]:
+        raise ValueError("replay gate model does not match the study candidate")
+    if receipt.get("model_sha256") != model["onnx_hash"]:
+        raise ValueError("replay gate ONNX hash does not match the study candidate")
+    if receipt.get("dataset_id") != manifest.get("dataset_id"):
+        raise ValueError("replay gate dataset does not match the study candidate")
+    closed = registry.run_metrics(qualification_study_id, "closed-loop")
+    decision = closed_loop_gate(closed)
+    if not decision["passed"]:
+        raise ValueError("formal execution requires a passed closed-loop gate")
+    return receipt
+
+
+def _prepare_tier(
+    registry, study_id, results_dir, tier, replay_gate_path, comparison_spec_path,
+    qualification_study_id, flight_timeout_s,
+):
+    if tier != "formal":
+        return None
+    if replay_gate_path is None:
+        raise ValueError("formal execution requires --replay-gate")
+    qualification_study_id = qualification_study_id or study_id
+    replay = _verify_replay_receipt(
+        registry, study_id, replay_gate_path, qualification_study_id
+    )
+    return freeze_formal_study(
+        registry, study_id, results_dir, replay, comparison_spec_path,
+        qualification_study_id=qualification_study_id,
+        flight_timeout_override_s=flight_timeout_s,
+    )
+
+
+def _result_payload(row, log_path, metrics, formal_receipt):
+    result = {
+        "schema_version": 1,
+        "run_id": row["run_id"],
+        "scenario_id": row["scenario_id"],
+        "condition": row["condition"],
+        "code_commit": git_commit(),
+        "metrics": metrics,
+        "artifacts": [
+            {
+                "kind": "flight_log",
+                "path": str(log_path),
+                "sha256": file_sha256(log_path),
+            }
+        ],
+    }
+    if formal_receipt is not None:
+        result["formal_study_identity_sha256"] = formal_receipt[
+            "formal_study_identity_sha256"
+        ]
+    return result
+
+
+def _execute_row(
+    registry, row, run_root, tier, results_dir, formal_receipt, *,
+    startup_timeout_s, probe_timeout_s, flight_timeout_s,
+):
+    registry.set_run_status(row["run_id"], "running")
+    try:
+        timeout_s = closed_loop_timeout_s(
+            row["oracle_planner_config"], flight_timeout_s
+        )
+        log_path, metrics = _run_one(
+            row, run_root, startup_timeout_s=startup_timeout_s,
+            probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
+        )
+        write_json(
+            row["result_path"],
+            _result_payload(row, log_path, metrics, formal_receipt),
+        )
+        ingest_results(registry, row["study_id"], tier, results_dir)
+    except Exception as error:
+        registry.set_run_status(
+            row["run_id"], "failed",
+            failure_reason=f"{type(error).__name__}: {error}",
+        )
+        write_json(run_root / "failure.json", {
+            "run_id": row["run_id"], "scenario_id": row["scenario_id"],
+            "condition": row["condition"], "error": f"{type(error).__name__}: {error}",
+        })
+        raise
+
+
+def execute_flight_tier(
+    registry_path, study_id, results_dir, *, tier, max_runs=None,
+    startup_timeout_s=180.0, probe_timeout_s=5.0, flight_timeout_s=None,
+    replay_gate_path=None,
+    comparison_spec_path=DEFAULT_FORMAL_SPEC,
+    qualification_study_id=None,
+):
+    """Execute one flight tier sequentially and stop on the first failure."""
+    if tier not in FLIGHT_TIERS:
+        raise ValueError(f"unsupported flight tier: {tier}")
     if max_runs is not None and max_runs <= 0:
         raise ValueError("max runs must be positive")
     registry = ResearchRegistry(registry_path)
-    scheduled = ingest_results(registry, study_id, "closed-loop", results_dir)
+    formal_receipt = _prepare_tier(
+        registry, study_id, results_dir, tier, replay_gate_path,
+        comparison_spec_path, qualification_study_id, flight_timeout_s,
+    )
+    scheduled = ingest_results(registry, study_id, tier, results_dir)
     queue = json.loads(Path(scheduled["run_queue"]).read_text(encoding="utf-8"))
     pending = [row for row in queue["runs"] if row["status"] != "completed"]
     selected = pending[:max_runs] if max_runs is not None else pending
     completed = []
     for row in selected:
+        row["study_id"] = study_id
         run_root = _attempt_root(
-            Path(results_dir) / study_id / "closed-loop/runs" / row["run_id"]
+            Path(results_dir) / study_id / tier / "runs" / row["run_id"]
         )
-        registry.set_run_status(row["run_id"], "running")
-        try:
-            timeout_s = closed_loop_timeout_s(row["oracle_planner_config"], flight_timeout_s)
-            log_path, metrics = _run_one(
-                row, run_root, startup_timeout_s=startup_timeout_s,
-                probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
-            )
-            result = {
-                "schema_version": 1,
-                "run_id": row["run_id"],
-                "scenario_id": row["scenario_id"],
-                "condition": row["condition"],
-                "code_commit": git_commit(),
-                "metrics": metrics,
-                "artifacts": [
-                    {"kind": "flight_log", "path": str(log_path),
-                     "sha256": file_sha256(log_path)}
-                ],
-            }
-            write_json(row["result_path"], result)
-            ingest_results(registry, study_id, "closed-loop", results_dir)
-            completed.append(row["run_id"])
-        except Exception as error:
-            registry.set_run_status(
-                row["run_id"], "failed",
-                failure_reason=f"{type(error).__name__}: {error}",
-            )
-            write_json(run_root / "failure.json", {
-                "run_id": row["run_id"], "scenario_id": row["scenario_id"],
-                "condition": row["condition"], "error": f"{type(error).__name__}: {error}",
-            })
-            raise
-    status = ingest_results(registry, study_id, "closed-loop", results_dir)
+        _execute_row(
+            registry, row, run_root, tier, results_dir, formal_receipt,
+            startup_timeout_s=startup_timeout_s,
+            probe_timeout_s=probe_timeout_s,
+            flight_timeout_s=flight_timeout_s,
+        )
+        completed.append(row["run_id"])
+    status = ingest_results(registry, study_id, tier, results_dir)
     return {**status, "executed": len(completed), "run_ids": completed}
+
+
+def execute_closed_loop(registry_path, study_id, results_dir, **options):
+    return execute_flight_tier(
+        registry_path, study_id, results_dir, tier="closed-loop", **options
+    )
+
+
+def execute_formal(registry_path, study_id, results_dir, **options):
+    return execute_flight_tier(
+        registry_path, study_id, results_dir, tier="formal", **options
+    )

@@ -5,14 +5,20 @@ import unittest
 from unittest.mock import patch
 
 from src.cli.studies import build_parser
-from src.ml.artifacts import write_json
+from src.ml.artifacts import object_sha256, write_json
 from src.study.closed_loop_worker import (
     _attempt_root,
     _probe_lidar,
     _run_one,
+    _verify_replay_receipt,
     execute_closed_loop,
+    execute_formal,
 )
-from src.study.flight_budget import closed_loop_timeout_s, route_length_m
+from src.study.flight_budget import (
+    closed_loop_timeout_s,
+    flight_timeout_policy,
+    route_length_m,
+)
 from src.study.registry import ResearchRegistry
 from src.study.runner import _flight_arguments
 
@@ -58,6 +64,40 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     def tearDown(self):
         self.temporary.cleanup()
 
+    def eligible_formal_gate(self):
+        registry = ResearchRegistry(self.root / "formal.sqlite")
+        manifest = {
+            "model_id": "formal-model",
+            "onnx_sha256": "a" * 64,
+            "dataset_id": "formal-dataset",
+            "dataset_sha256": "b" * 64,
+            "parent_model": None,
+        }
+        registry.register_model(manifest, self.root / "formal-model")
+        study_id = registry.create_study("formal", "formal-model")
+        matrix = [
+            {
+                "scenario_id": "simple-center-1001", "map_id": "simple",
+                "target_id": "center", "seed": 1001, "condition": condition,
+            }
+            for condition in ("geometric_lidar", "ml_lidar")
+        ]
+        for run in registry.ensure_runs(study_id, "closed-loop", matrix):
+            registry.record_metrics(run["run_id"], {
+                "collision_count": 0, "safety_failure_count": 0,
+            })
+        receipt = {
+            "schema_version": 1,
+            "passed": True,
+            "model_id": "formal-model",
+            "model_sha256": "a" * 64,
+            "dataset_id": "formal-dataset",
+        }
+        receipt["replay_gate_identity_sha256"] = object_sha256(receipt)
+        path = self.root / "replay_gate.json"
+        write_json(path, receipt)
+        return registry, study_id, path
+
     def ingest(self, registry, study_id, tier, results_dir):
         if self.result_path.is_file():
             value = json.loads(self.result_path.read_text())
@@ -83,6 +123,16 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(args.max_runs, 1)
         self.assertEqual(args.flight_timeout, 120.0)
 
+    def test_cli_requires_explicit_replay_receipt_for_formal_execution(self):
+        args = build_parser().parse_args([
+            "execute-formal", self.study_id, "--replay-gate", "gate.json",
+            "--qualification-study", "qualification-study",
+            "--max-runs", "1",
+        ])
+        self.assertEqual(args.command, "execute-formal")
+        self.assertEqual(args.replay_gate, Path("gate.json"))
+        self.assertEqual(args.qualification_study, "qualification-study")
+
     def test_flight_queue_allows_transport_subscription_to_settle(self):
         arguments = _flight_arguments(
             "geometric_lidar", "model.onnx", "scenario.json"
@@ -97,6 +147,11 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(route_length_m(planner), 60.0)
         self.assertGreater(closed_loop_timeout_s(planner), 360.0)
         self.assertLessEqual(closed_loop_timeout_s(planner), 480.0)
+
+    def test_route_aware_timeout_covers_waypoint_and_landing_overhead(self):
+        planner = self.write_planner(goal=(37, 0))
+        self.assertGreater(closed_loop_timeout_s(planner), 330.0)
+        self.assertEqual(flight_timeout_policy()["max_timeout_s"], 480.0)
 
     def test_route_aware_timeout_is_bounded_and_override_is_exact(self):
         planner = self.write_planner(goal=(1, 0), resolution=0.5)
@@ -182,6 +237,43 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         row = self.registry.runs(self.study_id)[0]
         self.assertEqual(row["status"], "failed")
         self.assertIn("simulator failed", row["failure_reason"])
+
+    def test_formal_worker_rejects_missing_replay_receipt(self):
+        with self.assertRaisesRegex(ValueError, "requires --replay-gate"):
+            execute_formal(
+                self.registry_path, self.study_id, self.root, max_runs=1
+            )
+
+    def test_formal_gate_binds_replay_to_candidate_and_closed_loop(self):
+        registry, study_id, path = self.eligible_formal_gate()
+        receipt = _verify_replay_receipt(registry, study_id, path)
+        self.assertTrue(receipt["passed"])
+
+    def test_formal_gate_can_reuse_a_same_candidate_qualification_study(self):
+        registry, qualification_id, path = self.eligible_formal_gate()
+        formal_id = registry.create_study("formal-evidence", "formal-model")
+        receipt = _verify_replay_receipt(
+            registry, formal_id, path, qualification_id
+        )
+        self.assertTrue(receipt["passed"])
+
+    def test_formal_gate_rejects_tampered_receipt(self):
+        registry, study_id, path = self.eligible_formal_gate()
+        receipt = json.loads(path.read_text())
+        receipt["model_sha256"] = "c" * 64
+        write_json(path, receipt)
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            _verify_replay_receipt(registry, study_id, path)
+
+    def test_formal_gate_rejects_identity_valid_wrong_model(self):
+        registry, study_id, path = self.eligible_formal_gate()
+        receipt = json.loads(path.read_text())
+        receipt.pop("replay_gate_identity_sha256")
+        receipt["model_sha256"] = "c" * 64
+        receipt["replay_gate_identity_sha256"] = object_sha256(receipt)
+        write_json(path, receipt)
+        with self.assertRaisesRegex(ValueError, "ONNX hash"):
+            _verify_replay_receipt(registry, study_id, path)
 
 
 if __name__ == "__main__":

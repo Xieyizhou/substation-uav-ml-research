@@ -16,7 +16,16 @@ LOWER_IS_BETTER = {
     "replan_p95_ms",
     "inference_p95_ms",
     "risk_ece",
+    "risk_false_negative_rate",
+    "direction_mae_deg",
 }
+
+FORMAL_COMPARISONS = (
+    ("ml_lidar", "geometric_lidar"),
+    ("geometric_ml_fusion", "geometric_lidar"),
+    ("geometric_ml_fusion", "ml_lidar"),
+    ("map_oracle", "geometric_lidar"),
+)
 
 
 def paired_differences(runs, metric, candidate, baseline):
@@ -77,6 +86,53 @@ def comparison_report(runs):
             paired_differences(runs, metric, candidate, baseline)
         )
     return report
+
+
+def _descriptive_report(runs):
+    conditions = sorted({run["condition"] for run in runs})
+    report = {}
+    for condition in conditions:
+        selected = [run for run in runs if run["condition"] == condition]
+        completed = [run for run in selected if run["status"] == "completed"]
+        metrics = sorted({name for run in completed for name in run.get("metrics", {})})
+        report[condition] = {
+            "scheduled": len(selected),
+            "completed": len(completed),
+            "failed_or_missing": len(selected) - len(completed),
+            "metrics": {
+                name: sum(
+                    float(run["metrics"][name])
+                    for run in completed if name in run.get("metrics", {})
+                ) / max(sum(name in run.get("metrics", {}) for run in completed), 1)
+                for name in metrics
+            },
+        }
+    return report
+
+
+def formal_comparison_report(runs, *, samples=2000, seed=17):
+    """Build the frozen four-condition paired formal comparison report."""
+    comparisons = {}
+    all_metrics = sorted({name for run in runs for name in run.get("metrics", {})})
+    for candidate, baseline in FORMAL_COMPARISONS:
+        metrics = {}
+        for name in all_metrics:
+            differences = paired_differences(runs, name, candidate, baseline)
+            if differences:
+                metrics[name] = bootstrap_interval(
+                    differences, samples=samples, seed=seed
+                )
+        comparisons[f"{candidate}__vs__{baseline}"] = {
+            "candidate": candidate,
+            "baseline": baseline,
+            "metrics": metrics,
+        }
+    return {
+        "formal_comparison_schema_version": 1,
+        "bootstrap": {"samples": samples, "seed": seed, "confidence": 0.95},
+        "descriptive": _descriptive_report(runs),
+        "paired_comparisons": comparisons,
+    }
 
 
 def replay_gate(candidate, champion=None):

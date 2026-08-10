@@ -28,13 +28,14 @@ def result_root(results_dir, study_id, tier):
 
 def schedule_tier(registry, study_id, tier):
     study = registry.get_study(study_id)
+    candidate = registry.get_model(study["candidate_model"])
     matrix = tier_matrix(tier, include_champion=bool(study.get("champion_model")))
     return registry.ensure_runs(
         study_id,
         tier,
         matrix,
         config_hash=object_sha256({"tier": tier, "matrix": matrix}),
-        model_hash=study["candidate_model"],
+        model_hash=candidate["onnx_hash"],
     )
 
 

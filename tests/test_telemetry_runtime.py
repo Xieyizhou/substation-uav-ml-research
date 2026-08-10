@@ -70,7 +70,7 @@ class TelemetryRuntimeTests(unittest.IsolatedAsyncioTestCase):
                     telemetry_runtime,
                     "current_perception_detection",
                     return_value=None,
-                ),
+                ) as detection,
             ):
                 await telemetry_runtime.log_telemetry(
                     FakeDrone(),
@@ -100,6 +100,7 @@ class TelemetryRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(rows), 2)
         self.assertIn("elapsed_s", rows[0])
         self.assertFalse(replan_state["replan_triggered"])
+        self.assertIn("velocity", detection.call_args.kwargs)
 
 
 if __name__ == "__main__":

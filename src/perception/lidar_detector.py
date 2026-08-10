@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 import time
 
+from src.ml.truth_labels import label_scan
 from src.perception.local_costmap import RollingCostmapBuilder
 from src.sensors.types import RiskEstimate
 
@@ -82,7 +83,10 @@ class LidarRiskDetector:
             obstacle_east,
         )
 
-    def detect(self, local_north_m, local_east_m, yaw_deg=None, altitude_m=None):
+    def detect(
+        self, local_north_m, local_east_m, yaw_deg=None, altitude_m=None,
+        velocity_ned_m_s=None,
+    ):
         started = time.perf_counter()
         scan = self.source.latest()
         health = self.source.health()
@@ -153,6 +157,13 @@ class LidarRiskDetector:
         model_id = "geometric_lidar_v1"
         confidence = 1.0 if nearest else 0.95
         recommended_direction = self._recommended_direction(scan)
+        geometric_level = level
+        truth = label_scan(
+            scan.ranges_m,
+            scan.range_max_m,
+            velocity_ned_m_s or (self.nominal_speed_m_s, 0.0, 0.0),
+        )
+        prediction = None
         model_latency_ms = 0.0
         if self.risk_predictor is not None:
             prediction = self.risk_predictor.predict(scan)
@@ -221,6 +232,16 @@ class LidarRiskDetector:
             "risk_model_id": self.last_risk.model_id,
             "inference_latency_ms": latency_ms,
             "model_inference_latency_ms": model_latency_ms,
+            "truth_risk_level": truth["risk_label"],
+            "geometric_risk_level": geometric_level,
+            "ml_risk_level": prediction["risk_level"] if prediction else None,
+            "risk_confidence": confidence,
+            "truth_traversability": truth["traversability"],
+            "predicted_traversability": (
+                prediction["traversability"] if prediction else truth["traversability"]
+            ),
+            "truth_direction_deg": truth["recommended_direction_deg"],
+            "predicted_direction_deg": recommended_direction,
         }
 
     def _global_cells_from_costmap(self, costmap, north_m, east_m, yaw_deg):
