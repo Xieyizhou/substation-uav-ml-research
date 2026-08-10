@@ -126,6 +126,7 @@ async def log_telemetry(
                     timestamp_utc=now.isoformat(),
                     elapsed_s=round((now - start_time).total_seconds(), 3),
                     replan_config=replan_config,
+                    velocity=velocity,
                 )
                 writer.writerow(
                     build_telemetry_log_row(

@@ -29,6 +29,7 @@ from src.study.comparison import (
     bootstrap_interval,
     paired_differences,
     promotion_gate,
+    formal_comparison_report,
     study_gate_report,
 )
 from src.study.matrix import tier_matrix
@@ -486,6 +487,31 @@ class RegistryAndComparisonTests(unittest.TestCase):
         )
         self.assertFalse(report["passed"])
         self.assertIn("replay", report)
+
+    def test_formal_report_preserves_fixed_multi_condition_comparisons(self):
+        runs = []
+        for scenario in ("a", "b"):
+            for condition, f1 in (
+                ("map_oracle", 1.0),
+                ("geometric_lidar", 0.7),
+                ("ml_lidar", 0.8),
+                ("geometric_ml_fusion", 0.85),
+            ):
+                runs.append({
+                    "scenario_id": scenario,
+                    "condition": condition,
+                    "status": "completed",
+                    "metrics": {"risk_f1": f1, "collision_count": 0},
+                })
+        report = formal_comparison_report(runs, samples=100)
+        self.assertEqual(report["bootstrap"]["seed"], 17)
+        self.assertEqual(len(report["paired_comparisons"]), 4)
+        effect = report["paired_comparisons"][
+            "ml_lidar__vs__geometric_lidar"
+        ]["metrics"]["risk_f1"]
+        self.assertEqual(effect["count"], 2)
+        self.assertAlmostEqual(effect["mean"], 0.1)
+        self.assertEqual(report["descriptive"]["map_oracle"]["completed"], 2)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,37 @@
+{
+  "bootstrap": {
+    "confidence": 0.95,
+    "samples": 2000,
+    "seed": 17
+  },
+  "comparisons": [
+    ["ml_lidar", "geometric_lidar"],
+    ["geometric_ml_fusion", "geometric_lidar"],
+    ["geometric_ml_fusion", "ml_lidar"],
+    ["map_oracle", "geometric_lidar"]
+  ],
+  "conditions": [
+    "map_oracle",
+    "geometric_lidar",
+    "ml_lidar",
+    "geometric_ml_fusion"
+  ],
+  "formal_comparison_schema_version": 1,
+  "metrics": [
+    "mission_success",
+    "landing_success",
+    "collision_count",
+    "buffer_entry_count",
+    "safety_failure_count",
+    "risk_f1",
+    "danger_recall",
+    "risk_false_negative_rate",
+    "risk_ece",
+    "traversability_iou",
+    "direction_mae_deg",
+    "flight_time_s",
+    "inference_p95_ms",
+    "replan_attempt_count",
+    "successful_replan_count"
+  ]
+}

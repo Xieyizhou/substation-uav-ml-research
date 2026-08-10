@@ -9,10 +9,15 @@ from pathlib import Path
 
 from src.ml.artifacts import write_json
 from src.ml.model_package import validate_model_package
-from src.study.comparison import comparison_report, study_gate_report
+from src.study.comparison import (
+    comparison_report,
+    formal_comparison_report,
+    study_gate_report,
+)
 from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results, schedule_tier
-from src.study.closed_loop_worker import execute_closed_loop
+from src.study.closed_loop_worker import execute_closed_loop, execute_formal
+from src.study.formal_spec import DEFAULT_FORMAL_SPEC
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -42,6 +47,19 @@ def build_parser():
     execute.add_argument(
         "--flight-timeout", type=float,
         help="override the default route-aware 240-480 second budget",
+    )
+    formal = commands.add_parser(
+        "execute-formal", help="Run the frozen 120-run paired formal study"
+    )
+    formal.add_argument("study_id")
+    formal.add_argument("--replay-gate", type=Path, required=True)
+    formal.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
+    formal.add_argument("--max-runs", type=int)
+    formal.add_argument("--startup-timeout", type=float, default=180.0)
+    formal.add_argument("--probe-timeout", type=float, default=5.0)
+    formal.add_argument("--flight-timeout", type=float)
+    formal.add_argument(
+        "--comparison-config", type=Path, default=DEFAULT_FORMAL_SPEC
     )
     resume = commands.add_parser("resume", help="Retry incomplete study runs")
     resume.add_argument("study_id")
@@ -122,11 +140,25 @@ def main(argv=None):
                 probe_timeout_s=args.probe_timeout,
                 flight_timeout_s=args.flight_timeout,
             )
+        elif args.command == "execute-formal":
+            result = execute_formal(
+                args.registry, args.study_id, args.results_dir,
+                max_runs=args.max_runs,
+                startup_timeout_s=args.startup_timeout,
+                probe_timeout_s=args.probe_timeout,
+                flight_timeout_s=args.flight_timeout,
+                replay_gate_path=args.replay_gate,
+                comparison_spec_path=args.comparison_config,
+            )
         elif args.command == "status":
             result = _status(registry, args.study_id)
         elif args.command == "compare":
             runs = registry.run_metrics(args.study_id, args.tier)
-            result = comparison_report(runs)
+            result = (
+                formal_comparison_report(runs)
+                if args.tier == "formal"
+                else comparison_report(runs)
+            )
             if args.output:
                 write_json(args.output, result)
         elif args.command == "promote":

@@ -5,7 +5,10 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock
 
+from src.flight.perception_response import current_perception_detection
 from src.perception.lidar_detector import LidarRiskDetector
 from src.perception.local_costmap import RollingCostmapBuilder, build_local_costmap
 from src.sensors.gazebo_lidar import parse_laser_scan_message, select_lidar_topic
@@ -50,6 +53,26 @@ class FakeSource:
 
 
 class SensorContractTests(unittest.TestCase):
+    def test_flight_perception_passes_ned_velocity_to_lidar_detector(self):
+        detector = Mock()
+        detector.detect.return_value = {
+            "risk_level": "clear",
+            "nearest_obstacle": None,
+            "closest_obstacle": None,
+        }
+        velocity = SimpleNamespace(
+            north_m_s=1.0, east_m_s=2.0, down_m_s=-0.5
+        )
+        current_perception_detection(
+            {"enabled": True}, detector,
+            SimpleNamespace(north_m=3.0, east_m=4.0, down_m=-1.5),
+            SimpleNamespace(yaw_deg=15.0), velocity=velocity,
+        )
+        self.assertEqual(
+            detector.detect.call_args.kwargs["velocity_ned_m_s"],
+            (1.0, 2.0, -0.5),
+        )
+
     def test_research_lidar_wins_over_generic_duplicate_topics(self):
         topics = [
             "/world/test/model/x500/link/link/sensor/lidar_2d_v2/scan",
@@ -121,6 +144,13 @@ class SensorContractTests(unittest.TestCase):
         self.assertTrue(detection["sensor_healthy"])
         self.assertTrue(detection["dynamic_grid_cells"])
         self.assertIsNotNone(detection["costmap"])
+        self.assertIn(detection["truth_risk_level"], {"clear", "warning", "danger"})
+        self.assertEqual(detection["geometric_risk_level"], "warning")
+        self.assertEqual(len(detection["truth_traversability"]), 72)
+        self.assertEqual(
+            detection["predicted_traversability"],
+            detection["truth_traversability"],
+        )
 
     def test_unhealthy_lidar_is_fail_safe_danger(self):
         detector = LidarRiskDetector(

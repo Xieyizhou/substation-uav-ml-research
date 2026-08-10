@@ -24,6 +24,7 @@ def current_perception_detection(
     timestamp_utc=None,
     elapsed_s=None,
     replan_config=None,
+    velocity=None,
 ):
     enabled = bool(perception_config.get("enabled"))
     if not enabled or detector is None or position is None:
@@ -43,6 +44,15 @@ def current_perception_detection(
         local_east_m=position.east_m,
         yaw_deg=yaw_deg,
         altitude_m=altitude_m,
+        velocity_ned_m_s=(
+            (
+                value_or_blank(velocity, "north_m_s") or 0.0,
+                value_or_blank(velocity, "east_m_s") or 0.0,
+                value_or_blank(velocity, "down_m_s") or 0.0,
+            )
+            if velocity is not None
+            else None
+        ),
     )
     return build_perception_state(
         perception_config,

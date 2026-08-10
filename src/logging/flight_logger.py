@@ -6,6 +6,8 @@ into rows for later analysis by `python main.py report analyze` and the
 stage summary tools.
 """
 
+import json
+
 
 TELEMETRY_CSV_HEADER = [
     "timestamp_utc",
@@ -68,6 +70,15 @@ TELEMETRY_CSV_HEADER = [
     "sensor_dropped_frames",
     "risk_model_id",
     "inference_latency_ms",
+    "model_inference_latency_ms",
+    "truth_risk_level",
+    "geometric_risk_level",
+    "ml_risk_level",
+    "risk_confidence",
+    "truth_traversability_json",
+    "predicted_traversability_json",
+    "truth_direction_deg",
+    "predicted_direction_deg",
     "costmap_version",
     "equipment_model_id",
     "equipment_detection_count",
@@ -182,6 +193,15 @@ def perception_csv_values(perception_config, detection):
             perception_config.get("risk_model", ""),
             "",
             "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
             equipment_model,
             0,
             "",
@@ -212,6 +232,17 @@ def perception_csv_values(perception_config, detection):
         detection.get("sensor_dropped_frames", ""),
         detection.get("risk_model_id", perception_config.get("risk_model", "")),
         detection.get("inference_latency_ms", ""),
+        detection.get("model_inference_latency_ms", ""),
+        detection.get("truth_risk_level", ""),
+        detection.get("geometric_risk_level", ""),
+        detection.get("ml_risk_level", ""),
+        detection.get("risk_confidence", ""),
+        json.dumps(detection.get("truth_traversability", []), separators=(",", ":")),
+        json.dumps(
+            detection.get("predicted_traversability", []), separators=(",", ":")
+        ),
+        detection.get("truth_direction_deg", ""),
+        detection.get("predicted_direction_deg", ""),
         getattr(detection.get("costmap"), "version", ""),
         detection.get("equipment_model_id", equipment_model),
         len(detection.get("equipment_detections", [])),
