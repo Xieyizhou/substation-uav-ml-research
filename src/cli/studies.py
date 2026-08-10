@@ -12,6 +12,7 @@ from src.ml.model_package import validate_model_package
 from src.study.comparison import comparison_report, study_gate_report
 from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results, schedule_tier
+from src.study.closed_loop_worker import execute_closed_loop
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,6 +31,15 @@ def build_parser():
     run.add_argument("study_id")
     run.add_argument("--tier", choices=["replay", "closed-loop", "formal"], required=True)
     run.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
+    execute = commands.add_parser(
+        "execute-closed-loop", help="Run pending five-scenario gate flights"
+    )
+    execute.add_argument("study_id")
+    execute.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
+    execute.add_argument("--max-runs", type=int)
+    execute.add_argument("--startup-timeout", type=float, default=180.0)
+    execute.add_argument("--probe-timeout", type=float, default=5.0)
+    execute.add_argument("--flight-timeout", type=float, default=360.0)
     resume = commands.add_parser("resume", help="Retry incomplete study runs")
     resume.add_argument("study_id")
     resume.add_argument("--tier", choices=["replay", "closed-loop", "formal"])
@@ -101,6 +111,14 @@ def main(argv=None):
                 tier: ingest_results(registry, args.study_id, tier, args.results_dir)
                 for tier in tiers
             }
+        elif args.command == "execute-closed-loop":
+            result = execute_closed_loop(
+                args.registry, args.study_id, args.results_dir,
+                max_runs=args.max_runs,
+                startup_timeout_s=args.startup_timeout,
+                probe_timeout_s=args.probe_timeout,
+                flight_timeout_s=args.flight_timeout,
+            )
         elif args.command == "status":
             result = _status(registry, args.study_id)
         elif args.command == "compare":

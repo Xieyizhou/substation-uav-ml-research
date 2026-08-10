@@ -437,6 +437,7 @@ python main.py study create --name risk-cnn-v2 \
 
 python main.py study run STUDY_ID --tier replay
 python main.py study run STUDY_ID --tier closed-loop
+python main.py study execute-closed-loop STUDY_ID --max-runs 1
 python main.py study run STUDY_ID --tier formal
 
 python main.py study resume STUDY_ID
@@ -448,6 +449,12 @@ python main.py study promote STUDY_ID
 Commands are idempotent. Completed runs are preserved; resume resets only
 running, failed, or blocked records. Missing simulator results remain pending
 and are never converted into zero-valued metrics.
+
+The closed-loop worker is sequential and fail-fast. Start with `--max-runs 1`;
+only remove the limit after the first run has a confirmed landing, healthy
+LiDAR, no collision, and a valid result receipt. Each study stores results
+under its own `STUDY_ID/TIER/results` directory so separate candidates cannot
+overwrite one another.
 
 Promotion requires all three tiers to be complete. Replay enforces ≤50 ms ONNX
 CPU P95 latency and no danger-recall regression greater than two percentage

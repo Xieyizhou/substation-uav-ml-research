@@ -380,6 +380,7 @@ class RegistryAndComparisonTests(unittest.TestCase):
             )
             for row in payload["runs"]:
                 self.assertTrue(Path(row["scenario_manifest"]).is_file())
+                self.assertIn(f"{study}/replay/results", row["result_path"])
 
     def test_paired_bootstrap_and_promotion_gate(self):
         runs = []
