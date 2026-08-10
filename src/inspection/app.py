@@ -67,6 +67,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
     def _api(self, path, query):
         if path == "/api/doctor":
             return self._json(self.service.doctor())
+        if path == "/api/profile":
+            return self._json(self.service.profile())
         if path == "/api/dashboard":
             return self._json(self.service.dashboard())
         if path == "/api/runtime":
@@ -110,6 +112,7 @@ class InspectionHandler(BaseHTTPRequestHandler):
         if name not in {
             "index.html", "app.js", "style.css", "operator.css", "research.css",
             "experiments.css",
+            "profile.css",
         }:
             return self._json({"error": "not found"}, 404)
         self._file(STATIC_ROOT / name)
@@ -164,8 +167,12 @@ def main(argv=None):
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
+    parser.add_argument(
+        "--profile", choices=("demo", "development", "formal"),
+        default="development",
+    )
     args = parser.parse_args(argv)
-    config = InspectionConfig.defaults(args.project_root)
+    config = InspectionConfig.for_profile(args.project_root, args.profile)
     server = create_server(config, args.host, args.port)
     print(f"Research sandbox app: http://{args.host}:{args.port}")
     try:

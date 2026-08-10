@@ -69,6 +69,14 @@ PX4/Gazebo simulation
 
 ## Sandbox Workflow Architecture
 
+`src/sandbox/profiles.py` is the capability boundary for `demo`,
+`development`, and `formal` operation. `src/sandbox/bootstrap.py` initializes
+profile-local runtime directories; `demo_workflow.py` provides the
+dependency-free first-run workflow; and `release_gate.py` verifies the v0.1
+distribution without simulator processes or external data. The top-level CLI
+loads command modules only after routing, so the Demo Profile does not import
+optional plotting or flight dependencies.
+
 `src/sandbox/command_models.py` defines the command boundary used by the local
 operator. `workflow_commands.py` maps browser choices to allow-listed visual,
 LiDAR, or acceptance commands. `workflow.py` wraps every managed execution in
@@ -82,6 +90,7 @@ through `inspection/acceptance.py`.
 
 ```text
 App workflow selection
+  -> profile capability check
   -> allow-listed SandboxCommand
   -> workflow recipe
   -> single-instance managed process

@@ -17,11 +17,11 @@ def _check(name, passed, explanation, action="", warning=False):
 
 
 def run_doctor(config: InspectionConfig) -> tuple[DoctorCheck, ...]:
-    version_ok = sys.version_info >= (3, 9)
+    version_ok = sys.version_info >= (3, 11)
     checks = [
         _check(
             "Python", version_ok, f"Python {sys.version.split()[0]}",
-            "Use Python 3.9 or newer.",
+            "Use Python 3.11 or newer.",
         )
     ]
     for executable in ("git", "gz", "make"):

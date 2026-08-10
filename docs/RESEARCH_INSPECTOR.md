@@ -1,6 +1,6 @@
 # Local research sandbox app
 
-The local app combines a read-only experiment inspector with a controlled job
+The local App combines a read-only experiment inspector with a controlled job
 operator. It shows collection progress, environment checks, process health,
 bounded logs, route phases, recorded PNG frames, and the complete visual ML
 lifecycle from training-view identity through frozen-package, paired blind,
@@ -18,15 +18,18 @@ Start it from the repository root:
 ./scripts/run_sandbox_app.sh
 ```
 
-Then open `http://127.0.0.1:8765`. The equivalent command is:
+Then open `http://127.0.0.1:8765`. The equivalent Demo Profile command is:
 
 ```bash
-python main.py sandbox serve
+python3 main.py sandbox --profile demo serve
 ```
 
-The port may be changed. The host is restricted to a loopback name or address;
-the operator is deliberately unavailable over the network. The app defaults
-to `visual_collection_v2` and its tracked plan.
+The launcher defaults to `demo`, which needs no datasets, weights, PX4,
+Gazebo, or optional Python packages. Use `./scripts/run_sandbox_app.sh
+--profile development` for the local `visual_collection_v2` plan and full
+simulator actions. The port may be changed. The host is restricted to a
+loopback name or address; the operator is deliberately unavailable over the
+network.
 
 ## Managed workflows
 
@@ -59,10 +62,14 @@ registry, refuses completed studies, and always adds `--max-runs 1`. It uses
 the same single-job lock, runtime conflict checks, timeout, stop sequence, and
 job history as the other managed workflows.
 
-The Experiments tab provides one workflow selector for visual ONNX replay,
+The Experiments tab provides a dependency-free Demo classifier plus selectors for visual ONNX replay,
 LiDAR replay, one pending LiDAR closed-loop flight, and Sandbox v1 acceptance.
 Only workflow-specific safe fields are shown; paths, thresholds, models, and
 blind partitions cannot be supplied by the browser.
+
+Profile capabilities are enforced in command construction as well as the UI.
+Demo Profile exposes only the doctor and Demo classifier; direct HTTP requests
+cannot unlock simulator or formal workflows.
 
 Every managed job now writes `workflow_recipe.json` before process launch and
 `workflow_receipt.json` after termination. The recipe binds the command,

@@ -261,7 +261,8 @@ class SandboxCliTests(InspectionFixture):
 
     def test_help_exposes_local_inspection_workflow(self):
         help_text = sandbox.build_parser().format_help()
-        for command in ("doctor", "status", "serve"):
+        for command in ("bootstrap", "doctor", "status", "serve", "demo-run",
+                        "release-gate"):
             self.assertIn(command, help_text)
 
 

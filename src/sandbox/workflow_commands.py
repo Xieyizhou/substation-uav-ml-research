@@ -8,6 +8,7 @@ import sys
 from src.sandbox.command_models import SandboxCommand
 from src.sandbox.experiment_recipe import materialize_recipe
 from src.sandbox.lidar_jobs import build_lidar_command
+from src.sandbox.profiles import sandbox_profile
 from src.sandbox.workflow import artifact_reference
 
 
@@ -89,10 +90,35 @@ def _acceptance_command(config):
     )
 
 
+def _demo_command(config):
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    output = config.project_root / "outputs/sandbox/demo/runs" / stamp
+    return SandboxCommand(
+        "sandbox-demo",
+        (
+            sys.executable, "main.py", "sandbox", "--project-root",
+            str(config.project_root), "--profile", config.profile,
+            "demo-run", "--output", str(output),
+        ),
+        60.0,
+        workflow="demo_contract",
+        expected_outputs=(
+            (output / "demo_result.json").relative_to(config.project_root).as_posix(),
+        ),
+        requires_runtime_idle=False,
+    )
+
+
 def build_workflow_command(config, parameters):
     if not isinstance(parameters, dict):
         raise ValueError("workflow parameters must be an object")
     workflow = parameters.get("workflow")
+    if workflow not in sandbox_profile(config.profile).available_workflows:
+        raise ValueError(f"workflow is unavailable in {config.profile} profile")
+    if workflow == "demo_contract":
+        if set(parameters) != {"workflow"}:
+            raise ValueError("unsupported workflow parameter")
+        return _demo_command(config)
     if workflow == "visual_replay":
         return build_visual_command(
             config, {key: value for key, value in parameters.items() if key != "workflow"}

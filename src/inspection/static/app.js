@@ -1,16 +1,17 @@
-const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,operatorToken='',lidarState=null,acceptanceState=null;
+const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,operatorToken='',lidarState=null,acceptanceState=null,profileState=null;
 const api=async path=>{const r=await fetch(path,{cache:'no-store'});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const post=async(path,value)=>{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Sandbox-Token':operatorToken},body:JSON.stringify(value)});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active')});
 
 async function refresh(){
-  const [dash,runtime,doctor,recs,available,operator,research,experiments,lidar,acceptance]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments'),api('/api/lidar'),api('/api/acceptance')]);
-  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderDashboard(dash,runtime);renderResearch(research);renderExperiments(experiments);renderLidar(lidar);renderAcceptance(acceptance);renderDoctor(doctor);renderSelectors();renderOperator(operator);
+  const [profile,dash,runtime,doctor,recs,available,operator,research,experiments,lidar,acceptance]=await Promise.all([api('/api/profile'),api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments'),api('/api/lidar'),api('/api/acceptance')]);
+  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderProfile(profile);renderDashboard(dash,runtime);renderResearch(research);renderExperiments(experiments);renderLidar(lidar);renderAcceptance(acceptance);renderDoctor(doctor);renderSelectors();renderOperator(operator);
   $('#updated').textContent=`Observed ${new Date().toLocaleTimeString()}`;
 }
 const pct=v=>v==null?'—':`${(Number(v)*100).toFixed(2)}%`;
 const fixed=(v,d=2)=>v==null?'—':Number(v).toFixed(d);
+function renderProfile(value){profileState=value;$('#profile-badge').textContent=value.title;$('#profile-description').textContent=value.description;document.querySelectorAll('[data-full-profile]').forEach(control=>control.disabled=!value.flight_enabled);document.querySelectorAll('[data-full-section]').forEach(section=>section.hidden=!value.flight_enabled);document.querySelectorAll('#experiment-workflow option').forEach(option=>option.disabled=!value.available_workflows.includes(option.value));if(!value.available_workflows.includes($('#experiment-workflow').value))$('#experiment-workflow').value=value.available_workflows[0];updateWorkflowInputs()}
 function stageCard(label,value){const ok=value.status==='complete',detail=value.identity?.slice(0,12)||(ok?'verified result':'artifact unavailable');return `<div class="pipeline-stage ${ok?'ready':''}"><span class="badge ${ok?'pass':value.status==='invalid'?'failure':'warning'}">${esc(value.status)}</span><strong>${esc(label)}</strong><small>${esc(detail)}</small></div>`}
 function renderResearch(r){
   $('#research-status').textContent=`${r.complete_stage_count} / ${r.stage_count} stages complete`;
@@ -35,9 +36,10 @@ function renderLidar(value){
   $('#lidar-closed-badge').innerHTML=gateBadge(closed);
   const total=closed.total||0,progress=total?100*closed.completed/total:0;
   $('#lidar-closed-summary').innerHTML=`<div class="progress-row"><strong>${closed.completed||0} / ${total}</strong><span>${closed.scenario_count||0} scenarios</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="research-facts gate-facts"><span>Missions / landings<b>${closed.mission_success||0} / ${closed.landing_success||0}</b></span><span>Collisions / buffer entries<b>${closed.collision_count||0} / ${closed.buffer_entry_count||0}</b></span><span>Minimum sensor health<b>${pct(closed.sensor_health_min)}</b></span><span>Maximum inference P95<b>${fixed(closed.inference_p95_max_ms,3)} ms</b></span></div><small class="artifact-path">${esc(closed.study_id||closed.error||'No closed-loop study')}</small>`;
-  $('#lidar-closed-start').disabled=!closed.pending;
-  $('#lidar-closed-option').disabled=!closed.pending;
-  $('#experiment-workflow option[value="lidar_closed_loop"]').disabled=!closed.pending;
+  $('#lidar-replay-start').disabled=!profileState?.flight_enabled;
+  $('#lidar-closed-start').disabled=!closed.pending||!profileState?.flight_enabled;
+  $('#lidar-closed-option').disabled=!closed.pending||!profileState?.flight_enabled;
+  $('#experiment-workflow option[value="lidar_closed_loop"]').disabled=!closed.pending||!profileState?.available_workflows.includes('lidar_closed_loop');
 }
 function defaultExperimentName(){const d=new Date(),part=n=>String(n).padStart(2,'0');return `validation-416-${d.getFullYear()}${part(d.getMonth()+1)}${part(d.getDate())}-${part(d.getHours())}${part(d.getMinutes())}${part(d.getSeconds())}`}
 function renderExperiments(rows){
@@ -78,7 +80,7 @@ function renderOperator(value){
   document.querySelectorAll('.job-row').forEach(row=>row.onclick=()=>loadJobLog(row.dataset.job,row.dataset.sensitive==='true'));
   $('#operator-scenario').innerHTML=scenarios.map(row=>`<option value="${esc(row.scenario_id)}">${esc(row.scenario_id)} · ${esc(row.dataset_role)}</option>`).join('');
   $('#experiment-start').disabled=Boolean(active);
-  $('#lidar-replay-start').disabled=Boolean(active);$('#lidar-closed-start').disabled=Boolean(active)||!lidarState?.closed_loop?.pending;$('#lidar-stop').disabled=!active;$('#lidar-stop').dataset.job=active?.job_id||'';
+  $('#lidar-replay-start').disabled=Boolean(active)||!profileState?.flight_enabled;$('#lidar-closed-start').disabled=Boolean(active)||!lidarState?.closed_loop?.pending||!profileState?.flight_enabled;$('#lidar-stop').disabled=!active;$('#lidar-stop').dataset.job=active?.job_id||'';
   updateOperatorInputs();
 }
 function updateOperatorInputs(){const smoke=$('#operator-action').value==='flight-smoke';$('#operator-scenario').disabled=!smoke;$('#operator-scenario').hidden=!smoke}
@@ -90,7 +92,7 @@ async function stopManaged(job){if(!job||!confirm('Stop this job and its managed
 $('#operator-start').onclick=()=>{const action=$('#operator-action').value,scenario=action==='flight-smoke'?$('#operator-scenario').value:null;startManaged(action,scenario)};
 $('#operator-stop').onclick=()=>stopManaged($('#operator-stop').dataset.job);
 $('#lidar-replay-start').onclick=()=>startManaged('lidar-replay-gate');$('#lidar-closed-start').onclick=()=>startManaged('lidar-closed-loop-next');$('#lidar-stop').onclick=()=>stopManaged($('#lidar-stop').dataset.job);
-function updateWorkflowInputs(){const workflow=$('#experiment-workflow').value,visual=workflow==='visual_replay';document.querySelectorAll('.visual-option').forEach(x=>x.hidden=!visual);const notes={visual_replay:'Visual replay uses non-blind validation data. Model package, threshold and membership cannot be overridden.',lidar_replay:'LiDAR replay revalidates the latest passed candidate with its fixed model and dataset identities.',lidar_closed_loop:'Closed-loop runs exactly one pending approved flight and requires a clean simulator runtime.',multimodal_acceptance:'Sandbox v1 acceptance binds existing visual, LiDAR and closed-loop evidence and runs offline supervisor lifecycle checks.'};$('#workflow-note').textContent=notes[workflow];}
+function updateWorkflowInputs(){const workflow=$('#experiment-workflow').value,visual=workflow==='visual_replay';document.querySelectorAll('.visual-option').forEach(x=>x.hidden=!visual);const notes={demo_contract:'Trains and evaluates a tiny deterministic classifier on synthetic features. The result demonstrates workflow provenance and is never formal evidence.',visual_replay:'Visual replay uses non-blind validation data. Model package, threshold and membership cannot be overridden.',lidar_replay:'LiDAR replay revalidates the latest passed candidate with its fixed model and dataset identities.',lidar_closed_loop:'Closed-loop runs exactly one pending approved flight and requires a clean simulator runtime.',multimodal_acceptance:'Sandbox v1 acceptance binds existing visual, LiDAR and closed-loop evidence and runs offline supervisor lifecycle checks.'};$('#workflow-note').textContent=notes[workflow];}
 $('#experiment-workflow').onchange=updateWorkflowInputs;updateWorkflowInputs();
 $('#experiment-start').onclick=async()=>{const workflow=$('#experiment-workflow').value,parameters={workflow};if(workflow==='visual_replay'){const limit=$('#experiment-limit').value;Object.assign(parameters,{name:$('#experiment-name').value.trim(),partition:$('#experiment-partition').value,input_size:Number($('#experiment-size').value),frame_skip_interval:Number($('#experiment-skip').value),frame_limit:limit==='all'?null:Number(limit)})}if(!confirm(`Create and run ${workflow}? Only fixed, allow-listed inputs are available.`))return;try{await post('/api/operator/start',{action:'workflow-run',parameters});if(workflow==='visual_replay')$('#experiment-name').value='';await refreshOperator()}catch(e){alert(e.message)}};
 

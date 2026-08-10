@@ -1,6 +1,6 @@
 # Substation UAV ML Research Platform
 
-> **Status: Experimental Research Platform**
+> **Status: Sandbox v0.1 Candidate / Experimental Research Platform**
 >
 > This repository develops sensor-driven risk, traversability learning, and
 > semantic inspection planning in simulation. It is not production software,
@@ -12,12 +12,15 @@ The project extends the stable
 baseline with Gazebo LiDAR, record/replay, local costmaps, ML/ONNX research
 interfaces, deterministic camera collection, and visual model evaluation.
 
+![Sandbox Demo Profile](docs/assets/sandbox_demo.jpg)
+
 ![A* route preview](docs/assets/grid_path.png)
 
 [Demo video](https://github.com/Xieyizhou/uav-path-planning-demo/releases/tag/v0.1-demo)
 · [Command reference](docs/CLI_REFERENCE.md)
 · [Architecture](docs/architecture.md)
 · [Local sandbox app](docs/RESEARCH_INSPECTOR.md)
+· [Sandbox quick start](docs/SANDBOX_QUICKSTART.md)
 · [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
 · [ML research platform](docs/ML_RESEARCH_PLATFORM.md)
 · [ML study workflow](docs/STUDY_WORKFLOW.md)
@@ -131,9 +134,34 @@ map management, and reporting into small modules under `src/`.
 - Bash experiment launchers and GitHub Actions offline validation
 - JSON/SDF configuration for synchronized planning and simulation maps
 
-## Quick Start
+## Quick Start: App Demo
 
-Prerequisites: Python 3.9+, PX4 SITL/Gazebo, and a local
+The tracked Demo Profile runs with Python 3.11+ and does not require local
+datasets, trained weights, PX4, Gazebo, or third-party Python packages:
+
+```bash
+git clone https://github.com/Xieyizhou/substation-uav-ml-research.git
+cd substation-uav-ml-research
+./scripts/run_sandbox_app.sh
+```
+
+Open `http://127.0.0.1:8765`, choose **Experiments**, and run **Demo
+classifier**. The result is an identity-bound workflow example built from
+synthetic features and is explicitly excluded from formal research evidence.
+
+Run the complete offline release check with:
+
+```bash
+python3 main.py sandbox --profile demo release-gate \
+  --output outputs/sandbox/demo/release-gate/local
+```
+
+See the [Sandbox quick start](docs/SANDBOX_QUICKSTART.md) for profile boundaries,
+outputs, and the first experiment walkthrough.
+
+## Full Simulator Setup
+
+Prerequisites: Python 3.11+, PX4 SITL/Gazebo, and a local
 `~/PX4-Autopilot` checkout.
 
 ```bash

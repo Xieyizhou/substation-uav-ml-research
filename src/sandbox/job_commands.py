@@ -12,6 +12,7 @@ from src.sandbox.workflow_commands import (
     build_visual_command,
     build_workflow_command,
 )
+from src.sandbox.profiles import sandbox_profile
 from src.vision.collection.plan import collection_status
 from src.vision.collection.recording import scenario_by_id
 
@@ -84,41 +85,38 @@ def _training_smoke_command():
     )
 
 
-def build_command(config, action, scenario_id=None, parameters=None):
-    if action == "workflow-run":
-        return build_workflow_command(config, parameters)
-    if action.startswith("lidar-"):
-        return build_lidar_sandbox_command(config, action)
-    if action == "doctor":
-        return SandboxCommand(
-            action,
-            (sys.executable, "main.py", "sandbox", "doctor"),
-            60.0,
-            workflow="environment_check",
-            requires_runtime_idle=False,
-        )
-    if action == "flight-smoke":
-        row = _scenario(config, scenario_id)
-        if is_blind(row):
-            raise ValueError("flight smoke cannot use a blind scenario")
-        return SandboxCommand(
-            action,
-            (
-                sys.executable,
-                "main.py",
-                "sandbox",
-                "flight-smoke",
-                "--plan",
-                str(config.plan_path),
-                "--output-root",
-                str(config.collection_root),
-                "--scenario-id",
-                str(scenario_id),
-            ),
-            600.0,
-            str(scenario_id),
-            workflow="flight_smoke",
-        )
+def _doctor_command(config):
+    return SandboxCommand(
+        "doctor",
+        (
+            sys.executable, "main.py", "sandbox", "--project-root",
+            str(config.project_root), "--profile", config.profile, "doctor",
+        ),
+        60.0,
+        workflow="environment_check",
+        requires_runtime_idle=False,
+    )
+
+
+def _flight_command(config, scenario_id):
+    row = _scenario(config, scenario_id)
+    if is_blind(row):
+        raise ValueError("flight smoke cannot use a blind scenario")
+    return SandboxCommand(
+        "flight-smoke",
+        (
+            sys.executable, "main.py", "sandbox", "flight-smoke",
+            "--plan", str(config.plan_path),
+            "--output-root", str(config.collection_root),
+            "--scenario-id", str(scenario_id),
+        ),
+        600.0,
+        str(scenario_id),
+        workflow="flight_smoke",
+    )
+
+
+def _model_command(config, action):
     if action == "training-view-v2":
         return SandboxCommand(
             action, _training_view_command(config), 1_800.0,
@@ -154,18 +152,39 @@ def build_command(config, action, scenario_id=None, parameters=None):
             workflow="package_inspection",
             requires_runtime_idle=False,
         )
+    return None
+
+
+def _collection_job(config, action):
+    counts = {"collection-single": 1, "collection-gate": 5}
+    if action not in counts:
+        return None
+    count = counts[action]
+    rows = _next_rows(config, count)
+    return SandboxCommand(
+        action,
+        _collection_command(config, count),
+        900.0 if count == 1 else 3600.0,
+        sensitive=any(is_blind(row) for row in rows),
+        workflow="visual_collection",
+    )
+
+
+def build_command(config, action, scenario_id=None, parameters=None):
+    profile = sandbox_profile(config.profile)
+    if action == "workflow-run":
+        return build_workflow_command(config, parameters)
+    if not profile.flight_enabled and action != "doctor":
+        raise ValueError(f"action is unavailable in {config.profile} profile")
+    if action == "doctor":
+        return _doctor_command(config)
+    if action == "flight-smoke":
+        return _flight_command(config, scenario_id)
+    if action.startswith("lidar-"):
+        return build_lidar_sandbox_command(config, action)
     if action == "experiment-run":
         return build_visual_command(config, parameters)
-    counts = {"collection-single": 1, "collection-gate": 5}
-    if action in counts:
-        count = counts[action]
-        rows = _next_rows(config, count)
-        sensitive = any(is_blind(row) for row in rows)
-        return SandboxCommand(
-            action,
-            _collection_command(config, count),
-            900.0 if count == 1 else 3600.0,
-            sensitive=sensitive,
-            workflow="visual_collection",
-        )
+    command = _model_command(config, action) or _collection_job(config, action)
+    if command is not None:
+        return command
     raise ValueError(f"unsupported sandbox action: {action}")

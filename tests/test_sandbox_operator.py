@@ -1,4 +1,5 @@
 import http.client
+from dataclasses import replace
 import json
 from pathlib import Path
 import sys
@@ -103,6 +104,13 @@ class SandboxOperatorTests(unittest.TestCase):
         self.assertIn("training-view-materialize", view.argv)
         with self.assertRaisesRegex(ValueError, "materialize the v2 training view"):
             build_command(self.config, "training-smoke-v2")
+        demo_config = replace(self.config, profile="demo")
+        with self.assertRaisesRegex(ValueError, "unavailable in demo profile"):
+            build_command(demo_config, "flight-smoke", "development-s")
+        with self.assertRaisesRegex(ValueError, "unavailable in demo profile"):
+            build_command(
+                demo_config, "workflow-run", parameters={"workflow": "visual_replay"}
+            )
 
     def test_training_smoke_uses_a_new_managed_output_directory(self):
         identity = self.root / (
@@ -172,6 +180,11 @@ class SandboxOperatorTests(unittest.TestCase):
                 self.config, "workflow-run",
                 parameters={"workflow": "lidar_replay", "model": "/tmp/model"},
             )
+        demo = build_command(
+            self.config, "workflow-run", parameters={"workflow": "demo_contract"}
+        )
+        self.assertEqual(demo.workflow, "demo_contract")
+        self.assertIn("demo-run", demo.argv)
 
     def test_job_store_detects_record_tampering(self):
         store = SandboxJobStore(self.config.sandbox_jobs_root)
@@ -256,6 +269,10 @@ class SandboxOperatorTests(unittest.TestCase):
             response = connection.getresponse()
             status = json.loads(response.read())
             token = status["operator_token"]
+            connection.request("GET", "/api/profile")
+            profile = connection.getresponse()
+            self.assertEqual(profile.status, 200)
+            self.assertEqual(json.loads(profile.read())["profile_id"], "development")
             connection.request("GET", "/api/research")
             research = connection.getresponse()
             payload = json.loads(research.read())

@@ -9,9 +9,13 @@ from pathlib import Path
 from src.inspection import InspectionConfig, InspectionService
 from src.inspection.app import main as serve_inspector
 from src.sandbox.acceptance import inspect_acceptance, run_acceptance
+from src.sandbox.bootstrap import bootstrap_sandbox, inspect_bootstrap
+from src.sandbox.demo_workflow import inspect_demo, run_demo
 from src.sandbox.experiment_recipe import inspect_recipe, materialize_recipe
 from src.sandbox.experiment_runner import inspect_result, run_recipe
 from src.sandbox.flight_smoke import run_flight_smoke
+from src.sandbox.profiles import PROFILE_NAMES
+from src.sandbox.release_gate import inspect_release_gate, run_release_gate
 from src.sandbox.supervisor_gate import inspect_supervisor_gate, run_supervisor_gate
 
 
@@ -21,7 +25,16 @@ def build_parser():
         description="Inspect and safely operate the local UAV research sandbox.",
     )
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
+    parser.add_argument("--profile", choices=PROFILE_NAMES, default="development")
     commands = parser.add_subparsers(dest="command", required=True)
+    bootstrap = commands.add_parser(
+        "bootstrap", help="Initialize the selected local sandbox profile"
+    )
+    bootstrap.add_argument("--output", type=Path)
+    bootstrap_inspect = commands.add_parser(
+        "bootstrap-inspect", help="Validate a sandbox bootstrap receipt"
+    )
+    bootstrap_inspect.add_argument("--input", type=Path, required=True)
     commands.add_parser("doctor", help="Check dependencies, paths, and disk space")
     commands.add_parser("status", help="Show collection and runtime status")
     serve = commands.add_parser("serve", help="Run the controlled local sandbox app")
@@ -89,6 +102,22 @@ def build_parser():
         "acceptance-inspect", help="Validate a Sandbox v1 acceptance result"
     )
     acceptance_inspect.add_argument("--input", type=Path, required=True)
+    demo = commands.add_parser(
+        "demo-run", help="Run the dependency-free demonstration workflow"
+    )
+    demo.add_argument("--output", type=Path, required=True)
+    demo_inspect = commands.add_parser(
+        "demo-inspect", help="Validate a demonstration workflow result"
+    )
+    demo_inspect.add_argument("--input", type=Path, required=True)
+    release = commands.add_parser(
+        "release-gate", help="Run the offline Sandbox v0.1 release gate"
+    )
+    release.add_argument("--output", type=Path, required=True)
+    release_inspect = commands.add_parser(
+        "release-gate-inspect", help="Validate a Sandbox v0.1 gate result"
+    )
+    release_inspect.add_argument("--input", type=Path, required=True)
     return parser
 
 
@@ -98,8 +127,22 @@ def _print(value):
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
-    config = InspectionConfig.defaults(args.project_root)
+    config = InspectionConfig.for_profile(args.project_root, args.profile)
     service = InspectionService(config)
+    if args.command == "bootstrap":
+        try:
+            _print(bootstrap_sandbox(config, args.output))
+        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
+            print(f"Sandbox bootstrap failed: {error}")
+            return 1
+        return 0
+    if args.command == "bootstrap-inspect":
+        try:
+            _print(inspect_bootstrap(args.input))
+        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
+            print(f"Sandbox bootstrap failed: {error}")
+            return 1
+        return 0
     if args.command == "doctor":
         checks = service.doctor()
         _print(checks)
@@ -194,8 +237,41 @@ def main(argv=None):
             return 1
         _print(result)
         return 0 if result["passed"] else 1
+    if args.command == "demo-run":
+        try:
+            result = run_demo(config.project_root, args.output)
+        except (FileNotFoundError, OSError, TypeError, ValueError) as error:
+            print(f"Sandbox demo failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["result"]["passed"] else 1
+    if args.command == "demo-inspect":
+        try:
+            result = inspect_demo(args.input)
+        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
+            print(f"Sandbox demo failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["passed"] else 1
+    if args.command == "release-gate":
+        try:
+            result = run_release_gate(config, args.output)
+        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
+            print(f"Sandbox release gate failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["passed"] else 1
+    if args.command == "release-gate-inspect":
+        try:
+            result = inspect_release_gate(args.input)
+        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
+            print(f"Sandbox release gate failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["passed"] else 1
     return serve_inspector([
         "--host", args.host,
         "--port", str(args.port),
         "--project-root", str(args.project_root),
+        "--profile", args.profile,
     ])

@@ -3,20 +3,9 @@
 from __future__ import annotations
 
 import argparse
+from importlib import import_module
 import sys
 
-from src.cli import (
-    astar,
-    checks,
-    data,
-    experiments,
-    models,
-    reports,
-    sandbox,
-    sensors,
-    studies,
-    visual,
-)
 from src.cli.process import run_script
 
 
@@ -27,16 +16,16 @@ FORWARDED_SCRIPTS = {
     "task": ("scripts/flight/run_task.py", "Opening compact task runner"),
 }
 MODULE_COMMANDS = {
-    "astar": astar.main,
-    "experiment": experiments.main,
-    "report": reports.main,
-    "sandbox": sandbox.main,
-    "check": checks.main,
-    "sensor": sensors.main,
-    "data": data.main,
-    "model": models.main,
-    "study": studies.main,
-    "visual": visual.main,
+    "astar": "src.cli.astar",
+    "experiment": "src.cli.experiments",
+    "report": "src.cli.reports",
+    "sandbox": "src.cli.sandbox",
+    "check": "src.cli.checks",
+    "sensor": "src.cli.sensors",
+    "data": "src.cli.data",
+    "model": "src.cli.models",
+    "study": "src.cli.studies",
+    "visual": "src.cli.visual",
 }
 
 
@@ -92,4 +81,4 @@ def main(argv=None):
     if command in FORWARDED_SCRIPTS:
         script, description = FORWARDED_SCRIPTS[command]
         return run_script(script, arguments[1:], description)
-    return MODULE_COMMANDS[command](arguments[1:])
+    return import_module(MODULE_COMMANDS[command]).main(arguments[1:])

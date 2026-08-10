@@ -14,6 +14,7 @@ from src.inspection.logs import log_tail
 from src.inspection.lidar import lidar_summary
 from src.inspection.runtime import LocalProcessAdapter, runtime_status
 from src.inspection.research import research_summary
+from src.sandbox.profiles import sandbox_profile
 
 
 def serialize(value):
@@ -34,6 +35,9 @@ class InspectionService:
 
     def doctor(self):
         return serialize(run_doctor(self.config))
+
+    def profile(self):
+        return sandbox_profile(self.config.profile).to_record()
 
     def dashboard(self):
         return serialize(dashboard(self.config))

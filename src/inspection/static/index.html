@@ -8,21 +8,23 @@
   <link rel="stylesheet" href="/operator.css">
   <link rel="stylesheet" href="/research.css">
   <link rel="stylesheet" href="/experiments.css">
+  <link rel="stylesheet" href="/profile.css">
 </head>
 <body>
   <header>
-    <div><span class="eyebrow">LOCAL · CONTROLLED</span><h1>UAV Research Sandbox</h1></div>
+    <div><span class="eyebrow">LOCAL · CONTROLLED</span><h1>UAV Research Sandbox</h1><p id="profile-description" class="profile-description"></p></div>
+    <span id="profile-badge" class="profile-badge">Loading profile</span>
     <button id="refresh">Refresh observations</button>
   </header>
   <nav>
     <button class="tab active" data-tab="overview">Overview</button>
-    <button class="tab" data-tab="research">ML results</button>
-    <button class="tab" data-tab="lidar">LiDAR gates</button>
+    <button class="tab" data-full-profile data-tab="research">ML results</button>
+    <button class="tab" data-full-profile data-tab="lidar">LiDAR gates</button>
     <button class="tab" data-tab="experiments">Experiments</button>
     <button class="tab" data-tab="doctor">Sandbox doctor</button>
     <button class="tab" data-tab="operator">Operator</button>
-    <button class="tab" data-tab="logs">Live logs</button>
-    <button class="tab" data-tab="frames">Recordings</button>
+    <button class="tab" data-full-profile data-tab="logs">Live logs</button>
+    <button class="tab" data-full-profile data-tab="frames">Recordings</button>
   </nav>
   <main>
     <section id="overview" class="panel active">
@@ -54,11 +56,11 @@
       <article><div class="section-head"><div><p class="kicker">STATIC ONNX REPLAY</p><h2>Resolution and scheduling matrix</h2></div><p id="replay-status"></p></div><div class="table-wrap"><table><thead><tr><th>Input</th><th>Policy</th><th>Source</th><th>FPS</th><th>P50</th><th>P95</th><th>Precision</th><th>Recall</th><th>Small recall</th></tr></thead><tbody id="replay-rows"></tbody></table></div><p id="replay-note" class="research-note"></p></article>
     </section>
     <section id="experiments" class="panel">
-      <div class="section-head"><div><p class="kicker">NON-BLIND WORKBENCH</p><h2>Visual experiment recipes</h2></div><p>Frozen package · fixed threshold</p></div>
+      <div class="section-head"><div><p class="kicker">MANAGED WORKBENCH</p><h2>Reproducible workflows</h2></div><p>Identity-bound recipes · fixed inputs</p></div>
       <article class="experiment-launch">
         <h3>New managed workflow</h3>
         <div class="experiment-form">
-          <label>Workflow<select id="experiment-workflow"><option value="visual_replay">Visual ONNX replay</option><option value="lidar_replay">LiDAR replay</option><option value="lidar_closed_loop">Next LiDAR closed-loop flight</option><option value="multimodal_acceptance">Sandbox v1 acceptance</option></select></label>
+          <label>Workflow<select id="experiment-workflow"><option value="demo_contract">Demo classifier</option><option value="visual_replay">Visual ONNX replay</option><option value="lidar_replay">LiDAR replay</option><option value="lidar_closed_loop">Next LiDAR closed-loop flight</option><option value="multimodal_acceptance">Sandbox v1 acceptance</option></select></label>
           <label class="visual-option">Name<input id="experiment-name" maxlength="64" autocomplete="off"></label>
           <label class="visual-option">Partition<select id="experiment-partition"><option value="validation">Selection validation</option><option value="full_validation">Full validation</option></select></label>
           <label class="visual-option">ONNX input<select id="experiment-size"><option>320</option><option selected>416</option><option>640</option></select></label>
@@ -68,9 +70,9 @@
         </div>
         <p id="workflow-note" class="operator-note">Visual replay uses non-blind validation data. Model package, threshold and membership cannot be overridden.</p>
       </article>
-      <article class="acceptance-card"><div class="section-head"><div><p class="kicker">SANDBOX V1</p><h2>Acceptance gate</h2></div><span id="acceptance-badge"></span></div><div id="acceptance-checks" class="acceptance-grid"></div><p id="acceptance-note" class="operator-note"></p></article>
-      <h3>Visual replay results</h3>
-      <div id="experiment-history" class="experiment-history"></div>
+      <article data-full-section class="acceptance-card"><div class="section-head"><div><p class="kicker">SANDBOX V1</p><h2>Acceptance gate</h2></div><span id="acceptance-badge"></span></div><div id="acceptance-checks" class="acceptance-grid"></div><p id="acceptance-note" class="operator-note"></p></article>
+      <h3 data-full-section>Visual replay results</h3>
+      <div data-full-section id="experiment-history" class="experiment-history"></div>
       <h3>Managed workflow receipts</h3>
       <div id="workflow-history" class="experiment-history"></div>
     </section>
@@ -82,14 +84,14 @@
         <div class="controls">
           <select id="operator-action">
             <option value="doctor">Run doctor</option>
-            <option value="flight-smoke">Run flight smoke</option>
-            <option value="collection-single">Collect one scenario</option>
-            <option value="collection-gate">Run five-scenario gate</option>
-            <option value="training-view-v2">Materialize v2 training view</option>
-            <option value="training-smoke-v2">Run v2 smoke training</option>
-            <option value="package-inspect-v2">Verify frozen v2 package</option>
-            <option value="lidar-replay-gate">Revalidate LiDAR replay</option>
-            <option id="lidar-closed-option" value="lidar-closed-loop-next">Run next LiDAR closed-loop flight</option>
+            <option data-full-profile value="flight-smoke">Run flight smoke</option>
+            <option data-full-profile value="collection-single">Collect one scenario</option>
+            <option data-full-profile value="collection-gate">Run five-scenario gate</option>
+            <option data-full-profile value="training-view-v2">Materialize v2 training view</option>
+            <option data-full-profile value="training-smoke-v2">Run v2 smoke training</option>
+            <option data-full-profile value="package-inspect-v2">Verify frozen v2 package</option>
+            <option data-full-profile value="lidar-replay-gate">Revalidate LiDAR replay</option>
+            <option data-full-profile id="lidar-closed-option" value="lidar-closed-loop-next">Run next LiDAR closed-loop flight</option>
           </select>
           <select id="operator-scenario"></select>
           <button id="operator-start">Start managed job</button>
