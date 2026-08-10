@@ -152,13 +152,19 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
         stop_process(launcher)
 
 
-def _verify_replay_receipt(registry, study_id, path):
+def _verify_replay_receipt(
+    registry, study_id, path, qualification_study_id=None
+):
     receipt = json.loads(Path(path).read_text(encoding="utf-8"))
     supplied = receipt.pop("replay_gate_identity_sha256", None)
     if supplied != object_sha256(receipt):
         raise ValueError("replay gate identity mismatch")
     receipt["replay_gate_identity_sha256"] = supplied
     study = registry.get_study(study_id)
+    qualification_study_id = qualification_study_id or study_id
+    qualification = registry.get_study(qualification_study_id)
+    if qualification["candidate_model"] != study["candidate_model"]:
+        raise ValueError("qualification study candidate does not match formal study")
     model = registry.get_model(study["candidate_model"])
     manifest = json.loads(model["manifest_json"])
     if receipt.get("passed") is not True:
@@ -169,7 +175,7 @@ def _verify_replay_receipt(registry, study_id, path):
         raise ValueError("replay gate ONNX hash does not match the study candidate")
     if receipt.get("dataset_id") != manifest.get("dataset_id"):
         raise ValueError("replay gate dataset does not match the study candidate")
-    closed = registry.run_metrics(study_id, "closed-loop")
+    closed = registry.run_metrics(qualification_study_id, "closed-loop")
     decision = closed_loop_gate(closed)
     if not decision["passed"]:
         raise ValueError("formal execution requires a passed closed-loop gate")
@@ -177,15 +183,20 @@ def _verify_replay_receipt(registry, study_id, path):
 
 
 def _prepare_tier(
-    registry, study_id, results_dir, tier, replay_gate_path, comparison_spec_path
+    registry, study_id, results_dir, tier, replay_gate_path, comparison_spec_path,
+    qualification_study_id,
 ):
     if tier != "formal":
         return None
     if replay_gate_path is None:
         raise ValueError("formal execution requires --replay-gate")
-    replay = _verify_replay_receipt(registry, study_id, replay_gate_path)
+    qualification_study_id = qualification_study_id or study_id
+    replay = _verify_replay_receipt(
+        registry, study_id, replay_gate_path, qualification_study_id
+    )
     return freeze_formal_study(
-        registry, study_id, results_dir, replay, comparison_spec_path
+        registry, study_id, results_dir, replay, comparison_spec_path,
+        qualification_study_id=qualification_study_id,
     )
 
 
@@ -247,6 +258,7 @@ def execute_flight_tier(
     startup_timeout_s=180.0, probe_timeout_s=5.0, flight_timeout_s=None,
     replay_gate_path=None,
     comparison_spec_path=DEFAULT_FORMAL_SPEC,
+    qualification_study_id=None,
 ):
     """Execute one flight tier sequentially and stop on the first failure."""
     if tier not in FLIGHT_TIERS:
@@ -256,7 +268,7 @@ def execute_flight_tier(
     registry = ResearchRegistry(registry_path)
     formal_receipt = _prepare_tier(
         registry, study_id, results_dir, tier, replay_gate_path,
-        comparison_spec_path,
+        comparison_spec_path, qualification_study_id,
     )
     scheduled = ingest_results(registry, study_id, tier, results_dir)
     queue = json.loads(Path(scheduled["run_queue"]).read_text(encoding="utf-8"))

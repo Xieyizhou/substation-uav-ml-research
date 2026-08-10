@@ -171,11 +171,14 @@ class SimpleObstacleDetector:
             return "detected"
         return "clear"
 
-    def detect(self, local_north_m, local_east_m, yaw_deg=None, altitude_m=None):
+    def detect(
+        self, local_north_m, local_east_m, yaw_deg=None, altitude_m=None,
+        velocity_ned_m_s=None,
+    ):
         local_north_m = safe_float(local_north_m)
         local_east_m = safe_float(local_east_m)
         yaw_deg = safe_float(yaw_deg)
-        _ = altitude_m
+        _ = altitude_m, velocity_ned_m_s
 
         if local_north_m is None or local_east_m is None:
             return {

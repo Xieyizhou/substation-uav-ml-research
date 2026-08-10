@@ -30,7 +30,8 @@ def load_formal_spec(path=DEFAULT_FORMAL_SPEC):
 
 
 def freeze_formal_study(
-    registry, study_id, results_dir, replay_receipt, spec_path=DEFAULT_FORMAL_SPEC
+    registry, study_id, results_dir, replay_receipt, spec_path=DEFAULT_FORMAL_SPEC,
+    *, qualification_study_id=None,
 ):
     study = registry.get_study(study_id)
     model = registry.get_model(study["candidate_model"])
@@ -42,6 +43,7 @@ def freeze_formal_study(
     record = {
         "formal_study_schema_version": 1,
         "study_id": study_id,
+        "qualification_study_id": qualification_study_id or study_id,
         "candidate_model_id": study["candidate_model"],
         "candidate_onnx_sha256": model["onnx_hash"],
         "dataset_id": model_manifest["dataset_id"],

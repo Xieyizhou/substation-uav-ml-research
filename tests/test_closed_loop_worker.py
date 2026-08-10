@@ -122,10 +122,12 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     def test_cli_requires_explicit_replay_receipt_for_formal_execution(self):
         args = build_parser().parse_args([
             "execute-formal", self.study_id, "--replay-gate", "gate.json",
+            "--qualification-study", "qualification-study",
             "--max-runs", "1",
         ])
         self.assertEqual(args.command, "execute-formal")
         self.assertEqual(args.replay_gate, Path("gate.json"))
+        self.assertEqual(args.qualification_study, "qualification-study")
 
     def test_flight_queue_allows_transport_subscription_to_settle(self):
         arguments = _flight_arguments(
@@ -236,6 +238,14 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     def test_formal_gate_binds_replay_to_candidate_and_closed_loop(self):
         registry, study_id, path = self.eligible_formal_gate()
         receipt = _verify_replay_receipt(registry, study_id, path)
+        self.assertTrue(receipt["passed"])
+
+    def test_formal_gate_can_reuse_a_same_candidate_qualification_study(self):
+        registry, qualification_id, path = self.eligible_formal_gate()
+        formal_id = registry.create_study("formal-evidence", "formal-model")
+        receipt = _verify_replay_receipt(
+            registry, formal_id, path, qualification_id
+        )
         self.assertTrue(receipt["passed"])
 
     def test_formal_gate_rejects_tampered_receipt(self):

@@ -38,12 +38,15 @@ class FormalStudySpecificationTests(unittest.TestCase):
     @patch("src.study.formal_spec.git_commit", return_value="commit")
     def test_receipt_is_identity_bound_and_idempotent(self, _commit):
         first = freeze_formal_study(
-            self.registry, self.study, self.root / "results", self.replay
+            self.registry, self.study, self.root / "results", self.replay,
+            qualification_study_id="qualification-study",
         )
         second = freeze_formal_study(
-            self.registry, self.study, self.root / "results", self.replay
+            self.registry, self.study, self.root / "results", self.replay,
+            qualification_study_id="qualification-study",
         )
         self.assertEqual(first, second)
+        self.assertEqual(first["qualification_study_id"], "qualification-study")
         supplied = first.pop("formal_study_identity_sha256")
         self.assertEqual(supplied, object_sha256(first))
 

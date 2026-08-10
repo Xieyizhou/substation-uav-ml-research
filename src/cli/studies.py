@@ -53,6 +53,10 @@ def build_parser():
     )
     formal.add_argument("study_id")
     formal.add_argument("--replay-gate", type=Path, required=True)
+    formal.add_argument(
+        "--qualification-study",
+        help="study containing the passed closed-loop candidate gate",
+    )
     formal.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
     formal.add_argument("--max-runs", type=int)
     formal.add_argument("--startup-timeout", type=float, default=180.0)
@@ -149,6 +153,7 @@ def main(argv=None):
                 flight_timeout_s=args.flight_timeout,
                 replay_gate_path=args.replay_gate,
                 comparison_spec_path=args.comparison_config,
+                qualification_study_id=args.qualification_study,
             )
         elif args.command == "status":
             result = _status(registry, args.study_id)

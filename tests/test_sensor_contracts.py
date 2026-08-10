@@ -10,6 +10,7 @@ from unittest.mock import Mock
 
 from src.flight.perception_response import current_perception_detection
 from src.perception.lidar_detector import LidarRiskDetector
+from src.perception.simple_obstacle_detector import SimpleObstacleDetector
 from src.perception.local_costmap import RollingCostmapBuilder, build_local_costmap
 from src.sensors.gazebo_lidar import parse_laser_scan_message, select_lidar_topic
 from src.sensors.replay import ReplayLidarSource, append_scan_record, load_scan_records
@@ -53,6 +54,15 @@ class FakeSource:
 
 
 class SensorContractTests(unittest.TestCase):
+    def test_map_oracle_accepts_the_shared_detector_velocity_keyword(self):
+        detector = SimpleObstacleDetector.__new__(SimpleObstacleDetector)
+        detector.warning_distance_m = 2.0
+        detector.danger_distance_m = 1.0
+        result = detector.detect(
+            None, None, velocity_ned_m_s=(1.0, 0.0, 0.0)
+        )
+        self.assertEqual(result["risk_level"], "clear")
+
     def test_flight_perception_passes_ned_velocity_to_lidar_detector(self):
         detector = Mock()
         detector.detect.return_value = {
