@@ -52,8 +52,7 @@ def _run_setup(commands, log_path):
 def _probe_lidar(log_path, launcher, startup_timeout_s, probe_timeout_s):
     deadline = time.monotonic() + startup_timeout_s
     command = [
-        sys.executable, "main.py", "sensor", "check", "--source",
-        "gazebo_lidar_2d", "--timeout", str(probe_timeout_s),
+        sys.executable, "main.py", "sensor", "list", "--json",
     ]
     while time.monotonic() < deadline:
         ensure_process_running(launcher, settle_s=0.0)

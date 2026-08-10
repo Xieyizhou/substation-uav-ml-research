@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from src.cli.studies import build_parser
 from src.ml.artifacts import write_json
-from src.study.closed_loop_worker import _attempt_root, execute_closed_loop
+from src.study.closed_loop_worker import _attempt_root, _probe_lidar, execute_closed_loop
 from src.study.registry import ResearchRegistry
 from src.study.runner import _flight_arguments
 
@@ -82,6 +82,15 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(first.name, "attempt_01")
         self.assertEqual(second.name, "attempt_02")
         self.assertTrue((first / "failure.json").is_file())
+
+    @patch("src.study.closed_loop_worker.ensure_process_running")
+    @patch("src.study.closed_loop_worker.subprocess.run")
+    def test_probe_discovers_topic_without_consuming_sensor_stream(self, run, ensure):
+        run.return_value.returncode = 0
+        _probe_lidar(self.root / "probe.log", object(), 1.0, 5.0)
+        command = run.call_args.args[0]
+        self.assertEqual(command[-3:], ["sensor", "list", "--json"])
+        ensure.assert_called_once()
 
     @patch("src.study.closed_loop_worker._run_one")
     @patch("src.study.closed_loop_worker.ingest_results")
