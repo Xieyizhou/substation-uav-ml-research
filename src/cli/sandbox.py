@@ -8,6 +8,7 @@ from pathlib import Path
 
 from src.inspection import InspectionConfig, InspectionService
 from src.inspection.app import main as serve_inspector
+from src.sandbox.experiment_recipe import inspect_recipe, materialize_recipe
 from src.sandbox.flight_smoke import run_flight_smoke
 
 
@@ -46,6 +47,21 @@ def build_parser():
     smoke.add_argument("--startup-timeout", type=float, default=180.0)
     smoke.add_argument("--probe-timeout", type=float, default=5.0)
     smoke.add_argument("--flight-timeout", type=float)
+    recipe = commands.add_parser(
+        "recipe-create", help="Create an identity-bound non-blind visual recipe"
+    )
+    recipe.add_argument("--name", required=True)
+    recipe.add_argument(
+        "--partition", choices=["validation", "full_validation"],
+        default="validation",
+    )
+    recipe.add_argument("--input-size", type=int, choices=[320, 416, 640], default=416)
+    recipe.add_argument("--frame-skip", type=int, choices=[1, 2, 3], default=1)
+    recipe.add_argument("--frame-limit", type=int)
+    inspect = commands.add_parser(
+        "recipe-inspect", help="Validate a sandbox visual experiment recipe"
+    )
+    inspect.add_argument("--input", type=Path, required=True)
     return parser
 
 
@@ -79,6 +95,29 @@ def main(argv=None):
             print(f"Sandbox flight smoke failed: {error}")
             return 1
         _print({"status": "complete", "run_root": str(root)})
+        return 0
+    if args.command == "recipe-create":
+        try:
+            recipe, output = materialize_recipe(
+                config.project_root,
+                args.name,
+                partition=args.partition,
+                input_size=args.input_size,
+                frame_skip_interval=args.frame_skip,
+                frame_limit=args.frame_limit,
+            )
+        except (FileNotFoundError, KeyError, TypeError, ValueError) as error:
+            print(f"Sandbox recipe failed: {error}")
+            return 1
+        _print({"path": str(output / "recipe.json"), "recipe": recipe.to_record()})
+        return 0
+    if args.command == "recipe-inspect":
+        try:
+            result = inspect_recipe(args.input)
+        except (FileNotFoundError, TypeError, ValueError) as error:
+            print(f"Sandbox recipe failed: {error}")
+            return 1
+        _print(result)
         return 0
     return serve_inspector([
         "--host", args.host,
