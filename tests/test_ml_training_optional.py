@@ -9,7 +9,11 @@ from src.ml.dataset_builder import build_dataset_manifest
 from src.ml.model_package import create_model_package, validate_model_package
 from src.ml.predictions import evaluate_predictions, predict_dataset
 from src.ml.research_recorder import ResearchDatasetWriter
-from src.ml.train_lidar import _validate_training_label_coverage, train
+from src.ml.train_lidar import (
+    _is_better_checkpoint,
+    _validate_training_label_coverage,
+    train,
+)
 
 
 ML_RUNTIME_AVAILABLE = all(
@@ -44,6 +48,23 @@ def sample(split, map_id, seed, index, risk):
     ML_RUNTIME_AVAILABLE, "optional PyTorch/ONNX research stack is not installed"
 )
 class EndToEndTrainingTests(unittest.TestCase):
+    def test_checkpoint_selection_prioritizes_macro_f1_over_total_loss(self):
+        self.assertTrue(
+            _is_better_checkpoint(
+                {"macro_f1": 0.7, "loss": 5.0}, best_f1=0.6, best_loss=1.0
+            )
+        )
+        self.assertFalse(
+            _is_better_checkpoint(
+                {"macro_f1": 0.5, "loss": 0.1}, best_f1=0.6, best_loss=1.0
+            )
+        )
+        self.assertTrue(
+            _is_better_checkpoint(
+                {"macro_f1": 0.6, "loss": 0.9}, best_f1=0.6, best_loss=1.0
+            )
+        )
+
     def test_training_rejects_missing_risk_classes_by_default(self):
         samples = [sample("train", "simple", 2001, 0, "clear")]
         with self.assertRaisesRegex(ValueError, "warning, danger"):

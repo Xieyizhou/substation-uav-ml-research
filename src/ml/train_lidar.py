@@ -128,6 +128,14 @@ def _batch_loss(outputs, targets, losses):
     )
 
 
+def _is_better_checkpoint(validation, best_f1, best_loss):
+    macro_f1 = float(validation["macro_f1"])
+    loss = float(validation["loss"])
+    return macro_f1 > best_f1 + 1e-6 or (
+        abs(macro_f1 - best_f1) <= 1e-6 and loss < best_loss - 1e-6
+    )
+
+
 def _evaluate(model, tensors, losses, torch):
     scans, risk, traversability, direction = tensors
     model.eval()
@@ -241,7 +249,7 @@ def train(
     checkpoint = package_dir / "checkpoints/best.pt"
     checkpoint.parent.mkdir(parents=True, exist_ok=True)
     history = []
-    best_loss, stale_epochs = float("inf"), 0
+    best_f1, best_loss, stale_epochs = float("-inf"), float("inf"), 0
     for epoch in range(1, epochs + 1):
         model.train()
         training_loss = 0.0
@@ -262,8 +270,9 @@ def train(
                 "validation_macro_f1": validation["macro_f1"],
             }
         )
-        if validation["loss"] < best_loss - 1e-6:
-            best_loss, stale_epochs = validation["loss"], 0
+        if _is_better_checkpoint(validation, best_f1, best_loss):
+            best_f1 = float(validation["macro_f1"])
+            best_loss, stale_epochs = float(validation["loss"]), 0
             torch.save(model.state_dict(), checkpoint)
         else:
             stale_epochs += 1
