@@ -28,6 +28,8 @@ class SafetySupervisor:
                 0.0,
                 detection.get("sensor_message") or "sensor is unhealthy",
             )
+        if detection.get("sensor_message"):
+            return SafetyDecision("hover", 0.0, detection["sensor_message"])
         age_s = detection.get("sensor_frame_age_s")
         if age_s is not None and age_s > self.stale_after_s:
             return SafetyDecision("hover_then_land", 0.0, "sensor data is stale")

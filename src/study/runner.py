@@ -44,7 +44,7 @@ def _flight_arguments(
     common = [
         "--scenario-manifest",
         str(scenario_manifest),
-        "--sensor-startup-timeout", "20",
+        "--sensor-startup-timeout", "20", "--sensor-stale-after", "2.0",
         "--enable-local-replan",
         "--replan-mode",
         "active",

@@ -78,6 +78,8 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         )
         timeout_index = arguments.index("--sensor-startup-timeout")
         self.assertEqual(arguments[timeout_index + 1], "20")
+        stale_index = arguments.index("--sensor-stale-after")
+        self.assertEqual(arguments[stale_index + 1], "2.0")
 
     def test_attempt_directories_preserve_previous_evidence(self):
         run_root = self.root / "run"

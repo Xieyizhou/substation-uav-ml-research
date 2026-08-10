@@ -106,6 +106,17 @@ class ProtocolAndSafetyTests(unittest.TestCase):
         )
         self.assertEqual(decision.action, "hover")
 
+    def test_degraded_sensor_hovers_until_fresh_data_recovers(self):
+        supervisor = SafetySupervisor(stale_after_s=2.0)
+        decision = supervisor.evaluate({
+            "sensor_healthy": True,
+            "sensor_message": "injected sensor stream outage within stale tolerance",
+            "sensor_frame_age_s": 0.8,
+            "risk_level": "clear",
+        })
+        self.assertEqual(decision.action, "hover")
+        self.assertEqual(decision.speed_scale, 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
