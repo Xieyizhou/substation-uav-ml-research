@@ -18,6 +18,7 @@ RECIPE_SCHEMA_VERSION = 1
 ALLOWED_PARTITIONS = frozenset({"validation", "full_validation"})
 ALLOWED_INPUT_SIZES = frozenset({320, 416, 640})
 ALLOWED_FRAME_SKIP_INTERVALS = frozenset({1, 2, 3})
+SELECTION_ALGORITHM = "uniform_partition_bins_v1"
 DEFAULT_DATASET_ROOT = Path("data/research/visual_yolo_v2")
 DEFAULT_PACKAGE_ROOT = Path("models/equipment/visual-yolo11n-baseline-v2-package")
 EXPERIMENT_ID = re.compile(r"^[a-z0-9][a-z0-9_-]{2,63}$")
@@ -32,6 +33,7 @@ class ExperimentRecipe:
     frame_limit: int
     source_frame_count: int
     inference_frame_count: int
+    selection_algorithm: str
     dataset_root: str
     package_root: str
     training_view_identity_sha256: str
@@ -64,6 +66,8 @@ class ExperimentRecipe:
         expected = (self.source_frame_count + self.frame_skip_interval - 1) // self.frame_skip_interval
         if self.inference_frame_count != expected:
             raise ValueError("inference frame count does not match frame-skip policy")
+        if self.selection_algorithm != SELECTION_ALGORITHM:
+            raise ValueError("unsupported sandbox frame-selection algorithm")
         for name in ("dataset_root", "package_root", "runtime_backend", "device", "software_commit_sha"):
             object.__setattr__(self, name, required_text(getattr(self, name), name))
         for name in (
@@ -166,6 +170,7 @@ def materialize_recipe(
         frame_limit=limit,
         source_frame_count=limit,
         inference_frame_count=(limit + frame_skip_interval - 1) // frame_skip_interval,
+        selection_algorithm=SELECTION_ALGORITHM,
         dataset_root=DEFAULT_DATASET_ROOT.as_posix(),
         package_root=DEFAULT_PACKAGE_ROOT.as_posix(),
         training_view_identity_sha256=identity.training_view_identity_sha256,

@@ -17,11 +17,21 @@ from src.vision.evaluation.yolo_package import validate_yolo_package
 from src.vision.replay.static_runtime import runtime_environment, timing_summary
 from src.vision.replay.static_source import ordered_replay_sources, write_source_list
 
-from src.sandbox.experiment_recipe import ExperimentRecipe
+from src.sandbox.experiment_recipe import ExperimentRecipe, SELECTION_ALGORITHM
 
 
 TIMING_KEYS = ("preprocess_ms", "inference_ms", "postprocess_ms", "end_to_end_ms")
 WARMUP_FRAME_COUNT = 8
+
+
+def select_source_rows(rows, limit, algorithm):
+    if algorithm != SELECTION_ALGORITHM:
+        raise ValueError("unsupported sandbox frame-selection algorithm")
+    if limit <= 0 or limit > len(rows):
+        raise ValueError("sandbox frame limit exceeds available membership")
+    if limit == len(rows):
+        return list(rows)
+    return [rows[((2 * index + 1) * len(rows)) // (2 * limit)] for index in range(limit)]
 
 
 def _clean_commit(project_root):
@@ -63,7 +73,9 @@ def _load_context(project_root, recipe_path):
     membership = dataset_root / "identity" / f"{recipe.partition}_membership.jsonl"
     if file_sha256(membership) != recipe.membership_sha256:
         raise ValueError("recipe membership hash mismatch")
-    rows = _read_jsonl(membership)[: recipe.frame_limit]
+    rows = select_source_rows(
+        _read_jsonl(membership), recipe.frame_limit, recipe.selection_algorithm
+    )
     if len(rows) != recipe.source_frame_count:
         raise ValueError("recipe source frame count is unavailable")
     models = json.loads((package_root / "model_identities.json").read_text())
@@ -138,6 +150,7 @@ def _aggregate_result(recipe, rows, dataset_root, raw, predictions, timings, wal
         "partition": recipe.partition,
         "input_size": recipe.input_size,
         "frame_skip_interval": recipe.frame_skip_interval,
+        "selection_algorithm": recipe.selection_algorithm,
         "confidence_threshold": recipe.confidence_threshold,
         "frame_counts": {
             "source": len(rows), "inferred": len(raw),

@@ -10,6 +10,7 @@ from src.sandbox.experiment_runner import (
     _approved_recipe_path,
     inspect_result,
     run_recipe,
+    select_source_rows,
 )
 
 
@@ -26,6 +27,7 @@ def recipe(**overrides):
         "frame_limit": 3,
         "source_frame_count": 3,
         "inference_frame_count": 2,
+        "selection_algorithm": "uniform_partition_bins_v1",
         "dataset_root": "data/research/visual_yolo_v2",
         "package_root": "models/package",
         "training_view_identity_sha256": HASH,
@@ -123,6 +125,17 @@ class SandboxExperimentRunnerTests(unittest.TestCase):
         outside.write_text("{}")
         with self.assertRaisesRegex(ValueError, "outside"):
             _approved_recipe_path(self.root, outside)
+
+    def test_frame_budget_is_spread_across_full_membership(self):
+        rows = list(range(100))
+        self.assertEqual(
+            select_source_rows(rows, 4, "uniform_partition_bins_v1"),
+            [12, 37, 62, 87],
+        )
+        self.assertEqual(
+            select_source_rows(rows, 4, "uniform_partition_bins_v1"),
+            select_source_rows(rows, 4, "uniform_partition_bins_v1"),
+        )
 
     def test_result_tampering_is_rejected(self):
         result = {"value": 1}

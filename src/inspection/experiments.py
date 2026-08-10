@@ -38,6 +38,7 @@ def _summary(directory):
         "partition": recipe["partition"],
         "input_size": recipe["input_size"],
         "frame_skip_interval": recipe["frame_skip_interval"],
+        "selection_algorithm": recipe["selection_algorithm"],
         "source_frame_count": recipe["source_frame_count"],
         "inference_frame_count": recipe["inference_frame_count"],
         "confidence_threshold": recipe["confidence_threshold"],

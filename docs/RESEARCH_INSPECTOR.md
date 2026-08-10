@@ -48,7 +48,8 @@ browser.
 The Experiments tab creates and runs a recipe in one managed job. A recipe
 binds the training view, exact membership, frozen package, selected ONNX
 identity, preprocessing identity, frozen confidence threshold, frame budget,
-schedule, CPU runtime, and clean source commit. Completed cards report fixed-
+uniform full-partition sampling algorithm, schedule, CPU runtime, and clean
+source commit. Completed cards report fixed-
 threshold precision, recall, per-size behavior, latency, throughput, small-
 object recall, and no-target false-positive rate. These are diagnostic
 development results; AP and formal held-out claims are intentionally absent.

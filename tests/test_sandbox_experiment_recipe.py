@@ -103,6 +103,7 @@ class SandboxExperimentRecipeTests(unittest.TestCase):
             "experiment_id": "valid-recipe", "partition": "blind",
             "input_size": 416, "frame_skip_interval": 1, "frame_limit": 1,
             "source_frame_count": 1, "inference_frame_count": 1,
+            "selection_algorithm": "uniform_partition_bins_v1",
             "dataset_root": "dataset", "package_root": "package",
             "training_view_identity_sha256": HASH, "membership_sha256": HASH,
             "package_identity_sha256": HASH, "model_identity_sha256": HASH,
