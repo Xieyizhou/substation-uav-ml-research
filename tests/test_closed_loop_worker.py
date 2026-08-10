@@ -6,7 +6,12 @@ from unittest.mock import patch
 
 from src.cli.studies import build_parser
 from src.ml.artifacts import write_json
-from src.study.closed_loop_worker import _attempt_root, _probe_lidar, execute_closed_loop
+from src.study.closed_loop_worker import (
+    _attempt_root,
+    _probe_lidar,
+    _run_one,
+    execute_closed_loop,
+)
 from src.study.registry import ResearchRegistry
 from src.study.runner import _flight_arguments
 
@@ -87,10 +92,37 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     @patch("src.study.closed_loop_worker.subprocess.run")
     def test_probe_discovers_topic_without_consuming_sensor_stream(self, run, ensure):
         run.return_value.returncode = 0
-        _probe_lidar(self.root / "probe.log", object(), 1.0, 5.0)
+        run.return_value.stdout = '{"lidar_2d": "/world/test/scan"}\n'
+        topic = _probe_lidar(self.root / "probe.log", object(), 1.0, 5.0)
         command = run.call_args.args[0]
         self.assertEqual(command[-3:], ["sensor", "list", "--json"])
+        self.assertEqual(topic, "/world/test/scan")
         ensure.assert_called_once()
+
+    @patch("src.study.closed_loop_worker._metrics", return_value={})
+    @patch("src.study.closed_loop_worker._completed_status")
+    @patch("src.study.closed_loop_worker._new_flight_log")
+    @patch("src.study.closed_loop_worker.wait_process")
+    @patch("src.study.closed_loop_worker.stop_process")
+    @patch("src.study.closed_loop_worker.ensure_process_running")
+    @patch("src.study.closed_loop_worker.start_process")
+    @patch("src.study.closed_loop_worker._probe_lidar", return_value="/world/test/scan")
+    @patch("src.study.closed_loop_worker._run_setup")
+    def test_run_uses_discovered_runtime_topic(
+        self, setup, probe, start, ensure, stop, wait, new_log, status, metrics
+    ):
+        new_log.return_value = self.root / "flight.csv"
+        start.side_effect = [object(), object()]
+        row = {
+            "setup_commands": [], "launcher_environment": {},
+            "launcher_command": ["launcher"],
+            "flight_command": ["python", "main.py", "task"],
+            "oracle_planner_config": "planner.json",
+        }
+        _run_one(row, self.root / "run", startup_timeout_s=1.0,
+                 probe_timeout_s=1.0, flight_timeout_s=1.0)
+        flight_command = start.call_args_list[1].args[1]
+        self.assertEqual(flight_command[-2:], ["--sensor-topic", "/world/test/scan"])
 
     @patch("src.study.closed_loop_worker._run_one")
     @patch("src.study.closed_loop_worker.ingest_results")

@@ -58,11 +58,19 @@ def _probe_lidar(log_path, launcher, startup_timeout_s, probe_timeout_s):
         ensure_process_running(launcher, settle_s=0.0)
         with Path(log_path).open("a", encoding="utf-8") as output:
             result = subprocess.run(
-                command, cwd=ROOT, stdout=output, stderr=subprocess.STDOUT,
-                timeout=probe_timeout_s + 10.0,
+                command, cwd=ROOT, stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT, timeout=probe_timeout_s + 10.0,
+                text=True,
             )
+            output.write(result.stdout or "")
         if result.returncode == 0:
-            return
+            for line in reversed((result.stdout or "").splitlines()):
+                try:
+                    topic = json.loads(line).get("lidar_2d")
+                except json.JSONDecodeError:
+                    continue
+                if topic:
+                    return topic
         time.sleep(2.0)
     raise CollectionProcessError("Gazebo LiDAR was not ready before startup timeout")
 
@@ -122,10 +130,13 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
             run_root / "simulator.log", env=environment,
         )
         ensure_process_running(launcher)
-        _probe_lidar(
+        lidar_topic = _probe_lidar(
             run_root / "probe.log", launcher, startup_timeout_s, probe_timeout_s
         )
-        command = [sys.executable, *row["flight_command"][1:]]
+        command = [
+            sys.executable, *row["flight_command"][1:],
+            "--sensor-topic", lidar_topic,
+        ]
         flight = start_process("flight task", command, run_root / "flight.log")
         wait_process(flight, flight_timeout_s)
         log_path = _new_flight_log(before)
