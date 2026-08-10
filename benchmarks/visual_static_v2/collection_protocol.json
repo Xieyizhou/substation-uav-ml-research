@@ -1,0 +1,108 @@
+{
+  "collection_protocol_schema_version": 2,
+  "protocol_version": 2,
+  "protocol_id": "visual-multiscenario-png-v2",
+  "evidence_role": "baseline_v2_development_validation_and_blind_evaluation",
+  "canonical_payload_format": "png",
+  "canonical_pixel_format": "rgb8",
+  "required_pilot_protocol": "visual-pilot-png-v3",
+  "randomization": {
+    "configuration": "config/perception/visual_domain_randomization_v2.json",
+    "generator_version": "gazebo-sdf-v3",
+    "materialized_world_required": true,
+    "applied_visual_fields": [
+      "equipment_scale",
+      "equipment_position_jitter_m",
+      "equipment_yaw_deg",
+      "material_age",
+      "light_intensity",
+      "weather",
+      "camera_noise_stddev",
+      "unknown_obstacles"
+    ],
+    "explicitly_not_applied": [
+      "rain_particles",
+      "motion_blur",
+      "sensor_outage"
+    ]
+  },
+  "layout_allocation": {
+    "development": {
+      "layout_ids": ["development-01", "development-02", "development-03", "development-04", "development-05", "development-06"],
+      "seed_first": 3001,
+      "seed_last": 3030
+    },
+    "validation": {
+      "layout_ids": ["validation-01", "validation-02"],
+      "seed_first": 3031,
+      "seed_last": 3040
+    },
+    "blind": {
+      "layout_ids": ["blind-01", "blind-02"],
+      "seed_first": 3041,
+      "seed_last": 3050
+    }
+  },
+  "routes": [
+    {"route_id": "transformer_centered_v2", "target_class": "transformer"},
+    {"route_id": "switchgear_centered_v2", "target_class": "switchgear"},
+    {"route_id": "capacitor_bank_centered_v2", "target_class": "capacitor_bank"},
+    {"route_id": "reactor_centered_v2", "target_class": "reactor"},
+    {"route_id": "background_transit_v2", "target_class": null}
+  ],
+  "split_policy": {
+    "minimum_split_unit": "layout",
+    "layout_overlap_forbidden": true,
+    "seed_overlap_forbidden": true,
+    "scenario_overlap_forbidden": true,
+    "blind_prediction_locked_until_package_freeze": true
+  },
+  "recording": {
+    "recordings_per_scenario": 1,
+    "route": "visual_centered_yaw_v2",
+    "route_schema_version": 4,
+    "required_mission_phases": ["cruise_distant", "approach", "close_inspection", "target_transition"],
+    "retain_every_valid_source_frame": true,
+    "automatic_downsampling": false,
+    "default_phase_source": "flight_lifecycle",
+    "automatic_stop_condition": "completed_landed_and_landing_confirmed",
+    "default_post_landing_drain_s": 1.0,
+    "manual_phase_fallback_allowed": false,
+    "altitude_m": 1.5,
+    "camera_pitch_down_deg": 5.0,
+    "camera_intrinsics_policy": "horizontal_fov_square_pixels_centered_v1",
+    "camera_heading_offset_deg": 341.0,
+    "vehicle_spawn_clearance_m": 0.1,
+    "small_scale_range_m": [16.0, 18.0],
+    "distant_range_m": [8.0, 12.0],
+    "approach_range_m": [4.0, 6.0],
+    "close_range_m": [2.5, 3.5],
+    "close_yaw_offsets_deg": [-30.0, 0.0, 30.0],
+    "minimum_close_hold_s": 1.5,
+    "minimum_phase_duration_s": 2.0,
+    "maximum_invalid_truth_rgb_fraction": 0.005,
+    "maximum_consecutive_invalid_truth_rgb_frames": 2,
+    "maximum_unmatched_rgb_frames": 0,
+    "maximum_ambiguous_rgb_frames": 2
+  },
+  "route_gate": {
+    "minimum_target_frames": 1000,
+    "minimum_frames_per_size_bin": 150,
+    "maximum_truncated_fraction": 0.5
+  },
+  "flight_timeout_policy": {
+    "nominal_horizontal_speed_m_s": 0.8,
+    "waypoint_settle_s": 1.0,
+    "yaw_acquisition_allowance_s_per_observation": 4.0,
+    "fixed_overhead_s": 30.0,
+    "timeout_multiplier": 1.2,
+    "minimum_timeout_s": 180.0,
+    "maximum_timeout_s": 360.0
+  },
+  "aggregate_gate": {
+    "required_classes_per_split": ["transformer", "switchgear", "capacitor_bank", "reactor"],
+    "minimum_labelled_frames_per_class": {"development": 4000, "validation": 1000, "blind": 1000},
+    "minimum_frames_per_class_size_bin": {"development": 500, "validation": 150, "blind": 150},
+    "minimum_verified_no_target_frames": {"development": 4000, "validation": 1000, "blind": 1000}
+  }
+}

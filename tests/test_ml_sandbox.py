@@ -3,6 +3,7 @@ from pathlib import Path
 import tempfile
 import time
 import unittest
+import xml.etree.ElementTree as ET
 
 from src.ml.artifacts import file_sha256
 from src.ml.dataset import ResearchSample
@@ -113,6 +114,22 @@ class ScenarioAndTruthTests(unittest.TestCase):
                 randomized["scenario_config_hash"], manifest["config_hash"]
             )
 
+    def test_randomized_light_color_is_clamped_to_sdf_range(self):
+        config = load_ranges(ROOT / "config/perception/domain_randomization.json")
+        manifest = sample_manifest(config, map_id="simple", seed=2007)
+        manifest["light_intensity"] = 2.0
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "world.sdf"
+            materialize_world(
+                ROOT / "simulation/worlds/substation_simple.sdf",
+                output,
+                manifest,
+            )
+            diffuse = ET.parse(output).getroot().findtext(
+                "./world/light[@name='sun']/diffuse"
+            )
+        self.assertEqual(diffuse, "1 1 1 1")
+
 
 class DatasetManifestTests(unittest.TestCase):
     def test_small_replay_builds_a_valid_automatically_labelled_dataset(self):
@@ -157,6 +174,61 @@ class DatasetManifestTests(unittest.TestCase):
                 validate_dataset_directory(root / "dataset")["dataset_id"],
                 result["dataset_id"],
             )
+
+    def test_flight_csv_is_synchronized_to_scan_receive_time(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            replay = root / "scan.jsonl"
+            append_scan_record(
+                replay,
+                LaserScanFrame(
+                    timestamp_s=100,
+                    received_monotonic_s=10,
+                    frame_id="lidar",
+                    angle_min_rad=-1,
+                    angle_max_rad=1,
+                    angle_step_rad=1,
+                    range_min_m=0.1,
+                    range_max_m=10,
+                    ranges_m=(5.0, 0.5, 5.0),
+                    source="fixture",
+                    sequence=1,
+                ),
+            )
+            replay.with_suffix(".metadata.json").write_text(
+                json.dumps({"wall_clock_minus_monotonic_s": 10})
+            )
+            telemetry = root / "flight.csv"
+            telemetry.write_text(
+                "timestamp_utc,local_north_m,local_east_m,local_down_m,"
+                "velocity_north_m_s,velocity_east_m_s,velocity_down_m_s,"
+                "yaw_deg,sensor_frame_age_s,sensor_healthy\n"
+                "1970-01-01T00:00:20+00:00,1,2,-3,0.5,0.25,0,45,0.01,true\n"
+            )
+            manifest = {
+                "seed": 2001,
+                "config_hash": "b" * 64,
+                "lidar_noise_stddev_m": 0,
+                "lidar_dropout_probability": 0,
+                "sensor_outage_probability": 0,
+                "attitude_jitter_deg": 0,
+            }
+            collect_replay(
+                replay,
+                root / "dataset",
+                map_id="simple",
+                target_id="center",
+                seed=2001,
+                scenario_manifest=manifest,
+                telemetry_path=telemetry,
+            )
+            sample = json.loads(
+                (root / "dataset/samples.jsonl").read_text().splitlines()[0]
+            )
+            self.assertEqual(sample["pose_ned_m"], [1.0, 2.0, -3.0])
+            self.assertEqual(sample["velocity_ned_m_s"], [0.5, 0.25, 0.0])
+            self.assertEqual(sample["sensor_data_age_ms"], 10.0)
+            self.assertTrue(sample["sensor_healthy"])
 
     def test_manifest_hash_detects_changed_data(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -261,6 +333,68 @@ class FaultInjectionTests(unittest.TestCase):
         self.assertFalse(source.health().healthy)
         self.assertIn("outage", source.health().message)
 
+    def test_short_outage_retains_last_frame_within_stale_tolerance(self):
+        received = time.monotonic()
+        first = LaserScanFrame(
+            timestamp_s=1, received_monotonic_s=received, frame_id="lidar",
+            angle_min_rad=-1, angle_max_rad=1, angle_step_rad=1,
+            range_min_m=0.1, range_max_m=10, ranges_m=(1.0, 2.0, 3.0),
+            source="fake", sequence=1,
+        )
+        underlying = _FakeSource(first)
+        source = FaultInjectedLidarSource(underlying, {
+            "seed": 1, "sensor_outage_probability": 1.0,
+            "sensor_outage_duration_s": 0.3,
+            "lidar_noise_stddev_m": 0, "lidar_dropout_probability": 0,
+        })
+        source._cached_sequence = 1
+        source._cached_frame = first
+        underlying.frame = LaserScanFrame(**{**first.__dict__, "sequence": 2})
+        self.assertEqual(source.latest().sequence, 1)
+        self.assertTrue(source.health(now_s=received + 0.1).healthy)
+        self.assertIn("stale tolerance", source.health(now_s=received + 0.1).message)
+
+    def test_prolonged_outage_becomes_unhealthy_after_stale_budget(self):
+        received = time.monotonic()
+        frame = LaserScanFrame(
+            timestamp_s=1, received_monotonic_s=received, frame_id="lidar",
+            angle_min_rad=-1, angle_max_rad=1, angle_step_rad=1,
+            range_min_m=0.1, range_max_m=10, ranges_m=(1.0,),
+            source="fake", sequence=1,
+        )
+        underlying = _FakeSource(frame)
+        source = FaultInjectedLidarSource(underlying, {
+            "seed": 1, "sensor_outage_probability": 1.0,
+            "sensor_outage_duration_s": 1.0,
+            "lidar_noise_stddev_m": 0, "lidar_dropout_probability": 0,
+        })
+        source._cached_sequence = 1
+        source._cached_frame = frame
+        underlying.frame = LaserScanFrame(**{**frame.__dict__, "sequence": 2})
+        source.latest()
+        self.assertFalse(source.health(now_s=received + 0.6).healthy)
+
+    def test_first_frame_after_outage_is_always_a_recovery_frame(self):
+        frame = LaserScanFrame(
+            timestamp_s=1, received_monotonic_s=time.monotonic(), frame_id="lidar",
+            angle_min_rad=-1, angle_max_rad=1, angle_step_rad=1,
+            range_min_m=0.1, range_max_m=10, ranges_m=(1.0,),
+            source="fake", sequence=1,
+        )
+        underlying = _FakeSource(frame)
+        source = FaultInjectedLidarSource(underlying, {
+            "seed": 1, "sensor_outage_probability": 1.0,
+            "sensor_outage_duration_s": 0.1,
+            "lidar_noise_stddev_m": 0, "lidar_dropout_probability": 0,
+        })
+        source._cached_sequence = 1
+        source._cached_frame = frame
+        source._outage = True
+        source._outage_until_s = 0.0
+        underlying.frame = LaserScanFrame(**{**frame.__dict__, "sequence": 2})
+        self.assertEqual(source.latest().sequence, 2)
+        self.assertFalse(source._outage)
+
 
 class RegistryAndComparisonTests(unittest.TestCase):
     def test_registry_scheduling_is_idempotent_and_resume_only_resets_failures(self):
@@ -308,6 +442,7 @@ class RegistryAndComparisonTests(unittest.TestCase):
             )
             for row in payload["runs"]:
                 self.assertTrue(Path(row["scenario_manifest"]).is_file())
+                self.assertIn(f"{study}/replay/results", row["result_path"])
 
     def test_paired_bootstrap_and_promotion_gate(self):
         runs = []

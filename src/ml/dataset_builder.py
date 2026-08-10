@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from collections import Counter
+import csv
+from datetime import datetime
 import json
 from pathlib import Path
 import random
@@ -37,10 +39,90 @@ def _read_jsonl(path):
     return rows
 
 
-def _nearest_telemetry(rows, timestamp_s):
+def _optional_float(value):
+    if value in (None, ""):
+        return None
+    return float(value)
+
+
+def _read_flight_csv(path, replay_path, frames):
+    metadata_path = Path(replay_path).with_suffix(".metadata.json")
+    if metadata_path.is_file():
+        metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+        clock_offset_s = metadata.get("wall_clock_minus_monotonic_s")
+    else:
+        clock_offset_s = None
+    if clock_offset_s is None:
+        # Schema-v1 recordings did not persist the clock relationship. The raw
+        # file is flushed for every frame, so its mtime provides a close,
+        # persistent calibration against the final monotonic receive timestamp.
+        clock_offset_s = (
+            Path(replay_path).stat().st_mtime - frames[-1].received_monotonic_s
+        )
+    rows = []
+    with Path(path).open(newline="", encoding="utf-8") as source:
+        for line_number, raw in enumerate(csv.DictReader(source), start=2):
+            try:
+                pose = tuple(
+                    _optional_float(raw.get(name))
+                    for name in ("local_north_m", "local_east_m", "local_down_m")
+                )
+                velocity = tuple(
+                    _optional_float(raw.get(name))
+                    for name in (
+                        "velocity_north_m_s",
+                        "velocity_east_m_s",
+                        "velocity_down_m_s",
+                    )
+                )
+                if any(value is None for value in pose + velocity):
+                    continue
+                timestamp_utc = datetime.fromisoformat(raw["timestamp_utc"])
+                if timestamp_utc.tzinfo is None:
+                    raise ValueError("timestamp_utc must include a timezone")
+                sensor_age_s = _optional_float(raw.get("sensor_frame_age_s"))
+                sensor_healthy = str(raw.get("sensor_healthy", "")).lower()
+                rows.append(
+                    {
+                        "_match_received_monotonic_s": (
+                            timestamp_utc.timestamp() - float(clock_offset_s)
+                        ),
+                        "pose_ned_m": pose,
+                        "velocity_ned_m_s": velocity,
+                        "yaw_deg": _optional_float(raw.get("yaw_deg")) or 0.0,
+                        "sensor_data_age_ms": (
+                            sensor_age_s * 1000.0 if sensor_age_s is not None else 0.0
+                        ),
+                        "sensor_healthy": sensor_healthy in {"1", "true", "yes"},
+                    }
+                )
+            except (KeyError, TypeError, ValueError) as error:
+                raise ValueError(f"{path}:{line_number}: {error}") from error
+    if not rows:
+        raise ValueError(f"{path} contains no flight rows with pose and velocity")
+    return rows
+
+
+def _read_telemetry(path, replay_path, frames):
+    if path is None:
+        return []
+    if Path(path).suffix.lower() == ".csv":
+        return _read_flight_csv(path, replay_path, frames)
+    return _read_jsonl(path)
+
+
+def _nearest_telemetry(rows, frame):
     if not rows:
         return {}
-    return min(rows, key=lambda row: abs(float(row["timestamp_s"]) - timestamp_s))
+    if "_match_received_monotonic_s" in rows[0]:
+        target_s = frame.received_monotonic_s
+        key = "_match_received_monotonic_s"
+        if not float(rows[0][key]) <= target_s <= float(rows[-1][key]):
+            return None
+    else:
+        target_s = frame.timestamp_s
+        key = "timestamp_s"
+    return min(rows, key=lambda row: abs(float(row[key]) - target_s))
 
 
 def collect_replay(
@@ -58,7 +140,7 @@ def collect_replay(
     split = split_for(map_id, int(seed))
     scenario = scenario_id(map_id, target_id, seed)
     frames = load_scan_records(Path(replay_path))
-    telemetry = _read_jsonl(telemetry_path)
+    telemetry = _read_telemetry(telemetry_path, replay_path, frames)
     dataset_dir = Path(dataset_dir)
     samples_path = dataset_dir / "samples.jsonl"
     manifest_path = dataset_dir / "dataset_manifest.json"
@@ -73,7 +155,9 @@ def collect_replay(
     )
     with ResearchDatasetWriter(samples_path) as writer:
         for frame in frames:
-            state = _nearest_telemetry(telemetry, frame.timestamp_s)
+            state = _nearest_telemetry(telemetry, frame)
+            if state is None:
+                continue
             velocity = tuple(
                 float(value)
                 for value in state.get("velocity_ned_m_s", (0.0, 0.0, 0.0))

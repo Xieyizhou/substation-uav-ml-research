@@ -30,6 +30,10 @@ def create_model_package(
     destination_model = package_dir / "model.onnx"
     if source_model.resolve() != destination_model.resolve():
         shutil.copy2(source_model, destination_model)
+    source_external = source_model.with_suffix(source_model.suffix + ".data")
+    destination_external = destination_model.with_suffix(destination_model.suffix + ".data")
+    if source_external.is_file() and source_external.resolve() != destination_external.resolve():
+        shutil.copy2(source_external, destination_external)
     for source, name in (
         (training_history_path, "training_history.json"),
         (offline_metrics_path, "offline_metrics.json"),
@@ -43,6 +47,9 @@ def create_model_package(
     onnx_hash = file_sha256(destination_model)
     identity = {
         "onnx_sha256": onnx_hash,
+        "onnx_external_data_sha256": (
+            file_sha256(destination_external) if destination_external.is_file() else None
+        ),
         "dataset_id": dataset["dataset_id"],
         "parent_model": parent_model,
     }
@@ -57,6 +64,7 @@ def create_model_package(
         "training_parameters": training_parameters or {},
         "training_commit": git_commit(root),
         "onnx_sha256": onnx_hash,
+        "onnx_external_data_sha256": identity["onnx_external_data_sha256"],
         "input_contract": {
             "laser_scan": ["batch", 1, 360],
             "dtype": "float32",
@@ -90,4 +98,10 @@ def validate_model_package(package_dir):
     )
     if manifest.get("onnx_sha256") != file_sha256(package_dir / "model.onnx"):
         raise ValueError("model package ONNX hash mismatch")
+    external_hash = manifest.get("onnx_external_data_sha256")
+    external_path = package_dir / "model.onnx.data"
+    if external_hash and (
+        not external_path.is_file() or file_sha256(external_path) != external_hash
+    ):
+        raise ValueError("model package ONNX external data hash mismatch")
     return manifest

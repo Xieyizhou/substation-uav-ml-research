@@ -14,7 +14,7 @@ Evidence: [v0.1 LiDAR validation](docs/results/v0.1_lidar_validation_20260728.md
 This milestone is simulation evidence, not a real-airframe or statistical ML
 claim.
 
-## v0.2 — ML experiment sandbox — Infrastructure complete, evidence pending
+## v0.2 — ML experiment sandbox — Visual workflow complete, LiDAR evidence pending
 
 - [x] Materialize deterministic Gazebo worlds with equipment variation,
   unknown obstacles, and sensor-fault manifests.
@@ -26,9 +26,20 @@ claim.
 - [x] Package dataset/model identities, hashes, contracts, history, and metrics.
 - [x] Schedule replay, 5-scenario closed-loop, and 30-scenario paired formal
   studies in a resumable SQLite registry.
-- [ ] Collect the full split-isolated dataset and publish aggregate statistics.
-- [ ] Train the first candidate and complete replay, 5-scenario, and 120-run
-  formal evidence gates.
+- [x] Freeze PNG visual replay identity, annotation, preprocessing, static
+  condition/result contracts, nine unmaterialized templates, and a pilot
+  recording protocol.
+- [x] Implement the stable PNG camera/truth adapters, deterministic
+  synchronization, and pilot recording/identity workflow.
+- [x] Pass the live visual source, synchronization, route-coverage, and pilot
+  identity/annotation/determinism gate.
+- [x] Collect the 50-recording split-isolated visual dataset and preserve its
+  aggregate identities.
+- [x] Train and freeze the first visual candidate, run one paired blind
+  comparison, and complete the nine-condition static ONNX replay.
+- [x] Provide identity-bound non-blind experiment recipes and bounded App
+  execution for repeatable visual diagnostics.
+- [ ] Complete the LiDAR replay, 5-scenario, and 120-run formal evidence gates.
 
 The runner uses 30 paired scenarios × four conditions, not the previous
 1,800-run Cartesian expansion.

@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual_benchmark_result.schema.json",
+  "title": "Static Visual Benchmark Result",
+  "type": "object",
+  "required": [
+    "result_schema_version",
+    "condition_identity_sha256",
+    "dataset_identity_sha256",
+    "model_identity_sha256",
+    "decoder_configuration_id",
+    "preprocessing_configuration_id",
+    "software_commit_sha",
+    "runtime_environment_identity",
+    "started",
+    "completion_status",
+    "frame_counts",
+    "timing_summaries",
+    "scheduling_summaries",
+    "visual_metrics",
+    "resource_metrics",
+    "metric_availability",
+    "unavailable_metrics",
+    "failure_codes",
+    "raw_result_artifact_manifest_sha256",
+    "result_identity_sha256"
+  ],
+  "properties": {
+    "result_schema_version": {"const": 1},
+    "condition_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "dataset_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "model_identity_sha256": {"$ref": "#/$defs/sha256"},
+    "decoder_configuration_id": {"$ref": "#/$defs/sha256"},
+    "preprocessing_configuration_id": {"$ref": "#/$defs/sha256"},
+    "software_commit_sha": {"type": "string", "minLength": 1},
+    "runtime_environment_identity": {"$ref": "#/$defs/sha256"},
+    "started": {"type": "boolean"},
+    "completion_status": {"enum": ["started", "completed", "failed"]},
+    "frame_counts": {
+      "type": "object",
+      "required": ["total", "decoded", "inferred", "skipped", "failed_decode", "failed_inference", "labelled"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "decoded": {"type": "integer", "minimum": 0},
+        "inferred": {"type": "integer", "minimum": 0},
+        "skipped": {"type": "integer", "minimum": 0},
+        "failed_decode": {"type": "integer", "minimum": 0},
+        "failed_inference": {"type": "integer", "minimum": 0},
+        "labelled": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "timing_summaries": {
+      "type": "object",
+      "required": ["payload_load_ms", "decode_ms", "preprocess_ms", "backend_call_ms", "inference_ms", "postprocess_ms", "end_to_end_ms"],
+      "properties": {
+        "payload_load_ms": {"$ref": "#/$defs/optionalTimingSummary"},
+        "decode_ms": {"$ref": "#/$defs/optionalTimingSummary"},
+        "preprocess_ms": {"$ref": "#/$defs/optionalTimingSummary"},
+        "backend_call_ms": {"$ref": "#/$defs/optionalTimingSummary"},
+        "inference_ms": {"$ref": "#/$defs/optionalTimingSummary"},
+        "postprocess_ms": {"$ref": "#/$defs/optionalTimingSummary"},
+        "end_to_end_ms": {"$ref": "#/$defs/optionalTimingSummary"}
+      },
+      "additionalProperties": false
+    },
+    "scheduling_summaries": {
+      "type": "object",
+      "required": ["requested_inference_frames", "completed_inference_frames", "deadline_misses", "dropped_or_unavailable_frames"],
+      "properties": {
+        "requested_inference_frames": {"type": "integer", "minimum": 0},
+        "completed_inference_frames": {"type": "integer", "minimum": 0},
+        "deadline_misses": {"type": "integer", "minimum": 0},
+        "dropped_or_unavailable_frames": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "visual_metrics": {"type": "object"},
+    "resource_metrics": {"type": "object"},
+    "metric_availability": {"type": "object", "additionalProperties": {"type": "boolean"}},
+    "unavailable_metrics": {"type": "array", "items": {"type": "string"}},
+    "failure_codes": {"type": "array", "items": {"type": "string"}},
+    "raw_result_artifact_manifest_sha256": {
+      "anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+    },
+    "result_identity_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "optionalTimingSummary": {
+      "anyOf": [{"$ref": "#/$defs/timingSummary"}, {"type": "null"}]
+    },
+    "timingSummary": {
+      "type": "object",
+      "required": ["count", "min_ms", "max_ms", "mean_ms", "p50_ms", "p95_ms", "p99_ms"],
+      "properties": {
+        "count": {"type": "integer", "minimum": 0},
+        "min_ms": {"type": ["number", "null"], "minimum": 0},
+        "max_ms": {"type": ["number", "null"], "minimum": 0},
+        "mean_ms": {"type": ["number", "null"], "minimum": 0},
+        "p50_ms": {"type": ["number", "null"], "minimum": 0},
+        "p95_ms": {"type": ["number", "null"], "minimum": 0},
+        "p99_ms": {"type": ["number", "null"], "minimum": 0}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

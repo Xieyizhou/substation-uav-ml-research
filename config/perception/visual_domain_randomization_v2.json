@@ -1,0 +1,12 @@
+{
+  "schema_version": 2,
+  "equipment_scale": [0.8, 1.2],
+  "equipment_position_jitter_m": [-0.6, 0.6],
+  "equipment_yaw_deg": [0, 90, 180, 270],
+  "light_intensity": [0.35, 1.4],
+  "material_age": [0.0, 1.0],
+  "camera_noise_stddev": [0.0, 0.04],
+  "unknown_obstacle_count": [1, 3],
+  "unknown_obstacle_size_m": [0.6, 1.4],
+  "weather": ["clear", "overcast", "mist"]
+}

@@ -98,6 +98,18 @@ def _class_weights(samples, torch):
     )
 
 
+def _validate_training_label_coverage(samples, *, allow_incomplete=False):
+    present = {sample.risk_label for sample in samples}
+    missing = [label for label in RISK_LABELS if label not in present]
+    if missing and not allow_incomplete:
+        raise ValueError(
+            "training split is missing risk labels: "
+            + ", ".join(missing)
+            + "; collect representative training scenarios or use "
+            "--allow-incomplete-labels only for a pipeline smoke test"
+        )
+
+
 def _losses(nn, weights):
     return nn.CrossEntropyLoss(weight=weights), nn.BCELoss(), nn.SmoothL1Loss()
 
@@ -113,6 +125,14 @@ def _batch_loss(outputs, targets, losses):
         + map_loss(predicted_map, target_map)
         + 0.1 * direction_loss(predicted_direction, target_direction)
         + 0.05 * map_loss(uncertainty, uncertainty_target)
+    )
+
+
+def _is_better_checkpoint(validation, best_f1, best_loss):
+    macro_f1 = float(validation["macro_f1"])
+    loss = float(validation["loss"])
+    return macro_f1 > best_f1 + 1e-6 or (
+        abs(macro_f1 - best_f1) <= 1e-6 and loss < best_loss - 1e-6
     )
 
 
@@ -147,8 +167,8 @@ def _export_and_verify(model, path, example, torch, *, model_id):
         path,
         input_names=["laser_scan"],
         output_names=["risk_logits", "traversability", "direction_deg", "uncertainty"],
-        dynamic_axes={"laser_scan": {0: "batch"}},
-        opset_version=17,
+        dynamic_shapes={"scan": {0: torch.export.Dim("batch")}},
+        opset_version=18,
     )
     try:
         import numpy as np
@@ -193,6 +213,7 @@ def train(
     seed=7,
     patience=5,
     model_id="lidar-risk-cnn",
+    allow_incomplete_labels=False,
 ):
     torch, nn, DataLoader, TensorDataset = _torch()
     torch.manual_seed(seed)
@@ -209,6 +230,9 @@ def train(
     missing = [split for split, values in split_samples.items() if not values]
     if missing:
         raise ValueError("dataset is missing required splits: " + ", ".join(missing))
+    _validate_training_label_coverage(
+        split_samples["train"], allow_incomplete=allow_incomplete_labels
+    )
     tensors = {split: _tensors(values, torch) for split, values in split_samples.items()}
     loader = DataLoader(
         TensorDataset(*tensors["train"]),
@@ -225,7 +249,7 @@ def train(
     checkpoint = package_dir / "checkpoints/best.pt"
     checkpoint.parent.mkdir(parents=True, exist_ok=True)
     history = []
-    best_loss, stale_epochs = float("inf"), 0
+    best_f1, best_loss, stale_epochs = float("-inf"), float("inf"), 0
     for epoch in range(1, epochs + 1):
         model.train()
         training_loss = 0.0
@@ -246,8 +270,9 @@ def train(
                 "validation_macro_f1": validation["macro_f1"],
             }
         )
-        if validation["loss"] < best_loss - 1e-6:
-            best_loss, stale_epochs = validation["loss"], 0
+        if _is_better_checkpoint(validation, best_f1, best_loss):
+            best_f1 = float(validation["macro_f1"])
+            best_loss, stale_epochs = float(validation["loss"]), 0
             torch.save(model.state_dict(), checkpoint)
         else:
             stale_epochs += 1

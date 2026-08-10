@@ -1,19 +1,20 @@
-import os
 import tempfile
 import unittest
 from pathlib import Path
 
-os.environ.setdefault("MPLBACKEND", "Agg")
-
 import pandas as pd
 
 from src.logging import plotting
+import matplotlib
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class PlottingModuleTests(unittest.TestCase):
+    def test_file_plotting_uses_headless_backend(self):
+        self.assertEqual(matplotlib.get_backend().lower(), "agg")
+
     def test_compatibility_module_preserves_public_plot_functions(self):
         expected = {
             "save_collision_zoom_plot",

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from src.perception.lidar_detector import LidarRiskDetector
 from src.perception.local_costmap import RollingCostmapBuilder, build_local_costmap
-from src.sensors.gazebo_lidar import parse_laser_scan_message
+from src.sensors.gazebo_lidar import parse_laser_scan_message, select_lidar_topic
 from src.sensors.replay import ReplayLidarSource, append_scan_record, load_scan_records
 from src.sensors.types import LaserScanFrame, SensorHealth
 
@@ -50,6 +50,14 @@ class FakeSource:
 
 
 class SensorContractTests(unittest.TestCase):
+    def test_research_lidar_wins_over_generic_duplicate_topics(self):
+        topics = [
+            "/world/test/model/x500/link/link/sensor/lidar_2d_v2/scan",
+            "/world/test/model/x500/link/research_lidar_link/sensor/lidar_2d_v2/scan",
+            "/world/test/model/x500/link/lidar_sensor_link/sensor/lidar/scan",
+        ]
+        self.assertIn("research_lidar_link", select_lidar_topic(topics))
+
     def test_parse_gazebo_json_scan(self):
         frame = parse_laser_scan_message(
             {

@@ -1,8 +1,11 @@
 # Optional research stack. Core planning and replay tests do not require these.
 numpy==2.5.1
+Pillow==12.3.0
 torch==2.13.0
 onnx==1.22.0
 onnxruntime==1.27.0
+onnxscript==0.7.1
+onnxslim==0.1.94
 ultralytics==8.4.107
 grpcio==1.82.1
 grpcio-tools==1.82.1

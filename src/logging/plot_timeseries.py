@@ -1,5 +1,9 @@
 """Time-series plots for offline A* analysis reports."""
 
+from src.plotting_runtime import configure_matplotlib
+
+configure_matplotlib()
+
 import matplotlib.pyplot as plt
 
 from src.logging.metrics import (

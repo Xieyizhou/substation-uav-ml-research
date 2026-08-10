@@ -51,6 +51,7 @@ from src.flight.landing_manager import (
     wait_until_landed,
 )
 from src.flight.mavsdk_preflight import (
+    close_mavsdk_system,
     health_status_text,
     wait_for_connection as _wait_for_connection,
     wait_for_local_position as _wait_for_local_position,
@@ -165,6 +166,8 @@ async def run_flight(
     replan_config,
     perception_detector=None,
     return_home=False,
+    visual_mission_events=None,
+    mission_runner=None,
 ):
     settings = current_runtime_settings()
     configure_runtime(settings)
@@ -179,7 +182,10 @@ async def run_flight(
         "log_telemetry": log_telemetry,
         "fly_astar_waypoints": fly_astar_waypoints,
         "attempt_safe_landing": attempt_safe_landing,
+        "close_system": close_mavsdk_system,
     }
+    if mission_runner is not None:
+        services["mission_runner"] = mission_runner
     return await execute_flight(
         system_address,
         waypoints,
@@ -190,6 +196,7 @@ async def run_flight(
         services,
         perception_detector,
         return_home,
+        visual_mission_events,
     )
 
 
@@ -239,6 +246,19 @@ def main(argv=None):
         "altitude_m": planner_config["altitude_m"],
         "return_home_enabled": args.return_home,
     }
+    mission_payload = waypoints
+    mission_runner = None
+    if args.visual_route is not None:
+        from src.vision.collection.flight_route import (
+            fly_visual_observation_route,
+            load_visual_route,
+        )
+
+        mission_payload = load_visual_route(args.visual_route)
+        mission_runner = fly_visual_observation_route
+        planner_info["visual_route_identity_sha256"] = (
+            mission_payload.route_identity_sha256
+        )
     if args.compact_output:
         print(f"Route summary: {len(grid_path)} grid cells, {len(waypoints)} flight waypoints")
         print(
@@ -258,6 +278,12 @@ def main(argv=None):
         print("Dry run requested: not connecting to PX4 and not flying.")
         if args.return_home:
             print("Return-home preview requested.")
+        if args.visual_route is not None:
+            print(
+                "Visual route validated: "
+                f"{len(mission_payload.waypoints)} observation waypoint(s), "
+                f"identity {mission_payload.route_identity_sha256}"
+            )
         save_preview(
             grid_path,
             simplified_path,
@@ -273,12 +299,14 @@ def main(argv=None):
     run_with_bounded_shutdown(
         run_flight(
             args.system_address,
-            waypoints,
+            mission_payload,
             planner_info,
             perception_config,
             replan_config,
             perception_detector,
             return_home=args.return_home,
+            visual_mission_events=args.visual_mission_events,
+            mission_runner=mission_runner,
         ),
         LOGGER_SHUTDOWN_TIMEOUT_S,
     )

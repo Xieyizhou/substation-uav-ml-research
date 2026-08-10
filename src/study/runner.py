@@ -22,11 +22,13 @@ ROOT = Path(__file__).resolve().parents[2]
 RANDOMIZATION_CONFIG = ROOT / "config/perception/domain_randomization.json"
 
 
+def result_root(results_dir, study_id, tier):
+    return Path(results_dir) / study_id / tier / "results"
+
+
 def schedule_tier(registry, study_id, tier):
     study = registry.get_study(study_id)
-    matrix = tier_matrix(
-        tier, include_champion=bool(study.get("champion_model"))
-    )
+    matrix = tier_matrix(tier, include_champion=bool(study.get("champion_model")))
     return registry.ensure_runs(
         study_id,
         tier,
@@ -42,6 +44,7 @@ def _flight_arguments(
     common = [
         "--scenario-manifest",
         str(scenario_manifest),
+        "--sensor-startup-timeout", "20", "--sensor-stale-after", "2.0",
         "--enable-local-replan",
         "--replan-mode",
         "active",
@@ -228,7 +231,7 @@ def write_run_queue(registry, study_id, tier, output_dir):
                     ),
                 ],
                 "result_path": str(
-                    Path(output_dir).parent.parent
+                    result_root(Path(output_dir).parent.parent, study_id, tier)
                     / f"{run['scenario_id']}__{run['condition']}.json"
                 ),
             }
@@ -250,11 +253,15 @@ def ingest_results(registry, study_id, tier, results_dir):
     """Import one JSON metric artifact per scenario/condition if available."""
     scheduled = schedule_tier(registry, study_id, tier)
     results_dir = Path(results_dir)
+    scoped_results = result_root(results_dir, study_id, tier)
     imported = 0
     for run in scheduled:
         if run["status"] == "completed":
             continue
-        path = results_dir / f"{run['scenario_id']}__{run['condition']}.json"
+        path = scoped_results / f"{run['scenario_id']}__{run['condition']}.json"
+        legacy_path = results_dir / path.name
+        if not path.is_file() and legacy_path.is_file():
+            path = legacy_path
         if not path.is_file():
             continue
         try:

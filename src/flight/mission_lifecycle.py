@@ -4,6 +4,8 @@ import asyncio
 import contextlib
 
 from src.flight.async_runtime import cancel_tasks
+from src.flight.mavsdk_connection import connect_mavsdk
+from src.flight.mission_events import MissionEventWriter
 from src.flight.perception_response import DangerObstacleDetected
 from src.flight.replanning_controller import empty_replan_state
 
@@ -18,8 +20,9 @@ async def execute_flight(
     services,
     perception_detector=None,
     return_home=False,
+    visual_mission_events=None,
 ):
-    drone = services["system_factory"]()
+    drone = None
     log_path = services["make_log_path"]()
     latest = {
         "connected": None,
@@ -34,6 +37,18 @@ async def execute_flight(
     replan_state = empty_replan_state()
     replan_state["replan_mode"] = replan_config.get("mode", "log_only")
     phase_state = {"phase": "connecting", "route_direction": "none"}
+    event_writer = (
+        MissionEventWriter(visual_mission_events)
+        if visual_mission_events is not None
+        else None
+    )
+    if event_writer is not None:
+        phase_state["_event_publisher"] = event_writer
+        event_writer.publish(
+            "mission_started",
+            phase=phase_state["phase"],
+            route_direction=phase_state["route_direction"],
+        )
     target_state = {"name": "", "north_m": 0.0, "east_m": 0.0, "down_m": 0.0}
     stop_logging = asyncio.Event()
     telemetry_task = None
@@ -53,17 +68,15 @@ async def execute_flight(
                 perception_config.get("sensor_startup_timeout_s", 5.0)
             )
         print(f"Connecting to PX4 SITL with MAVSDK at {system_address}...")
-        try:
-            await asyncio.wait_for(
-                drone.connect(system_address=system_address),
-                timeout=settings.connection_timeout_s,
-            )
-        except asyncio.TimeoutError as error:
-            raise TimeoutError(
-                f"Timed out waiting {settings.connection_timeout_s:g}s "
-                "for MAVSDK connection startup"
-            ) from error
-        await services["wait_for_connection"](drone, settings.connection_timeout_s)
+        drone = await connect_mavsdk(
+            services["system_factory"],
+            system_address,
+            settings.connection_timeout_s,
+            services["wait_for_connection"],
+            services["close_system"],
+            attempts=services.get("connection_attempts", 2),
+            retry_delay_s=services.get("connection_retry_delay_s", 2.0),
+        )
         await services["wait_for_position_ready"](
             drone, settings.position_ready_timeout_s
         )
@@ -85,8 +98,11 @@ async def execute_flight(
             name="telemetry-logger",
         )
         services["write_run_status"](log_path, "running", phase_state["phase"])
+        mission_runner = services.get(
+            "mission_runner", services["fly_astar_waypoints"]
+        )
         mission_task = asyncio.create_task(
-            services["fly_astar_waypoints"](
+            mission_runner(
                 drone,
                 latest,
                 phase_state,
@@ -119,6 +135,13 @@ async def execute_flight(
         services["write_run_status"](
             log_path, "completed", phase_state["phase"], landing_confirmed=True
         )
+        if event_writer is not None:
+            event_writer.publish(
+                "mission_completed",
+                status="completed",
+                phase=phase_state["phase"],
+                landing_confirmed=True,
+            )
     except Exception as error:
         print(f"Flight error: {error}")
         pending_error = error
@@ -140,6 +163,15 @@ async def execute_flight(
             message=f"{type(error).__name__}: {error}",
             landing_confirmed=landing_confirmed,
         )
+        if event_writer is not None:
+            event_writer.publish(
+                "mission_failed",
+                status="failed",
+                phase=phase_state["phase"],
+                landing_confirmed=landing_confirmed,
+                failure_type=type(error).__name__,
+                message=str(error),
+            )
     finally:
         if telemetry_task is not None:
             print("Stopping telemetry logging...")
@@ -175,6 +207,15 @@ async def execute_flight(
                 if pending_error is None:
                     pending_error = RuntimeError(
                         f"Perception source did not stop cleanly: {error}"
+                    )
+        close_system = services.get("close_system")
+        if close_system is not None and drone is not None:
+            try:
+                close_system(drone)
+            except Exception as error:
+                if pending_error is None:
+                    pending_error = RuntimeError(
+                        f"MAVSDK system did not stop cleanly: {error}"
                     )
     if pending_error is not None:
         raise pending_error

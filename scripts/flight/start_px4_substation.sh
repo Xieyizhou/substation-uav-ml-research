@@ -103,7 +103,8 @@ if [[ "$MAP_ID" != "custom" ]]; then
     "target world preparer could not be loaded"
 fi
 if [[ "$SIM_MODEL" == "x500_research" ]]; then
-  [[ -f "$PROJECT_ROOT/simulation/models/x500_research/model.sdf" ]] || fail \
+  RESEARCH_MODEL_SRC="${RESEARCH_MODEL_SRC:-$PROJECT_ROOT/simulation/models/x500_research/model.sdf}"
+  [[ -f "$RESEARCH_MODEL_SRC" ]] || fail \
     "research vehicle model is missing"
   [[ -f "$VEHICLE_PREPARER" ]] || fail "research vehicle preparer is missing"
 fi
@@ -119,8 +120,8 @@ if [[ -f "$PX4_PID_FILE" ]]; then
   if [[ "$previous_pid" =~ ^[0-9]+$ ]] && kill -0 "$previous_pid" 2>/dev/null; then
     previous_command="$(ps -p "$previous_pid" -o command= 2>/dev/null || true)"
     if [[ "$previous_command" == *"start_px4_substation.sh"* ]]; then
-      echo "ERROR: this project already has a PX4 launcher running as PID $previous_pid."
-      echo "Stop that launcher before starting another one."
+      echo "ERROR: this project already has a PX4 launcher running as PID $previous_pid." >&2
+      echo "Stop that launcher before starting another one." >&2
       exit 1
     fi
   fi
@@ -160,8 +161,29 @@ if (( ${#stale_gazebo_pids[@]} > 0 )); then
 
   for stale_pid in "${stale_gazebo_pids[@]}"; do
     if kill -0 "$stale_pid" 2>/dev/null; then
-      echo "ERROR: stale Gazebo server PID $stale_pid did not stop."
-      echo "Stop that process before starting PX4 again."
+      stale_command="$(ps -p "$stale_pid" -o command= 2>/dev/null || true)"
+      if [[ "$stale_command" == *"gz sim"* ]] && [[ "$stale_command" == *"$WORLD_DST"* ]]; then
+        echo "Stale Gazebo server PID $stale_pid ignored SIGTERM; sending SIGKILL."
+        kill -KILL "$stale_pid" 2>/dev/null || true
+      fi
+    fi
+  done
+
+  for _ in {1..20}; do
+    servers_still_running=false
+    for stale_pid in "${stale_gazebo_pids[@]}"; do
+      if kill -0 "$stale_pid" 2>/dev/null; then
+        servers_still_running=true
+        break
+      fi
+    done
+    [[ "$servers_still_running" == false ]] && break
+    sleep 0.1
+  done
+
+  for stale_pid in "${stale_gazebo_pids[@]}"; do
+    if kill -0 "$stale_pid" 2>/dev/null; then
+      echo "ERROR: stale Gazebo server PID $stale_pid did not stop after SIGKILL."
       exit 1
     fi
   done
@@ -199,7 +221,7 @@ cp "$WORLD_COPY_SRC" "$WORLD_DST"
 if [[ "$SIM_MODEL" == "x500_research" ]]; then
   RESEARCH_MODEL_DST="$PX4_ROOT/Tools/simulation/gz/models/x500_research"
   mkdir -p "$RESEARCH_MODEL_DST"
-  cp "$PROJECT_ROOT/simulation/models/x500_research/model.sdf" "$RESEARCH_MODEL_DST/model.sdf"
+  cp "$RESEARCH_MODEL_SRC" "$RESEARCH_MODEL_DST/model.sdf"
   cp "$PROJECT_ROOT/simulation/models/x500_research/model.config" "$RESEARCH_MODEL_DST/model.config"
 fi
 
@@ -239,6 +261,19 @@ if command -v brew >/dev/null 2>&1; then
     echo "OpenCV compatibility prefix: $OPENCV_PREFIX"
     echo "OpenCV_DIR=$OpenCV_DIR"
   fi
+
+  if brew --prefix qt@5 >/dev/null 2>&1; then
+    QT5_PREFIX="$(brew --prefix qt@5)"
+    QT5_CONFIG="$QT5_PREFIX/lib/cmake/Qt5/Qt5Config.cmake"
+    [[ -f "$QT5_CONFIG" ]] || fail \
+      "Qt 5 CMake configuration was not found: $QT5_CONFIG"
+    export Qt5_DIR="$QT5_PREFIX/lib/cmake/Qt5"
+    export CMAKE_PREFIX_PATH="$QT5_PREFIX${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+    echo "Qt 5 compatibility prefix: $QT5_PREFIX"
+    echo "Qt5_DIR=$Qt5_DIR"
+  else
+    fail "Gazebo GUI libraries require Qt 5. Install it with: brew install qt@5"
+  fi
 fi
 
 echo
@@ -259,6 +294,7 @@ if [[ -n "${OpenCV_DIR:-}" ]]; then
     -U 'PC_GSTREAMER_APP_*' \
     -DCONFIG=px4_sitl_default \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    -DOpenCV_DIR="$OpenCV_DIR"
+    -DOpenCV_DIR="$OpenCV_DIR" \
+    -DQt5_DIR="$Qt5_DIR"
 fi
 PX4_GZ_WORLD="$WORLD_NAME" make px4_sitl "gz_$MAKE_SIM_MODEL"

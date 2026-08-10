@@ -1,6 +1,6 @@
 # Substation UAV ML Research Platform
 
-> **Status: Experimental Research Platform**
+> **Status: Sandbox v0.1 Candidate / Experimental Research Platform**
 >
 > This repository develops sensor-driven risk, traversability learning, and
 > semantic inspection planning in simulation. It is not production software,
@@ -10,14 +10,17 @@
 The project extends the stable
 [uav-path-planning-demo](https://github.com/Xieyizhou/uav-path-planning-demo)
 baseline with Gazebo LiDAR, record/replay, local costmaps, ML/ONNX research
-interfaces, semantic perception components, and future DJI integration
-boundaries.
+interfaces, deterministic camera collection, and visual model evaluation.
+
+![Sandbox Demo Profile](docs/assets/sandbox_demo.jpg)
 
 ![A* route preview](docs/assets/grid_path.png)
 
 [Demo video](https://github.com/Xieyizhou/uav-path-planning-demo/releases/tag/v0.1-demo)
 · [Command reference](docs/CLI_REFERENCE.md)
 · [Architecture](docs/architecture.md)
+· [Local sandbox app](docs/RESEARCH_INSPECTOR.md)
+· [Sandbox quick start](docs/SANDBOX_QUICKSTART.md)
 · [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
 · [ML research platform](docs/ML_RESEARCH_PLATFORM.md)
 · [ML study workflow](docs/STUDY_WORKFLOW.md)
@@ -32,12 +35,11 @@ boundaries.
 | Flight execution | MAVSDK local-NED waypoint control against PX4 SITL and Gazebo |
 | Risk response | Map-oracle baseline plus live/replayed 2D LiDAR costmaps, geometric risk, safety actions, and optional ONNX fusion |
 | ML research | Reproducible randomized worlds, automatic LiDAR truth labels, versioned datasets/model packages, deterministic 1D CNN training, and resumable paired studies |
-| Hardware boundary | Vendor-neutral high-level flight protocol with MAVSDK implementation and a future DJI M30/M30T PSDK gRPC interface |
 | Local replanning | Candidate-only evaluation and active replacement of remaining outbound waypoints |
 | Test environments | 5 coordinated Gazebo/A* maps, 5 safe destination presets per map, and map/target switching |
 | Evaluation | Structured telemetry, run manifests, plots, stage summaries, and cross-stage comparisons |
 | Reliability | Explicit failure codes, timeout-bounded runtime tasks, landing confirmation, PID-scoped cleanup, and parameter validation |
-| Developer experience | One modular `main.py` command center with offline regression, replay, safety, and research-contract tests |
+| Developer experience | One modular `main.py` command center plus a local sandbox app for health checks, bounded jobs, recording review, and aggregate ML results |
 
 ## Selected Engineering Contributions
 
@@ -132,9 +134,34 @@ map management, and reporting into small modules under `src/`.
 - Bash experiment launchers and GitHub Actions offline validation
 - JSON/SDF configuration for synchronized planning and simulation maps
 
-## Quick Start
+## Quick Start: App Demo
 
-Prerequisites: Python 3.9+, PX4 SITL/Gazebo, and a local
+The tracked Demo Profile runs with Python 3.11+ and does not require local
+datasets, trained weights, PX4, Gazebo, or third-party Python packages:
+
+```bash
+git clone https://github.com/Xieyizhou/substation-uav-ml-research.git
+cd substation-uav-ml-research
+./scripts/run_sandbox_app.sh
+```
+
+Open `http://127.0.0.1:8765`, choose **Experiments**, and run **Demo
+classifier**. The result is an identity-bound workflow example built from
+synthetic features and is explicitly excluded from formal research evidence.
+
+Run the complete offline release check with:
+
+```bash
+python3 main.py sandbox --profile demo release-gate \
+  --output outputs/sandbox/demo/release-gate/local
+```
+
+See the [Sandbox quick start](docs/SANDBOX_QUICKSTART.md) for profile boundaries,
+outputs, and the first experiment walkthrough.
+
+## Full Simulator Setup
+
+Prerequisites: Python 3.11+, PX4 SITL/Gazebo, and a local
 `~/PX4-Autopilot` checkout.
 
 ```bash
@@ -194,6 +221,8 @@ python main.py data --help
 python main.py model --help
 python main.py study --help
 python main.py model protocol --config config/perception/research_protocol.json
+
+python main.py sandbox serve --host 127.0.0.1 --port 8765
 ```
 
 See [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for every command and advanced
@@ -209,9 +238,11 @@ parameter-forwarding example.
 | `src/flight/` | MAVSDK flight runtime, task presets, and replanning orchestration |
 | `src/perception/` | Simulated obstacle detector and risk-state logic |
 | `src/sensors/` | Unified live/replay sensor sources and stable data contracts |
-| `src/ml/` | Scenario generation, truth labels, datasets, metrics, ONNX training, packages, and protocols |
+| `src/ml/` | LiDAR learning, generic dataset utilities, and non-visual model tooling |
+| `src/vision/` | Camera contracts, collection, training views, evaluation, packaging, and static replay |
+| `src/inspection/` | Read-only sandbox observations, recording browser, and aggregate ML lifecycle results |
+| `src/sandbox/` | Allowlisted local jobs, single-instance control, bounded execution, and job history |
 | `src/study/` | SQLite registry, tier matrices, resumable queues, gates, and paired statistics |
-| `src/backends/` | Vendor-neutral flight backend contract and PX4/DJI adapters |
 | `src/maps/` | Map catalog, target selection, and Gazebo marker synchronization |
 | `src/logging/` | Telemetry, metrics, plots, reports, and comparisons |
 | `scripts/flight/experiments/` | Reproducible four-stage experiment launchers |
@@ -229,10 +260,10 @@ python main.py check tests
 python main.py check all
 ```
 
-The dependency-free suite currently passes 118 tests and covers CLI routing, map/target
+The dependency-free suite covers CLI routing, map/target
 alignment, A* reachability, parameter safety, exit-code propagation, timeout
 behavior, landing confirmation, sensor parsing/replay, costmaps, dataset
-isolation, semantic fusion, 2.5D planning, backend contracts, task presets,
+isolation, visual replay, task presets,
 goal-marker synchronization, and active-replan validation. PX4/Gazebo stability,
 closed-loop flight, and model benchmarks remain separate research runs and are
 not implied by a passing offline CI run.
@@ -247,8 +278,8 @@ not implied by a passing offline CI run.
   labels, ONNX packaging, and the 120-run paired study registry are
   implemented. No trained model or statistically complete 30-seed benchmark
   is committed.
-- YOLO, 3D/BEV, 2.5D, and DJI PSDK boundaries are research components; they
-  still require generated data, trained weights, and staged integration runs.
+- YOLO collection, training, evaluation, and replay are research components;
+  they still require frozen data, trained weights, and staged integration runs.
 - Reproducible unknown static obstacles, equipment pose/scale variation, scan
   noise/dropout, stream outage, and attitude-label jitter are implemented.
   Their formal closed-loop comparison is still pending.

@@ -1,0 +1,152 @@
+# Sandbox v0.1 Quick Start
+
+The local App has three explicit profiles. This keeps the first-run experience
+small while preserving the stricter research boundaries used by the full
+simulator.
+
+![Sandbox Demo Profile](assets/sandbox_demo.jpg)
+
+| Profile | Local data and weights | PX4/Gazebo | Intended use |
+| --- | --- | --- | --- |
+| `demo` | Not required | Not required | App tour and workflow-contract example |
+| `development` | Required for related actions | Required for flight | Non-blind collection, replay, and model iteration |
+| `formal` | Frozen artifacts required | Required for flight | Evidence-preserving evaluation with blind-data gates |
+
+The Demo Profile does not download assets, simulate performance, or expose
+formal evaluation controls. It creates only ignored runtime receipts under
+`outputs/sandbox/demo/`.
+
+## Start the App
+
+Requirements:
+
+- Git
+- Python 3.11 or newer
+- A modern browser
+
+No virtual environment is required for the Demo Profile.
+
+```bash
+git clone https://github.com/Xieyizhou/substation-uav-ml-research.git
+cd substation-uav-ml-research
+./scripts/run_sandbox_app.sh
+```
+
+Open [http://127.0.0.1:8765](http://127.0.0.1:8765). The launcher performs an
+idempotent bootstrap before starting the loopback-only server. Press `Ctrl-C`
+in the terminal to stop it.
+
+To use another port:
+
+```bash
+./scripts/run_sandbox_app.sh --port 8876
+```
+
+## First Reproducible Experiment
+
+In the App:
+
+1. Open **Experiments**.
+2. Select **Demo classifier**.
+3. Select **Create recipe and run** and confirm the bounded local action.
+4. Open **Operator** to inspect the job and its bounded log.
+5. Return to **Experiments** to inspect the workflow receipt.
+
+The workflow trains a nearest-centroid classifier from eight deterministic
+synthetic range/density samples and evaluates it on eight separate samples.
+It demonstrates:
+
+- fixed feature order and algorithm identity;
+- an immutable recipe identity;
+- a result identity that detects modification;
+- deterministic metrics and predictions;
+- explicit `dataset_role: demo` and `formal_evidence: false` boundaries.
+
+It does not claim real model accuracy, simulator performance, or airframe
+performance.
+
+The same workflow is available from the terminal:
+
+```bash
+python3 main.py sandbox --profile demo demo-run \
+  --output outputs/sandbox/demo/runs/first
+
+python3 main.py sandbox --profile demo demo-inspect \
+  --input outputs/sandbox/demo/runs/first
+```
+
+## Environment and Release Checks
+
+The doctor distinguishes required Demo components from optional full-simulator
+components:
+
+```bash
+python3 main.py sandbox --profile demo doctor
+```
+
+Missing PX4, Gazebo transport, MAVSDK, plotting, or table-analysis tools appear
+as warnings in Demo Profile. A missing tracked plan or world definition is a
+failure.
+
+The v0.1 release gate checks bootstrap identity, the deterministic demo,
+doctor failures, and required web assets:
+
+```bash
+python3 main.py sandbox --profile demo release-gate \
+  --output outputs/sandbox/demo/release-gate/local
+
+python3 main.py sandbox --profile demo release-gate-inspect \
+  --input outputs/sandbox/demo/release-gate/local/release_gate.json
+```
+
+The same gate runs in GitHub Actions on Python 3.11 and 3.13 without installing
+project dependencies.
+
+## Enable the Full Simulator
+
+Create the project environment and install the core runtime dependencies:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+```
+
+Install PX4 and Gazebo separately, then start the development profile:
+
+```bash
+./scripts/run_sandbox_app.sh --profile development
+```
+
+The development profile discovers the local v2 collection plan when present
+and enables managed flight, collection, replay, training-view, and validation
+actions. The App still enforces one active job, bounded timeouts, safe process
+cleanup, non-blind browsing, and fixed command construction.
+
+## Runtime Files
+
+Demo runtime files are kept outside version control:
+
+```text
+outputs/sandbox/demo/
+├── bootstrap/
+├── collection/
+├── experiments/
+├── operator/
+├── release-gate/
+└── runs/
+```
+
+Deleting this directory resets only local Demo receipts. It does not affect
+tracked source files or formal research data.
+
+## Troubleshooting
+
+- **Port already in use:** start with `--port 8876` or stop the existing App.
+- **Python is too old:** install Python 3.11+ and retry.
+- **Bootstrap identity mismatch:** restore
+  `config/sandbox/demo_collection_plan.json` from Git.
+- **Demo result identity mismatch:** create a new output directory or remove
+  only the modified local Demo run.
+- **Flight controls are disabled:** this is expected in Demo Profile; start the
+  development profile after installing the simulator stack.

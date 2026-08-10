@@ -1,0 +1,169 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual_collection_protocol.schema.json",
+  "title": "Visual Multi-Scenario Collection Protocol",
+  "type": "object",
+  "required": [
+    "collection_protocol_schema_version",
+    "protocol_version",
+    "protocol_id",
+    "evidence_role",
+    "canonical_payload_format",
+    "canonical_pixel_format",
+    "required_pilot_protocol",
+    "randomization",
+    "scenario_allocation",
+    "split_policy",
+    "recording",
+    "aggregate_gate"
+  ],
+  "properties": {
+    "collection_protocol_schema_version": {"const": 1},
+    "protocol_version": {"const": 1},
+    "protocol_id": {"const": "visual-multiscenario-png-v1"},
+    "evidence_role": {"const": "model_development_and_held_out_evaluation"},
+    "canonical_payload_format": {"const": "png"},
+    "canonical_pixel_format": {"const": "rgb8"},
+    "required_pilot_protocol": {"const": "visual-pilot-png-v3"},
+    "randomization": {
+      "type": "object",
+      "required": [
+        "configuration",
+        "generator_version",
+        "materialized_world_required",
+        "applied_visual_fields",
+        "explicitly_not_applied"
+      ],
+      "properties": {
+        "configuration": {"type": "string", "minLength": 1},
+        "generator_version": {"type": "string", "minLength": 1},
+        "materialized_world_required": {"const": true},
+        "applied_visual_fields": {"$ref": "#/$defs/nonemptyUniqueStrings"},
+        "explicitly_not_applied": {"$ref": "#/$defs/nonemptyUniqueStrings"}
+      },
+      "additionalProperties": false
+    },
+    "scenario_allocation": {
+      "type": "object",
+      "required": ["train", "validation", "test"],
+      "properties": {
+        "train": {"$ref": "#/$defs/allocation"},
+        "validation": {"$ref": "#/$defs/allocation"},
+        "test": {"$ref": "#/$defs/allocation"}
+      },
+      "additionalProperties": false
+    },
+    "split_policy": {
+      "type": "object",
+      "required": [
+        "minimum_split_unit",
+        "adjacent_frame_random_split_forbidden",
+        "seed_overlap_forbidden",
+        "scenario_overlap_forbidden",
+        "formal_evaluation_seeds_forbidden",
+        "test_map_policy"
+      ],
+      "properties": {
+        "minimum_split_unit": {"const": "recording"},
+        "adjacent_frame_random_split_forbidden": {"const": true},
+        "seed_overlap_forbidden": {"const": true},
+        "scenario_overlap_forbidden": {"const": true},
+        "formal_evaluation_seeds_forbidden": {
+          "type": "array",
+          "prefixItems": [{"const": 1001}, {"const": 1030}],
+          "items": false
+        },
+        "test_map_policy": {"const": "extreme_only"}
+      },
+      "additionalProperties": false
+    },
+    "recording": {
+      "type": "object",
+      "required": [
+        "recordings_per_scenario",
+        "route",
+        "required_mission_phases",
+        "retain_every_valid_source_frame",
+        "automatic_downsampling",
+        "default_phase_source",
+        "automatic_stop_condition",
+        "default_post_landing_drain_s",
+        "manual_phase_fallback_allowed",
+        "maximum_invalid_truth_rgb_fraction",
+        "maximum_consecutive_invalid_truth_rgb_frames",
+        "maximum_unmatched_rgb_frames",
+        "maximum_ambiguous_rgb_frames",
+        "minimum_phase_duration_s"
+      ],
+      "properties": {
+        "recordings_per_scenario": {"const": 1},
+        "route": {"const": "fly_round_trip_v1"},
+        "required_mission_phases": {"$ref": "#/$defs/nonemptyUniqueStrings"},
+        "retain_every_valid_source_frame": {"const": true},
+        "automatic_downsampling": {"const": false},
+        "default_phase_source": {"const": "flight_lifecycle"},
+        "automatic_stop_condition": {
+          "const": "completed_landed_and_landing_confirmed"
+        },
+        "default_post_landing_drain_s": {
+          "type": "number",
+          "minimum": 0
+        },
+        "manual_phase_fallback_allowed": {"const": true},
+        "maximum_invalid_truth_rgb_fraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "maximum_consecutive_invalid_truth_rgb_frames": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maximum_unmatched_rgb_frames": {"type": "integer", "minimum": 0},
+        "maximum_ambiguous_rgb_frames": {"type": "integer", "minimum": 0},
+        "minimum_phase_duration_s": {"type": "number", "exclusiveMinimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "aggregate_gate": {
+      "type": "object",
+      "required": [
+        "required_classes_per_split",
+        "minimum_labelled_frames_per_class_per_split",
+        "minimum_verified_no_target_frames_per_split"
+      ],
+      "properties": {
+        "required_classes_per_split": {"$ref": "#/$defs/nonemptyUniqueStrings"},
+        "minimum_labelled_frames_per_class_per_split": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minimum_verified_no_target_frames_per_split": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "allocation": {
+      "type": "object",
+      "required": ["seed_first", "seed_last", "maps", "targets"],
+      "properties": {
+        "seed_first": {"type": "integer", "minimum": 0},
+        "seed_last": {"type": "integer", "minimum": 0},
+        "maps": {"$ref": "#/$defs/nonemptyUniqueStrings"},
+        "targets": {"$ref": "#/$defs/nonemptyUniqueStrings"}
+      },
+      "additionalProperties": false
+    },
+    "nonemptyUniqueStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "additionalProperties": false
+}

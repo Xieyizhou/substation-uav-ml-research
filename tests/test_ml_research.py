@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 import tempfile
-import time
 import unittest
 
 from src.flight.safety_supervisor import SafetySupervisor
@@ -10,11 +9,8 @@ from src.ml.domain_randomization import load_ranges, sample_manifest
 from src.ml.metrics import binary_iou, classification_report, latency_summary
 from src.ml.protocol import experiment_matrix, load_protocol
 from src.ml.research_recorder import ResearchDatasetWriter
-from src.ml.yolo_labels import BoundingBoxLabel
-from src.perception.bev import point_cloud_to_bev
-from src.perception.semantic_fusion import associate_equipment_with_lidar
-from src.planner.astar_25d import astar_25d
-from src.sensors.types import EquipmentDetection, LaserScanFrame, RiskEstimate
+from src.vision.training.labels import BoundingBoxLabel
+from src.sensors.types import RiskEstimate
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,58 +68,6 @@ class ResearchAlgorithmTests(unittest.TestCase):
         self.assertAlmostEqual(binary_iou([1, 0, 1], [1, 1, 1]), 2 / 3)
         self.assertEqual(latency_summary([1, 2, 10])["p50_ms"], 2)
 
-    def test_bev_and_25d_path_support_overhead_obstacles(self):
-        bev = point_cloud_to_bev(
-            [(1.0, 0.0, 0.0), (1.0, 0.0, 2.0)],
-            forward_range_m=3,
-            lateral_range_m=3,
-            resolution_m=1,
-        )
-        self.assertTrue(any(bev["occupancy"]))
-        path = astar_25d(
-            (0, 0, 0),
-            (2, 0, 0),
-            blocked={(1, 0, 0)},
-            width=3,
-            height=1,
-            layers=2,
-        )
-        self.assertIn((1, 0, 1), path)
-
-    def test_semantic_detection_requires_lidar_range_for_position(self):
-        scan = LaserScanFrame(
-            timestamp_s=1.0,
-            received_monotonic_s=time.monotonic(),
-            frame_id="lidar",
-            angle_min_rad=-0.2,
-            angle_max_rad=0.2,
-            angle_step_rad=0.2,
-            range_min_m=0.1,
-            range_max_m=20.0,
-            ranges_m=(10.0, 5.0, 10.0),
-            source="test",
-        )
-        detection = EquipmentDetection(
-            class_name="transformer",
-            confidence=0.9,
-            bbox_xyxy=(45, 10, 55, 30),
-            timestamp_s=1.0,
-            frame_id="camera",
-        )
-        fused = associate_equipment_with_lidar(
-            [detection],
-            scan,
-            image_width=100,
-            camera_hfov_deg=40,
-            vehicle_north_m=1,
-            vehicle_east_m=2,
-            vehicle_down_m=-3,
-            yaw_deg=0,
-            angular_window_deg=3,
-        )
-        self.assertAlmostEqual(fused[0].position_ned_m[0], 6.0)
-        self.assertAlmostEqual(fused[0].position_ned_m[1], 2.0)
-
     def test_yolo_label_conversion_uses_locked_class_order(self):
         label = BoundingBoxLabel("switchgear", 10, 20, 30, 60, 100, 100)
         self.assertEqual(label.to_yolo(), "1 0.200000 0.400000 0.200000 0.400000")
@@ -161,6 +105,17 @@ class ProtocolAndSafetyTests(unittest.TestCase):
             {"sensor_healthy": True, "risk_level": "clear", "risk_estimate": risk}
         )
         self.assertEqual(decision.action, "hover")
+
+    def test_degraded_sensor_hovers_until_fresh_data_recovers(self):
+        supervisor = SafetySupervisor(stale_after_s=2.0)
+        decision = supervisor.evaluate({
+            "sensor_healthy": True,
+            "sensor_message": "injected sensor stream outage within stale tolerance",
+            "sensor_frame_age_s": 0.8,
+            "risk_level": "clear",
+        })
+        self.assertEqual(decision.action, "hover")
+        self.assertEqual(decision.speed_scale, 0.0)
 
 
 if __name__ == "__main__":

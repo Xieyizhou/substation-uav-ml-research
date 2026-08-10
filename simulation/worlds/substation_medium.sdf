@@ -846,6 +846,9 @@
       <model name="entry_switchgear">
         <static>true</static>
         <pose>6 1.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>2</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.7 0 0 0</pose>
@@ -899,6 +902,9 @@
       <model name="transformer_west">
         <static>true</static>
         <pose>7.5 6.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>1</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.95 0 0 0</pose>
@@ -981,6 +987,9 @@
       <model name="transformer_north">
         <static>true</static>
         <pose>16.5 15.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>1</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.95 0 0 0</pose>
@@ -1116,6 +1125,9 @@
       <model name="switchgear_south">
         <static>true</static>
         <pose>13.5 4 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>2</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.7 0 0 0</pose>
@@ -1169,6 +1181,9 @@
       <model name="capacitor_east">
         <static>true</static>
         <pose>19.5 8.5 0 0 0 0</pose>
+        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+          <label>3</label>
+        </plugin>
         <link name="link">
           <collision name="collision">
             <pose>0 0 0.85 0 0 0</pose>

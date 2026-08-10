@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual_annotation.schema.json",
+  "title": "Visual Frame Annotation",
+  "type": "object",
+  "required": [
+    "annotation_schema_version",
+    "frame_id",
+    "source_id",
+    "sequence_number",
+    "payload_sha256",
+    "decoded_content_sha256",
+    "image_width",
+    "image_height",
+    "scenario_id",
+    "map_id",
+    "seed",
+    "mission_phase",
+    "frame_order_reference",
+    "annotation_status",
+    "objects"
+  ],
+  "properties": {
+    "annotation_schema_version": {"const": 1},
+    "dataset_identity_sha256": {
+      "anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+    },
+    "recording_id": {"type": ["string", "null"]},
+    "frame_id": {"type": "string", "minLength": 1},
+    "source_id": {"type": "string", "minLength": 1},
+    "sequence_number": {"type": "integer", "minimum": 0},
+    "payload_sha256": {"$ref": "#/$defs/sha256"},
+    "decoded_content_sha256": {"$ref": "#/$defs/sha256"},
+    "image_width": {"type": "integer", "minimum": 1},
+    "image_height": {"type": "integer", "minimum": 1},
+    "scenario_id": {"type": "string", "minLength": 1},
+    "map_id": {"type": "string", "minLength": 1},
+    "seed": {"type": "integer", "minimum": 0},
+    "mission_phase": {
+      "enum": ["cruise_distant", "approach", "close_inspection", "target_transition", "other"]
+    },
+    "frame_order_reference": {"type": "integer", "minimum": 0},
+    "annotation_status": {
+      "enum": ["labelled", "verified_no_target", "pending", "rejected"]
+    },
+    "objects": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/objectAnnotation"}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "objectAnnotation": {
+      "type": "object",
+      "required": [
+        "annotation_id",
+        "class_id",
+        "class_name",
+        "bbox_xyxy",
+        "bbox_coordinate_convention",
+        "visibility_status",
+        "truncation_status",
+        "truth_source",
+        "validation_status"
+      ],
+      "properties": {
+        "annotation_id": {"type": "string", "minLength": 1},
+        "class_id": {"type": "integer", "minimum": 0, "maximum": 3},
+        "class_name": {"enum": ["transformer", "switchgear", "capacitor_bank", "reactor"]},
+        "bbox_xyxy": {
+          "type": "array",
+          "minItems": 4,
+          "maxItems": 4,
+          "items": {"type": "number", "minimum": 0}
+        },
+        "bbox_coordinate_convention": {"const": "xyxy_pixels_half_open"},
+        "visibility_status": {"enum": ["visible", "partially_occluded", "heavily_occluded", "unknown"]},
+        "truncation_status": {"enum": ["not_truncated", "truncated", "unknown"]},
+        "truth_source": {
+          "enum": ["simulator_geometry", "gazebo_bounding_box_sensor", "manual_annotation", "verified_imported_annotation"]
+        },
+        "validation_status": {"enum": ["unverified", "validated", "rejected"]}
+      },
+      "additionalProperties": false
+    }
+  },
+  "anyOf": [
+    {"required": ["dataset_identity_sha256"]},
+    {"required": ["recording_id"]}
+  ],
+  "additionalProperties": false
+}

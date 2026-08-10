@@ -1,0 +1,50 @@
+{
+  "metrics_schema_version": 1,
+  "benchmark_id": "visual_static_v1",
+  "null_policy": "unavailable measurements remain null and are never replaced by zero",
+  "timing_stages": [
+    "payload_load_ms",
+    "decode_ms",
+    "preprocess_ms",
+    "backend_call_ms",
+    "inference_ms",
+    "postprocess_ms",
+    "end_to_end_ms"
+  ],
+  "timing_statistics": [
+    "count",
+    "min_ms",
+    "max_ms",
+    "mean_ms",
+    "p50_ms",
+    "p95_ms",
+    "p99_ms"
+  ],
+  "frame_counts": [
+    "total",
+    "decoded",
+    "inferred",
+    "skipped",
+    "failed_decode",
+    "failed_inference",
+    "labelled"
+  ],
+  "scheduling_summaries": [
+    "requested_inference_frames",
+    "completed_inference_frames",
+    "deadline_misses",
+    "dropped_or_unavailable_frames"
+  ],
+  "visual_metrics": [
+    "precision",
+    "recall",
+    "mAP50",
+    "mAP50_95",
+    "per_class_recall",
+    "small_object_recall"
+  ],
+  "resource_metrics": {
+    "status": "record_only_when_measured",
+    "examples": ["cpu_utilization", "memory_bytes", "energy_joules"]
+  }
+}

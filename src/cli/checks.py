@@ -13,7 +13,7 @@ from src.cli.process import PROJECT_ROOT, forwarded_args, run_module
 
 def check_environment():
     checks = [
-        ("Python 3.9+", sys.version_info >= (3, 9), sys.version.split()[0]),
+        ("Python 3.11+", sys.version_info >= (3, 11), sys.version.split()[0]),
         ("MAVSDK package", importlib.util.find_spec("mavsdk") is not None, "Python import"),
         ("Gazebo gz command", shutil.which("gz") is not None, shutil.which("gz") or "not found"),
         ("PX4 source", (Path.home() / "PX4-Autopilot").is_dir(), "~/PX4-Autopilot"),

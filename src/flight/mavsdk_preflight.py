@@ -5,6 +5,13 @@ import asyncio
 from src.flight.flight_state import local_position
 
 
+def close_mavsdk_system(drone):
+    """Stop MAVSDK's bundled server when the Python API exposes no public close."""
+    stop_server = getattr(drone, "_stop_mavsdk_server", None)
+    if callable(stop_server):
+        stop_server()
+
+
 async def wait_for_connection(drone, timeout_s):
     print("Waiting for drone connection...")
     loop = asyncio.get_running_loop()

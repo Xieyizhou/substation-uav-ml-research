@@ -42,7 +42,6 @@ from src.logging.summary_values import (
 )
 from src.logging.summary_collection import (
     collect_run,
-    find_analysis_dirs,
     find_stage_analysis_dirs,
     infer_stage_from_output_dir,
 )

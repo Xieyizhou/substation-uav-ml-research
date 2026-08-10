@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual_dataset_identity.schema.json",
+  "title": "Visual Dataset Identity",
+  "type": "object",
+  "required": [
+    "identity_schema_version",
+    "dataset_name",
+    "dataset_version",
+    "dataset_role",
+    "recording_schema_version",
+    "annotation_schema_version",
+    "decoder_configuration_id",
+    "canonical_payload_format",
+    "canonical_pixel_format",
+    "recording_manifest_sha256",
+    "scenario_manifest_sha256",
+    "split_manifest_sha256",
+    "ordered_frame_count",
+    "labelled_frame_count",
+    "source_recording_ids",
+    "scenario_ids",
+    "map_ids",
+    "seed_ids",
+    "class_order_identity",
+    "source_payload_formats",
+    "dataset_identity_sha256"
+  ],
+  "properties": {
+    "identity_schema_version": {"const": 1},
+    "dataset_name": {"type": "string", "minLength": 1},
+    "dataset_version": {"type": "string", "minLength": 1},
+    "dataset_role": {
+      "enum": ["pilot", "development", "validation", "held_out_test", "formal", "external_real_image"]
+    },
+    "recording_schema_version": {"type": "integer", "minimum": 1},
+    "annotation_schema_version": {"type": "integer", "minimum": 1},
+    "decoder_configuration_id": {"$ref": "#/$defs/sha256"},
+    "canonical_payload_format": {"const": "png"},
+    "canonical_pixel_format": {"const": "rgb8"},
+    "recording_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "annotation_manifest_sha256": {
+      "anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]
+    },
+    "scenario_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "split_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "ordered_frame_count": {"type": "integer", "minimum": 0},
+    "labelled_frame_count": {"type": "integer", "minimum": 0},
+    "source_recording_ids": {"$ref": "#/$defs/nonemptyUniqueStrings"},
+    "scenario_ids": {"$ref": "#/$defs/nonemptyUniqueStrings"},
+    "map_ids": {"$ref": "#/$defs/nonemptyUniqueStrings"},
+    "seed_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "integer", "minimum": 0}
+    },
+    "class_order_identity": {"$ref": "#/$defs/sha256"},
+    "creation_commit_sha": {"type": ["string", "null"]},
+    "source_payload_formats": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"enum": ["png", "jpeg", "raw"]}
+    },
+    "dataset_identity_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "nonemptyUniqueStrings": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "additionalProperties": false
+}

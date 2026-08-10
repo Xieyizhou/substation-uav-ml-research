@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>UAV Research Sandbox</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/operator.css">
+  <link rel="stylesheet" href="/research.css">
+  <link rel="stylesheet" href="/experiments.css">
+  <link rel="stylesheet" href="/profile.css">
+</head>
+<body>
+  <header>
+    <div><span class="eyebrow">LOCAL · CONTROLLED</span><h1>UAV Research Sandbox</h1><p id="profile-description" class="profile-description"></p></div>
+    <span id="profile-badge" class="profile-badge">Loading profile</span>
+    <button id="refresh">Refresh observations</button>
+  </header>
+  <nav>
+    <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-full-profile data-tab="research">ML results</button>
+    <button class="tab" data-full-profile data-tab="lidar">LiDAR gates</button>
+    <button class="tab" data-tab="experiments">Experiments</button>
+    <button class="tab" data-tab="doctor">Sandbox doctor</button>
+    <button class="tab" data-tab="operator">Operator</button>
+    <button class="tab" data-full-profile data-tab="logs">Live logs</button>
+    <button class="tab" data-full-profile data-tab="frames">Recordings</button>
+  </nav>
+  <main>
+    <section id="overview" class="panel active">
+      <div class="section-head"><div><p class="kicker">COLLECTION</p><h2>Experiment overview</h2></div><p id="updated"></p></div>
+      <div id="progress" class="progress-card"></div>
+      <div id="counts" class="metric-grid"></div>
+      <div class="two-col"><article><h3>Scenario queue</h3><div id="scenario"></div></article><article><h3>Runtime status</h3><div id="runtime"></div></article></div>
+      <article><h3>Dataset boundaries</h3><div id="roles" class="role-grid"></div></article>
+    </section>
+    <section id="lidar" class="panel">
+      <div class="section-head"><div><p class="kicker">FLIGHT ENTRY</p><h2>LiDAR candidate gates</h2></div><p id="lidar-status"></p></div>
+      <div class="lidar-grid">
+        <article class="gate-card"><div class="section-head"><h3>Validation replay</h3><span id="lidar-replay-badge"></span></div><div id="lidar-replay-summary"></div></article>
+        <article class="gate-card"><div class="section-head"><h3>Five-scenario closed loop</h3><span id="lidar-closed-badge"></span></div><div id="lidar-closed-summary"></div></article>
+      </div>
+      <article class="gate-controls">
+        <div><h3>Managed gate controls</h3><p class="operator-note">Replay is offline. Closed-loop continuation runs one pending flight and preserves the existing single-instance and process cleanup rules.</p></div>
+        <div class="controls"><button id="lidar-replay-start">Revalidate replay</button><button id="lidar-closed-start">Run next closed-loop flight</button><button id="lidar-stop" class="danger" disabled>Stop active job</button></div>
+      </article>
+    </section>
+    <section id="research" class="panel">
+      <div class="section-head"><div><p class="kicker">REPRODUCIBLE ML</p><h2>Visual experiment lifecycle</h2></div><p id="research-status"></p></div>
+      <div id="research-pipeline" class="pipeline-grid"></div>
+      <div class="two-col research-summary-grid">
+        <article><h3>Training view</h3><div id="training-summary"></div></article>
+        <article><h3>Frozen model package</h3><div id="package-summary"></div></article>
+      </div>
+      <article class="blind-card"><div class="section-head"><div><p class="kicker">PAIRED BLIND</p><h2>Generalization result</h2></div><p id="blind-commit"></p></div><div id="blind-metrics" class="metric-grid research-metrics"></div><div id="class-recall" class="class-grid"></div><div id="blind-comparison" class="result-callout"></div></article>
+      <article><div class="section-head"><div><p class="kicker">STATIC ONNX REPLAY</p><h2>Resolution and scheduling matrix</h2></div><p id="replay-status"></p></div><div class="table-wrap"><table><thead><tr><th>Input</th><th>Policy</th><th>Source</th><th>FPS</th><th>P50</th><th>P95</th><th>Precision</th><th>Recall</th><th>Small recall</th></tr></thead><tbody id="replay-rows"></tbody></table></div><p id="replay-note" class="research-note"></p></article>
+    </section>
+    <section id="experiments" class="panel">
+      <div class="section-head"><div><p class="kicker">MANAGED WORKBENCH</p><h2>Reproducible workflows</h2></div><p>Identity-bound recipes · fixed inputs</p></div>
+      <article class="experiment-launch">
+        <h3>New managed workflow</h3>
+        <div class="experiment-form">
+          <label>Workflow<select id="experiment-workflow"><option value="demo_contract">Demo classifier</option><option value="visual_replay">Visual ONNX replay</option><option value="lidar_replay">LiDAR replay</option><option value="lidar_closed_loop">Next LiDAR closed-loop flight</option><option value="multimodal_acceptance">Sandbox v1 acceptance</option></select></label>
+          <label class="visual-option">Name<input id="experiment-name" maxlength="64" autocomplete="off"></label>
+          <label class="visual-option">Partition<select id="experiment-partition"><option value="validation">Selection validation</option><option value="full_validation">Full validation</option></select></label>
+          <label class="visual-option">ONNX input<select id="experiment-size"><option>320</option><option selected>416</option><option>640</option></select></label>
+          <label class="visual-option">Schedule<select id="experiment-skip"><option value="1">Every frame</option><option value="2">Every 2nd frame</option><option value="3">Every 3rd frame</option></select></label>
+          <label class="visual-option">Frame budget<select id="experiment-limit"><option value="64">64 · quick gate</option><option value="256">256</option><option value="1024">1,024</option><option value="all">All partition frames</option></select></label>
+          <button id="experiment-start">Create recipe and run</button>
+        </div>
+        <p id="workflow-note" class="operator-note">Visual replay uses non-blind validation data. Model package, threshold and membership cannot be overridden.</p>
+      </article>
+      <article data-full-section class="acceptance-card"><div class="section-head"><div><p class="kicker">SANDBOX V1</p><h2>Acceptance gate</h2></div><span id="acceptance-badge"></span></div><div id="acceptance-checks" class="acceptance-grid"></div><p id="acceptance-note" class="operator-note"></p></article>
+      <h3 data-full-section>Visual replay results</h3>
+      <div data-full-section id="experiment-history" class="experiment-history"></div>
+      <h3>Managed workflow receipts</h3>
+      <div id="workflow-history" class="experiment-history"></div>
+    </section>
+    <section id="doctor" class="panel"><div class="section-head"><div><p class="kicker">ENVIRONMENT</p><h2>Sandbox doctor</h2></div></div><div id="checks"></div></section>
+    <section id="operator" class="panel">
+      <div class="section-head"><div><p class="kicker">CONTROLLED EXECUTION</p><h2>Sandbox operator</h2></div><p>One managed job at a time</p></div>
+      <article class="operator-card">
+        <div id="operator-state" class="operator-state"></div>
+        <div class="controls">
+          <select id="operator-action">
+            <option value="doctor">Run doctor</option>
+            <option data-full-profile value="flight-smoke">Run flight smoke</option>
+            <option data-full-profile value="collection-single">Collect one scenario</option>
+            <option data-full-profile value="collection-gate">Run five-scenario gate</option>
+            <option data-full-profile value="training-view-v2">Materialize v2 training view</option>
+            <option data-full-profile value="training-smoke-v2">Run v2 smoke training</option>
+            <option data-full-profile value="package-inspect-v2">Verify frozen v2 package</option>
+            <option data-full-profile value="lidar-replay-gate">Revalidate LiDAR replay</option>
+            <option data-full-profile id="lidar-closed-option" value="lidar-closed-loop-next">Run next LiDAR closed-loop flight</option>
+          </select>
+          <select id="operator-scenario"></select>
+          <button id="operator-start">Start managed job</button>
+          <button id="operator-stop" class="danger" disabled>Stop safely</button>
+        </div>
+        <p class="operator-note">Flight, collection, and training actions use fixed inputs after environment and single-instance checks. Blind data and logs remain sealed.</p>
+      </article>
+      <div class="two-col operator-grid">
+        <article><h3>Job history</h3><div id="job-history"></div></article>
+        <article><h3>Selected job log</h3><pre id="job-log">No job selected.</pre></article>
+      </div>
+    </section>
+    <section id="logs" class="panel">
+      <div class="section-head"><div><p class="kicker">BOUNDED TAIL</p><h2>Live logs</h2></div></div>
+      <div class="controls"><select id="log-scenario"></select><select id="log-kind"><option>recorder</option><option>flight</option><option>simulator</option><option>probe</option></select><button id="load-log">Load last 200 lines</button></div>
+      <pre id="log-output" aria-live="polite">Select a recorded scenario.</pre>
+    </section>
+    <section id="frames" class="panel">
+      <div class="section-head"><div><p class="kicker">ON DEMAND</p><h2>Recording frame browser</h2></div></div>
+      <div class="controls"><select id="recording"></select><button id="load-frames">Inspect recording</button></div>
+      <div id="recording-progress"></div><div id="frame-grid" class="frame-grid"></div><div id="pager"></div>
+    </section>
+  </main>
+  <dialog id="viewer"><button id="close-viewer">Close</button><div class="canvas-wrap"><img id="full-image"><canvas id="overlay"></canvas></div><div id="frame-detail"></div></dialog>
+  <footer>Local actions use fixed commands, one-job locking, bounded timeouts, and process-group cleanup.</footer>
+  <script src="/app.js"></script>
+</body>
+</html>

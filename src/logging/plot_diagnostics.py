@@ -1,5 +1,9 @@
 """Target and collision diagnostic plots."""
 
+from src.plotting_runtime import configure_matplotlib
+
+configure_matplotlib()
+
 import matplotlib.pyplot as plt
 import pandas as pd
 

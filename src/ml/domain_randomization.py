@@ -177,7 +177,8 @@ def materialize_world(source_path, output_path, manifest, *, report_path=None):
     sun = world.find("./light[@name='sun']/diffuse")
     if sun is not None:
         intensity = float(manifest["light_intensity"])
-        _set_numbers(sun, [0.8 * intensity] * 3 + [1.0])
+        diffuse = min(1.0, max(0.0, 0.8 * intensity))
+        _set_numbers(sun, [diffuse] * 3 + [1.0])
     ET.indent(tree, space="  ")
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)

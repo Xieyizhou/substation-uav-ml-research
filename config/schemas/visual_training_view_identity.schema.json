@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual_training_view_identity.schema.json",
+  "title": "Visual Training View Identity",
+  "type": "object",
+  "required": [
+    "identity_schema_version",
+    "source_development_dataset_identity",
+    "sampling_algorithm",
+    "sampling_seed",
+    "train_membership_sha256",
+    "validation_membership_sha256",
+    "full_validation_membership_sha256",
+    "labels_manifest_sha256",
+    "class_order_identity",
+    "train_frame_count",
+    "validation_frame_count",
+    "full_validation_frame_count",
+    "train_class_counts",
+    "validation_class_counts",
+    "train_no_target_count",
+    "validation_no_target_count",
+    "training_view_identity_sha256"
+  ],
+  "properties": {
+    "identity_schema_version": {"const": 1},
+    "source_development_dataset_identity": {"$ref": "#/$defs/sha256"},
+    "sampling_algorithm": {"type": "string", "minLength": 1},
+    "sampling_seed": {"type": "integer"},
+    "train_membership_sha256": {"$ref": "#/$defs/sha256"},
+    "validation_membership_sha256": {"$ref": "#/$defs/sha256"},
+    "full_validation_membership_sha256": {"$ref": "#/$defs/sha256"},
+    "labels_manifest_sha256": {"$ref": "#/$defs/sha256"},
+    "class_order_identity": {"$ref": "#/$defs/sha256"},
+    "train_frame_count": {"type": "integer", "minimum": 0},
+    "validation_frame_count": {"type": "integer", "minimum": 0},
+    "full_validation_frame_count": {"type": "integer", "minimum": 0},
+    "train_class_counts": {"$ref": "#/$defs/counts"},
+    "validation_class_counts": {"$ref": "#/$defs/counts"},
+    "train_no_target_count": {"type": "integer", "minimum": 0},
+    "validation_no_target_count": {"type": "integer", "minimum": 0},
+    "training_view_identity_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "counts": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    }
+  },
+  "additionalProperties": false
+}

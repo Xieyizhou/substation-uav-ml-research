@@ -10,6 +10,36 @@ on:
   workflow_dispatch:
 
 jobs:
+  sandbox-demo:
+    name: Sandbox demo · Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Initialize dependency-free demo profile
+        run: python main.py sandbox --profile demo bootstrap
+
+      - name: Run Sandbox v0.1 release gate
+        run: >-
+          python main.py sandbox --profile demo release-gate
+          --output outputs/sandbox/demo/release-gate/ci
+
+      - name: Inspect release receipt
+        run: >-
+          python main.py sandbox --profile demo release-gate-inspect
+          --input outputs/sandbox/demo/release-gate/ci/release_gate.json
+
   offline-validation:
     runs-on: ubuntu-latest
 
@@ -37,6 +67,7 @@ jobs:
 
       - name: Check all flight shell syntax
         run: |
+          bash -n scripts/run_sandbox_app.sh
           for script in scripts/flight/*.sh scripts/flight/experiments/*.sh; do
             bash -n "$script"
           done

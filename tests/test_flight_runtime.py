@@ -64,8 +64,14 @@ class RunStatusTests(unittest.TestCase):
 
 
 class FakeDrone:
+    def __init__(self):
+        self.server_stopped = False
+
     async def connect(self, system_address):
         self.system_address = system_address
+
+    def _stop_mavsdk_server(self):
+        self.server_stopped = True
 
 
 class HangingConnectDrone:
@@ -118,7 +124,9 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
                 patch.object(fly_astar_path, "make_log_path", return_value=log_path),
                 patch.object(fly_astar_path, "CONNECTION_TIMEOUT_S", 0.01),
             ):
-                with self.assertRaisesRegex(TimeoutError, "MAVSDK connection startup"):
+                with self.assertRaisesRegex(
+                    TimeoutError, "MAVSDK connection failed after 2 attempts"
+                ):
                     await run_flight(
                         "udp://test",
                         [{"name": "WP01", "north_m": 0.0, "east_m": 0.0, "down_m": -1.0}],
@@ -133,8 +141,10 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
     async def test_successful_mission_records_confirmed_completion(self):
         with tempfile.TemporaryDirectory() as directory:
             log_path = Path(directory) / "astar_20260715_120001.csv"
+            mission_events = Path(directory) / "mission_events.jsonl"
+            drone = FakeDrone()
             with (
-                patch.object(fly_astar_path, "System", return_value=FakeDrone()),
+                patch.object(fly_astar_path, "System", return_value=drone),
                 patch.object(fly_astar_path, "make_log_path", return_value=log_path),
                 patch.object(fly_astar_path, "wait_for_connection", new=AsyncMock()),
                 patch.object(fly_astar_path, "wait_for_position_ready", new=AsyncMock()),
@@ -147,16 +157,27 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
                     {},
                     {},
                     {},
+                    visual_mission_events=mission_events,
                 )
+            self.assertTrue(drone.server_stopped)
             payload = json.loads(status_path_for_log(log_path).read_text())
             self.assertEqual(payload["status"], "completed")
             self.assertTrue(payload["landing_confirmed"])
+            events = [
+                json.loads(line)
+                for line in mission_events.read_text().splitlines()
+            ]
+            self.assertEqual(events[0]["event_type"], "mission_started")
+            self.assertEqual(events[-1]["event_type"], "mission_completed")
+            self.assertTrue(events[-1]["landing_confirmed"])
 
     async def test_failed_mission_records_failure_and_propagates(self):
         with tempfile.TemporaryDirectory() as directory:
             log_path = Path(directory) / "astar_20260715_120002.csv"
+            mission_events = Path(directory) / "mission_events.jsonl"
+            drone = FakeDrone()
             with (
-                patch.object(fly_astar_path, "System", return_value=FakeDrone()),
+                patch.object(fly_astar_path, "System", return_value=drone),
                 patch.object(fly_astar_path, "make_log_path", return_value=log_path),
                 patch.object(fly_astar_path, "wait_for_connection", new=AsyncMock()),
                 patch.object(fly_astar_path, "wait_for_position_ready", new=AsyncMock()),
@@ -175,10 +196,17 @@ class FlightOutcomeTests(unittest.IsolatedAsyncioTestCase):
                         {},
                         {},
                         {},
+                        visual_mission_events=mission_events,
                     )
+            self.assertTrue(drone.server_stopped)
             payload = json.loads(status_path_for_log(log_path).read_text())
             self.assertEqual(payload["status"], "failed")
             self.assertFalse(payload["landing_confirmed"])
+            events = [
+                json.loads(line)
+                for line in mission_events.read_text().splitlines()
+            ]
+            self.assertEqual(events[-1]["event_type"], "mission_failed")
 
 
 if __name__ == "__main__":

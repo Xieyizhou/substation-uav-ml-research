@@ -1,0 +1,78 @@
+{
+  "collection_plan_identity_sha256": "ea4347481baf9b61d1356a20a9239ce583a31d6fc9fafa319de5e427eb28bfc8",
+  "layout_count": 10,
+  "layout_index_identity_sha256": "164e6c1d2477c5ae40a6b8d9593c76a499b65f276692c843804ef0b60b1a2b3c",
+  "layouts": [
+    {
+      "layout_id": "development-01",
+      "layout_identity_sha256": "59d7babb726f19741475ef8e646ea2f36b08352ed9b2c91fbffad4321135a3e1",
+      "layout_seed": 3001,
+      "path": "layouts/development-01.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-02",
+      "layout_identity_sha256": "c258112c68a8cd17bfcc5c17e79befe1574d2286e01808464293bb5817b3634c",
+      "layout_seed": 3006,
+      "path": "layouts/development-02.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-03",
+      "layout_identity_sha256": "aa2d2a799626494a0e360863183ba67044fbe47c3698d1def1aece8364af3387",
+      "layout_seed": 3011,
+      "path": "layouts/development-03.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-04",
+      "layout_identity_sha256": "8c6ee6d5cfa5c5eb4b2a3792091a9064a298f3236eb19049f2551fa32b2fc2db",
+      "layout_seed": 3016,
+      "path": "layouts/development-04.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-05",
+      "layout_identity_sha256": "3d6fcd0370bdf74308c4d1c2a9cf82d86acce87e3a719021d9ba82f0875f7d83",
+      "layout_seed": 3021,
+      "path": "layouts/development-05.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "development-06",
+      "layout_identity_sha256": "bbfc64f41f1c754a6befa373107126d20638529c8193c125b41effed36e29804",
+      "layout_seed": 3026,
+      "path": "layouts/development-06.json",
+      "split": "development"
+    },
+    {
+      "layout_id": "validation-01",
+      "layout_identity_sha256": "889f7faf524b3a7a1d74eb6a8c9e0ae47f18e85a0f0d74383705fbd990784e7a",
+      "layout_seed": 3031,
+      "path": "layouts/validation-01.json",
+      "split": "validation"
+    },
+    {
+      "layout_id": "validation-02",
+      "layout_identity_sha256": "6902163b998cc37c6349f5a88cece910c41cb1994cd58fcd3e8f947c6af54a93",
+      "layout_seed": 3036,
+      "path": "layouts/validation-02.json",
+      "split": "validation"
+    },
+    {
+      "layout_id": "blind-01",
+      "layout_identity_sha256": "7980d07a2d4daa23e6b0ded067cd321f615ada686bed51b580aa15d50ae9e9f2",
+      "layout_seed": 3041,
+      "path": "layouts/blind-01.json",
+      "split": "blind"
+    },
+    {
+      "layout_id": "blind-02",
+      "layout_identity_sha256": "4652a7dac4a6f31d53638c6ed9599d79af4502c070db6252444a6d0ecd9930b9",
+      "layout_seed": 3046,
+      "path": "layouts/blind-02.json",
+      "split": "blind"
+    }
+  ],
+  "protocol_identity_sha256": "eaba1fe0f1c2192012edc7f097bfeffbeb956af1330f8e453b468bda63f50d60"
+}

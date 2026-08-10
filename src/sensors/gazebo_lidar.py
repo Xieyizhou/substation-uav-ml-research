@@ -77,26 +77,8 @@ def _transport_environment():
     return environment
 
 
-async def discover_lidar_topic(timeout_s: float = 5.0) -> str:
-    process = await asyncio.create_subprocess_exec(
-        "gz",
-        "topic",
-        "-l",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-        env=_transport_environment(),
-    )
-    try:
-        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout_s)
-    except asyncio.TimeoutError:
-        process.kill()
-        await process.wait()
-        raise TimeoutError("timed out while discovering Gazebo topics")
-    if process.returncode:
-        raise RuntimeError(
-            "Gazebo topic discovery failed: " + stderr.decode(errors="replace").strip()
-        )
-    topics = [line.strip() for line in stdout.decode().splitlines() if line.strip()]
+def select_lidar_topic(topics) -> str:
+    """Select the owned research scanner before generic or stale publishers."""
     candidates = [
         topic
         for topic in topics
@@ -110,11 +92,31 @@ async def discover_lidar_topic(timeout_s: float = 5.0) -> str:
     return sorted(
         candidates,
         key=lambda topic: (
+            "research_lidar_link" not in topic.lower(),
             "lidar_2d" not in topic.lower(),
             "gpu_lidar" not in topic.lower(),
             topic,
         ),
     )[0]
+
+
+async def discover_lidar_topic(timeout_s: float = 5.0) -> str:
+    process = await asyncio.create_subprocess_exec(
+        "gz", "topic", "-l", stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE, env=_transport_environment(),
+    )
+    try:
+        stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=timeout_s)
+    except asyncio.TimeoutError:
+        process.kill()
+        await process.wait()
+        raise TimeoutError("timed out while discovering Gazebo topics")
+    if process.returncode:
+        raise RuntimeError(
+            "Gazebo topic discovery failed: " + stderr.decode(errors="replace").strip()
+        )
+    topics = [line.strip() for line in stdout.decode().splitlines() if line.strip()]
+    return select_lidar_topic(topics)
 
 
 class GazeboLidar2DSource(SensorSource):

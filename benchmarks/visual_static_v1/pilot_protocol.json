@@ -1,0 +1,82 @@
+{
+  "pilot_protocol_schema_version": 1,
+  "protocol_version": 3,
+  "protocol_id": "visual-pilot-png-v3",
+  "evidence_role": "pipeline_validation_only",
+  "canonical_payload_format": "png",
+  "canonical_pixel_format": "rgb8",
+  "scenario": {
+    "map_id": "training",
+    "target_id": "center",
+    "seed": 2001,
+    "route": "training_center_fly_round_trip_v1",
+    "recording_count": 1
+  },
+  "practical_retained_frame_range": {
+    "minimum": 100,
+    "maximum": 300,
+    "scientific_requirement": false
+  },
+  "recording": {
+    "expected_source_rate_hz": 10.0,
+    "expected_rate_is_observation_only": true,
+    "default_rate_observation_tolerance_fraction": 0.1,
+    "retain_every_valid_source_frame": true,
+    "automatic_downsampling": false,
+    "preserve_original_sequence_numbers": true,
+    "synchronized_ground_truth": "required",
+    "invalid_truth_handling": "exclude_from_dataset_and_retain_failure_record",
+    "maximum_invalid_truth_rgb_fraction": 0.001,
+    "maximum_consecutive_invalid_truth_rgb_frames": 2,
+    "maximum_unmatched_rgb_frames": 0,
+    "maximum_ambiguous_rgb_frames": 0,
+    "benchmark_frame_skipping_applies_after_dataset_freeze": true
+  },
+  "frame_handling": {
+    "duplicate_timestamps": "retain_first_and_record_duplicate",
+    "sequence_gaps": "preserve_gap_and_record_it",
+    "invalid_frames": "exclude_from_dataset_and_retain_failure_record",
+    "no_target_frames": "retain",
+    "maximum_consecutive_near_duplicates": 5
+  },
+  "coverage": {
+    "required_mission_phases": [
+      "cruise_distant",
+      "approach",
+      "close_inspection",
+      "target_transition"
+    ],
+    "mission_phase_minimum_duration_s": {
+      "cruise_distant": 1.0,
+      "approach": 1.0,
+      "close_inspection": 1.0,
+      "target_transition": 1.0
+    },
+    "partial_occlusion_required_when_available": true,
+    "target_enter_or_leave_required": true,
+    "minimum_no_target_fraction": 0.1,
+    "target_distance_bins": ["distant", "approach", "close"],
+    "visibility_states": ["visible", "partially_occluded"]
+  },
+  "validation_gates": [
+    "identity_continuity",
+    "recording_integrity",
+    "annotation_linkage",
+    "decoder_determinism",
+    "storage_inspection",
+    "all_valid_frame_retention",
+    "scene_coverage",
+    "cli_workflow"
+  ],
+  "split_isolation": {
+    "minimum_split_unit": "recording",
+    "allowed_units": ["scenario", "map", "route", "recording", "seed"],
+    "adjacent_frame_random_split_forbidden": true
+  },
+  "before_recording": [
+    "implement_stable_png_camera_source_adapter",
+    "measure_actual_gazebo_camera_rate",
+    "confirm_target_and_route_are_visible",
+    "confirm_ground_truth_source"
+  ]
+}

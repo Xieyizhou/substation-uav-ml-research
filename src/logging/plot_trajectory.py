@@ -2,6 +2,10 @@
 
 import math
 
+from src.plotting_runtime import configure_matplotlib
+
+configure_matplotlib()
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.patches import Rectangle

@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual_collection_plan.schema.json",
+  "title": "Frozen Visual Collection Plan",
+  "type": "object",
+  "required": [
+    "collection_plan_schema_version",
+    "protocol_id",
+    "scenario_count",
+    "split_scenario_counts",
+    "scenarios",
+    "collection_plan_identity_sha256"
+  ],
+  "properties": {
+    "collection_plan_schema_version": {"const": 1},
+    "protocol_id": {"const": "visual-multiscenario-png-v1"},
+    "scenario_count": {"const": 60},
+    "split_scenario_counts": {
+      "type": "object",
+      "required": ["train", "validation", "test"],
+      "properties": {
+        "train": {"const": 40},
+        "validation": {"const": 10},
+        "test": {"const": 10}
+      },
+      "additionalProperties": false
+    },
+    "scenarios": {
+      "type": "array",
+      "minItems": 60,
+      "maxItems": 60,
+      "items": {
+        "type": "object",
+        "required": [
+          "scenario_id",
+          "recording_id",
+          "split",
+          "dataset_role",
+          "map_id",
+          "target_id",
+          "seed",
+          "route_id",
+          "expected_map_class_inventory",
+          "base_scenario_config_hash"
+        ],
+        "properties": {
+          "scenario_id": {"type": "string", "minLength": 1},
+          "recording_id": {"type": "string", "minLength": 1},
+          "split": {"enum": ["train", "validation", "test"]},
+          "dataset_role": {
+            "enum": ["development", "validation", "held_out_test"]
+          },
+          "map_id": {
+            "enum": ["training", "simple", "medium", "complex", "extreme"]
+          },
+          "target_id": {
+            "enum": ["top_right", "center", "left", "bottom", "right"]
+          },
+          "seed": {"type": "integer", "minimum": 2001, "maximum": 2060},
+          "route_id": {"type": "string", "minLength": 1},
+          "expected_map_class_inventory": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "transformer",
+                "switchgear",
+                "capacitor_bank",
+                "reactor"
+              ]
+            }
+          },
+          "base_scenario_config_hash": {"$ref": "#/$defs/sha256"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "collection_plan_identity_sha256": {"$ref": "#/$defs/sha256"}
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "additionalProperties": false
+}

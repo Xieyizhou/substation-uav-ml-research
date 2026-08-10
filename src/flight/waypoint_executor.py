@@ -23,6 +23,7 @@ from src.flight.flight_state import (
     horizontal_command_speed,
     horizontal_distance_to_waypoint,
     local_position,
+    publish_mission_event,
     set_phase,
     target_errors,
 )
@@ -41,6 +42,10 @@ from src.flight.replanning_controller import (
 )
 from src.flight.route_planning import reversed_waypoints
 from src.flight.safety_supervisor import SafetySupervisor
+from src.flight.takeoff_stability import (
+    takeoff_climb_waypoint,
+    validate_takeoff_stability,
+)
 
 
 def configure_runtime(settings):
@@ -66,7 +71,7 @@ def clamp(value, min_value, max_value):
     return max(min_value, min(max_value, value))
 
 
-def velocity_command_from_error(error, speed_scale=1.0):
+def velocity_command_from_error(error, speed_scale=1.0, yaw_deg=0.0):
     north_velocity = POSITION_GAIN * error["north_m"]
     east_velocity = POSITION_GAIN * error["east_m"]
     horizontal_speed = sqrt(north_velocity**2 + east_velocity**2)
@@ -80,7 +85,17 @@ def velocity_command_from_error(error, speed_scale=1.0):
         -MAX_VERTICAL_SPEED_M_S,
         MAX_VERTICAL_SPEED_M_S,
     )
-    return VelocityNedYaw(north_velocity, east_velocity, down_velocity, 0.0)
+    return VelocityNedYaw(
+        north_velocity,
+        east_velocity,
+        down_velocity,
+        normalize_yaw_deg(yaw_deg),
+    )
+
+
+def normalize_yaw_deg(yaw_deg):
+    normalized = (float(yaw_deg) + 180.0) % 360.0 - 180.0
+    return 180.0 if normalized == -180.0 else normalized
 
 
 def risk_adjusted_speed_scale(base_speed_scale, risk_level, risk_action):
@@ -274,7 +289,11 @@ async def fly_to_waypoint(
         adjusted_speed_scale = risk_adjusted_speed_scale(
             speed_scale, risk_level, risk_action
         )
-        last_command = velocity_command_from_error(error, adjusted_speed_scale)
+        last_command = velocity_command_from_error(
+            error,
+            adjusted_speed_scale,
+            waypoint.get("yaw_deg", 0.0),
+        )
         await drone.offboard.set_velocity_ned(last_command)
         await asyncio.sleep(0.2)
     print_waypoint_timeout_debug(
@@ -300,6 +319,16 @@ async def fly_waypoint_route(
     active_waypoints = list(waypoints)
     waypoint_index = 0
     while waypoint_index < len(active_waypoints):
+        publish_mission_event(
+            phase_state,
+            "waypoint_started",
+            phase=phase_name,
+            route_direction=route_direction,
+            waypoint_index=waypoint_index,
+            waypoint_count=len(active_waypoints),
+            waypoint_name=active_waypoints[waypoint_index]["name"],
+            is_final_waypoint=waypoint_index == len(active_waypoints) - 1,
+        )
         replacement_waypoints = await fly_to_waypoint(
             drone,
             latest,
@@ -328,7 +357,14 @@ async def fly_waypoint_route(
 async def hover_at_waypoint(drone, phase_state, target_state, waypoint, phase_name, hover_s):
     set_phase(phase_state, phase_name)
     target_state.update(waypoint)
-    await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
+    await drone.offboard.set_velocity_ned(
+        VelocityNedYaw(
+            0.0,
+            0.0,
+            0.0,
+            normalize_yaw_deg(waypoint.get("yaw_deg", 0.0)),
+        )
+    )
     await asyncio.sleep(hover_s)
 
 
@@ -356,11 +392,27 @@ async def fly_astar_waypoints(
     print("Waiting 8 seconds for takeoff stabilization...")
     await asyncio.sleep(8)
     await wait_for_local_position(latest, TELEMETRY_TIMEOUT_S)
+    validate_takeoff_stability(latest, target_takeoff_altitude_m)
     print("Sending initial zero velocity setpoint before Offboard start...")
     await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
     print("Starting Offboard mode...")
     await drone.offboard.start()
     print("Offboard mode started.")
+    print("Climbing vertically to route altitude...")
+    await fly_to_waypoint(
+        drone,
+        latest,
+        phase_state,
+        target_state,
+        takeoff_climb_waypoint(latest, waypoints[0]["down_m"]),
+        "takeoff",
+        "none",
+        1.0,
+        perception_config,
+        perception_detector,
+        replan_config,
+        replan_state,
+    )
     print("Flying outbound A* path to goal...")
     await fly_waypoint_route(
         drone,

@@ -1,0 +1,35 @@
+header {
+  gap: 18px;
+}
+
+.profile-description {
+  color: #b7cbc6;
+  font-size: 12px;
+  margin: 8px 0 0;
+  max-width: 620px;
+}
+
+.profile-badge {
+  background: #e2f2ed;
+  border-radius: 999px;
+  color: #14735d;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 12px;
+  white-space: nowrap;
+}
+
+[data-full-section][hidden] {
+  display: none;
+}
+
+@media (max-width: 700px) {
+  header {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .profile-badge {
+    order: 3;
+  }
+}

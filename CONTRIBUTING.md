@@ -28,7 +28,7 @@ Run commands from the repository root.
 - `src/perception/`: simulated perception and risk states
 - `src/sensors/`: live/replay sensor sources and timestamped contracts
 - `src/ml/`: datasets, evaluation, ONNX, and semantic-perception research
-- `src/backends/`: vendor-neutral flight backend boundaries
+- `src/vision/`: camera collection, visual training, evaluation, and replay
 - `src/maps/`: map and destination management
 - `src/logging/`: telemetry analysis, reports, plots, and comparisons
 - `scripts/flight/experiments/`: official experiment launchers
