@@ -81,6 +81,9 @@ class FaultInjectedLidarSource(SensorSource):
             if now_s < self._outage_until_s:
                 self._outage = True
                 self._fault_drops += 1
+            elif self._outage:
+                self._outage = False
+                self._cached_frame = self._inject(frame)
             else:
                 generator = random.Random(self.seed + frame.sequence * 104729)
                 probability = float(

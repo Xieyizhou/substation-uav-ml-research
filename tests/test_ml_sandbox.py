@@ -374,6 +374,27 @@ class FaultInjectionTests(unittest.TestCase):
         source.latest()
         self.assertFalse(source.health(now_s=received + 0.6).healthy)
 
+    def test_first_frame_after_outage_is_always_a_recovery_frame(self):
+        frame = LaserScanFrame(
+            timestamp_s=1, received_monotonic_s=time.monotonic(), frame_id="lidar",
+            angle_min_rad=-1, angle_max_rad=1, angle_step_rad=1,
+            range_min_m=0.1, range_max_m=10, ranges_m=(1.0,),
+            source="fake", sequence=1,
+        )
+        underlying = _FakeSource(frame)
+        source = FaultInjectedLidarSource(underlying, {
+            "seed": 1, "sensor_outage_probability": 1.0,
+            "sensor_outage_duration_s": 0.1,
+            "lidar_noise_stddev_m": 0, "lidar_dropout_probability": 0,
+        })
+        source._cached_sequence = 1
+        source._cached_frame = frame
+        source._outage = True
+        source._outage_until_s = 0.0
+        underlying.frame = LaserScanFrame(**{**frame.__dict__, "sequence": 2})
+        self.assertEqual(source.latest().sequence, 2)
+        self.assertFalse(source._outage)
+
 
 class RegistryAndComparisonTests(unittest.TestCase):
     def test_registry_scheduling_is_idempotent_and_resume_only_resets_failures(self):
