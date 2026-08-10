@@ -8,9 +8,11 @@ from pathlib import Path
 
 from src.inspection import InspectionConfig, InspectionService
 from src.inspection.app import main as serve_inspector
+from src.sandbox.acceptance import inspect_acceptance, run_acceptance
 from src.sandbox.experiment_recipe import inspect_recipe, materialize_recipe
 from src.sandbox.experiment_runner import inspect_result, run_recipe
 from src.sandbox.flight_smoke import run_flight_smoke
+from src.sandbox.supervisor_gate import inspect_supervisor_gate, run_supervisor_gate
 
 
 def build_parser():
@@ -71,6 +73,22 @@ def build_parser():
         "experiment-inspect", help="Validate a completed sandbox experiment result"
     )
     result.add_argument("--input", type=Path, required=True)
+    supervisor = commands.add_parser(
+        "supervisor-gate", help="Verify safe stop and failure diagnostics offline"
+    )
+    supervisor.add_argument("--output", type=Path, required=True)
+    supervisor_inspect = commands.add_parser(
+        "supervisor-gate-inspect", help="Validate a supervisor gate receipt"
+    )
+    supervisor_inspect.add_argument("--input", type=Path, required=True)
+    acceptance = commands.add_parser(
+        "acceptance-run", help="Run the evidence-bound Sandbox v1 gate"
+    )
+    acceptance.add_argument("--output", type=Path, required=True)
+    acceptance_inspect = commands.add_parser(
+        "acceptance-inspect", help="Validate a Sandbox v1 acceptance result"
+    )
+    acceptance_inspect.add_argument("--input", type=Path, required=True)
     return parser
 
 
@@ -144,6 +162,38 @@ def main(argv=None):
             return 1
         _print(result)
         return 0
+    if args.command == "supervisor-gate":
+        try:
+            result = run_supervisor_gate(config.project_root, args.output)
+        except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
+            print(f"Sandbox supervisor gate failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["passed"] else 1
+    if args.command == "supervisor-gate-inspect":
+        try:
+            result = inspect_supervisor_gate(args.input)
+        except (FileNotFoundError, OSError, TypeError, ValueError) as error:
+            print(f"Sandbox supervisor gate failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["passed"] else 1
+    if args.command == "acceptance-run":
+        try:
+            result = run_acceptance(config.project_root, args.output)
+        except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
+            print(f"Sandbox acceptance failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["passed"] else 1
+    if args.command == "acceptance-inspect":
+        try:
+            result = inspect_acceptance(args.input)
+        except (FileNotFoundError, OSError, TypeError, ValueError) as error:
+            print(f"Sandbox acceptance failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["passed"] else 1
     return serve_inspector([
         "--host", args.host,
         "--port", str(args.port),

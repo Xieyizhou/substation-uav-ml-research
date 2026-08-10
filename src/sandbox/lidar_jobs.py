@@ -8,6 +8,8 @@ from pathlib import Path
 import sqlite3
 import sys
 
+from src.sandbox.workflow import artifact_reference
+
 
 def _read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
@@ -24,6 +26,7 @@ def _latest_replay(root):
     value = _read_json(paths[0])
     if not value.get("passed"):
         raise ValueError("the latest LiDAR replay gate did not pass")
+    value["_receipt_path"] = paths[0]
     return value
 
 
@@ -77,6 +80,15 @@ def build_lidar_command(config, action):
         )
         stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         output = root / "outputs/sandbox/lidar_replay" / stamp
+        artifacts = (
+            artifact_reference(
+                root, "lidar_replay_receipt",
+                replay["replay_gate_identity_sha256"],
+                replay["_receipt_path"],
+            ),
+            artifact_reference(root, "lidar_model", model_id, package),
+            artifact_reference(root, "lidar_dataset", dataset_id, dataset),
+        )
         return (
             action,
             (
@@ -85,6 +97,9 @@ def build_lidar_command(config, action):
                 "--output", str(output),
             ),
             600.0,
+            artifacts,
+            ((output / "replay_gate.json").relative_to(root).as_posix(),),
+            False,
         )
     if action == "lidar-closed-loop-next":
         study_id = _study_id(root, model_id)
@@ -95,5 +110,18 @@ def build_lidar_command(config, action):
                 study_id, "--max-runs", "1",
             ),
             540.0,
+            (
+                artifact_reference(
+                    root, "lidar_replay_receipt",
+                    replay["replay_gate_identity_sha256"],
+                    replay["_receipt_path"],
+                ),
+                artifact_reference(
+                    root, "closed_loop_study", study_id,
+                    root / "outputs/research/registry.sqlite",
+                ),
+            ),
+            (),
+            True,
         )
     raise ValueError(f"unsupported LiDAR sandbox action: {action}")

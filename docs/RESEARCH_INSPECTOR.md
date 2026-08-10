@@ -59,7 +59,19 @@ registry, refuses completed studies, and always adds `--max-runs 1`. It uses
 the same single-job lock, runtime conflict checks, timeout, stop sequence, and
 job history as the other managed workflows.
 
-The Experiments tab creates and runs a recipe in one managed job. A recipe
+The Experiments tab provides one workflow selector for visual ONNX replay,
+LiDAR replay, one pending LiDAR closed-loop flight, and Sandbox v1 acceptance.
+Only workflow-specific safe fields are shown; paths, thresholds, models, and
+blind partitions cannot be supplied by the browser.
+
+Every managed job now writes `workflow_recipe.json` before process launch and
+`workflow_receipt.json` after termination. The recipe binds the command,
+source commit, artifact identities, timeout, scenario, and expected outputs.
+The receipt binds final job state, exit status, diagnostics, bounded log hash,
+and hashes of produced files. Existing specialized visual and LiDAR identities
+remain unchanged and are referenced rather than replaced.
+
+A visual recipe
 binds the training view, exact membership, frozen package, selected ONNX
 identity, preprocessing identity, frozen confidence threshold, frame budget,
 uniform full-partition sampling algorithm, schedule, CPU runtime, and clean
@@ -83,6 +95,20 @@ python main.py sandbox experiment-inspect \
 Each experiment directory contains `recipe.json`, `status.json`, a hashed raw
 prediction artifact, and `result.json`. The App exposes only the recipe state
 and aggregate result.
+
+Sandbox v1 acceptance uses the latest valid 64-frame-or-larger visual replay,
+the latest passed LiDAR replay, and the complete matching closed-loop study.
+It also runs two local supervisor checks: graceful process-group stop and
+capture of a deliberate non-zero exit with its diagnostic. The result binds
+all five evidence identities. Visual and LiDAR evidence is paired in this
+gate; it is not represented as synchronized sensor-fusion inference.
+
+```bash
+python main.py sandbox acceptance-run \
+  --output outputs/sandbox/acceptance/manual-v1
+python main.py sandbox acceptance-inspect \
+  --input outputs/sandbox/acceptance/manual-v1/acceptance.json
+```
 
 Jobs follow `preparing → running → stopping → complete/failed`. Metadata,
 diagnostics, and logs are stored under `outputs/sandbox/operator/jobs`. A file
@@ -121,6 +147,7 @@ dataset identities, model freezing, held-out evaluation, and formal studies.
 6. Pass the v2 smoke training gate.
 7. Run a 64-frame validation recipe, then increase the frame budget only when
    the diagnostic result and runtime are healthy.
+8. Run Sandbox v1 acceptance and preserve its identity-bound result.
 
 Formal training should begin only from a clean tracked commit after these
 checks pass. Generated datasets, weights, job histories, and training outputs

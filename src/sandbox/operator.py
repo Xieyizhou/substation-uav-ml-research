@@ -18,6 +18,10 @@ from src.sandbox.job_models import (
     utc_now,
 )
 from src.sandbox.job_process import process_alive, start_job_process, stop_job_process
+from src.sandbox.workflow import (
+    materialize_workflow_receipt,
+    materialize_workflow_recipe,
+)
 
 
 class OperatorBusy(RuntimeError):
@@ -84,41 +88,46 @@ class SandboxOperator:
                     "an interrupted sandbox job is still alive; inspect PID "
                     + ", ".join(str(pid) for pid in self._orphan_pids)
                 )
-            offline_actions = {
-                "doctor", "package-inspect-v2", "experiment-run",
-                "lidar-replay-gate",
-            }
-            conflicts = (
-                self._runtime_conflicts() if action not in offline_actions else []
-            )
+            command = build_command(self.config, action, scenario_id, parameters)
+            conflicts = self._runtime_conflicts() if command.requires_runtime_idle else []
             if conflicts:
                 raise OperatorBusy(
                     "runtime processes already exist: " + ", ".join(conflicts)
                 )
-            command = build_command(self.config, action, scenario_id, parameters)
             self._acquire_lock()
             job = SandboxJob(
                 job_id=new_job_id(action),
-                action=action,
+                action=command.action,
                 state="preparing",
                 created_at=utc_now(),
                 timeout_s=command.timeout_s,
                 sensitive=command.sensitive,
                 scenario_id=command.scenario_id,
             )
-            self.store.write(job)
+            try:
+                self.store.write(job)
+                recipe = materialize_workflow_recipe(
+                    self.config.project_root, self.store, job, command
+                )
+            except Exception as error:
+                job.state = "failed"
+                job.ended_at = utc_now()
+                job.error = f"workflow recipe failed: {error}"
+                self.store.write(job)
+                self._release_lock()
+                raise
             self._active = job
             self._stop_requested.clear()
             self._thread = threading.Thread(
                 target=self._run,
-                args=(job, command.argv),
+                args=(job, command.argv, recipe),
                 name=f"sandbox-{action}",
                 daemon=True,
             )
             self._thread.start()
             return job.to_record()
 
-    def _run(self, job, argv):
+    def _run(self, job, argv, recipe):
         process = handle = None
         started = time.monotonic()
         try:
@@ -164,6 +173,14 @@ class SandboxOperator:
             self._append_diagnostics(job)
             with self._guard:
                 self.store.write(job)
+                try:
+                    materialize_workflow_receipt(
+                        self.config.project_root, self.store, job, recipe
+                    )
+                except Exception as error:
+                    job.state = "failed"
+                    job.error = f"workflow receipt failed: {error}"
+                    self.store.write(job)
                 self._active = None
                 self._release_lock()
 

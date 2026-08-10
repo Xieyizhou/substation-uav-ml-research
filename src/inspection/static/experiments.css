@@ -4,7 +4,7 @@
   align-items: end;
   display: grid;
   gap: 10px;
-  grid-template-columns: minmax(190px, 1.4fr) repeat(4, minmax(130px, 1fr)) auto;
+  grid-template-columns: minmax(180px, 1.3fr) minmax(190px, 1.4fr) repeat(4, minmax(120px, 1fr)) auto;
 }
 
 .experiment-form label {
@@ -16,6 +16,8 @@
   letter-spacing: .04em;
   text-transform: uppercase;
 }
+
+.experiment-form .visual-option[hidden] { display: none; }
 
 .experiment-form input {
   background: #fff;
@@ -84,11 +86,32 @@
   text-align: center;
 }
 
+.acceptance-card { margin-bottom: 22px; }
+
+.acceptance-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.acceptance-check {
+  background: #f7f8f6;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.acceptance-check b,
+.acceptance-check small { display: block; overflow-wrap: anywhere; }
+.acceptance-check small { color: var(--muted); margin-top: 4px; }
+.experiment-history + h3 { margin-top: 24px; }
+
 @media (max-width: 1100px) {
   .experiment-form { grid-template-columns: repeat(3, 1fr); }
+  .acceptance-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
 @media (max-width: 650px) {
   .experiment-form { grid-template-columns: 1fr; }
   .experiment-facts { grid-template-columns: repeat(2, 1fr); }
+  .acceptance-grid { grid-template-columns: 1fr; }
 }

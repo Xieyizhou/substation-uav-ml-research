@@ -56,18 +56,23 @@
     <section id="experiments" class="panel">
       <div class="section-head"><div><p class="kicker">NON-BLIND WORKBENCH</p><h2>Visual experiment recipes</h2></div><p>Frozen package · fixed threshold</p></div>
       <article class="experiment-launch">
-        <h3>New development experiment</h3>
+        <h3>New managed workflow</h3>
         <div class="experiment-form">
-          <label>Name<input id="experiment-name" maxlength="64" autocomplete="off"></label>
-          <label>Partition<select id="experiment-partition"><option value="validation">Selection validation</option><option value="full_validation">Full validation</option></select></label>
-          <label>ONNX input<select id="experiment-size"><option>320</option><option selected>416</option><option>640</option></select></label>
-          <label>Schedule<select id="experiment-skip"><option value="1">Every frame</option><option value="2">Every 2nd frame</option><option value="3">Every 3rd frame</option></select></label>
-          <label>Frame budget<select id="experiment-limit"><option value="64">64 · quick gate</option><option value="256">256</option><option value="1024">1,024</option><option value="all">All partition frames</option></select></label>
-          <button id="experiment-start">Create and run</button>
+          <label>Workflow<select id="experiment-workflow"><option value="visual_replay">Visual ONNX replay</option><option value="lidar_replay">LiDAR replay</option><option value="lidar_closed_loop">Next LiDAR closed-loop flight</option><option value="multimodal_acceptance">Sandbox v1 acceptance</option></select></label>
+          <label class="visual-option">Name<input id="experiment-name" maxlength="64" autocomplete="off"></label>
+          <label class="visual-option">Partition<select id="experiment-partition"><option value="validation">Selection validation</option><option value="full_validation">Full validation</option></select></label>
+          <label class="visual-option">ONNX input<select id="experiment-size"><option>320</option><option selected>416</option><option>640</option></select></label>
+          <label class="visual-option">Schedule<select id="experiment-skip"><option value="1">Every frame</option><option value="2">Every 2nd frame</option><option value="3">Every 3rd frame</option></select></label>
+          <label class="visual-option">Frame budget<select id="experiment-limit"><option value="64">64 · quick gate</option><option value="256">256</option><option value="1024">1,024</option><option value="all">All partition frames</option></select></label>
+          <button id="experiment-start">Create recipe and run</button>
         </div>
-        <p class="operator-note">Only validation views are available. The model package and confidence threshold cannot be overridden, and blind data is not accessible from this workflow.</p>
+        <p id="workflow-note" class="operator-note">Visual replay uses non-blind validation data. Model package, threshold and membership cannot be overridden.</p>
       </article>
+      <article class="acceptance-card"><div class="section-head"><div><p class="kicker">SANDBOX V1</p><h2>Acceptance gate</h2></div><span id="acceptance-badge"></span></div><div id="acceptance-checks" class="acceptance-grid"></div><p id="acceptance-note" class="operator-note"></p></article>
+      <h3>Visual replay results</h3>
       <div id="experiment-history" class="experiment-history"></div>
+      <h3>Managed workflow receipts</h3>
+      <div id="workflow-history" class="experiment-history"></div>
     </section>
     <section id="doctor" class="panel"><div class="section-head"><div><p class="kicker">ENVIRONMENT</p><h2>Sandbox doctor</h2></div></div><div id="checks"></div></section>
     <section id="operator" class="panel">

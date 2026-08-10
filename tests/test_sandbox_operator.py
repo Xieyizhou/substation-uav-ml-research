@@ -125,9 +125,16 @@ class SandboxOperatorTests(unittest.TestCase):
         self.assertEqual(command.argv[-1], str(package))
         self.assertEqual(command.timeout_s, 120.0)
 
-    @patch("src.sandbox.job_commands.materialize_recipe")
+    @patch("src.sandbox.workflow_commands.materialize_recipe")
     def test_experiment_command_uses_validated_recipe_and_fixed_cli(self, materialize):
-        recipe = Mock(source_frame_count=64)
+        recipe = Mock(
+            source_frame_count=64,
+            recipe_identity_sha256=HASH,
+            package_identity_sha256=HASH,
+            membership_sha256=HASH,
+            package_root="models/package",
+            dataset_root="data/dataset",
+        )
         output = self.root / "outputs/sandbox/experiments/validation-416"
         materialize.return_value = (recipe, output)
         parameters = {
@@ -145,6 +152,25 @@ class SandboxOperatorTests(unittest.TestCase):
             build_command(
                 self.config, "experiment-run",
                 parameters={**parameters, "model_path": "/tmp/model.onnx"},
+            )
+
+    @patch("src.sandbox.workflow_commands.build_visual_command")
+    def test_unified_workflow_dispatch_rejects_overrides(self, visual):
+        expected = SandboxCommand("experiment-run", ("python",), 5.0)
+        visual.return_value = expected
+        parameters = {
+            "workflow": "visual_replay", "name": "validation-test",
+            "partition": "validation", "input_size": 416,
+            "frame_skip_interval": 1, "frame_limit": 64,
+        }
+        self.assertIs(
+            build_command(self.config, "workflow-run", parameters=parameters),
+            expected,
+        )
+        with self.assertRaisesRegex(ValueError, "unsupported workflow parameter"):
+            build_command(
+                self.config, "workflow-run",
+                parameters={"workflow": "lidar_replay", "model": "/tmp/model"},
             )
 
     def test_job_store_detects_record_tampering(self):
@@ -171,6 +197,9 @@ class SandboxOperatorTests(unittest.TestCase):
             status = self.wait_idle(operator)
         self.assertEqual(status["history"][0]["state"], "complete")
         self.assertIn("sandbox-ready", "\n".join(operator.log(started["job_id"])))
+        directory = operator.store.directory(started["job_id"])
+        self.assertTrue((directory / "workflow_recipe.json").is_file())
+        self.assertTrue((directory / "workflow_receipt.json").is_file())
 
     def test_single_instance_lock_and_safe_stop(self):
         command = SandboxCommand(
@@ -191,6 +220,10 @@ class SandboxOperatorTests(unittest.TestCase):
             status = self.wait_idle(first)
         self.assertEqual(status["history"][0]["state"], "failed")
         self.assertTrue(status["history"][0]["stop_requested"])
+        receipt = json.loads((
+            first.store.directory(started["job_id"]) / "workflow_receipt.json"
+        ).read_text())
+        self.assertEqual(receipt["state"], "stopped")
 
     def test_live_interrupted_job_blocks_a_new_operator_job(self):
         store = SandboxJobStore(self.config.sandbox_jobs_root)
@@ -236,6 +269,13 @@ class SandboxOperatorTests(unittest.TestCase):
             lidar = connection.getresponse()
             self.assertEqual(lidar.status, 200)
             self.assertEqual(json.loads(lidar.read())["status"], "incomplete")
+            connection.request("GET", "/api/acceptance")
+            acceptance = connection.getresponse()
+            self.assertEqual(acceptance.status, 200)
+            self.assertEqual(
+                json.loads(acceptance.read())["acceptance"]["status"],
+                "incomplete",
+            )
             connection.request(
                 "POST",
                 "/api/operator/start",

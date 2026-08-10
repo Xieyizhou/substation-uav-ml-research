@@ -77,6 +77,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.experiments())
         if path == "/api/lidar":
             return self._json(self.service.lidar())
+        if path == "/api/acceptance":
+            return self._json(self.service.acceptance())
         if path == "/api/recordings":
             return self._json(self.service.recordings())
         if path == "/api/scenarios":

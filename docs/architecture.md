@@ -67,6 +67,33 @@ PX4/Gazebo simulation
 - `config/maps/`: synchronized map-specific planner configurations.
 - `config/perception/`: research protocol, equipment classes, and domain randomization.
 
+## Sandbox Workflow Architecture
+
+`src/sandbox/command_models.py` defines the command boundary used by the local
+operator. `workflow_commands.py` maps browser choices to allow-listed visual,
+LiDAR, or acceptance commands. `workflow.py` wraps every managed execution in
+an identity-bound recipe and receipt without changing the specialized visual
+or LiDAR artifact schemas.
+
+The acceptance orchestrator in `sandbox/acceptance.py` composes verified
+evidence from existing subsystems. Process lifecycle checks remain isolated in
+`sandbox/supervisor_gate.py`; the inspector only reads their resulting hashes
+through `inspection/acceptance.py`.
+
+```text
+App workflow selection
+  -> allow-listed SandboxCommand
+  -> workflow recipe
+  -> single-instance managed process
+  -> specialized visual / LiDAR / flight output
+  -> workflow receipt
+  -> Sandbox v1 acceptance evidence
+```
+
+The wrapper records provenance and termination state. It does not reinterpret
+model metrics, expose blind inputs, or claim that paired visual and LiDAR
+results are synchronized sensor fusion.
+
 ## Visual Workflow Architecture
 
 Visual research code follows one-way domain layers. JSON dictionaries enter

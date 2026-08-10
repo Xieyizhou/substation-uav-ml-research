@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import asdict, is_dataclass
 
 from src.inspection.config import AccessDenied, InspectionConfig
+from src.inspection.acceptance import acceptance_summary
 from src.inspection.dashboard import dashboard, is_blind, load_plan
 from src.inspection.doctor import run_doctor
 from src.inspection.experiments import experiment_summaries
@@ -48,6 +49,9 @@ class InspectionService:
 
     def lidar(self):
         return serialize(lidar_summary(self.config))
+
+    def acceptance(self):
+        return serialize(acceptance_summary(self.config))
 
     def recordings(self):
         results = []
