@@ -7,6 +7,11 @@ lifecycle from training-view identity through frozen-package, paired blind,
 and static replay results. It can also run a small set of fixed workflows
 without exposing an arbitrary command shell.
 
+The LiDAR Gates tab reads the latest identity-bound validation replay receipt
+and its matching closed-loop study. It reports gate state, model identity,
+replay quality and latency, completed flights, landings, collisions, safety
+buffer entries, sensor health, and live inference latency.
+
 Start it from the repository root:
 
 ```bash
@@ -38,12 +43,21 @@ The Operator tab exposes fixed actions:
 - identity-bound visual evaluation recipes on selection or full validation;
 - bounded 320/416/640 ONNX evaluation with every-frame, every-second-frame,
   or every-third-frame scheduling.
+- offline revalidation of the latest accepted LiDAR candidate;
+- one pending LiDAR closed-loop flight at a time.
 
 The ML Results tab is read-only. It exposes aggregate identities and metrics,
 including the controlled 416-pixel latency replicate, but does not expose
 blind images, per-frame predictions, labels, or scenario details. Formal blind
 evaluation remains unavailable as an App action and cannot be rerun from the
 browser.
+
+LiDAR replay revalidation resolves the package and validation dataset from
+their recorded identities; the browser cannot provide paths or substitute a
+model. Closed-loop continuation resolves the matching study from the local
+registry, refuses completed studies, and always adds `--max-runs 1`. It uses
+the same single-job lock, runtime conflict checks, timeout, stop sequence, and
+job history as the other managed workflows.
 
 The Experiments tab creates and runs a recipe in one managed job. A recipe
 binds the training view, exact membership, frozen package, selected ONNX
@@ -95,7 +109,7 @@ the process groups descended from that job.
   delete datasets, retries, model artifacts, or logs.
 
 The command line remains the source of truth for formal collection audit,
-dataset identities, model freezing, held-out evaluation, and replay studies.
+dataset identities, model freezing, held-out evaluation, and formal studies.
 
 ## Recommended gate sequence
 

@@ -9,6 +9,7 @@ import sys
 
 from src.inspection.dashboard import is_blind, load_plan
 from src.sandbox.experiment_recipe import materialize_recipe
+from src.sandbox.lidar_jobs import build_lidar_command
 from src.vision.collection.plan import collection_status
 from src.vision.collection.recording import scenario_by_id
 
@@ -119,6 +120,9 @@ def _experiment_command(config, parameters):
 
 
 def build_command(config, action, scenario_id=None, parameters=None):
+    if action.startswith("lidar-"):
+        name, argv, timeout = build_lidar_command(config, action)
+        return SandboxCommand(name, argv, timeout)
     if action == "doctor":
         return SandboxCommand(
             action,

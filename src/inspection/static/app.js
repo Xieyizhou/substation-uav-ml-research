@@ -1,12 +1,12 @@
-const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,operatorToken='';
+const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,operatorToken='',lidarState=null;
 const api=async path=>{const r=await fetch(path,{cache:'no-store'});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const post=async(path,value)=>{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Sandbox-Token':operatorToken},body:JSON.stringify(value)});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active')});
 
 async function refresh(){
-  const [dash,runtime,doctor,recs,available,operator,research,experiments]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments')]);
-  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderDashboard(dash,runtime);renderResearch(research);renderExperiments(experiments);renderDoctor(doctor);renderSelectors();renderOperator(operator);
+  const [dash,runtime,doctor,recs,available,operator,research,experiments,lidar]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments'),api('/api/lidar')]);
+  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderDashboard(dash,runtime);renderResearch(research);renderExperiments(experiments);renderLidar(lidar);renderDoctor(doctor);renderSelectors();renderOperator(operator);
   $('#updated').textContent=`Observed ${new Date().toLocaleTimeString()}`;
 }
 const pct=v=>v==null?'—':`${(Number(v)*100).toFixed(2)}%`;
@@ -25,6 +25,18 @@ function renderResearch(r){
   const replay=r.static_replay;$('#replay-status').textContent=`${replay.completed} / ${replay.total} completed`;
   $('#replay-rows').innerHTML=replay.rows.map(x=>`<tr><td><b>${x.input_size}</b></td><td>${esc(x.policy)}</td><td><span class="source-tag ${x.source==='controlled_replicate'?'selected':''}">${esc(x.source)}</span></td><td>${fixed(x.throughput_fps)}</td><td>${fixed(x.p50_ms)} ms</td><td>${fixed(x.p95_ms)} ms</td><td>${pct(x.precision)}</td><td>${pct(x.recall)}</td><td>${pct(x.small_recall)}</td></tr>`).join('');
   $('#replay-note').textContent=replay.note||'';
+}
+function gateBadge(value){const cls=value.passed?'pass':value.status==='failed'||value.status==='invalid'?'failure':'warning';return `<span class="badge ${cls}">${esc(value.status)}</span>`}
+function renderLidar(value){
+  lidarState=value;const replay=value.replay,closed=value.closed_loop;
+  $('#lidar-status').textContent=value.status==='complete'?'Replay and closed-loop gates passed':'Gate work remains';
+  $('#lidar-replay-badge').innerHTML=gateBadge(replay);
+  $('#lidar-replay-summary').innerHTML=replay.status==='missing'?'<p>No replay receipt is available.</p>':`<div class="research-facts"><span>Model<b>${esc(replay.model_id)}</b></span><span>Macro-F1<b>${pct(replay.macro_f1)}</b></span><span>Danger recall<b>${pct(replay.danger_recall)}</b></span><span>CPU P95<b>${fixed(replay.inference_p95_ms,3)} ms</b></span></div><small class="artifact-path">${esc(replay.path||replay.error)}</small>`;
+  $('#lidar-closed-badge').innerHTML=gateBadge(closed);
+  const total=closed.total||0,progress=total?100*closed.completed/total:0;
+  $('#lidar-closed-summary').innerHTML=`<div class="progress-row"><strong>${closed.completed||0} / ${total}</strong><span>${closed.scenario_count||0} scenarios</span></div><div class="progress-track"><div class="progress-fill" style="width:${progress}%"></div></div><div class="research-facts gate-facts"><span>Missions / landings<b>${closed.mission_success||0} / ${closed.landing_success||0}</b></span><span>Collisions / buffer entries<b>${closed.collision_count||0} / ${closed.buffer_entry_count||0}</b></span><span>Minimum sensor health<b>${pct(closed.sensor_health_min)}</b></span><span>Maximum inference P95<b>${fixed(closed.inference_p95_max_ms,3)} ms</b></span></div><small class="artifact-path">${esc(closed.study_id||closed.error||'No closed-loop study')}</small>`;
+  $('#lidar-closed-start').disabled=!closed.pending;
+  $('#lidar-closed-option').disabled=!closed.pending;
 }
 function defaultExperimentName(){const d=new Date(),part=n=>String(n).padStart(2,'0');return `validation-416-${d.getFullYear()}${part(d.getMonth()+1)}${part(d.getDate())}-${part(d.getHours())}${part(d.getMinutes())}${part(d.getSeconds())}`}
 function renderExperiments(rows){
@@ -58,14 +70,18 @@ function renderOperator(value){
   document.querySelectorAll('.job-row').forEach(row=>row.onclick=()=>loadJobLog(row.dataset.job,row.dataset.sensitive==='true'));
   $('#operator-scenario').innerHTML=scenarios.map(row=>`<option value="${esc(row.scenario_id)}">${esc(row.scenario_id)} · ${esc(row.dataset_role)}</option>`).join('');
   $('#experiment-start').disabled=Boolean(active);
+  $('#lidar-replay-start').disabled=Boolean(active);$('#lidar-closed-start').disabled=Boolean(active)||!lidarState?.closed_loop?.pending;$('#lidar-stop').disabled=!active;$('#lidar-stop').dataset.job=active?.job_id||'';
   updateOperatorInputs();
 }
 function updateOperatorInputs(){const smoke=$('#operator-action').value==='flight-smoke';$('#operator-scenario').disabled=!smoke;$('#operator-scenario').hidden=!smoke}
-async function refreshOperator(){try{const [value,experiments]=await Promise.all([api('/api/operator'),api('/api/experiments')]);operatorToken=value.operator_token;renderOperator(value);renderExperiments(experiments)}catch(e){$('#operator-state').textContent=e.message}}
+async function refreshOperator(){try{const [value,experiments,lidar]=await Promise.all([api('/api/operator'),api('/api/experiments'),api('/api/lidar')]);operatorToken=value.operator_token;renderExperiments(experiments);renderLidar(lidar);renderOperator(value)}catch(e){$('#operator-state').textContent=e.message}}
 async function loadJobLog(job,sensitive){if(sensitive){$('#job-log').textContent='Blind collection job logs are sealed.';return}try{$('#job-log').innerHTML=(await api(`/api/operator/log/${encodeURIComponent(job)}?limit=300`)).join('\n')||'Log is empty.'}catch(e){$('#job-log').textContent=e.message}}
 $('#operator-action').onchange=updateOperatorInputs;
-$('#operator-start').onclick=async()=>{const action=$('#operator-action').value,scenario=action==='flight-smoke'?$('#operator-scenario').value:null;if(!confirm(`Start ${action}? Only one sandbox job may run.`))return;try{await post('/api/operator/start',{action,scenario_id:scenario});await refreshOperator()}catch(e){alert(e.message)}};
-$('#operator-stop').onclick=async()=>{const job=$('#operator-stop').dataset.job;if(!job||!confirm('Stop this job and its managed process groups?'))return;try{await post('/api/operator/stop',{job_id:job});await refreshOperator()}catch(e){alert(e.message)}};
+async function startManaged(action,scenario=null){if(!confirm(`Start ${action}? Only one sandbox job may run.`))return;try{await post('/api/operator/start',{action,scenario_id:scenario});await refreshOperator()}catch(e){alert(e.message)}}
+async function stopManaged(job){if(!job||!confirm('Stop this job and its managed process groups?'))return;try{await post('/api/operator/stop',{job_id:job});await refreshOperator()}catch(e){alert(e.message)}}
+$('#operator-start').onclick=()=>{const action=$('#operator-action').value,scenario=action==='flight-smoke'?$('#operator-scenario').value:null;startManaged(action,scenario)};
+$('#operator-stop').onclick=()=>stopManaged($('#operator-stop').dataset.job);
+$('#lidar-replay-start').onclick=()=>startManaged('lidar-replay-gate');$('#lidar-closed-start').onclick=()=>startManaged('lidar-closed-loop-next');$('#lidar-stop').onclick=()=>stopManaged($('#lidar-stop').dataset.job);
 $('#experiment-start').onclick=async()=>{const name=$('#experiment-name').value.trim(),limit=$('#experiment-limit').value,parameters={name,partition:$('#experiment-partition').value,input_size:Number($('#experiment-size').value),frame_skip_interval:Number($('#experiment-skip').value),frame_limit:limit==='all'?null:Number(limit)};if(!confirm(`Create and run ${name}? This uses non-blind validation data only.`))return;try{await post('/api/operator/start',{action:'experiment-run',parameters});$('#experiment-name').value='';await refreshOperator()}catch(e){alert(e.message)}};
 
 $('#load-log').onclick=async()=>{

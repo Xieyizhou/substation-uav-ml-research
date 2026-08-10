@@ -232,6 +232,10 @@ class SandboxOperatorTests(unittest.TestCase):
             experiments = connection.getresponse()
             self.assertEqual(experiments.status, 200)
             self.assertEqual(json.loads(experiments.read()), [])
+            connection.request("GET", "/api/lidar")
+            lidar = connection.getresponse()
+            self.assertEqual(lidar.status, 200)
+            self.assertEqual(json.loads(lidar.read())["status"], "incomplete")
             connection.request(
                 "POST",
                 "/api/operator/start",

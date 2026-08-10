@@ -84,7 +84,10 @@ class SandboxOperator:
                     "an interrupted sandbox job is still alive; inspect PID "
                     + ", ".join(str(pid) for pid in self._orphan_pids)
                 )
-            offline_actions = {"doctor", "package-inspect-v2", "experiment-run"}
+            offline_actions = {
+                "doctor", "package-inspect-v2", "experiment-run",
+                "lidar-replay-gate",
+            }
             conflicts = (
                 self._runtime_conflicts() if action not in offline_actions else []
             )

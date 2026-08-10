@@ -17,6 +17,7 @@
   <nav>
     <button class="tab active" data-tab="overview">Overview</button>
     <button class="tab" data-tab="research">ML results</button>
+    <button class="tab" data-tab="lidar">LiDAR gates</button>
     <button class="tab" data-tab="experiments">Experiments</button>
     <button class="tab" data-tab="doctor">Sandbox doctor</button>
     <button class="tab" data-tab="operator">Operator</button>
@@ -30,6 +31,17 @@
       <div id="counts" class="metric-grid"></div>
       <div class="two-col"><article><h3>Scenario queue</h3><div id="scenario"></div></article><article><h3>Runtime status</h3><div id="runtime"></div></article></div>
       <article><h3>Dataset boundaries</h3><div id="roles" class="role-grid"></div></article>
+    </section>
+    <section id="lidar" class="panel">
+      <div class="section-head"><div><p class="kicker">FLIGHT ENTRY</p><h2>LiDAR candidate gates</h2></div><p id="lidar-status"></p></div>
+      <div class="lidar-grid">
+        <article class="gate-card"><div class="section-head"><h3>Validation replay</h3><span id="lidar-replay-badge"></span></div><div id="lidar-replay-summary"></div></article>
+        <article class="gate-card"><div class="section-head"><h3>Five-scenario closed loop</h3><span id="lidar-closed-badge"></span></div><div id="lidar-closed-summary"></div></article>
+      </div>
+      <article class="gate-controls">
+        <div><h3>Managed gate controls</h3><p class="operator-note">Replay is offline. Closed-loop continuation runs one pending flight and preserves the existing single-instance and process cleanup rules.</p></div>
+        <div class="controls"><button id="lidar-replay-start">Revalidate replay</button><button id="lidar-closed-start">Run next closed-loop flight</button><button id="lidar-stop" class="danger" disabled>Stop active job</button></div>
+      </article>
     </section>
     <section id="research" class="panel">
       <div class="section-head"><div><p class="kicker">REPRODUCIBLE ML</p><h2>Visual experiment lifecycle</h2></div><p id="research-status"></p></div>
@@ -71,6 +83,8 @@
             <option value="training-view-v2">Materialize v2 training view</option>
             <option value="training-smoke-v2">Run v2 smoke training</option>
             <option value="package-inspect-v2">Verify frozen v2 package</option>
+            <option value="lidar-replay-gate">Revalidate LiDAR replay</option>
+            <option id="lidar-closed-option" value="lidar-closed-loop-next">Run next LiDAR closed-loop flight</option>
           </select>
           <select id="operator-scenario"></select>
           <button id="operator-start">Start managed job</button>

@@ -10,6 +10,7 @@ from src.inspection.doctor import run_doctor
 from src.inspection.experiments import experiment_summaries
 from src.inspection.frames import frame_page, frame_path, scenario_progress
 from src.inspection.logs import log_tail
+from src.inspection.lidar import lidar_summary
 from src.inspection.runtime import LocalProcessAdapter, runtime_status
 from src.inspection.research import research_summary
 
@@ -44,6 +45,9 @@ class InspectionService:
 
     def experiments(self):
         return serialize(experiment_summaries(self.config))
+
+    def lidar(self):
+        return serialize(lidar_summary(self.config))
 
     def recordings(self):
         results = []
