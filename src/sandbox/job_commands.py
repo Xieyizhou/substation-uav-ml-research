@@ -126,6 +126,24 @@ def build_command(config, action, scenario_id=None):
         if not identity.is_file():
             raise ValueError("materialize the v2 training view before smoke training")
         return SandboxCommand(action, _training_smoke_command(), 3_600.0)
+    if action == "package-inspect-v2":
+        package = config.project_root / (
+            "models/equipment/visual-yolo11n-baseline-v2-package"
+        )
+        if not (package / "manifest.json").is_file():
+            raise ValueError("the frozen v2 model package is not present")
+        return SandboxCommand(
+            action,
+            (
+                sys.executable,
+                "main.py",
+                "visual",
+                "model-package-inspect",
+                "--input",
+                str(package),
+            ),
+            120.0,
+        )
     counts = {"collection-single": 1, "collection-gate": 5}
     if action in counts:
         count = counts[action]

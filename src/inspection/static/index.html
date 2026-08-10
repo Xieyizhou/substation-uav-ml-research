@@ -6,6 +6,7 @@
   <title>UAV Research Sandbox</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/operator.css">
+  <link rel="stylesheet" href="/research.css">
 </head>
 <body>
   <header>
@@ -14,6 +15,7 @@
   </header>
   <nav>
     <button class="tab active" data-tab="overview">Overview</button>
+    <button class="tab" data-tab="research">ML results</button>
     <button class="tab" data-tab="doctor">Sandbox doctor</button>
     <button class="tab" data-tab="operator">Operator</button>
     <button class="tab" data-tab="logs">Live logs</button>
@@ -26,6 +28,16 @@
       <div id="counts" class="metric-grid"></div>
       <div class="two-col"><article><h3>Scenario queue</h3><div id="scenario"></div></article><article><h3>Runtime status</h3><div id="runtime"></div></article></div>
       <article><h3>Dataset boundaries</h3><div id="roles" class="role-grid"></div></article>
+    </section>
+    <section id="research" class="panel">
+      <div class="section-head"><div><p class="kicker">REPRODUCIBLE ML</p><h2>Visual experiment lifecycle</h2></div><p id="research-status"></p></div>
+      <div id="research-pipeline" class="pipeline-grid"></div>
+      <div class="two-col research-summary-grid">
+        <article><h3>Training view</h3><div id="training-summary"></div></article>
+        <article><h3>Frozen model package</h3><div id="package-summary"></div></article>
+      </div>
+      <article class="blind-card"><div class="section-head"><div><p class="kicker">PAIRED BLIND</p><h2>Generalization result</h2></div><p id="blind-commit"></p></div><div id="blind-metrics" class="metric-grid research-metrics"></div><div id="class-recall" class="class-grid"></div><div id="blind-comparison" class="result-callout"></div></article>
+      <article><div class="section-head"><div><p class="kicker">STATIC ONNX REPLAY</p><h2>Resolution and scheduling matrix</h2></div><p id="replay-status"></p></div><div class="table-wrap"><table><thead><tr><th>Input</th><th>Policy</th><th>Source</th><th>FPS</th><th>P50</th><th>P95</th><th>Precision</th><th>Recall</th><th>Small recall</th></tr></thead><tbody id="replay-rows"></tbody></table></div><p id="replay-note" class="research-note"></p></article>
     </section>
     <section id="doctor" class="panel"><div class="section-head"><div><p class="kicker">ENVIRONMENT</p><h2>Sandbox doctor</h2></div></div><div id="checks"></div></section>
     <section id="operator" class="panel">
@@ -40,6 +52,7 @@
             <option value="collection-gate">Run five-scenario gate</option>
             <option value="training-view-v2">Materialize v2 training view</option>
             <option value="training-smoke-v2">Run v2 smoke training</option>
+            <option value="package-inspect-v2">Verify frozen v2 package</option>
           </select>
           <select id="operator-scenario"></select>
           <button id="operator-start">Start managed job</button>

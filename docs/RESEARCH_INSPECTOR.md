@@ -2,8 +2,10 @@
 
 The local app combines a read-only experiment inspector with a controlled job
 operator. It shows collection progress, environment checks, process health,
-bounded logs, route phases, and recorded PNG frames. It can also run a small
-set of fixed workflows without exposing an arbitrary command shell.
+bounded logs, route phases, recorded PNG frames, and the complete visual ML
+lifecycle from training-view identity through frozen-package, paired blind,
+and static replay results. It can also run a small set of fixed workflows
+without exposing an arbitrary command shell.
 
 Start it from the repository root:
 
@@ -32,6 +34,13 @@ The Operator tab exposes fixed actions:
 - deterministic v2 training-view materialization;
 - a one-epoch v2 training, checkpoint reload, ONNX export, and inference smoke
   gate.
+- offline integrity verification of the frozen v2 model package.
+
+The ML Results tab is read-only. It exposes aggregate identities and metrics,
+including the controlled 416-pixel latency replicate, but does not expose
+blind images, per-frame predictions, labels, or scenario details. Formal blind
+evaluation remains unavailable as an App action and cannot be rerun from the
+browser.
 
 Jobs follow `preparing → running → stopping → complete/failed`. Metadata,
 diagnostics, and logs are stored under `outputs/sandbox/operator/jobs`. A file

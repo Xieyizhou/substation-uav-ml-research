@@ -70,6 +70,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.dashboard())
         if path == "/api/runtime":
             return self._json(self.service.runtime())
+        if path == "/api/research":
+            return self._json(self.service.research())
         if path == "/api/recordings":
             return self._json(self.service.recordings())
         if path == "/api/scenarios":
@@ -98,7 +100,9 @@ class InspectionHandler(BaseHTTPRequestHandler):
 
     def _static(self, path):
         name = "index.html" if path == "/" else path.lstrip("/")
-        if name not in {"index.html", "app.js", "style.css", "operator.css"}:
+        if name not in {
+            "index.html", "app.js", "style.css", "operator.css", "research.css"
+        }:
             return self._json({"error": "not found"}, 404)
         self._file(STATIC_ROOT / name)
 

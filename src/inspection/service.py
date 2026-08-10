@@ -10,6 +10,7 @@ from src.inspection.doctor import run_doctor
 from src.inspection.frames import frame_page, frame_path, scenario_progress
 from src.inspection.logs import log_tail
 from src.inspection.runtime import LocalProcessAdapter, runtime_status
+from src.inspection.research import research_summary
 
 
 def serialize(value):
@@ -36,6 +37,9 @@ class InspectionService:
 
     def runtime(self):
         return serialize(runtime_status(self.process_adapter))
+
+    def research(self):
+        return serialize(research_summary(self.config))
 
     def recordings(self):
         results = []

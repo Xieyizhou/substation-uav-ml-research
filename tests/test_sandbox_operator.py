@@ -114,6 +114,17 @@ class SandboxOperatorTests(unittest.TestCase):
         output = command.argv[command.argv.index("--output") + 1]
         self.assertTrue(output.startswith("outputs/sandbox/training_smoke/"))
 
+    def test_package_inspection_is_fixed_and_requires_frozen_manifest(self):
+        with self.assertRaisesRegex(ValueError, "package is not present"):
+            build_command(self.config, "package-inspect-v2")
+        package = self.root / "models/equipment/visual-yolo11n-baseline-v2-package"
+        package.mkdir(parents=True)
+        (package / "manifest.json").write_text("{}", encoding="utf-8")
+        command = build_command(self.config, "package-inspect-v2")
+        self.assertIn("model-package-inspect", command.argv)
+        self.assertEqual(command.argv[-1], str(package))
+        self.assertEqual(command.timeout_s, 120.0)
+
     def test_job_store_detects_record_tampering(self):
         store = SandboxJobStore(self.config.sandbox_jobs_root)
         job = SandboxJob("job-1", "doctor", "complete", utc_now(), 5.0)
@@ -190,6 +201,11 @@ class SandboxOperatorTests(unittest.TestCase):
             response = connection.getresponse()
             status = json.loads(response.read())
             token = status["operator_token"]
+            connection.request("GET", "/api/research")
+            research = connection.getresponse()
+            payload = json.loads(research.read())
+            self.assertEqual(research.status, 200)
+            self.assertEqual(payload["stage_count"], 4)
             connection.request(
                 "POST",
                 "/api/operator/start",

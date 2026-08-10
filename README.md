@@ -36,7 +36,7 @@ interfaces, deterministic camera collection, and visual model evaluation.
 | Test environments | 5 coordinated Gazebo/A* maps, 5 safe destination presets per map, and map/target switching |
 | Evaluation | Structured telemetry, run manifests, plots, stage summaries, and cross-stage comparisons |
 | Reliability | Explicit failure codes, timeout-bounded runtime tasks, landing confirmation, PID-scoped cleanup, and parameter validation |
-| Developer experience | One modular `main.py` command center with offline regression, replay, safety, and research-contract tests |
+| Developer experience | One modular `main.py` command center plus a local sandbox app for health checks, bounded jobs, recording review, and aggregate ML results |
 
 ## Selected Engineering Contributions
 
@@ -193,6 +193,8 @@ python main.py data --help
 python main.py model --help
 python main.py study --help
 python main.py model protocol --config config/perception/research_protocol.json
+
+python main.py sandbox serve --host 127.0.0.1 --port 8765
 ```
 
 See [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for every command and advanced
@@ -208,7 +210,10 @@ parameter-forwarding example.
 | `src/flight/` | MAVSDK flight runtime, task presets, and replanning orchestration |
 | `src/perception/` | Simulated obstacle detector and risk-state logic |
 | `src/sensors/` | Unified live/replay sensor sources and stable data contracts |
-| `src/ml/` | Scenario generation, truth labels, datasets, metrics, ONNX training, packages, and protocols |
+| `src/ml/` | LiDAR learning, generic dataset utilities, and non-visual model tooling |
+| `src/vision/` | Camera contracts, collection, training views, evaluation, packaging, and static replay |
+| `src/inspection/` | Read-only sandbox observations, recording browser, and aggregate ML lifecycle results |
+| `src/sandbox/` | Allowlisted local jobs, single-instance control, bounded execution, and job history |
 | `src/study/` | SQLite registry, tier matrices, resumable queues, gates, and paired statistics |
 | `src/maps/` | Map catalog, target selection, and Gazebo marker synchronization |
 | `src/logging/` | Telemetry, metrics, plots, reports, and comparisons |

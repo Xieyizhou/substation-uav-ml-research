@@ -5,9 +5,26 @@ const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>'
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active')});
 
 async function refresh(){
-  const [dash,runtime,doctor,recs,available,operator]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator')]);
-  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderDashboard(dash,runtime);renderDoctor(doctor);renderSelectors();renderOperator(operator);
+  const [dash,runtime,doctor,recs,available,operator,research]=await Promise.all([api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research')]);
+  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderDashboard(dash,runtime);renderResearch(research);renderDoctor(doctor);renderSelectors();renderOperator(operator);
   $('#updated').textContent=`Observed ${new Date().toLocaleTimeString()}`;
+}
+const pct=v=>v==null?'—':`${(Number(v)*100).toFixed(2)}%`;
+const fixed=(v,d=2)=>v==null?'—':Number(v).toFixed(d);
+function stageCard(label,value){const ok=value.status==='complete',detail=value.identity?.slice(0,12)||(ok?'verified result':'artifact unavailable');return `<div class="pipeline-stage ${ok?'ready':''}"><span class="badge ${ok?'pass':value.status==='invalid'?'failure':'warning'}">${esc(value.status)}</span><strong>${esc(label)}</strong><small>${esc(detail)}</small></div>`}
+function renderResearch(r){
+  $('#research-status').textContent=`${r.complete_stage_count} / ${r.stage_count} stages complete`;
+  $('#research-pipeline').innerHTML=[['Training view',r.training_view],['Model package',r.model_package],['Paired blind',r.paired_blind],['Static replay',r.static_replay]].map(([label,value])=>stageCard(label,value)).join('<i aria-hidden="true">→</i>');
+  const t=r.training_view;$('#training-summary').innerHTML=t.status==='complete'?`<div class="research-facts"><span>Training frames<b>${esc(t.train_frames)}</b></span><span>Selection validation<b>${esc(t.selection_validation_frames)}</b></span><span>Full validation<b>${esc(t.full_validation_frames)}</b></span><span>Sampling<b>${esc(t.algorithm)}</b></span></div><small class="artifact-path">${esc(t.path)}</small>`:`<p>Training view is ${esc(t.status)}.</p>`;
+  const p=r.model_package;$('#package-summary').innerHTML=p.status==='complete'?`<div class="research-facts"><span>Architecture<b>${esc(p.architecture)}</b></span><span>Frozen threshold<b>${fixed(p.threshold)}</b></span><span>ONNX inputs<b>${esc(p.exports.join(' / '))}</b></span><span>Package identity<b>${esc(p.identity.slice(0,12))}…</b></span></div><small class="artifact-path">${esc(p.path)}</small>`:`<p>Model package is ${esc(p.status)}${p.error?`: ${esc(p.error)}`:'.'}</p>`;
+  const b=r.paired_blind;if(b.status!=='complete'){$('#blind-metrics').innerHTML=`<p>Paired blind result is ${esc(b.status)}.</p>`;$('#class-recall').innerHTML='';$('#blind-comparison').innerHTML='';return}
+  $('#blind-commit').textContent=`${b.frame_count.toLocaleString()} frames · commit ${b.commit.slice(0,8)}`;
+  $('#blind-metrics').innerHTML=[['v2 mAP50–95',pct(b.v2.map50_95)],['v2 macro-F1',pct(b.v2.macro_f1)],['Precision',pct(b.v2.precision)],['Recall',pct(b.v2.recall)],['Small recall',pct(b.v2.small_recall)],['No-target FPR',pct(b.v2.no_target_fpr)]].map(([k,v])=>`<div class="metric"><b>${v}</b><span>${k}</span></div>`).join('');
+  $('#class-recall').innerHTML=Object.entries(b.v2.per_class_recall).map(([name,value])=>`<div><span>${esc(name)}</span><b>${pct(value)}</b><div class="mini-track"><i style="width:${Number(value)*100}%"></i></div></div>`).join('');
+  $('#blind-comparison').innerHTML=`<strong>v2 improved macro-F1 by ${pct(b.macro_f1_delta)}</strong><span>mAP50–95 Δ ${pct(b.map_delta)} · paired bootstrap 95% CI ${pct(b.bootstrap_ci95[0])} to ${pct(b.bootstrap_ci95[1])} · improvement probability ${pct(b.bootstrap_improvement_probability)}</span>`;
+  const replay=r.static_replay;$('#replay-status').textContent=`${replay.completed} / ${replay.total} completed`;
+  $('#replay-rows').innerHTML=replay.rows.map(x=>`<tr><td><b>${x.input_size}</b></td><td>${esc(x.policy)}</td><td><span class="source-tag ${x.source==='controlled_replicate'?'selected':''}">${esc(x.source)}</span></td><td>${fixed(x.throughput_fps)}</td><td>${fixed(x.p50_ms)} ms</td><td>${fixed(x.p95_ms)} ms</td><td>${pct(x.precision)}</td><td>${pct(x.recall)}</td><td>${pct(x.small_recall)}</td></tr>`).join('');
+  $('#replay-note').textContent=replay.note||'';
 }
 function renderDashboard(d,runtime){
   $('#progress').innerHTML=`<div class="progress-row"><div><span class="kicker">OVERALL PROGRESS</span><br><strong>${d.completed} / ${d.total}</strong></div><div>${d.remaining} scenarios remaining</div></div><div class="progress-track"><div class="progress-fill" style="width:${d.progress_percent}%"></div></div>`;
