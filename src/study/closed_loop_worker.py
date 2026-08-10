@@ -184,7 +184,7 @@ def _verify_replay_receipt(
 
 def _prepare_tier(
     registry, study_id, results_dir, tier, replay_gate_path, comparison_spec_path,
-    qualification_study_id,
+    qualification_study_id, flight_timeout_s,
 ):
     if tier != "formal":
         return None
@@ -197,6 +197,7 @@ def _prepare_tier(
     return freeze_formal_study(
         registry, study_id, results_dir, replay, comparison_spec_path,
         qualification_study_id=qualification_study_id,
+        flight_timeout_override_s=flight_timeout_s,
     )
 
 
@@ -268,7 +269,7 @@ def execute_flight_tier(
     registry = ResearchRegistry(registry_path)
     formal_receipt = _prepare_tier(
         registry, study_id, results_dir, tier, replay_gate_path,
-        comparison_spec_path, qualification_study_id,
+        comparison_spec_path, qualification_study_id, flight_timeout_s,
     )
     scheduled = ingest_results(registry, study_id, tier, results_dir)
     queue = json.loads(Path(scheduled["run_queue"]).read_text(encoding="utf-8"))

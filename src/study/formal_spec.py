@@ -7,6 +7,7 @@ from pathlib import Path
 
 from src.ml.artifacts import git_commit, object_sha256, write_json
 from src.study.comparison import FORMAL_COMPARISONS
+from src.study.flight_budget import flight_timeout_policy
 from src.study.matrix import FORMAL_CONDITIONS, tier_matrix
 
 
@@ -32,6 +33,7 @@ def load_formal_spec(path=DEFAULT_FORMAL_SPEC):
 def freeze_formal_study(
     registry, study_id, results_dir, replay_receipt, spec_path=DEFAULT_FORMAL_SPEC,
     *, qualification_study_id=None,
+    flight_timeout_override_s=None,
 ):
     study = registry.get_study(study_id)
     model = registry.get_model(study["candidate_model"])
@@ -55,6 +57,9 @@ def freeze_formal_study(
         "comparison_specification": specification,
         "comparison_specification_identity_sha256": object_sha256(specification),
         "execution_code_commit": commit,
+        "flight_timeout_policy": flight_timeout_policy(
+            flight_timeout_override_s
+        ),
     }
     record["formal_study_identity_sha256"] = object_sha256(record)
     path = Path(results_dir) / study_id / "formal/formal_study_receipt.json"
