@@ -14,6 +14,7 @@ from src.logging.collision_checks import obstacle_collision_report
 from src.logging.log_io import prepare_dataframe
 from src.ml.artifacts import file_sha256, git_commit, write_json
 from src.planner.obstacle_config import build_obstacle_map
+from src.study.flight_budget import closed_loop_timeout_s
 from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results
 from src.vision.collection.process import (
@@ -23,8 +24,6 @@ from src.vision.collection.process import (
     stop_process,
     wait_process,
 )
-
-
 ROOT = Path(__file__).resolve().parents[2]
 
 
@@ -150,7 +149,7 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
 
 def execute_closed_loop(
     registry_path, study_id, results_dir, *, max_runs=None,
-    startup_timeout_s=180.0, probe_timeout_s=5.0, flight_timeout_s=360.0,
+    startup_timeout_s=180.0, probe_timeout_s=5.0, flight_timeout_s=None,
 ):
     """Execute pending runs sequentially; stop immediately on the first failure."""
     if max_runs is not None and max_runs <= 0:
@@ -167,9 +166,10 @@ def execute_closed_loop(
         )
         registry.set_run_status(row["run_id"], "running")
         try:
+            timeout_s = closed_loop_timeout_s(row["oracle_planner_config"], flight_timeout_s)
             log_path, metrics = _run_one(
                 row, run_root, startup_timeout_s=startup_timeout_s,
-                probe_timeout_s=probe_timeout_s, flight_timeout_s=flight_timeout_s,
+                probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
             )
             result = {
                 "schema_version": 1,

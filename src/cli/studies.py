@@ -39,7 +39,10 @@ def build_parser():
     execute.add_argument("--max-runs", type=int)
     execute.add_argument("--startup-timeout", type=float, default=180.0)
     execute.add_argument("--probe-timeout", type=float, default=5.0)
-    execute.add_argument("--flight-timeout", type=float, default=360.0)
+    execute.add_argument(
+        "--flight-timeout", type=float,
+        help="override the default route-aware 240-480 second budget",
+    )
     resume = commands.add_parser("resume", help="Retry incomplete study runs")
     resume.add_argument("study_id")
     resume.add_argument("--tier", choices=["replay", "closed-loop", "formal"])

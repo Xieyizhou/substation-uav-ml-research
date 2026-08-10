@@ -223,7 +223,9 @@ python main.py visual collection-run \
 ```
 
 `collection-status` defaults to the `recordings/` directory beside the plan.
-The v2 runner computes a route-specific 180--360 second flight timeout; pass
+The v2 visual runner computes a route-specific 180--360 second flight timeout.
+The LiDAR closed-loop worker independently computes a 240--480 second budget
+from the A* path length and its outbound and return speeds. Pass
 `--flight-timeout` only as an explicit diagnostic override. Each target route
 contains an identity-bound A* return path generated from the final observation
 cell to the start cell; it is not a reversal of accumulated outbound segments.

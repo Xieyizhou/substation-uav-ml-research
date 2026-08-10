@@ -12,6 +12,7 @@ from src.study.closed_loop_worker import (
     _run_one,
     execute_closed_loop,
 )
+from src.study.flight_budget import closed_loop_timeout_s, route_length_m
 from src.study.registry import ResearchRegistry
 from src.study.runner import _flight_arguments
 
@@ -29,6 +30,7 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         }]
         run = self.registry.ensure_runs(self.study_id, "closed-loop", matrix)[0]
         self.run = run
+        planner_path = self.write_planner()
         self.result_path = (
             self.root / self.study_id / "closed-loop/results"
             / "simple-center-1001__ml_lidar.json"
@@ -39,10 +41,19 @@ class ClosedLoopWorkerTests(unittest.TestCase):
             "runs": [{
                 **run, "setup_commands": [], "launcher_environment": {},
                 "launcher_command": [], "flight_command": [],
-                "oracle_planner_config": "planner.json",
+                "oracle_planner_config": str(planner_path),
                 "result_path": str(self.result_path),
             }],
         })
+
+    def write_planner(self, goal=(60, 0), resolution=1.0):
+        path = self.root / "planner.json"
+        write_json(path, {
+            "width": 80, "height": 2, "start_cell": [0, 0],
+            "goal_cell": list(goal), "obstacles": [],
+            "resolution_m": resolution,
+        })
+        return path
 
     def tearDown(self):
         self.temporary.cleanup()
@@ -80,6 +91,19 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(arguments[timeout_index + 1], "20")
         stale_index = arguments.index("--sensor-stale-after")
         self.assertEqual(arguments[stale_index + 1], "2.0")
+
+    def test_route_aware_timeout_covers_long_round_trip(self):
+        planner = self.write_planner()
+        self.assertEqual(route_length_m(planner), 60.0)
+        self.assertGreater(closed_loop_timeout_s(planner), 360.0)
+        self.assertLessEqual(closed_loop_timeout_s(planner), 480.0)
+
+    def test_route_aware_timeout_is_bounded_and_override_is_exact(self):
+        planner = self.write_planner(goal=(1, 0), resolution=0.5)
+        self.assertEqual(closed_loop_timeout_s(planner), 240.0)
+        self.assertEqual(closed_loop_timeout_s(planner, 123.0), 123.0)
+        with self.assertRaisesRegex(ValueError, "must be positive"):
+            closed_loop_timeout_s(planner, 0.0)
 
     def test_attempt_directories_preserve_previous_evidence(self):
         run_root = self.root / "run"
