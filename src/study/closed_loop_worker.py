@@ -28,6 +28,16 @@ from src.vision.collection.process import (
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def _attempt_root(run_root):
+    attempts = Path(run_root) / "attempts"
+    number = 1
+    while (attempts / f"attempt_{number:02d}").exists():
+        number += 1
+    path = attempts / f"attempt_{number:02d}"
+    path.mkdir(parents=True)
+    return path
+
+
 def _run_setup(commands, log_path):
     with Path(log_path).open("a", encoding="utf-8") as output:
         for command in commands:
@@ -142,7 +152,9 @@ def execute_closed_loop(
     selected = pending[:max_runs] if max_runs is not None else pending
     completed = []
     for row in selected:
-        run_root = Path(results_dir) / study_id / "closed-loop/runs" / row["run_id"]
+        run_root = _attempt_root(
+            Path(results_dir) / study_id / "closed-loop/runs" / row["run_id"]
+        )
         registry.set_run_status(row["run_id"], "running")
         try:
             log_path, metrics = _run_one(

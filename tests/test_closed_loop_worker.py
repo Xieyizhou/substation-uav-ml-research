@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 from src.cli.studies import build_parser
 from src.ml.artifacts import write_json
-from src.study.closed_loop_worker import execute_closed_loop
+from src.study.closed_loop_worker import _attempt_root, execute_closed_loop
 from src.study.registry import ResearchRegistry
 
 
@@ -65,6 +65,15 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(args.command, "execute-closed-loop")
         self.assertEqual(args.max_runs, 1)
         self.assertEqual(args.flight_timeout, 120.0)
+
+    def test_attempt_directories_preserve_previous_evidence(self):
+        run_root = self.root / "run"
+        first = _attempt_root(run_root)
+        (first / "failure.json").write_text("{}")
+        second = _attempt_root(run_root)
+        self.assertEqual(first.name, "attempt_01")
+        self.assertEqual(second.name, "attempt_02")
+        self.assertTrue((first / "failure.json").is_file())
 
     @patch("src.study.closed_loop_worker._run_one")
     @patch("src.study.closed_loop_worker.ingest_results")
