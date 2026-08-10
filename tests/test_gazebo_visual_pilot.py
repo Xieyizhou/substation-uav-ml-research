@@ -184,6 +184,9 @@ class GazeboConfigurationTests(unittest.TestCase):
         ).getroot()
         lidar_link = model.find(".//link[@name='research_lidar_link']")
         self.assertIsNotNone(lidar_link)
+        self.assertEqual(
+            lidar_link.findtext("sensor[@name='lidar_2d_v2']/always_on"), "true"
+        )
         self.assertLessEqual(
             float(lidar_link.findtext("inertial/mass")),
             0.05,

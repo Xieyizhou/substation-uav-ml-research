@@ -110,7 +110,7 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
         environment.update(row["launcher_environment"])
         launcher = start_process(
             "PX4/Gazebo launcher", row["launcher_command"],
-            run_root / "simulator.log", env=environment, discard_stdout=True,
+            run_root / "simulator.log", env=environment,
         )
         ensure_process_running(launcher)
         _probe_lidar(
