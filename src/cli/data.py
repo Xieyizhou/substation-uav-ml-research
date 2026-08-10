@@ -18,6 +18,7 @@ from src.ml.domain_randomization import (
     sample_manifest,
 )
 from src.ml.artifacts import write_json
+from src.ml.overlay_dataset import OverlaySource, materialize_overlay_dataset
 from src.maps.map_catalog import map_by_id, project_path
 
 
@@ -40,6 +41,14 @@ def build_parser():
     validate.add_argument("--dataset", type=Path, required=True)
     summarize = commands.add_parser("summarize", help="Print dataset statistics")
     summarize.add_argument("--dataset", type=Path, required=True)
+    overlay = commands.add_parser(
+        "overlay", help="Build a deterministic risk-overlay development dataset"
+    )
+    overlay.add_argument(
+        "--source", action="append", required=True, metavar="PATH:MAP:SEED"
+    )
+    overlay.add_argument("--output", type=Path, required=True)
+    overlay.add_argument("--max-frames-per-source", type=int, default=1200)
     world = commands.add_parser(
         "world", help="Materialize a randomized, launchable Gazebo world"
     )
@@ -75,6 +84,12 @@ def main(argv=None):
             result = validate_dataset_directory(args.dataset)
         elif args.command == "summarize":
             result = summarize_dataset(args.dataset)
+        elif args.command == "overlay":
+            result = materialize_overlay_dataset(
+                [OverlaySource.parse(value) for value in args.source],
+                args.output,
+                max_frames_per_source=args.max_frames_per_source,
+            )
         elif args.command == "world":
             config = load_ranges(args.randomization)
             scenario = sample_manifest(config, map_id=args.map_id, seed=args.seed)

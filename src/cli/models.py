@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 
 from src.ml.dataset import load_dataset
+from src.ml.candidate_gate import audit_candidate, run_validation_replay
 from src.ml.model_package import create_model_package, validate_model_package
 from src.ml.predictions import evaluate_predictions, predict_dataset, read_predictions
 from src.ml.protocol import experiment_matrix, load_protocol
@@ -68,6 +69,17 @@ def build_parser():
     protocol.add_argument("--config", type=Path, required=True)
     inspect = commands.add_parser("inspect", help="Validate a model package")
     inspect.add_argument("--package", type=Path, required=True)
+    readiness = commands.add_parser(
+        "readiness", help="Audit whether a LiDAR candidate may enter replay"
+    )
+    readiness.add_argument("--package", type=Path, required=True)
+    readiness.add_argument("--dataset", type=Path, required=True)
+    replay = commands.add_parser(
+        "replay-gate", help="Run the fixed validation replay gate"
+    )
+    replay.add_argument("--package", type=Path, required=True)
+    replay.add_argument("--dataset", type=Path, required=True)
+    replay.add_argument("--output", type=Path, required=True)
     return parser
 
 
@@ -163,10 +175,14 @@ def main(argv=None):
             result = {"runs": len(experiment_matrix(protocol))}
         elif args.command == "inspect":
             result = validate_model_package(args.package)
+        elif args.command == "readiness":
+            result = audit_candidate(args.package, args.dataset)
+        elif args.command == "replay-gate":
+            result = run_validation_replay(args.package, args.dataset, args.output)
         else:
             return 2
         print(json.dumps(result, indent=2, sort_keys=True))
-        return 0
+        return 0 if result.get("passed", True) else 1
     except (FileNotFoundError, RuntimeError, ValueError) as error:
         print(f"Model command failed: {error}")
         return 1

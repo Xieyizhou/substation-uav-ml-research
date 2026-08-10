@@ -311,6 +311,32 @@ result cannot be overwritten or rerun.
 
 ### Static replay gate before adaptive scheduling
 
+LiDAR candidates must pass a readiness audit before any ML-controlled flight.
+The audit rejects dirty training commits, incomplete risk-label coverage,
+unbound ONNX external data, identity mismatches, and missing per-class metrics.
+A deterministic development-only overlay view may bootstrap sandbox testing
+from existing Gazebo scans; it is provenance-labelled and is not formal data.
+
+```bash
+python main.py data overlay \
+  --source outputs/research/pilot/raw/training_2001.jsonl:training:2001 \
+  --source outputs/research/pilot/raw/complex_2041.jsonl:complex:2041 \
+  --source outputs/research/pilot/raw/extreme_2051.jsonl:extreme:2051 \
+  --output outputs/research/lidar_overlay_v1
+python main.py model readiness \
+  --package models/lidar/risk-v1 \
+  --dataset outputs/research/lidar_overlay_v1
+python main.py model replay-gate \
+  --package models/lidar/risk-v1 \
+  --dataset outputs/research/lidar_overlay_v1 \
+  --output outputs/research/lidar_replay_gate_v1
+```
+
+The replay gate reads only the validation partition. It requires validation
+macro-F1 of at least 0.50, danger recall of at least 0.60, and ONNX CPU P95
+latency no greater than 50 ms. These are flight-entry safety gates, not a
+formal performance claim.
+
 `benchmarks/visual_static_v1/conditions.json` freezes nine unmaterialized
 static templates: sizes 320/416/640 crossed with every frame/every second/every
 third frame. A template is not executable until exact dataset, decoder,
