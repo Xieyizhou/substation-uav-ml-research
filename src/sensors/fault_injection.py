@@ -6,6 +6,7 @@ import json
 import math
 from pathlib import Path
 import random
+import time
 
 from src.sensors.base import SensorSource
 from src.sensors.types import LaserScanFrame, SensorHealth
@@ -21,6 +22,7 @@ class FaultInjectedLidarSource(SensorSource):
         self._cached_sequence = None
         self._cached_frame = None
         self._outage = False
+        self._outage_until_s = 0.0
         self._fault_drops = 0
 
     @classmethod
@@ -35,17 +37,16 @@ class FaultInjectedLidarSource(SensorSource):
         await self.source.stop()
 
     async def wait_ready(self, timeout_s):
-        return await self.source.wait_ready(timeout_s)
+        await self.source.wait_ready(timeout_s)
+        frame = self.source.latest()
+        if frame is not None:
+            self._cached_sequence = frame.sequence
+            self._cached_frame = self._inject(frame)
+        return self._cached_frame
 
     def _inject(self, frame):
         generator = random.Random(self.seed + frame.sequence * 104729)
-        outage_probability = float(
-            self.manifest.get("sensor_outage_probability", 0.0)
-        )
-        self._outage = generator.random() < outage_probability
-        if self._outage:
-            self._fault_drops += 1
-            return None
+        generator.random()  # Keep noise draws stable after the outage decision.
         noise = float(self.manifest.get("lidar_noise_stddev_m", 0.0))
         dropout = float(self.manifest.get("lidar_dropout_probability", 0.0))
         values = []
@@ -76,26 +77,53 @@ class FaultInjectedLidarSource(SensorSource):
             return None
         if frame.sequence != self._cached_sequence:
             self._cached_sequence = frame.sequence
-            self._cached_frame = self._inject(frame)
+            now_s = time.monotonic()
+            if now_s < self._outage_until_s:
+                self._outage = True
+                self._fault_drops += 1
+            else:
+                generator = random.Random(self.seed + frame.sequence * 104729)
+                probability = float(
+                    self.manifest.get("sensor_outage_probability", 0.0)
+                )
+                self._outage = generator.random() < probability
+                if self._outage:
+                    duration = float(
+                        self.manifest.get("sensor_outage_duration_s", 0.0)
+                    )
+                    self._outage_until_s = now_s + duration
+                    self._fault_drops += 1
+                else:
+                    self._cached_frame = self._inject(frame)
         return self._cached_frame
 
     def health(self, now_s=None):
+        now_s = time.monotonic() if now_s is None else now_s
         underlying = self.source.health(now_s)
-        self.latest()
+        frame = self.latest()
+        age_s = frame.age_s(now_s) if frame is not None else None
+        stale_after_s = float(getattr(self.source, "stale_after_s", 0.5))
+        exposed_healthy = bool(
+            underlying.healthy and age_s is not None and age_s <= stale_after_s
+        )
         if self._outage:
             return SensorHealth(
                 source=self.source_id,
-                healthy=False,
-                message="injected sensor stream outage",
+                healthy=exposed_healthy,
+                message=(
+                    "injected sensor stream outage within stale tolerance"
+                    if exposed_healthy
+                    else "injected sensor stream outage"
+                ),
                 frequency_hz=underlying.frequency_hz,
                 dropped_frames=underlying.dropped_frames + self._fault_drops,
-                last_frame_age_s=underlying.last_frame_age_s,
+                last_frame_age_s=age_s,
             )
         return SensorHealth(
             source=self.source_id,
-            healthy=underlying.healthy,
+            healthy=exposed_healthy,
             message=underlying.message,
             frequency_hz=underlying.frequency_hz,
             dropped_frames=underlying.dropped_frames + self._fault_drops,
-            last_frame_age_s=underlying.last_frame_age_s,
+            last_frame_age_s=age_s,
         )

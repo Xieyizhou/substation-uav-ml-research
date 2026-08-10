@@ -333,6 +333,47 @@ class FaultInjectionTests(unittest.TestCase):
         self.assertFalse(source.health().healthy)
         self.assertIn("outage", source.health().message)
 
+    def test_short_outage_retains_last_frame_within_stale_tolerance(self):
+        received = time.monotonic()
+        first = LaserScanFrame(
+            timestamp_s=1, received_monotonic_s=received, frame_id="lidar",
+            angle_min_rad=-1, angle_max_rad=1, angle_step_rad=1,
+            range_min_m=0.1, range_max_m=10, ranges_m=(1.0, 2.0, 3.0),
+            source="fake", sequence=1,
+        )
+        underlying = _FakeSource(first)
+        source = FaultInjectedLidarSource(underlying, {
+            "seed": 1, "sensor_outage_probability": 1.0,
+            "sensor_outage_duration_s": 0.3,
+            "lidar_noise_stddev_m": 0, "lidar_dropout_probability": 0,
+        })
+        source._cached_sequence = 1
+        source._cached_frame = first
+        underlying.frame = LaserScanFrame(**{**first.__dict__, "sequence": 2})
+        self.assertEqual(source.latest().sequence, 1)
+        self.assertTrue(source.health(now_s=received + 0.1).healthy)
+        self.assertIn("stale tolerance", source.health(now_s=received + 0.1).message)
+
+    def test_prolonged_outage_becomes_unhealthy_after_stale_budget(self):
+        received = time.monotonic()
+        frame = LaserScanFrame(
+            timestamp_s=1, received_monotonic_s=received, frame_id="lidar",
+            angle_min_rad=-1, angle_max_rad=1, angle_step_rad=1,
+            range_min_m=0.1, range_max_m=10, ranges_m=(1.0,),
+            source="fake", sequence=1,
+        )
+        underlying = _FakeSource(frame)
+        source = FaultInjectedLidarSource(underlying, {
+            "seed": 1, "sensor_outage_probability": 1.0,
+            "sensor_outage_duration_s": 1.0,
+            "lidar_noise_stddev_m": 0, "lidar_dropout_probability": 0,
+        })
+        source._cached_sequence = 1
+        source._cached_frame = frame
+        underlying.frame = LaserScanFrame(**{**frame.__dict__, "sequence": 2})
+        source.latest()
+        self.assertFalse(source.health(now_s=received + 0.6).healthy)
+
 
 class RegistryAndComparisonTests(unittest.TestCase):
     def test_registry_scheduling_is_idempotent_and_resume_only_resets_failures(self):
