@@ -207,6 +207,7 @@ class ClosedLoopWorkerTests(unittest.TestCase):
                  probe_timeout_s=1.0, flight_timeout_s=1.0)
         flight_command = start.call_args_list[1].args[1]
         self.assertEqual(flight_command[-2:], ["--sensor-topic", "/world/test/scan"])
+        self.assertTrue(start.call_args_list[0].kwargs["discard_stdout"])
 
     @patch("src.study.closed_loop_worker._run_one")
     @patch("src.study.closed_loop_worker.ingest_results")
