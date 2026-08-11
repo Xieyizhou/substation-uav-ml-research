@@ -9,15 +9,15 @@ import subprocess
 import sys
 import time
 
-from src.logging.analysis_summaries import perception_summary, replan_summary
-from src.logging.collision_checks import obstacle_collision_report
-from src.logging.log_io import prepare_dataframe
-from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
-from src.planner.obstacle_config import build_obstacle_map
+from src.ml.artifacts import object_sha256, write_json
 from src.study.flight_budget import closed_loop_timeout_s
 from src.study.formal_spec import DEFAULT_FORMAL_SPEC, freeze_formal_study
 from src.study.comparison import closed_loop_gate
-from src.study.quality_metrics import lidar_quality_metrics
+from src.study.mission_result import (
+    landed_mission_status,
+    mission_metrics,
+    result_payload,
+)
 from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results
 from src.vision.collection.process import (
@@ -87,40 +87,6 @@ def _new_flight_log(previous):
     return candidates.pop()
 
 
-def _completed_status(log_path):
-    path = log_path.with_suffix(".status.json")
-    value = json.loads(path.read_text(encoding="utf-8"))
-    if value.get("status") != "completed" or value.get("landing_confirmed") is not True:
-        raise CollectionProcessError("flight ended without confirmed landing")
-    return value
-
-
-def _metrics(log_path, planner_path):
-    frame = prepare_dataframe(log_path)
-    perception = perception_summary(frame)
-    replanning = replan_summary(frame) or {}
-    planner = json.loads(Path(planner_path).read_text(encoding="utf-8"))
-    collision = obstacle_collision_report(
-        frame, build_obstacle_map(planner), float(planner.get("resolution_m", 1.0))
-    )
-    duration = float(frame["elapsed_s"].max()) if not frame.empty else 0.0
-    health = perception.get("sensor_healthy_ratio")
-    return {
-        "mission_success": 1,
-        "landing_success": 1,
-        "collision_count": int(collision["raw_physical_collision_detected"]),
-        "buffer_entry_count": int(collision["inflated_safety_buffer_entry_detected"]),
-        "safety_failure_count": int(health is None or health < 0.99),
-        "flight_time_s": duration,
-        "sensor_healthy_ratio": health,
-        "inference_p95_ms": perception.get("inference_latency_p95_ms"),
-        "replan_attempt_count": replanning.get("total_replan_attempts"),
-        "successful_replan_count": replanning.get("successful_replan_attempts"),
-        "active_replan_count": replanning.get("active_route_replacement_count"),
-        **lidar_quality_metrics(frame),
-    }
-
-
 def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeout_s):
     run_root.mkdir(parents=True, exist_ok=True)
     launcher = flight = None
@@ -142,11 +108,24 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
             "--sensor-topic", lidar_topic,
         ]
         flight = start_process("flight task", command, run_root / "flight.log")
-        wait_process(flight, flight_timeout_s)
+        process_error = None
+        try:
+            wait_process(flight, flight_timeout_s)
+        except CollectionProcessError as error:
+            process_error = error
         log_path = _new_flight_log(before)
-        _completed_status(log_path)
-        metrics = _metrics(log_path, row["oracle_planner_config"])
-        return log_path, metrics
+        mission_status = landed_mission_status(log_path)
+        mission_failed = mission_status["status"] == "failed"
+        if process_error is not None and not mission_failed:
+            raise process_error
+        if process_error is None and mission_failed:
+            raise CollectionProcessError(
+                "flight process exited successfully with a failed mission status"
+            )
+        metrics = mission_metrics(
+            log_path, row["oracle_planner_config"], mission_status
+        )
+        return log_path, metrics, mission_status
     finally:
         stop_process(flight)
         stop_process(launcher)
@@ -201,29 +180,6 @@ def _prepare_tier(
     )
 
 
-def _result_payload(row, log_path, metrics, formal_receipt):
-    result = {
-        "schema_version": 1,
-        "run_id": row["run_id"],
-        "scenario_id": row["scenario_id"],
-        "condition": row["condition"],
-        "code_commit": git_commit(),
-        "metrics": metrics,
-        "artifacts": [
-            {
-                "kind": "flight_log",
-                "path": str(log_path),
-                "sha256": file_sha256(log_path),
-            }
-        ],
-    }
-    if formal_receipt is not None:
-        result["formal_study_identity_sha256"] = formal_receipt[
-            "formal_study_identity_sha256"
-        ]
-    return result
-
-
 def _execute_row(
     registry, row, run_root, tier, results_dir, formal_receipt, *,
     startup_timeout_s, probe_timeout_s, flight_timeout_s,
@@ -233,13 +189,15 @@ def _execute_row(
         timeout_s = closed_loop_timeout_s(
             row["oracle_planner_config"], flight_timeout_s
         )
-        log_path, metrics = _run_one(
+        log_path, metrics, mission_status = _run_one(
             row, run_root, startup_timeout_s=startup_timeout_s,
             probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
         )
         write_json(
             row["result_path"],
-            _result_payload(row, log_path, metrics, formal_receipt),
+            result_payload(
+                row, log_path, metrics, mission_status, formal_receipt
+            ),
         )
         ingest_results(registry, row["study_id"], tier, results_dir)
     except Exception as error:

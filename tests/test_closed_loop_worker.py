@@ -180,8 +180,8 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(topic, "/world/test/scan")
         ensure.assert_called_once()
 
-    @patch("src.study.closed_loop_worker._metrics", return_value={})
-    @patch("src.study.closed_loop_worker._completed_status")
+    @patch("src.study.closed_loop_worker.mission_metrics", return_value={})
+    @patch("src.study.closed_loop_worker.landed_mission_status")
     @patch("src.study.closed_loop_worker._new_flight_log")
     @patch("src.study.closed_loop_worker.wait_process")
     @patch("src.study.closed_loop_worker.stop_process")
@@ -193,6 +193,9 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self, setup, probe, start, ensure, stop, wait, new_log, status, metrics
     ):
         new_log.return_value = self.root / "flight.csv"
+        status.return_value = {
+            "status": "completed", "landing_confirmed": True,
+        }
         start.side_effect = [object(), object()]
         row = {
             "setup_commands": [], "launcher_environment": {},
@@ -210,10 +213,14 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     def test_worker_writes_result_and_completes_registry(self, ingest, run_one):
         flight_log = self.root / "flight.csv"
         flight_log.write_text("elapsed_s\n0\n")
-        run_one.return_value = (flight_log, {
-            "mission_success": 1, "landing_success": 1,
-            "collision_count": 0, "safety_failure_count": 0,
-        })
+        run_one.return_value = (
+            flight_log,
+            {
+                "mission_success": 1, "landing_success": 1,
+                "collision_count": 0, "safety_failure_count": 0,
+            },
+            {"status": "completed", "landing_confirmed": True},
+        )
         ingest.side_effect = self.ingest
         result = execute_closed_loop(
             self.registry_path, self.study_id, self.root, max_runs=1
