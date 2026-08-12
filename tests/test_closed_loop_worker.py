@@ -77,14 +77,24 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         study_id = registry.create_study("formal", "formal-model")
         matrix = [
             {
-                "scenario_id": "simple-center-1001", "map_id": "simple",
-                "target_id": "center", "seed": 1001, "condition": condition,
+                "scenario_id": f"simple-center-{1001 + index}",
+                "map_id": "simple", "target_id": "center",
+                "seed": 1001 + index, "condition": condition,
             }
-            for condition in ("geometric_lidar", "ml_lidar")
+            for condition in (
+                "geometric_lidar", "ml_lidar", "geometric_ml_fusion"
+            )
+            for index in range(5)
         ]
         for run in registry.ensure_runs(study_id, "closed-loop", matrix):
             registry.record_metrics(run["run_id"], {
+                "mission_success": 1, "landing_success": 1,
                 "collision_count": 0, "safety_failure_count": 0,
+                "sensor_healthy_ratio": 1.0,
+                "predicted_danger_sample_count": 1,
+                "replan_attempt_count": 1,
+                "successful_replan_count": 1,
+                "active_replan_count": 1,
             })
         receipt = {
             "schema_version": 1,
@@ -117,11 +127,12 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     def test_cli_registers_bounded_closed_loop_execution(self):
         args = build_parser().parse_args([
             "execute-closed-loop", self.study_id, "--max-runs", "1",
-            "--flight-timeout", "120",
+            "--flight-timeout", "120", "--scenario-id", "simple-center-1001",
         ])
         self.assertEqual(args.command, "execute-closed-loop")
         self.assertEqual(args.max_runs, 1)
         self.assertEqual(args.flight_timeout, 120.0)
+        self.assertEqual(args.scenario_id, "simple-center-1001")
 
     def test_cli_requires_explicit_replay_receipt_for_formal_execution(self):
         args = build_parser().parse_args([

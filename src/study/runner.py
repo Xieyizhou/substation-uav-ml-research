@@ -8,14 +8,11 @@ from pathlib import Path
 from src.ml.artifacts import file_sha256, object_sha256, write_json
 from src.ml.domain_randomization import (
     load_ranges,
-    materialize_planner_config,
-    materialize_world,
     sample_manifest,
 )
-from src.maps.map_catalog import map_by_id, project_path, spawn_pose_text
-from src.planner.astar_grid import astar
-from src.planner.obstacle_config import build_obstacle_map
+from src.maps.map_catalog import map_by_id, spawn_pose_text
 from src.study.matrix import tier_matrix
+from src.study.capability_scenario import materialize_reachable_scenario
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -81,67 +78,6 @@ def _flight_arguments(
     ]
 
 
-def _set_target_and_validate(planner_path, entry, target_id):
-    planner_path = Path(planner_path)
-    config = json.loads(planner_path.read_text(encoding="utf-8"))
-    target = next(
-        (item for item in entry["targets"] if item["id"] == target_id), None
-    )
-    if target is None:
-        raise ValueError(f"{entry['id']} has no target {target_id!r}")
-    config["goal_cell"] = list(target["cell"])
-    obstacle_map = build_obstacle_map(config)
-    astar(
-        tuple(config["start_cell"]),
-        tuple(config["goal_cell"]),
-        obstacle_map["inflated_blocking_cells"],
-        int(config["width"]),
-        int(config["height"]),
-    )
-    write_json(planner_path, config)
-
-
-def _rehash_manifest(manifest):
-    value = {key: item for key, item in manifest.items() if key != "config_hash"}
-    manifest["config_hash"] = object_sha256(value)
-
-
-def _materialize_reachable_scenario(
-    manifest, entry, target_id, world_path, scenario_manifest, oracle_planner
-):
-    adjustments = manifest.setdefault("feasibility_adjustments", [])
-    relaxed_equipment = False
-    while True:
-        _rehash_manifest(manifest)
-        materialize_world(
-            project_path(entry["world_file"]),
-            world_path,
-            manifest,
-            report_path=scenario_manifest,
-        )
-        report = json.loads(scenario_manifest.read_text(encoding="utf-8"))
-        materialize_planner_config(
-            project_path(entry["obstacle_config"]),
-            oracle_planner,
-            report,
-        )
-        try:
-            _set_target_and_validate(oracle_planner, entry, target_id)
-            return
-        except ValueError:
-            if manifest["unknown_obstacles"]:
-                removed = manifest["unknown_obstacles"].pop()
-                adjustments.append(f"removed_unreachable:{removed['id']}")
-                continue
-            if not relaxed_equipment:
-                manifest["equipment_position_jitter_m"] = 0.0
-                manifest["equipment_scale"] = 1.0
-                adjustments.append("restored_baseline_equipment_geometry")
-                relaxed_equipment = True
-                continue
-            raise
-
-
 def write_run_queue(registry, study_id, tier, output_dir):
     """Write an auditable worker queue without embedding machine-specific state in Git."""
     study = registry.get_study(study_id)
@@ -151,8 +87,14 @@ def write_run_queue(registry, study_id, tier, output_dir):
     scenarios_dir = output_dir / "scenarios"
     worlds_dir = output_dir / "worlds"
     randomization = load_ranges(RANDOMIZATION_CONFIG)
+    definitions = {
+        (row["scenario_id"], row["condition"]): row
+        for row in tier_matrix(tier, include_champion=bool(study.get("champion_model")))
+    }
     rows = []
     for run in schedule_tier(registry, study_id, tier):
+        definition = definitions[(run["scenario_id"], run["condition"])]
+        scenario_profile = definition.get("scenario_profile")
         scenario_manifest = scenarios_dir / f"{run['scenario_id']}.json"
         world_path = worlds_dir / f"{run['scenario_id']}.sdf"
         oracle_planner = worlds_dir / f"{run['scenario_id']}.planner.json"
@@ -167,13 +109,14 @@ def write_run_queue(registry, study_id, tier, output_dir):
             if tier == "replay":
                 write_json(scenario_manifest, manifest)
             else:
-                _materialize_reachable_scenario(
+                materialize_reachable_scenario(
                     manifest,
                     entry,
                     run["target_id"],
                     world_path,
                     scenario_manifest,
                     oracle_planner,
+                    scenario_profile,
                 )
         rows.append(
             {
@@ -183,6 +126,10 @@ def write_run_queue(registry, study_id, tier, output_dir):
                 "map_id": run["map_id"],
                 "target_id": run["target_id"],
                 "seed": run["seed"],
+                "scenario_profile": scenario_profile,
+                "required_capabilities": list(
+                    definition.get("required_capabilities", ())
+                ),
                 "status": run["status"],
                 "scenario_manifest": str(scenario_manifest),
                 "world_path": str(world_path) if tier != "replay" else None,

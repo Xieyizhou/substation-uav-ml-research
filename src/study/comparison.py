@@ -5,6 +5,7 @@ from __future__ import annotations
 import random
 
 from src.ml.metrics import percentile
+from src.study.capability_gate import capability_coverage_report
 
 
 LOWER_IS_BETTER = {
@@ -154,6 +155,13 @@ def closed_loop_gate(runs):
             "passed": False,
             "reasons": [f"{len(incomplete)} closed-loop run(s) are incomplete"],
         }
+    coverage = capability_coverage_report(runs)
+    if not coverage["passed"]:
+        return {
+            "passed": False,
+            "reasons": coverage["reasons"],
+            "capability_coverage": coverage,
+        }
     by_condition = {}
     for run in runs:
         by_condition.setdefault(run["condition"], []).append(run.get("metrics", {}))
@@ -167,7 +175,11 @@ def closed_loop_gate(runs):
             row.get(unsafe, 0) for row in baseline
         ):
             reasons.append(f"{unsafe} regressed")
-    return {"passed": not reasons, "reasons": reasons}
+    return {
+        "passed": not reasons,
+        "reasons": reasons,
+        "capability_coverage": coverage,
+    }
 
 
 def promotion_gate(runs, *, minimum_quality_gain=0.005, minimum_latency_gain=0.01):

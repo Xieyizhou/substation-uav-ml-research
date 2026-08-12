@@ -18,6 +18,7 @@ from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results, schedule_tier
 from src.study.closed_loop_worker import execute_closed_loop, execute_formal
 from src.study.formal_spec import DEFAULT_FORMAL_SPEC
+from src.study.capability_gate import capability_coverage_report
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -42,6 +43,9 @@ def build_parser():
     execute.add_argument("study_id")
     execute.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
     execute.add_argument("--max-runs", type=int)
+    execute.add_argument(
+        "--scenario-id", help="run only one qualification scenario"
+    )
     execute.add_argument("--startup-timeout", type=float, default=180.0)
     execute.add_argument("--probe-timeout", type=float, default=5.0)
     execute.add_argument(
@@ -75,6 +79,10 @@ def build_parser():
     compare.add_argument("study_id")
     compare.add_argument("--tier", choices=["replay", "closed-loop", "formal"], default="formal")
     compare.add_argument("--output", type=Path)
+    capabilities = commands.add_parser(
+        "capabilities", help="Check functional coverage before a large study"
+    )
+    capabilities.add_argument("study_id")
     promote = commands.add_parser("promote", help="Promote a safe, improving candidate")
     promote.add_argument("study_id")
     return parser
@@ -143,6 +151,7 @@ def main(argv=None):
                 startup_timeout_s=args.startup_timeout,
                 probe_timeout_s=args.probe_timeout,
                 flight_timeout_s=args.flight_timeout,
+                scenario_id=args.scenario_id,
             )
         elif args.command == "execute-formal":
             result = execute_formal(
@@ -166,6 +175,10 @@ def main(argv=None):
             )
             if args.output:
                 write_json(args.output, result)
+        elif args.command == "capabilities":
+            result = capability_coverage_report(
+                registry.run_metrics(args.study_id, "closed-loop")
+            )
         elif args.command == "promote":
             result = study_gate_report(
                 {
@@ -178,7 +191,8 @@ def main(argv=None):
         else:
             return 2
         print(json.dumps(result, indent=2, sort_keys=True))
-        return 0 if args.command != "promote" or result["passed"] else 1
+        gated = args.command in {"promote", "capabilities"}
+        return 0 if not gated or result["passed"] else 1
     except (FileNotFoundError, RuntimeError, ValueError) as error:
         print(f"Study command failed: {error}")
         return 1

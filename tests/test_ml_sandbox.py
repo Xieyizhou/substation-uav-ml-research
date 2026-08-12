@@ -35,6 +35,8 @@ from src.study.comparison import (
 from src.study.matrix import tier_matrix
 from src.study.registry import ResearchRegistry
 from src.study.runner import write_run_queue
+from src.study.capability_gate import capability_coverage_report
+from src.study.capability_scenario import route_blocker_specification
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -75,6 +77,48 @@ class ScenarioAndTruthTests(unittest.TestCase):
         self.assertEqual(len({row["scenario_id"] for row in scenarios}), 30)
         self.assertEqual(len(tier_matrix("formal")), 120)
         self.assertEqual(len(tier_matrix("closed-loop")), 15)
+        blocker_runs = [
+            row for row in tier_matrix("closed-loop")
+            if row.get("scenario_profile") == "unmapped_route_blocker_v1"
+        ]
+        self.assertEqual(len(blocker_runs), 3)
+
+    def test_route_blocker_intersects_route_but_preserves_a_detour(self):
+        config = json.loads((ROOT / "config/substation_obstacles.json").read_text())
+        config["goal_cell"] = [16, 16]
+        with tempfile.TemporaryDirectory() as directory:
+            planner = Path(directory) / "planner.json"
+            planner.write_text(json.dumps(config))
+            blocker = route_blocker_specification(planner)
+        self.assertEqual(blocker["profile"], "unmapped_route_blocker_v1")
+        self.assertEqual(len(blocker["grid_cell"]), 2)
+
+    def test_large_study_gate_requires_observed_functional_coverage(self):
+        runs = []
+        for condition in ("geometric_lidar", "ml_lidar", "geometric_ml_fusion"):
+            for index in range(5):
+                runs.append({
+                    "condition": condition,
+                    "status": "completed",
+                    "metrics": {
+                        "mission_success": 1,
+                        "landing_success": 1,
+                        "collision_count": 0,
+                        "sensor_healthy_ratio": 1.0,
+                        "predicted_danger_sample_count": int(index == 0),
+                        "replan_attempt_count": int(index == 0),
+                        "successful_replan_count": int(index == 0),
+                        "active_replan_count": int(index == 0),
+                    },
+                })
+        self.assertTrue(capability_coverage_report(runs)["passed"])
+        runs[5]["metrics"]["active_replan_count"] = 0
+        report = capability_coverage_report(runs)
+        self.assertFalse(report["passed"])
+        self.assertIn(
+            "ml_lidar: active_route_replacement was not demonstrated",
+            report["reasons"],
+        )
 
     def test_truth_labels_include_nonconstant_recommended_direction(self):
         ranges = [6.0] * 72

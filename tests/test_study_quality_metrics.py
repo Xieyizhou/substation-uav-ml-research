@@ -34,6 +34,8 @@ class StudyQualityMetricTests(unittest.TestCase):
         metrics = lidar_quality_metrics(frame)
         self.assertEqual(metrics["quality_sample_count"], 2)
         self.assertEqual(metrics["danger_recall"], 0.0)
+        self.assertEqual(metrics["truth_danger_sample_count"], 1)
+        self.assertEqual(metrics["predicted_danger_sample_count"], 0)
         self.assertEqual(metrics["risk_false_negative_rate"], 1.0)
         self.assertEqual(metrics["traversability_iou"], 0.5)
         self.assertEqual(metrics["direction_mae_deg"], 12.5)
