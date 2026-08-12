@@ -8,6 +8,7 @@ from src.cli.studies import build_parser
 from src.ml.artifacts import object_sha256, write_json
 from src.study.closed_loop_worker import (
     _attempt_root,
+    _is_retryable_startup_failure,
     _probe_lidar,
     _run_one,
     _verify_replay_receipt,
@@ -21,6 +22,7 @@ from src.study.flight_budget import (
 )
 from src.study.registry import ResearchRegistry
 from src.study.runner import _flight_arguments
+from src.vision.collection.process import CollectionProcessError
 
 
 class ClosedLoopWorkerTests(unittest.TestCase):
@@ -191,6 +193,20 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(topic, "/world/test/scan")
         ensure.assert_called_once()
 
+    def test_only_preflight_mavsdk_failure_is_retryable(self):
+        attempt = self.root / "attempt"
+        attempt.mkdir()
+        (attempt / "flight.log").write_text(
+            "MAVSDK connection failed after 2 attempts\n", encoding="utf-8"
+        )
+        self.assertTrue(_is_retryable_startup_failure(
+            CollectionProcessError("expected one new flight log, found 0"),
+            attempt,
+        ))
+        self.assertFalse(_is_retryable_startup_failure(
+            CollectionProcessError("flight task exceeded timeout"), attempt
+        ))
+
     @patch("src.study.closed_loop_worker.mission_metrics", return_value={})
     @patch("src.study.closed_loop_worker.landed_mission_status")
     @patch("src.study.closed_loop_worker._new_flight_log")
@@ -256,6 +272,37 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         row = self.registry.runs(self.study_id)[0]
         self.assertEqual(row["status"], "failed")
         self.assertIn("simulator failed", row["failure_reason"])
+
+    @patch("src.study.closed_loop_worker._run_one")
+    @patch("src.study.closed_loop_worker.ingest_results")
+    def test_worker_restarts_simulator_after_preflight_mavsdk_failure(
+        self, ingest, run_one
+    ):
+        flight_log = self.root / "flight.csv"
+        flight_log.write_text("elapsed_s\n0\n")
+
+        def run_side_effect(row, attempt, **options):
+            if run_one.call_count == 1:
+                (attempt / "flight.log").write_text(
+                    "MAVSDK connection failed after 2 attempts\n", encoding="utf-8"
+                )
+                raise CollectionProcessError(
+                    "expected one new flight log, found 0"
+                )
+            return flight_log, {}, {
+                "status": "completed", "landing_confirmed": True,
+            }
+
+        run_one.side_effect = run_side_effect
+        ingest.side_effect = self.ingest
+        result = execute_closed_loop(
+            self.registry_path, self.study_id, self.root, max_runs=1
+        )
+        self.assertEqual(result["completed"], 1)
+        self.assertEqual(run_one.call_count, 2)
+        attempts = self.root / self.study_id / "closed-loop/runs" / self.run["run_id"] / "attempts"
+        self.assertTrue((attempts / "attempt_01/failure.json").is_file())
+        self.assertTrue((attempts / "attempt_02").is_dir())
 
     def test_formal_worker_rejects_missing_replay_receipt(self):
         with self.assertRaisesRegex(ValueError, "requires --replay-gate"):

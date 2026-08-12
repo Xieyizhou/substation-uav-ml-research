@@ -29,6 +29,7 @@ from src.vision.collection.process import (
 )
 ROOT = Path(__file__).resolve().parents[2]
 FLIGHT_TIERS = frozenset({"closed-loop", "formal"})
+STARTUP_RUN_ATTEMPTS = 2
 
 
 def _attempt_root(run_root):
@@ -85,6 +86,22 @@ def _new_flight_log(previous):
             f"expected one new flight log, found {len(candidates)}"
         )
     return candidates.pop()
+
+
+def _is_retryable_startup_failure(error, attempt_root):
+    """Retry only failures that occurred before a telemetry log was created."""
+    if not isinstance(error, CollectionProcessError):
+        return False
+    try:
+        flight_output = (Path(attempt_root) / "flight.log").read_text(
+            encoding="utf-8"
+        )
+    except OSError:
+        return False
+    return (
+        "expected one new flight log, found 0" in str(error)
+        and "MAVSDK connection failed" in flight_output
+    )
 
 
 def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeout_s):
@@ -185,35 +202,44 @@ def _prepare_tier(
 
 
 def _execute_row(
-    registry, row, run_root, tier, results_dir, formal_receipt, *,
+    registry, row, run_base, tier, results_dir, formal_receipt, *,
     startup_timeout_s, probe_timeout_s, flight_timeout_s,
 ):
     registry.set_run_status(row["run_id"], "running")
-    try:
-        timeout_s = closed_loop_timeout_s(
-            row["oracle_planner_config"], flight_timeout_s
-        )
-        log_path, metrics, mission_status = _run_one(
-            row, run_root, startup_timeout_s=startup_timeout_s,
-            probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
-        )
-        write_json(
-            row["result_path"],
-            result_payload(
-                row, log_path, metrics, mission_status, formal_receipt
-            ),
-        )
-        ingest_results(registry, row["study_id"], tier, results_dir)
-    except Exception as error:
-        registry.set_run_status(
-            row["run_id"], "failed",
-            failure_reason=f"{type(error).__name__}: {error}",
-        )
-        write_json(run_root / "failure.json", {
-            "run_id": row["run_id"], "scenario_id": row["scenario_id"],
-            "condition": row["condition"], "error": f"{type(error).__name__}: {error}",
-        })
-        raise
+    for attempt_number in range(1, STARTUP_RUN_ATTEMPTS + 1):
+        run_root = _attempt_root(run_base)
+        try:
+            timeout_s = closed_loop_timeout_s(
+                row["oracle_planner_config"], flight_timeout_s
+            )
+            log_path, metrics, mission_status = _run_one(
+                row, run_root, startup_timeout_s=startup_timeout_s,
+                probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
+            )
+            write_json(
+                row["result_path"],
+                result_payload(
+                    row, log_path, metrics, mission_status, formal_receipt
+                ),
+            )
+            ingest_results(registry, row["study_id"], tier, results_dir)
+            return
+        except Exception as error:
+            write_json(run_root / "failure.json", {
+                "run_id": row["run_id"], "scenario_id": row["scenario_id"],
+                "condition": row["condition"],
+                "error": f"{type(error).__name__}: {error}",
+            })
+            if (
+                attempt_number < STARTUP_RUN_ATTEMPTS
+                and _is_retryable_startup_failure(error, run_root)
+            ):
+                continue
+            registry.set_run_status(
+                row["run_id"], "failed",
+                failure_reason=f"{type(error).__name__}: {error}",
+            )
+            raise
 
 
 def execute_flight_tier(
@@ -245,11 +271,9 @@ def execute_flight_tier(
     completed = []
     for row in selected:
         row["study_id"] = study_id
-        run_root = _attempt_root(
-            Path(results_dir) / study_id / tier / "runs" / row["run_id"]
-        )
+        run_base = Path(results_dir) / study_id / tier / "runs" / row["run_id"]
         _execute_row(
-            registry, row, run_root, tier, results_dir, formal_receipt,
+            registry, row, run_base, tier, results_dir, formal_receipt,
             startup_timeout_s=startup_timeout_s,
             probe_timeout_s=probe_timeout_s,
             flight_timeout_s=flight_timeout_s,
