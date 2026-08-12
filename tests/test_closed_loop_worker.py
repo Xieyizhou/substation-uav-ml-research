@@ -273,6 +273,33 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(row["status"], "failed")
         self.assertIn("simulator failed", row["failure_reason"])
 
+    @patch("src.study.closed_loop_worker.mission_metrics")
+    @patch("src.study.closed_loop_worker.landed_mission_status")
+    @patch("src.study.closed_loop_worker._new_flight_log")
+    @patch("src.study.closed_loop_worker.wait_process")
+    @patch("src.study.closed_loop_worker.stop_process")
+    @patch("src.study.closed_loop_worker.ensure_process_running")
+    @patch("src.study.closed_loop_worker.start_process")
+    @patch("src.study.closed_loop_worker._probe_lidar", return_value="/scan")
+    @patch("src.study.closed_loop_worker._run_setup")
+    def test_run_rejects_nonzero_process_with_failed_terminal_status(
+        self, setup, probe, start, ensure, stop, wait, new_log, status, metrics
+    ):
+        start.side_effect = [object(), object()]
+        wait.side_effect = CollectionProcessError("flight exited with code 1")
+        new_log.return_value = self.root / "failed.csv"
+        status.return_value = {"status": "failed", "landing_confirmed": True}
+        row = {
+            "setup_commands": [], "launcher_environment": {},
+            "launcher_command": ["launcher"],
+            "flight_command": ["python", "main.py", "task"],
+            "oracle_planner_config": "planner.json",
+        }
+        with self.assertRaisesRegex(CollectionProcessError, "exited with code 1"):
+            _run_one(row, self.root / "run-failed", startup_timeout_s=1.0,
+                     probe_timeout_s=1.0, flight_timeout_s=1.0)
+        metrics.assert_not_called()
+
     @patch("src.study.closed_loop_worker._run_one")
     @patch("src.study.closed_loop_worker.ingest_results")
     def test_worker_restarts_simulator_after_preflight_mavsdk_failure(

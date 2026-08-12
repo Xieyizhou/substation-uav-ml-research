@@ -1,4 +1,3 @@
-import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -11,7 +10,7 @@ from src.vision.collection.process import CollectionProcessError
 class ClosedLoopOutcomeTests(unittest.TestCase):
     @patch("src.study.closed_loop_worker.ingest_results")
     @patch("src.study.closed_loop_worker._run_one")
-    def test_execute_row_materializes_safe_failure(self, run_one, ingest):
+    def test_execute_row_rejects_safe_failure(self, run_one, ingest):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             log_path = root / "flight.csv"
@@ -31,15 +30,16 @@ class ClosedLoopOutcomeTests(unittest.TestCase):
                 "oracle_planner_config": "planner.json",
                 "result_path": str(result_path),
             }
-            _execute_row(
-                registry, row, root / "attempt", "formal", root, None,
-                startup_timeout_s=1.0, probe_timeout_s=1.0,
-                flight_timeout_s=1.0,
-            )
-            payload = json.loads(result_path.read_text())
-        self.assertEqual(payload["mission"]["status"], "failed")
-        self.assertEqual(payload["metrics"]["mission_success"], 0)
-        ingest.assert_called_once()
+            with self.assertRaisesRegex(
+                CollectionProcessError, "did not complete"
+            ):
+                _execute_row(
+                    registry, row, root / "attempt", "formal", root, None,
+                    startup_timeout_s=1.0, probe_timeout_s=1.0,
+                    flight_timeout_s=1.0,
+                )
+        self.assertFalse(result_path.exists())
+        ingest.assert_not_called()
 
     @patch("src.study.closed_loop_worker.mission_metrics", return_value={"mission_success": 0})
     @patch("src.study.closed_loop_worker.landed_mission_status")
@@ -50,7 +50,7 @@ class ClosedLoopOutcomeTests(unittest.TestCase):
     @patch("src.study.closed_loop_worker.start_process")
     @patch("src.study.closed_loop_worker._probe_lidar", return_value="/world/test/scan")
     @patch("src.study.closed_loop_worker._run_setup")
-    def test_safe_failed_mission_becomes_an_experiment_result(
+    def test_safe_failed_mission_is_not_an_experiment_result(
         self, setup, probe, start, ensure, stop, wait, new_log, status, metrics
     ):
         wait.side_effect = CollectionProcessError("flight task exited with code 1")
@@ -68,12 +68,14 @@ class ClosedLoopOutcomeTests(unittest.TestCase):
                 "flight_command": ["python", "main.py", "task"],
                 "oracle_planner_config": "planner.json",
             }
-            _, result_metrics, mission = _run_one(
-                row, root / "run", startup_timeout_s=1.0,
-                probe_timeout_s=1.0, flight_timeout_s=1.0,
-            )
-        self.assertEqual(result_metrics["mission_success"], 0)
-        self.assertEqual(mission["status"], "failed")
+            with self.assertRaisesRegex(
+                CollectionProcessError, "exited with code 1"
+            ):
+                _run_one(
+                    row, root / "run", startup_timeout_s=1.0,
+                    probe_timeout_s=1.0, flight_timeout_s=1.0,
+                )
+        metrics.assert_not_called()
 
 
 if __name__ == "__main__":
