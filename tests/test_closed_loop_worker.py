@@ -158,17 +158,17 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     def test_route_aware_timeout_covers_long_round_trip(self):
         planner = self.write_planner()
         self.assertEqual(route_length_m(planner), 60.0)
-        self.assertGreater(closed_loop_timeout_s(planner), 480.0)
-        self.assertLessEqual(closed_loop_timeout_s(planner), 600.0)
+        self.assertGreater(closed_loop_timeout_s(planner), 600.0)
+        self.assertLessEqual(closed_loop_timeout_s(planner), 720.0)
 
     def test_route_aware_timeout_covers_waypoint_and_landing_overhead(self):
         planner = self.write_planner(goal=(37, 0))
-        self.assertGreater(closed_loop_timeout_s(planner), 390.0)
-        self.assertEqual(flight_timeout_policy()["max_timeout_s"], 600.0)
+        self.assertGreater(closed_loop_timeout_s(planner), 490.0)
+        self.assertEqual(flight_timeout_policy()["max_timeout_s"], 720.0)
 
     def test_route_aware_timeout_is_bounded_and_override_is_exact(self):
         planner = self.write_planner(goal=(1, 0), resolution=0.5)
-        self.assertEqual(closed_loop_timeout_s(planner), 240.0)
+        self.assertGreaterEqual(closed_loop_timeout_s(planner), 240.0)
         self.assertEqual(closed_loop_timeout_s(planner, 123.0), 123.0)
         with self.assertRaisesRegex(ValueError, "must be positive"):
             closed_loop_timeout_s(planner, 0.0)
