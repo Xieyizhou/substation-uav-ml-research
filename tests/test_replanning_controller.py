@@ -13,6 +13,23 @@ from src.flight.replanning_controller import (
 
 
 class ReplanningControllerTests(unittest.TestCase):
+    def test_return_route_still_stops_for_geometric_obstacle_evidence(self):
+        detection = {
+            "nearest_obstacle": {"distance_m": 1.0},
+            "detected_obstacles": [],
+            "dynamic_grid_cells": [],
+        }
+        self.assertTrue(
+            waypoint_executor.return_has_geometric_obstacle_evidence(
+                "return", detection
+            )
+        )
+        self.assertFalse(
+            waypoint_executor.return_has_geometric_obstacle_evidence(
+                "outbound", detection
+            )
+        )
+
     def test_active_escape_suppresses_duplicate_replans_until_risk_clears(self):
         config = {"risk_level": "danger", "enabled": True, "max_replans": 3,
                   "cooldown_s": 0}

@@ -156,6 +156,11 @@ def print_waypoint_timeout_info(waypoint, timeout_info):
     print(f"  timeout: {timeout_info['timeout_s']:.1f} s")
 
 
+def return_has_geometric_obstacle_evidence(route_direction, detection):
+    evidence_fields = ("nearest_obstacle", "detected_obstacles", "dynamic_grid_cells")
+    return route_direction == "return" and bool(detection) and any(detection.get(field) for field in evidence_fields)
+
+
 def print_waypoint_timeout_debug(
     waypoint, latest, perception_config, perception_detector, command
 ):
@@ -285,7 +290,10 @@ async def fly_to_waypoint(
             safety_decision
             and safety_decision.action == "replan_or_hover"
             and not following_escape_route
-            and route_direction != "return"
+            and (
+                route_direction != "return"
+                or return_has_geometric_obstacle_evidence(route_direction, detection)
+            )
         ):
             last_command = VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
             await drone.offboard.set_velocity_ned(last_command)
