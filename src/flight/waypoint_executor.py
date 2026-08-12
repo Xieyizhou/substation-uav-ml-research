@@ -402,7 +402,7 @@ async def fly_astar_waypoints(
     await drone.action.set_takeoff_altitude(target_takeoff_altitude_m)
     set_phase(phase_state, "takeoff")
     print("Arming...")
-    await drone.action.arm()
+    await arm_when_ready(drone.action)
     print("Taking off...")
     await drone.action.takeoff()
     print("Waiting 8 seconds for takeoff stabilization...")
@@ -483,3 +483,4 @@ async def fly_astar_waypoints(
     await drone.action.land()
     await wait_until_landed(latest, LANDING_TIMEOUT_S)
     set_phase(phase_state, "landed")
+from src.flight.arming import arm_when_ready
