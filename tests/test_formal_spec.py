@@ -47,7 +47,7 @@ class FormalStudySpecificationTests(unittest.TestCase):
         )
         self.assertEqual(first, second)
         self.assertEqual(first["qualification_study_id"], "qualification-study")
-        self.assertEqual(first["flight_timeout_policy"]["max_timeout_s"], 480.0)
+        self.assertEqual(first["flight_timeout_policy"]["max_timeout_s"], 600.0)
         supplied = first.pop("formal_study_identity_sha256")
         self.assertEqual(supplied, object_sha256(first))
 
