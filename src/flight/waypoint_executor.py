@@ -38,6 +38,7 @@ from src.flight.replanning_controller import (
     attempt_local_replan,
     build_active_replan_route,
     configure_acceptance,
+    route_allows_local_replan,
     should_attempt_local_replan,
 )
 from src.flight.route_planning import reversed_waypoints
@@ -255,7 +256,11 @@ async def fly_to_waypoint(
             await asyncio.sleep(0.2)
             continue
         now_s = asyncio.get_running_loop().time()
-        if should_attempt_local_replan(replan_config, replan_state, risk_level, now_s):
+        if route_allows_local_replan(
+            replan_config, route_direction
+        ) and should_attempt_local_replan(
+            replan_config, replan_state, risk_level, now_s
+        ):
             replanned_path = attempt_local_replan(
                 replan_config, replan_state, position, detection, now_s
             )

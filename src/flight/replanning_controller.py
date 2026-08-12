@@ -94,6 +94,10 @@ def should_attempt_local_replan(replan_config, replan_state, risk_level, now_s):
     )
 
 
+def route_allows_local_replan(replan_config, route_direction):
+    return replan_config.get("mode") != "active" or route_direction == "outbound"
+
+
 def attempt_local_replan(replan_config, replan_state, position, detection, now_s):
     replan_state["last_attempt_time"] = now_s
     replan_state["replan_count"] = replan_state.get("replan_count", 0) + 1
@@ -107,6 +111,7 @@ def attempt_local_replan(replan_config, replan_state, position, detection, now_s
     replan_state["replan_goal_grid_x"] = goal_cell[0]
     replan_state["replan_goal_grid_y"] = goal_cell[1]
     dynamic_cells = dynamic_cells_from_detection(detection)
+    dynamic_cells -= set(replan_config["static_obstacles"])
     inflated_dynamic_cells = inflate_cells(
         dynamic_cells,
         replan_config["width"],

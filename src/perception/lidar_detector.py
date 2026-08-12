@@ -215,11 +215,8 @@ class LidarRiskDetector:
             "closest_obstacle": nearest,
             "nearest_obstacle": nearest,
             "detected_obstacles": detected,
-            "dynamic_grid_cells": self._global_cells_from_costmap(
-                self.last_costmap,
-                float(local_north_m),
-                float(local_east_m),
-                float(yaw_deg or 0.0),
+            "dynamic_grid_cells": sorted(
+                {(item["grid_x"], item["grid_y"]) for item in detected}
             ),
             "sensor_source": self.source.source_id,
             "sensor_healthy": True,
@@ -243,35 +240,6 @@ class LidarRiskDetector:
             "truth_direction_deg": truth["recommended_direction_deg"],
             "predicted_direction_deg": recommended_direction,
         }
-
-    def _global_cells_from_costmap(self, costmap, north_m, east_m, yaw_deg):
-        """Project inflated occupied costmap cells into the global A* grid."""
-        yaw_rad = math.radians(yaw_deg)
-        cells = set()
-        for y in range(costmap.height):
-            for x in range(costmap.width):
-                offset = costmap.index(x, y)
-                if costmap.unknown[offset] or costmap.occupancy[offset] < 0.55:
-                    continue
-                forward_m = costmap.origin_forward_m + (x + 0.5) * costmap.resolution_m
-                left_m = costmap.origin_left_m + (y + 0.5) * costmap.resolution_m
-                obstacle_north = (
-                    north_m
-                    + forward_m * math.cos(yaw_rad)
-                    - left_m * math.sin(yaw_rad)
-                )
-                obstacle_east = (
-                    east_m
-                    + forward_m * math.sin(yaw_rad)
-                    + left_m * math.cos(yaw_rad)
-                )
-                cells.add(
-                    (
-                        int(math.floor(obstacle_east / self.resolution_m)),
-                        int(math.floor(obstacle_north / self.resolution_m)),
-                    )
-                )
-        return sorted(cells)
 
     def _recommended_direction(self, scan):
         sectors = {"left": [], "center": [], "right": []}
