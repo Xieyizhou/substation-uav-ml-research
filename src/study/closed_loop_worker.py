@@ -134,9 +134,9 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
         log_path = _new_flight_log(before)
         mission_status = landed_mission_status(log_path)
         mission_failed = mission_status["status"] == "failed"
-        if process_error is not None and not mission_failed:
+        if process_error is not None:
             raise process_error
-        if process_error is None and mission_failed:
+        if mission_failed:
             raise CollectionProcessError(
                 "flight process exited successfully with a failed mission status"
             )
@@ -216,6 +216,10 @@ def _execute_row(
                 row, run_root, startup_timeout_s=startup_timeout_s,
                 probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
             )
+            if mission_status.get("status") != "completed":
+                raise CollectionProcessError(
+                    "formal run did not complete its mission"
+                )
             write_json(
                 row["result_path"],
                 result_payload(

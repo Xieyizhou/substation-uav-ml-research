@@ -421,6 +421,13 @@ class VisualV2CollectionTests(unittest.TestCase):
         self.assertEqual(normalize_yaw_deg(225.0), -135.0)
         self.assertEqual(normalize_yaw_deg(180.0), 180.0)
 
+    def test_vertical_command_has_minimum_speed_outside_tolerance(self):
+        error = {"north_m": 0.0, "east_m": 0.0, "down_m": -0.39}
+        with patch("src.flight.waypoint_executor.POSITION_GAIN", 0.05), patch(
+            "src.flight.waypoint_executor.REACHED_VERTICAL_ERROR_M", 0.1
+        ):
+            self.assertEqual(velocity_command_from_error(error).down_m_s, -0.1)
+
     def test_full_offline_collection_audit(self):
         result = audit_collection_plan(build_collection_plan("v2"))
         self.assertTrue(result["audit_passed"])

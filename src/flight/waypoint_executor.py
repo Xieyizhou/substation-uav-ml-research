@@ -87,6 +87,11 @@ def velocity_command_from_error(error, speed_scale=1.0, yaw_deg=0.0):
         -MAX_VERTICAL_SPEED_M_S,
         MAX_VERTICAL_SPEED_M_S,
     )
+    if (
+        abs(error["down_m"]) >= REACHED_VERTICAL_ERROR_M
+        and abs(down_velocity) < 0.1
+    ):
+        down_velocity = 0.1 if error["down_m"] > 0.0 else -0.1
     return VelocityNedYaw(
         north_velocity,
         east_velocity,
