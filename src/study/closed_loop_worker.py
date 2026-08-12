@@ -158,7 +158,10 @@ def _verify_replay_receipt(
     closed = registry.run_metrics(qualification_study_id, "closed-loop")
     decision = closed_loop_gate(closed)
     if not decision["passed"]:
-        raise ValueError("formal execution requires a passed closed-loop gate")
+        details = "; ".join(decision.get("reasons", []))
+        raise ValueError(
+            "formal execution requires demonstrated capability coverage: " + details
+        )
     return receipt
 
 
@@ -219,6 +222,7 @@ def execute_flight_tier(
     replay_gate_path=None,
     comparison_spec_path=DEFAULT_FORMAL_SPEC,
     qualification_study_id=None,
+    scenario_id=None,
 ):
     """Execute one flight tier sequentially and stop on the first failure."""
     if tier not in FLIGHT_TIERS:
@@ -233,6 +237,10 @@ def execute_flight_tier(
     scheduled = ingest_results(registry, study_id, tier, results_dir)
     queue = json.loads(Path(scheduled["run_queue"]).read_text(encoding="utf-8"))
     pending = [row for row in queue["runs"] if row["status"] != "completed"]
+    if scenario_id is not None:
+        pending = [row for row in pending if row["scenario_id"] == scenario_id]
+        if not pending:
+            raise ValueError(f"no pending runs match scenario {scenario_id!r}")
     selected = pending[:max_runs] if max_runs is not None else pending
     completed = []
     for row in selected:

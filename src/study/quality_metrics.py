@@ -86,4 +86,8 @@ def lidar_quality_metrics(frame):
         ),
         "direction_mae_deg": sum(direction) / len(direction) if direction else None,
         "quality_sample_count": len(rows),
+        "truth_danger_sample_count": sum(label == "danger" for label in labels),
+        "predicted_danger_sample_count": sum(
+            label == "danger" for label in predictions
+        ),
     }

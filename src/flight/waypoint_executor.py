@@ -39,6 +39,7 @@ from src.flight.replanning_controller import (
     build_active_replan_route,
     configure_acceptance,
     route_allows_local_replan,
+    update_replanned_route_escape,
     should_attempt_local_replan,
 )
 from src.flight.route_planning import reversed_waypoints
@@ -232,6 +233,9 @@ async def fly_to_waypoint(
             replan_config=replan_config,
         )
         risk_level = detection["risk_level"] if detection else "clear"
+        following_escape_route = update_replanned_route_escape(
+            replan_config, replan_state, risk_level
+        )
         uses_live_sensor = (
             detection
             and perception_config.get("source", "map_baseline") != "map_baseline"
@@ -272,7 +276,11 @@ async def fly_to_waypoint(
                     last_command = VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
                     await drone.offboard.set_velocity_ned(last_command)
                     return replacement_waypoints
-        if safety_decision and safety_decision.action == "replan_or_hover":
+        if (
+            safety_decision
+            and safety_decision.action == "replan_or_hover"
+            and not following_escape_route
+        ):
             last_command = VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
             await drone.offboard.set_velocity_ned(last_command)
             await asyncio.sleep(0.2)
@@ -322,6 +330,7 @@ async def fly_waypoint_route(
     speed_scale=1.0,
 ):
     active_waypoints = list(waypoints)
+    completed_waypoints = []
     waypoint_index = 0
     while waypoint_index < len(active_waypoints):
         publish_mission_event(
@@ -356,7 +365,9 @@ async def fly_waypoint_route(
                 f"with {len(active_waypoints)} waypoint(s)."
             )
             continue
+        completed_waypoints.append(active_waypoints[waypoint_index])
         waypoint_index += 1
+    return completed_waypoints
 
 
 async def hover_at_waypoint(drone, phase_state, target_state, waypoint, phase_name, hover_s):
@@ -419,7 +430,7 @@ async def fly_astar_waypoints(
         replan_state,
     )
     print("Flying outbound A* path to goal...")
-    await fly_waypoint_route(
+    completed_outbound_waypoints = await fly_waypoint_route(
         drone,
         latest,
         phase_state,
@@ -437,8 +448,11 @@ async def fly_astar_waypoints(
     print("Hovering briefly at the goal...")
     await hover_at_waypoint(drone, phase_state, target_state, waypoints[-1], "goal_hover", 3)
     if return_home:
-        return_waypoints = reversed_waypoints(waypoints)
-        print("Return-home enabled. Flying reversed path back to start...")
+        return_waypoints = reversed_waypoints(completed_outbound_waypoints)
+        print(
+            "Return-home enabled. Flying the verified outbound route "
+            "in reverse back to start..."
+        )
         print(f"Return route speed scale: {RETURN_SPEED_SCALE:.2f}")
         await fly_waypoint_route(
             drone,

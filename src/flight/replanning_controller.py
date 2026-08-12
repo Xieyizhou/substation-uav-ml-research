@@ -41,6 +41,7 @@ def empty_replan_state():
         "replan_route_replaced": False,
         "active_replan_count": 0,
         "active_replan_path_length": "",
+        "following_replanned_route": False,
         "last_attempt_time": None,
     }
 
@@ -85,6 +86,8 @@ def should_attempt_local_replan(replan_config, replan_state, risk_level, now_s):
         return False
     if replan_state.get("replan_count", 0) >= replan_config["max_replans"]:
         return False
+    if replan_state.get("following_replanned_route"):
+        return False
     if not risk_reaches_threshold(risk_level, replan_config["risk_level"]):
         return False
     last_attempt_time = replan_state.get("last_attempt_time")
@@ -96,6 +99,17 @@ def should_attempt_local_replan(replan_config, replan_state, risk_level, now_s):
 
 def route_allows_local_replan(replan_config, route_direction):
     return replan_config.get("mode") != "active" or route_direction == "outbound"
+
+
+def update_replanned_route_escape(replan_config, replan_state, risk_level):
+    """Keep the escape route active until its triggering risk has cleared."""
+    following = bool(replan_state.get("following_replanned_route"))
+    if following and not risk_reaches_threshold(
+        risk_level, replan_config["risk_level"]
+    ):
+        replan_state["following_replanned_route"] = False
+        return False
+    return following
 
 
 def attempt_local_replan(replan_config, replan_state, position, detection, now_s):
@@ -185,6 +199,7 @@ def build_active_replan_route(replanned_path, replan_config, replan_state, posit
     first_index = first_useful_replan_waypoint_index(position, replanned_waypoints)
     replacement_waypoints = replanned_waypoints[first_index:] or [replanned_waypoints[-1]]
     replan_state["replan_route_replaced"] = True
+    replan_state["following_replanned_route"] = True
     replan_state["active_replan_count"] = replan_state.get("active_replan_count", 0) + 1
     replan_state["active_replan_path_length"] = len(replanned_path)
     print(

@@ -34,12 +34,14 @@ class LidarInspectorTests(unittest.TestCase):
         )
         matrix = [
             {
-                "scenario_id": "simple-center-1001", "map_id": "simple",
-                "target_id": "center", "seed": 1001, "condition": condition,
+                "scenario_id": f"simple-center-{1001 + index}", "map_id": "simple",
+                "target_id": "center", "seed": 1001 + index,
+                "condition": condition,
             }
             for condition in (
                 "geometric_lidar", "geometric_ml_fusion", "ml_lidar"
             )
+            for index in range(5)
         ]
         self.runs = self.registry.ensure_runs(
             self.study_id, "closed-loop", matrix
@@ -74,6 +76,10 @@ class LidarInspectorTests(unittest.TestCase):
                 "safety_failure_count": 0,
                 "sensor_healthy_ratio": 0.99 + index * 0.001,
                 "inference_p95_ms": 2.0 + index,
+                "predicted_danger_sample_count": 1,
+                "replan_attempt_count": 1,
+                "successful_replan_count": 1,
+                "active_replan_count": 1,
             })
 
     def test_summary_combines_replay_and_closed_loop_without_writes(self):
@@ -85,8 +91,8 @@ class LidarInspectorTests(unittest.TestCase):
         self.assertEqual(before, after)
         self.assertEqual(value["status"], "complete")
         self.assertEqual(value["replay"]["danger_recall"], 0.92)
-        self.assertEqual(value["closed_loop"]["completed"], 3)
-        self.assertEqual(value["closed_loop"]["mission_success"], 3)
+        self.assertEqual(value["closed_loop"]["completed"], 15)
+        self.assertEqual(value["closed_loop"]["mission_success"], 15)
         self.assertEqual(value["closed_loop"]["buffer_entry_count"], 1)
         self.assertTrue(value["closed_loop"]["passed"])
         self.assertNotIn(str(self.root), json.dumps(value))
@@ -99,7 +105,7 @@ class LidarInspectorTests(unittest.TestCase):
         closed = lidar_summary(self.config)["closed_loop"]
         self.assertEqual(closed["status"], "in_progress")
         self.assertEqual(closed["completed"], 1)
-        self.assertEqual(closed["pending"], 2)
+        self.assertEqual(closed["pending"], 14)
         self.assertFalse(closed["passed"])
 
     def test_gate_commands_resolve_identity_bound_local_artifacts(self):

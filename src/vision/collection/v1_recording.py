@@ -6,7 +6,7 @@ from pathlib import Path
 from src.ml.artifacts import file_sha256, object_sha256, write_json
 from src.ml.domain_randomization import load_ranges, sample_manifest
 from src.maps.map_catalog import map_by_id, project_path, spawn_pose_text
-from src.study.runner import _materialize_reachable_scenario
+from src.study.capability_scenario import materialize_reachable_scenario
 from src.vision.collection.plan import visual_randomization_identity
 
 
@@ -81,7 +81,7 @@ def prepare_v1_collection_scenario(plan, row, output_root, protocol):
         raise ValueError("scenario randomization does not match collection plan")
     root = Path(output_root) / "scenarios" / row["scenario_id"]
     paths = (root / "world.sdf", root / "scenario.json", root / "planner.json")
-    _materialize_reachable_scenario(
+    materialize_reachable_scenario(
         manifest,
         entry,
         row["target_id"],

@@ -172,7 +172,10 @@ def materialize_world(source_path, output_path, manifest, *, report_path=None):
     station = world.find("./model[@name='substation_map']")
     equipment_parent = station if station is not None else world
     changes = _randomize_equipment(equipment_parent, manifest)
-    for specification in manifest.get("unknown_obstacles", []):
+    for specification in (
+        manifest.get("unknown_obstacles", [])
+        + manifest.get("unmapped_obstacles", [])
+    ):
         equipment_parent.append(_unknown_model(specification))
     sun = world.find("./light[@name='sun']/diffuse")
     if sun is not None:
@@ -190,6 +193,7 @@ def materialize_world(source_path, output_path, manifest, *, report_path=None):
         "scenario_config_hash": manifest["config_hash"],
         "equipment_changes": changes,
         "unknown_obstacles": manifest.get("unknown_obstacles", []),
+        "unmapped_obstacles": manifest.get("unmapped_obstacles", []),
         "sensor_faults": {
             key: manifest[key]
             for key in (

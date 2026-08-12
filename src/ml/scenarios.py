@@ -52,7 +52,7 @@ def formal_scenarios():
 
 def closed_loop_scenarios():
     maps = ("simple", "medium", "complex", "extreme", "complex")
-    return [
+    scenarios = [
         {
             "scenario_id": scenario_id(map_id, target_id, seed),
             "map_id": map_id,
@@ -61,3 +61,12 @@ def closed_loop_scenarios():
         }
         for map_id, target_id, seed in zip(maps, TARGETS, range(1001, 1006))
     ]
+    scenarios[0]["scenario_profile"] = "unmapped_route_blocker_v1"
+    scenarios[0]["required_capabilities"] = (
+        "dynamic_threat_detection",
+        "local_replan_attempt",
+        "local_replan_success",
+        "active_route_replacement",
+        "safe_mission_completion",
+    )
+    return scenarios
