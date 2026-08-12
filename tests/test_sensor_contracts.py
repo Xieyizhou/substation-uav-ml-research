@@ -153,6 +153,13 @@ class SensorContractTests(unittest.TestCase):
         self.assertEqual(detection["risk_level"], "warning")
         self.assertTrue(detection["sensor_healthy"])
         self.assertTrue(detection["dynamic_grid_cells"])
+        self.assertEqual(
+            set(map(tuple, detection["dynamic_grid_cells"])),
+            {
+                (item["grid_x"], item["grid_y"])
+                for item in detection["detected_obstacles"]
+            },
+        )
         self.assertIsNotNone(detection["costmap"])
         self.assertIn(detection["truth_risk_level"], {"clear", "warning", "danger"})
         self.assertEqual(detection["geometric_risk_level"], "warning")
