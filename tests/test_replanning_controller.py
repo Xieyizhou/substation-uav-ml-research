@@ -1,6 +1,6 @@
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 from src.flight import waypoint_executor
 from src.flight.replanning_controller import (
@@ -75,6 +75,40 @@ class ReplannedRouteHistoryTests(unittest.IsolatedAsyncioTestCase):
             [waypoint["name"] for waypoint in completed],
             ["WP01", "RWP01", "RWP02"],
         )
+
+    @patch("src.flight.waypoint_executor.asyncio.sleep", return_value=None)
+    @patch("src.flight.waypoint_executor.current_perception_detection")
+    async def test_return_route_does_not_hover_forever_on_model_only_danger(
+        self, detection, _sleep
+    ):
+        detection.return_value = {
+            "risk_level": "danger", "sensor_healthy": True,
+            "sensor_frame_age_s": 0.0, "dynamic_grid_cells": [],
+            "detected_obstacles": [], "nearest_obstacle": None,
+        }
+        drone = SimpleNamespace(
+            offboard=SimpleNamespace(set_velocity_ned=AsyncMock())
+        )
+        position = SimpleNamespace(north_m=0.0, east_m=0.0, down_m=-1.5)
+        latest = {
+            "position_velocity": SimpleNamespace(position=position),
+            "attitude": None,
+            "updated_at": {"position_velocity": float("inf")},
+        }
+        waypoint = {
+            "name": "RWP01", "north_m": 0.0,
+            "east_m": 0.0, "down_m": -1.5,
+        }
+        with patch(
+            "src.flight.waypoint_executor.ensure_critical_telemetry_fresh"
+        ):
+            await waypoint_executor.fly_to_waypoint(
+                drone, latest, {}, {}, waypoint, "return_to_start", "return",
+                0.6, {"source": "gazebo_lidar_2d"}, object(),
+                {"enabled": True, "mode": "active", "risk_level": "danger"},
+                {"following_replanned_route": False},
+            )
+        drone.offboard.set_velocity_ned.assert_awaited()
 
 
 if __name__ == "__main__":

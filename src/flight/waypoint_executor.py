@@ -285,6 +285,7 @@ async def fly_to_waypoint(
             safety_decision
             and safety_decision.action == "replan_or_hover"
             and not following_escape_route
+            and route_direction != "return"
         ):
             last_command = VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
             await drone.offboard.set_velocity_ned(last_command)
