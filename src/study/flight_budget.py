@@ -11,8 +11,8 @@ from src.planner.obstacle_config import build_obstacle_map, get_start_goal
 
 
 MIN_TIMEOUT_S = 240.0
-MAX_TIMEOUT_S = 720.0
-FIXED_OVERHEAD_S = 240.0
+MAX_TIMEOUT_S = 900.0
+FIXED_OVERHEAD_S = 360.0
 OUTBOUND_SPEED_M_S = 0.5
 RETURN_SPEED_M_S = 0.3
 SCHEDULING_MARGIN = 1.35
