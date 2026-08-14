@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from src.ml.scenarios import closed_loop_scenarios, formal_scenarios
+from src.study.challenge_spec import challenge_matrix
 
 
 FORMAL_CONDITIONS = (
@@ -41,6 +42,8 @@ def tier_matrix(tier, *, include_champion=True):
             for scenario in closed_loop_scenarios()
             for condition in CLOSED_LOOP_CONDITIONS
         ]
+    if tier == "challenge":
+        return challenge_matrix()
     if tier == "formal":
         return [
             {**scenario, "condition": condition}

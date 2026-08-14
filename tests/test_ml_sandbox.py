@@ -37,6 +37,7 @@ from src.study.registry import ResearchRegistry
 from src.study.runner import write_run_queue
 from src.study.capability_gate import capability_coverage_report
 from src.study.capability_scenario import route_blocker_specification
+from src.study.challenge_spec import challenge_matrix, load_challenge_spec
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -77,6 +78,22 @@ class ScenarioAndTruthTests(unittest.TestCase):
         self.assertEqual(len({row["scenario_id"] for row in scenarios}), 30)
         self.assertEqual(len(tier_matrix("formal")), 120)
         self.assertEqual(len(tier_matrix("closed-loop")), 15)
+
+    def test_challenge_gate_is_three_runs_on_one_grounded_blocker(self):
+        specification = load_challenge_spec()
+        matrix = challenge_matrix()
+        self.assertEqual(len(matrix), 3)
+        self.assertEqual({row["scenario_id"] for row in matrix}, {
+            "challenge-route-blocker-1101"
+        })
+        self.assertEqual(
+            {row["condition"] for row in matrix},
+            set(specification["conditions"]),
+        )
+        self.assertTrue(all(
+            row["scenario_profile"] == "unmapped_route_blocker_v1"
+            for row in matrix
+        ))
         blocker_runs = [
             row for row in tier_matrix("closed-loop")
             if row.get("scenario_profile") == "unmapped_route_blocker_v1"
@@ -118,6 +135,37 @@ class ScenarioAndTruthTests(unittest.TestCase):
         self.assertIn(
             "ml_lidar: active_route_replacement was not demonstrated",
             report["reasons"],
+        )
+
+    def test_capability_gate_uses_tier_specific_matrix_size(self):
+        runs = []
+        for condition in ("geometric_lidar", "ml_lidar", "geometric_ml_fusion"):
+            runs.append({
+                "condition": condition,
+                "status": "completed",
+                "metrics": {
+                    "mission_success": 1,
+                    "landing_success": 1,
+                    "collision_count": 0,
+                    "sensor_healthy_ratio": 1.0,
+                    "predicted_danger_sample_count": 1,
+                    "truth_danger_sample_count": 0,
+                    "replan_attempt_count": 1,
+                    "successful_replan_count": 1,
+                    "active_replan_count": 1,
+                },
+            })
+        report = capability_coverage_report(runs, tier="challenge")
+        self.assertTrue(report["passed"])
+        self.assertEqual(report["tier"], "challenge")
+        self.assertEqual(
+            report["conditions"]["ml_lidar"]["observed"][
+                "truth_danger_sample_count"
+            ],
+            0,
+        )
+        self.assertFalse(
+            capability_coverage_report(runs, tier="formal")["passed"]
         )
 
     def test_truth_labels_include_nonconstant_recommended_direction(self):
@@ -488,6 +536,36 @@ class RegistryAndComparisonTests(unittest.TestCase):
             for row in payload["runs"]:
                 self.assertTrue(Path(row["scenario_manifest"]).is_file())
                 self.assertIn(f"{study}/replay/results", row["result_path"])
+
+    def test_challenge_queue_materializes_one_route_blocker_for_three_runs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            registry = ResearchRegistry(root / "registry.sqlite")
+            model = root / "model"
+            model.mkdir()
+            registry.register_model({
+                "model_id": "model-v1",
+                "onnx_sha256": "c" * 64,
+                "dataset_id": "dataset-v1",
+                "parent_model": None,
+            }, model)
+            study = registry.create_study("challenge", "model-v1")
+            queue = write_run_queue(
+                registry, study, "challenge", root / "results"
+            )
+            payload = json.loads(queue.read_text())
+            self.assertEqual(len(payload["runs"]), 3)
+            manifests = {row["scenario_manifest"] for row in payload["runs"]}
+            self.assertEqual(len(manifests), 1)
+            scenario = json.loads(Path(manifests.pop()).read_text())
+            self.assertEqual(len(scenario["unmapped_obstacles"]), 1)
+            self.assertEqual(
+                scenario["unmapped_obstacles"][0]["profile"],
+                "unmapped_route_blocker_v1",
+            )
+            self.assertTrue(all(
+                row["required_capabilities"] for row in payload["runs"]
+            ))
 
     def test_paired_bootstrap_and_promotion_gate(self):
         runs = []

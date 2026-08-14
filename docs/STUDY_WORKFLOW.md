@@ -433,14 +433,25 @@ At minimum it contains:
 
 ## Commands
 
+Before a five-scenario or larger flight matrix, run the bounded challenge
+tier. It materializes one simulator-only blocker on the original A* route
+while retaining a verified detour. The same grounded scenario is exercised
+once by geometric LiDAR, ML LiDAR, and safety-max fusion. Each condition must
+detect the threat, attempt and complete a replan, replace the active route,
+finish the mission, and land without collision.
+
 ```bash
 python main.py study create --name risk-cnn-v2 \
   --candidate models/lidar/risk_v2
 
 python main.py study run STUDY_ID --tier replay
+python main.py study execute-challenge STUDY_ID
+python main.py study capabilities STUDY_ID --tier challenge
 python main.py study run STUDY_ID --tier closed-loop
 python main.py study execute-closed-loop STUDY_ID --max-runs 1
+python main.py study capabilities STUDY_ID --tier closed-loop
 python main.py study run STUDY_ID --tier formal
+python main.py study capabilities STUDY_ID --tier formal
 
 python main.py study resume STUDY_ID
 python main.py study status STUDY_ID
@@ -457,6 +468,13 @@ only remove the limit after the first run has a confirmed landing, healthy
 LiDAR, no collision, and a valid result receipt. Each study stores results
 under its own `STUDY_ID/TIER/results` directory so separate candidates cannot
 overwrite one another.
+
+Capability reports always read the explicitly selected tier. A formal report
+is observational and does not replace the preflight challenge. It also exposes
+both predicted and truth danger sample counts so a prediction cannot be
+mistaken for ground-truth danger coverage. Safe early replanning may correctly
+produce zero truth-danger samples; the challenge is grounded by the
+route-intersecting blocker recorded in its scenario manifest.
 
 Promotion requires all three tiers to be complete. Replay enforces ≤50 ms ONNX
 CPU P95 latency and no danger-recall regression greater than two percentage

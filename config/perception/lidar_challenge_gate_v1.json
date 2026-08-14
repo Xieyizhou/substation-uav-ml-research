@@ -1,0 +1,35 @@
+{
+  "acceptance": {
+    "active_route_replacement_min": 1,
+    "collision_count_max": 0,
+    "landing_success_required": true,
+    "mission_success_required": true,
+    "predicted_danger_sample_count_min": 1,
+    "replan_attempt_count_min": 1,
+    "sensor_healthy_ratio_min": 0.95,
+    "successful_replan_count_min": 1
+  },
+  "challenge_gate_schema_version": 1,
+  "conditions": [
+    "geometric_lidar",
+    "ml_lidar",
+    "geometric_ml_fusion"
+  ],
+  "purpose": "Exercise obstacle detection, replanning, route replacement, and safe completion before a large flight matrix.",
+  "scenarios": [
+    {
+      "map_id": "simple",
+      "required_capabilities": [
+        "dynamic_threat_detection",
+        "local_replan_attempt",
+        "local_replan_success",
+        "active_route_replacement",
+        "safe_mission_completion"
+      ],
+      "scenario_id": "challenge-route-blocker-1101",
+      "scenario_profile": "unmapped_route_blocker_v1",
+      "seed": 1101,
+      "target_id": "top_right"
+    }
+  ]
+}

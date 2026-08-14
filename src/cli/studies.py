@@ -17,6 +17,7 @@ from src.study.comparison import (
 from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results, schedule_tier
 from src.study.closed_loop_worker import execute_closed_loop, execute_formal
+from src.study.challenge_worker import execute_challenge
 from src.study.formal_spec import DEFAULT_FORMAL_SPEC
 from src.study.capability_gate import capability_coverage_report
 
@@ -35,7 +36,10 @@ def build_parser():
     create.add_argument("--candidate", type=Path, required=True)
     run = commands.add_parser("run", help="Schedule and ingest one evaluation tier")
     run.add_argument("study_id")
-    run.add_argument("--tier", choices=["replay", "closed-loop", "formal"], required=True)
+    run.add_argument(
+        "--tier", choices=["replay", "challenge", "closed-loop", "formal"],
+        required=True,
+    )
     run.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
     execute = commands.add_parser(
         "execute-closed-loop", help="Run pending five-scenario gate flights"
@@ -52,6 +56,15 @@ def build_parser():
         "--flight-timeout", type=float,
         help="override the default route-aware 240-480 second budget",
     )
+    challenge = commands.add_parser(
+        "execute-challenge", help="Run the three-flight capability challenge"
+    )
+    challenge.add_argument("study_id")
+    challenge.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
+    challenge.add_argument("--max-runs", type=int)
+    challenge.add_argument("--startup-timeout", type=float, default=180.0)
+    challenge.add_argument("--probe-timeout", type=float, default=5.0)
+    challenge.add_argument("--flight-timeout", type=float)
     formal = commands.add_parser(
         "execute-formal", help="Run the frozen 120-run paired formal study"
     )
@@ -71,18 +84,27 @@ def build_parser():
     )
     resume = commands.add_parser("resume", help="Retry incomplete study runs")
     resume.add_argument("study_id")
-    resume.add_argument("--tier", choices=["replay", "closed-loop", "formal"])
+    resume.add_argument(
+        "--tier", choices=["replay", "challenge", "closed-loop", "formal"]
+    )
     resume.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
     status = commands.add_parser("status", help="Show study progress")
     status.add_argument("study_id")
     compare = commands.add_parser("compare", help="Build paired metric comparisons")
     compare.add_argument("study_id")
-    compare.add_argument("--tier", choices=["replay", "closed-loop", "formal"], default="formal")
+    compare.add_argument(
+        "--tier", choices=["replay", "challenge", "closed-loop", "formal"],
+        default="formal",
+    )
     compare.add_argument("--output", type=Path)
     capabilities = commands.add_parser(
         "capabilities", help="Check functional coverage before a large study"
     )
     capabilities.add_argument("study_id")
+    capabilities.add_argument(
+        "--tier", choices=["challenge", "closed-loop", "formal"],
+        default="closed-loop",
+    )
     promote = commands.add_parser("promote", help="Promote a safe, improving candidate")
     promote.add_argument("study_id")
     return parser
@@ -139,7 +161,10 @@ def main(argv=None):
             )
         elif args.command == "resume":
             registry.reset_incomplete(args.study_id, args.tier)
-            tiers = (args.tier,) if args.tier else ("replay", "closed-loop", "formal")
+            tiers = (
+                (args.tier,) if args.tier
+                else ("replay", "closed-loop", "formal")
+            )
             result = {
                 tier: ingest_results(registry, args.study_id, tier, args.results_dir)
                 for tier in tiers
@@ -152,6 +177,14 @@ def main(argv=None):
                 probe_timeout_s=args.probe_timeout,
                 flight_timeout_s=args.flight_timeout,
                 scenario_id=args.scenario_id,
+            )
+        elif args.command == "execute-challenge":
+            result = execute_challenge(
+                args.registry, args.study_id, args.results_dir,
+                max_runs=args.max_runs,
+                startup_timeout_s=args.startup_timeout,
+                probe_timeout_s=args.probe_timeout,
+                flight_timeout_s=args.flight_timeout,
             )
         elif args.command == "execute-formal":
             result = execute_formal(
@@ -177,7 +210,7 @@ def main(argv=None):
                 write_json(args.output, result)
         elif args.command == "capabilities":
             result = capability_coverage_report(
-                registry.run_metrics(args.study_id, "closed-loop")
+                registry.run_metrics(args.study_id, args.tier), tier=args.tier
             )
         elif args.command == "promote":
             result = study_gate_report(

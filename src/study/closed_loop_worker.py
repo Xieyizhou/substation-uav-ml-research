@@ -1,4 +1,4 @@
-"""Fail-fast local worker for the five-scenario LiDAR closed-loop gate."""
+"""Fail-fast local worker for sequential LiDAR study flight tiers."""
 
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ from src.vision.collection.process import (
     stop_process,
 )
 ROOT = Path(__file__).resolve().parents[2]
-FLIGHT_TIERS = frozenset({"closed-loop", "formal"})
+FLIGHT_TIERS = frozenset({"challenge", "closed-loop", "formal"})
 STARTUP_RUN_ATTEMPTS = 2
 
 
