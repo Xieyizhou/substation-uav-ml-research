@@ -2,6 +2,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import AsyncMock, patch
 
+from src.flight import waypoint_executor
 from src.flight.takeoff_stability import (
     wait_for_ground_stability,
     wait_for_takeoff_hover,
@@ -91,6 +92,38 @@ class ContinuousStabilityTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(wait.await_args.args[1]())
         latest["position_velocity"].position.down_m = -0.5
         self.assertFalse(wait.await_args.args[1]())
+
+    async def test_mission_waits_for_stable_hover_before_offboard(self):
+        action = SimpleNamespace(
+            set_takeoff_altitude=AsyncMock(), takeoff=AsyncMock(), land=AsyncMock()
+        )
+        offboard = SimpleNamespace(
+            set_velocity_ned=AsyncMock(), start=AsyncMock(), stop=AsyncMock()
+        )
+        drone = SimpleNamespace(action=action, offboard=offboard)
+        waypoint = {
+            "name": "WP01", "north_m": 0.5,
+            "east_m": 0.5, "down_m": -1.5,
+        }
+        with (
+            patch.object(waypoint_executor, "arm_when_ready", new=AsyncMock()),
+            patch.object(waypoint_executor, "wait_for_local_position", new=AsyncMock()),
+            patch.object(waypoint_executor, "wait_for_takeoff_hover", new=AsyncMock()) as hover,
+            patch.object(waypoint_executor, "fly_to_waypoint", new=AsyncMock()),
+            patch.object(
+                waypoint_executor, "fly_waypoint_route",
+                new=AsyncMock(return_value=[waypoint]),
+            ),
+            patch.object(waypoint_executor, "hover_at_waypoint", new=AsyncMock()),
+            patch.object(waypoint_executor, "wait_until_landed", new=AsyncMock()),
+        ):
+            await waypoint_executor.fly_astar_waypoints(
+                drone, _latest(down=-1.0), {}, {}, [waypoint], {}, None, {}, {},
+            )
+        hover.assert_awaited_once_with(
+            unittest.mock.ANY, 1.5, waypoint_executor.TELEMETRY_TIMEOUT_S
+        )
+        offboard.start.assert_awaited_once()
 
 
 if __name__ == "__main__":

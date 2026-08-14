@@ -47,6 +47,7 @@ from src.flight.safety_supervisor import SafetySupervisor
 from src.flight.takeoff_stability import (
     takeoff_climb_waypoint,
     validate_takeoff_stability,
+    wait_for_takeoff_hover,
 )
 
 
@@ -419,10 +420,9 @@ async def fly_astar_waypoints(
     await arm_when_ready(drone.action)
     print("Taking off...")
     await drone.action.takeoff()
-    print("Waiting 8 seconds for takeoff stabilization...")
-    await asyncio.sleep(8)
+    print("Waiting for a continuous stable takeoff hover...")
     await wait_for_local_position(latest, TELEMETRY_TIMEOUT_S)
-    validate_takeoff_stability(latest, target_takeoff_altitude_m)
+    await wait_for_takeoff_hover(latest, target_takeoff_altitude_m, TELEMETRY_TIMEOUT_S)
     print("Sending initial zero velocity setpoint before Offboard start...")
     await drone.offboard.set_velocity_ned(VelocityNedYaw(0.0, 0.0, 0.0, 0.0))
     print("Starting Offboard mode...")
