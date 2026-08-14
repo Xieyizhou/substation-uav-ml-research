@@ -107,13 +107,13 @@ from src.flight.waypoint_executor import (
     fly_to_waypoint,
     fly_waypoint_route,
     hover_at_waypoint,
-    parse_waypoint_timeout,
     print_waypoint_timeout_debug,
     print_waypoint_timeout_info,
     risk_adjusted_speed_scale,
     velocity_command_from_error,
     waypoint_timeout_info,
 )
+from src.flight.waypoint_progress import parse_waypoint_timeout
 from src.flight.flight_state import (
     ensure_critical_telemetry_fresh,
     horizontal_command_speed,
