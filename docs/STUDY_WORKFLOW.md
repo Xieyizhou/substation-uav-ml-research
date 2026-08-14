@@ -439,6 +439,9 @@ while retaining a verified detour. The same grounded scenario is exercised
 once by geometric LiDAR, ML LiDAR, and safety-max fusion. Each condition must
 detect the threat, attempt and complete a replan, replace the active route,
 finish the mission, and land without collision.
+Random unknown obstacles and sensor noise, dropout, and outage are disabled in
+this tier so a failure is attributable to the route-blocker response. Those
+stressors remain available in the later closed-loop and formal tiers.
 
 ```bash
 python main.py study create --name risk-cnn-v2 \

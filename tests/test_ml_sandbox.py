@@ -36,7 +36,10 @@ from src.study.matrix import tier_matrix
 from src.study.registry import ResearchRegistry
 from src.study.runner import write_run_queue
 from src.study.capability_gate import capability_coverage_report
-from src.study.capability_scenario import route_blocker_specification
+from src.study.capability_scenario import (
+    apply_scenario_profile,
+    route_blocker_specification,
+)
 from src.study.challenge_spec import challenge_matrix, load_challenge_spec
 
 
@@ -109,6 +112,26 @@ class ScenarioAndTruthTests(unittest.TestCase):
             blocker = route_blocker_specification(planner)
         self.assertEqual(blocker["profile"], "unmapped_route_blocker_v1")
         self.assertEqual(len(blocker["grid_cell"]), 2)
+
+    def test_route_blocker_profile_removes_uncontrolled_confounders(self):
+        manifest = {
+            "unknown_obstacles": [{"id": "random"}],
+            "lidar_noise_stddev_m": 0.1,
+            "lidar_dropout_probability": 0.2,
+            "sensor_outage_probability": 0.1,
+            "sensor_outage_duration_s": 1.0,
+        }
+        self.assertTrue(apply_scenario_profile(
+            manifest, ROOT / "config/substation_obstacles.json",
+            "unmapped_route_blocker_v1",
+        ))
+        self.assertEqual(manifest["unknown_obstacles"], [])
+        self.assertFalse(manifest.get("unmapped_obstacles"))
+        for name in (
+            "lidar_noise_stddev_m", "lidar_dropout_probability",
+            "sensor_outage_probability", "sensor_outage_duration_s",
+        ):
+            self.assertEqual(manifest[name], 0.0)
 
     def test_large_study_gate_requires_observed_functional_coverage(self):
         runs = []
@@ -558,10 +581,17 @@ class RegistryAndComparisonTests(unittest.TestCase):
             manifests = {row["scenario_manifest"] for row in payload["runs"]}
             self.assertEqual(len(manifests), 1)
             scenario = json.loads(Path(manifests.pop()).read_text())
+            self.assertEqual(scenario["unknown_obstacles"], [])
             self.assertEqual(len(scenario["unmapped_obstacles"]), 1)
             self.assertEqual(
                 scenario["unmapped_obstacles"][0]["profile"],
                 "unmapped_route_blocker_v1",
+            )
+            self.assertEqual(
+                scenario["sensor_faults"]["lidar_noise_stddev_m"], 0.0
+            )
+            self.assertEqual(
+                scenario["sensor_faults"]["sensor_outage_probability"], 0.0
             )
             self.assertTrue(all(
                 row["required_capabilities"] for row in payload["runs"]

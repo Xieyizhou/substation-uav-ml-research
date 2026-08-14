@@ -13,6 +13,12 @@ from src.planner.obstacle_config import build_obstacle_map, inflate_cells
 
 
 UNMAPPED_ROUTE_BLOCKER_V1 = "unmapped_route_blocker_v1"
+CONTROLLED_SENSOR_DEFAULTS = {
+    "lidar_noise_stddev_m": 0.0,
+    "lidar_dropout_probability": 0.0,
+    "sensor_outage_probability": 0.0,
+    "sensor_outage_duration_s": 0.0,
+}
 
 
 def _route(config):
@@ -67,12 +73,23 @@ def route_blocker_specification(planner_path):
     }
 
 
+def _stabilize_challenge_manifest(manifest):
+    changed = bool(manifest.get("unknown_obstacles"))
+    manifest["unknown_obstacles"] = []
+    for name, value in CONTROLLED_SENSOR_DEFAULTS.items():
+        changed = changed or float(manifest.get(name, value)) != value
+        manifest[name] = value
+    return changed
+
+
 def apply_scenario_profile(manifest, planner_path, profile):
     """Add a profile once; return true when rematerialization is required."""
     if not profile:
         return False
     if profile != UNMAPPED_ROUTE_BLOCKER_V1:
         raise ValueError(f"unsupported qualification scenario profile: {profile}")
+    if _stabilize_challenge_manifest(manifest):
+        return True
     if manifest.get("unmapped_obstacles"):
         return False
     manifest["unmapped_obstacles"] = [route_blocker_specification(planner_path)]
@@ -126,7 +143,9 @@ def materialize_reachable_scenario(
         try:
             _set_target_and_validate(oracle_planner, entry, target_id)
             if apply_scenario_profile(manifest, oracle_planner, scenario_profile):
-                adjustments.append(f"applied_profile:{scenario_profile}")
+                marker = f"applied_profile:{scenario_profile}"
+                if marker not in adjustments:
+                    adjustments.append(marker)
                 continue
             return
         except ValueError:
