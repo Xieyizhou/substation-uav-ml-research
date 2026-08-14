@@ -2,7 +2,10 @@ import asyncio
 from types import SimpleNamespace
 import unittest
 
-from src.flight.flight_state import ensure_critical_telemetry_fresh
+from src.flight.flight_state import (
+    ensure_critical_telemetry_fresh,
+    finish_or_raise_waypoint_timeout,
+)
 
 
 def _latest(*, connected, age_s, with_position=True):
@@ -41,6 +44,26 @@ class CriticalTelemetryTests(unittest.IsolatedAsyncioTestCase):
             ensure_critical_telemetry_fresh(
                 _latest(connected=False, age_s=0.0, with_position=False),
                 timeout_s=2.0,
+            )
+
+
+class WaypointTimeoutAcceptanceTests(unittest.TestCase):
+    def test_accepts_only_the_bounded_horizontal_timeout_margin(self):
+        waypoint = {"name": "RWP02"}
+        accepted = {"horizontal_m": 0.54, "down_m": 0.01}
+        self.assertIsNone(
+            finish_or_raise_waypoint_timeout(waypoint, accepted, 0.5, 0.1)
+        )
+        with self.assertRaisesRegex(TimeoutError, "RWP02"):
+            finish_or_raise_waypoint_timeout(
+                waypoint, {"horizontal_m": 0.61, "down_m": 0.01}, 0.5, 0.1
+            )
+
+    def test_rejects_vertical_error_even_inside_horizontal_margin(self):
+        with self.assertRaises(TimeoutError):
+            finish_or_raise_waypoint_timeout(
+                {"name": "WP"}, {"horizontal_m": 0.54, "down_m": 0.2},
+                0.5, 0.1,
             )
 
 

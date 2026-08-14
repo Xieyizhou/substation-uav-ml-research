@@ -103,3 +103,19 @@ def horizontal_command_speed(command):
     if north_m_s is None or east_m_s is None:
         return None
     return sqrt(north_m_s**2 + east_m_s**2)
+
+
+def finish_or_raise_waypoint_timeout(
+    waypoint, error, horizontal_tolerance_m, vertical_tolerance_m,
+    *, horizontal_margin_m=0.1,
+):
+    if error is not None and (
+        error["horizontal_m"] <= horizontal_tolerance_m + horizontal_margin_m
+        and abs(error["down_m"]) < vertical_tolerance_m
+    ):
+        print(
+            f"Accepted {waypoint['name']} within "
+            f"{horizontal_margin_m:.2f} m timeout margin."
+        )
+        return None
+    raise TimeoutError(f"Timed out before reaching {waypoint['name']}")
