@@ -49,13 +49,20 @@ class SandboxAcceptanceTests(unittest.TestCase):
         self.assertEqual(result["acceptance"]["status"], "incomplete")
         self.assertEqual(result["workflows"], [])
 
+    @patch("src.sandbox.acceptance.latest_challenge_receipt")
     @patch("src.sandbox.acceptance._supervisor_evidence")
     @patch("src.sandbox.acceptance._lidar_evidence")
     @patch("src.sandbox.acceptance._visual_evidence")
-    def test_snapshot_requires_every_gate(self, visual, lidar, supervisor):
+    def test_snapshot_requires_every_gate(
+        self, visual, lidar, supervisor, challenge
+    ):
         visual.return_value = evidence()
         lidar.return_value = (evidence(), evidence(False))
         supervisor.return_value = (evidence(), evidence())
+        challenge.return_value = {
+            "passed": True, "current": True,
+            "challenge_receipt_identity_sha256": HASH,
+        }
         result = acceptance_snapshot(self.config)
         self.assertFalse(result["passed"])
         self.assertFalse(result["checks"]["closed_loop_flight"]["passed"])
@@ -68,7 +75,8 @@ class SandboxAcceptanceTests(unittest.TestCase):
     ):
         checks = {
             name: evidence() for name in (
-                "visual_replay", "lidar_replay", "closed_loop_flight",
+                "visual_replay", "lidar_replay", "capability_challenge",
+                "closed_loop_flight",
                 "safe_process_stop", "failure_diagnostics",
             )
         }
@@ -99,6 +107,11 @@ class SandboxAcceptanceTests(unittest.TestCase):
             ]).command,
             "supervisor-gate-inspect",
         )
+        challenge = parser.parse_args([
+            "challenge-run", "--model-id", "model-1",
+        ])
+        self.assertEqual(challenge.command, "challenge-run")
+        self.assertEqual(challenge.model_id, "model-1")
 
 
 if __name__ == "__main__":

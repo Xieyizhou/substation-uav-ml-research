@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from src.inspection.config import InspectionConfig
 from src.inspection.lidar import lidar_summary
@@ -122,12 +123,27 @@ class LidarInspectorTests(unittest.TestCase):
         self.assertIn(str(self.root / "models/lidar/candidate"), replay.argv)
         self.assertIn(str(self.root / "outputs/research/dataset"), replay.argv)
         self.assertIn("outputs/sandbox/lidar_replay", " ".join(replay.argv))
-        closed = build_command(self.config, "lidar-closed-loop-next")
+        challenge_command = build_command(self.config, "lidar-challenge-gate")
+        self.assertIn("challenge-run", challenge_command.argv)
+        self.assertIn(self.model_id, challenge_command.argv)
+        challenge = {
+            "challenge_receipt_identity_sha256": HASH,
+            "path": str(self.root / "challenge_receipt.json"),
+        }
+        with patch(
+            "src.sandbox.lidar_jobs.require_current_challenge",
+            return_value=challenge,
+        ):
+            closed = build_command(self.config, "lidar-closed-loop-next")
         self.assertEqual(closed.argv[-2:], ("--max-runs", "1"))
         self.assertIn(self.study_id, closed.argv)
         self.complete_runs()
-        with self.assertRaisesRegex(ValueError, "no pending runs"):
-            build_command(self.config, "lidar-closed-loop-next")
+        with patch(
+            "src.sandbox.lidar_jobs.require_current_challenge",
+            return_value=challenge,
+        ):
+            with self.assertRaisesRegex(ValueError, "no pending runs"):
+                build_command(self.config, "lidar-closed-loop-next")
 
 
 if __name__ == "__main__":

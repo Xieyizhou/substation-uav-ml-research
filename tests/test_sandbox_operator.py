@@ -293,6 +293,10 @@ class SandboxOperatorTests(unittest.TestCase):
                 json.loads(acceptance.read())["acceptance"]["status"],
                 "incomplete",
             )
+            connection.request("GET", "/api/preflight")
+            preflight = connection.getresponse()
+            self.assertEqual(preflight.status, 200)
+            self.assertFalse(json.loads(preflight.read())["ready_for_large_lidar"])
             connection.request(
                 "POST",
                 "/api/operator/start",

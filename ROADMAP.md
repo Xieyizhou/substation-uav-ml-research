@@ -1,4 +1,4 @@
-# Research Roadmap
+# Sandbox Roadmap
 
 The roadmap is evidence-gated. Interfaces or untrained model wrappers do not
 count as completed capabilities.
@@ -51,6 +51,19 @@ The runner uses 30 paired scenarios × four conditions, not the previous
   suppressing neutral or negative results.
 - Promote a model only when safety does not regress and at least one quality or
   latency metric improves.
+
+## Sandbox v1 — Reliable local operation
+
+- [x] Provide a dependency-free Demo profile and local browser App.
+- [x] Enforce single-job execution, bounded timeouts, safe process-group stop,
+  persistent history, and failure diagnostics.
+- [x] Add a controlled three-flight LiDAR capability challenge with an
+  integrity-bound receipt.
+- [x] Block large LiDAR gates when the challenge receipt is missing, stale,
+  changed, or belongs to another model.
+- [ ] Recover or explicitly adopt a still-running owned job after App restart.
+- [ ] Add output budgets, retention policy, and structured failure classes.
+- [ ] Complete a GitHub Beta installation gate on a clean supported machine.
 
 ## v0.4 — Four-class equipment perception
 

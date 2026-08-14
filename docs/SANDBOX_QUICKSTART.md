@@ -123,6 +123,37 @@ and enables managed flight, collection, replay, training-view, and validation
 actions. The App still enforces one active job, bounded timeouts, safe process
 cleanup, non-blind browsing, and fixed command construction.
 
+## Preflight Before Large LiDAR Jobs
+
+Open **Preflight** before a multi-flight LiDAR gate. The page combines the
+environment doctor, disk capacity, runtime ownership, and the latest controlled
+capability challenge. A large LiDAR gate remains blocked until all four checks
+pass.
+
+The capability challenge runs three flights against one controlled route
+blocker: geometric LiDAR, ML LiDAR, and safety fusion. Each condition must
+detect danger, attempt and complete a local replan, replace the active route,
+finish the mission, land, remain collision-free, and maintain sensor health.
+Its receipt binds the model hash, challenge specification, result hashes, and
+the clean source commit that produced the flights. Changing the model,
+challenge contract, results, or tracked code makes the receipt stale.
+
+Use **Run three-flight challenge** in the App. The equivalent command for a
+registered model is:
+
+```bash
+python main.py sandbox --profile development challenge-run \
+  --model-id sandbox-lidar-risk-v2
+```
+
+Existing completed challenge runs can be inspected without flying:
+
+```bash
+python main.py study challenge-receipt-inspect \
+  --input outputs/research/study_results/STUDY_ID/challenge/challenge_receipt.json \
+  --require-current
+```
+
 ## Runtime Files
 
 Demo runtime files are kept outside version control:

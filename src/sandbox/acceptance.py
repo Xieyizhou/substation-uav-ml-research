@@ -10,6 +10,7 @@ from src.inspection.lidar import lidar_summary
 from src.ml.artifacts import git_commit, object_sha256, write_json
 from src.sandbox.experiment_runner import inspect_result
 from src.sandbox.supervisor_gate import inspect_supervisor_gate, run_supervisor_gate
+from src.sandbox.preflight import latest_challenge_receipt
 
 
 ACCEPTANCE_RECIPE_SCHEMA_VERSION = 1
@@ -56,6 +57,7 @@ def _lidar_evidence(config):
             "passed": bool(replay.get("passed")),
             "identity": replay.get("identity"),
             "path": replay.get("path"),
+            "model_id": replay.get("model_id"),
             "summary": {
                 "macro_f1": replay.get("macro_f1"),
                 "danger_recall": replay.get("danger_recall"),
@@ -98,10 +100,17 @@ def _supervisor_evidence(root):
 def acceptance_snapshot(config):
     root = config.project_root
     replay, closed = _lidar_evidence(config)
+    challenge = latest_challenge_receipt(root, replay.get("model_id"))
     safe_stop, diagnostics = _supervisor_evidence(root)
     checks = {
         "visual_replay": _visual_evidence(root),
         "lidar_replay": replay,
+        "capability_challenge": {
+            "passed": bool(challenge.get("passed") and challenge.get("current")),
+            "identity": challenge.get("challenge_receipt_identity_sha256"),
+            "path": challenge.get("path"),
+            "summary": {"status": challenge.get("status")},
+        },
         "closed_loop_flight": closed,
         "safe_process_stop": safe_stop,
         "failure_diagnostics": diagnostics,

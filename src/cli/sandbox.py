@@ -33,6 +33,10 @@ def build_parser():
     bootstrap_inspect.add_argument("--input", type=Path, required=True)
     commands.add_parser("doctor", help="Check dependencies, paths, and disk space")
     commands.add_parser("status", help="Show collection and runtime status")
+    challenge = commands.add_parser(
+        "challenge-run", help="Run a fresh three-flight LiDAR capability gate"
+    )
+    challenge.add_argument("--model-id", required=True)
     serve = commands.add_parser("serve", help="Run the controlled local sandbox app")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8765)
@@ -151,6 +155,17 @@ def main(argv=None):
         service = InspectionService(config)
         _print({"collection": service.dashboard(), "runtime": service.runtime()})
         return 0
+    if args.command == "challenge-run":
+        run_challenge_gate = _command(
+            "src.sandbox.challenge_gate", "run_challenge_gate"
+        )
+        try:
+            result = run_challenge_gate(config.project_root, args.model_id)
+        except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
+            print(f"Sandbox challenge failed: {error}")
+            return 1
+        _print(result)
+        return 0 if result["challenge_receipt"]["passed"] else 1
     if args.command == "flight-smoke":
         run_flight_smoke = _command("src.sandbox.flight_smoke", "run_flight_smoke")
         try:
