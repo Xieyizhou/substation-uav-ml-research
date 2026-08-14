@@ -50,6 +50,8 @@ from src.flight.takeoff_stability import (
     validate_takeoff_stability,
     wait_for_takeoff_hover,
 )
+from src.flight.waypoint_progress import WaypointProgressWatchdog
+
 
 def configure_runtime(settings):
     global MAX_HORIZONTAL_SPEED_M_S, MAX_VERTICAL_SPEED_M_S, MIN_RISK_SPEED_M_S
@@ -117,18 +119,6 @@ def risk_adjusted_speed_scale(base_speed_scale, risk_level, risk_action):
         adjusted_speed_m_s = max(base_speed_m_s * 0.5, MIN_RISK_SPEED_M_S)
         return adjusted_speed_m_s / MAX_HORIZONTAL_SPEED_M_S
     return base_speed_scale
-
-
-def parse_waypoint_timeout(value):
-    if str(value).lower() == "auto":
-        return "auto"
-    try:
-        timeout_s = float(value)
-    except ValueError as error:
-        raise ValueError("--waypoint-timeout must be 'auto' or a positive number") from error
-    if timeout_s <= 0:
-        raise ValueError("--waypoint-timeout must be 'auto' or a positive number")
-    return timeout_s
 
 
 def waypoint_timeout_info(position, waypoint, speed_scale, perception_config):
@@ -226,8 +216,12 @@ async def fly_to_waypoint(
     )
     print_waypoint_timeout_info(waypoint, timeout_info)
     last_command = None
-    deadline = asyncio.get_running_loop().time() + timeout_info["timeout_s"]
-    while asyncio.get_running_loop().time() < deadline:
+    loop = asyncio.get_running_loop()
+    watchdog = WaypointProgressWatchdog(
+        loop.time(), timeout_info["timeout_s"], timeout_info["distance_m"],
+        enabled=WAYPOINT_TIMEOUT_MODE == "auto",
+    )
+    while watchdog.should_continue(loop.time()):
         ensure_critical_telemetry_fresh(latest, TELEMETRY_TIMEOUT_S)
         position = local_position(latest)
         if position is None:
@@ -236,6 +230,7 @@ async def fly_to_waypoint(
             await asyncio.sleep(0.2)
             continue
         error = target_errors(position, waypoint)
+        watchdog.observe(error["horizontal_m"], loop.time())
         detection = current_perception_detection(
             perception_config,
             perception_detector,
@@ -327,7 +322,11 @@ async def fly_to_waypoint(
     print_waypoint_timeout_debug(
         waypoint, latest, perception_config, perception_detector, last_command
     )
-    return finish_or_raise_waypoint_timeout(waypoint, target_errors(local_position(latest), waypoint), REACHED_HORIZONTAL_ERROR_M, REACHED_VERTICAL_ERROR_M)
+    print(f"  timeout reason: {watchdog.stop_reason(loop.time())}")
+    return finish_or_raise_waypoint_timeout(
+        waypoint, target_errors(local_position(latest), waypoint),
+        REACHED_HORIZONTAL_ERROR_M, REACHED_VERTICAL_ERROR_M,
+    )
 
 
 async def fly_waypoint_route(
