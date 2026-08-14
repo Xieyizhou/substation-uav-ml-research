@@ -136,6 +136,17 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(args.flight_timeout, 120.0)
         self.assertEqual(args.scenario_id, "simple-center-1001")
 
+    def test_cli_exposes_challenge_execution_and_tier_aware_capabilities(self):
+        challenge = build_parser().parse_args([
+            "execute-challenge", self.study_id, "--max-runs", "1",
+        ])
+        capabilities = build_parser().parse_args([
+            "capabilities", self.study_id, "--tier", "formal",
+        ])
+        self.assertEqual(challenge.command, "execute-challenge")
+        self.assertEqual(challenge.max_runs, 1)
+        self.assertEqual(capabilities.tier, "formal")
+
     def test_cli_requires_explicit_replay_receipt_for_formal_execution(self):
         args = build_parser().parse_args([
             "execute-formal", self.study_id, "--replay-gate", "gate.json",
