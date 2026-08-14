@@ -157,6 +157,14 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(args.replay_gate, Path("gate.json"))
         self.assertEqual(args.qualification_study, "qualification-study")
 
+    def test_formal_worker_requires_current_capability_receipt(self):
+        registry, study_id, replay = self.eligible_formal_gate()
+        with self.assertRaisesRegex(ValueError, "capability challenge receipt"):
+            execute_formal(
+                registry.path, study_id, self.root, replay_gate_path=replay,
+                max_runs=1,
+            )
+
     def test_flight_queue_allows_transport_subscription_to_settle(self):
         arguments = _flight_arguments(
             "geometric_lidar", "model.onnx", "scenario.json"

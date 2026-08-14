@@ -18,6 +18,10 @@ from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results, schedule_tier
 from src.study.closed_loop_worker import execute_closed_loop, execute_formal
 from src.study.challenge_worker import execute_challenge
+from src.study.challenge_receipt import (
+    inspect_challenge_receipt,
+    materialize_challenge_receipt,
+)
 from src.study.formal_spec import DEFAULT_FORMAL_SPEC
 from src.study.capability_gate import capability_coverage_report
 
@@ -65,11 +69,25 @@ def build_parser():
     challenge.add_argument("--startup-timeout", type=float, default=180.0)
     challenge.add_argument("--probe-timeout", type=float, default=5.0)
     challenge.add_argument("--flight-timeout", type=float)
+    receipt = commands.add_parser(
+        "challenge-receipt", help="Materialize a receipt from completed challenge runs"
+    )
+    receipt.add_argument("study_id")
+    receipt.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
+    receipt_inspect = commands.add_parser(
+        "challenge-receipt-inspect", help="Validate a capability challenge receipt"
+    )
+    receipt_inspect.add_argument("--input", type=Path, required=True)
+    receipt_inspect.add_argument("--require-current", action="store_true")
     formal = commands.add_parser(
         "execute-formal", help="Run the frozen 120-run paired formal study"
     )
     formal.add_argument("study_id")
     formal.add_argument("--replay-gate", type=Path, required=True)
+    formal.add_argument(
+        "--challenge-receipt", type=Path,
+        help="passed receipt for the current code and candidate model",
+    )
     formal.add_argument(
         "--qualification-study",
         help="study containing the passed closed-loop candidate gate",
@@ -186,6 +204,15 @@ def main(argv=None):
                 probe_timeout_s=args.probe_timeout,
                 flight_timeout_s=args.flight_timeout,
             )
+        elif args.command == "challenge-receipt":
+            result = materialize_challenge_receipt(
+                args.registry, args.study_id, args.results_dir
+            )
+        elif args.command == "challenge-receipt-inspect":
+            result = inspect_challenge_receipt(
+                args.input, project_root=ROOT, registry_path=args.registry,
+                require_current=args.require_current,
+            )
         elif args.command == "execute-formal":
             result = execute_formal(
                 args.registry, args.study_id, args.results_dir,
@@ -196,6 +223,7 @@ def main(argv=None):
                 replay_gate_path=args.replay_gate,
                 comparison_spec_path=args.comparison_config,
                 qualification_study_id=args.qualification_study,
+                challenge_receipt_path=args.challenge_receipt,
             )
         elif args.command == "status":
             result = _status(registry, args.study_id)

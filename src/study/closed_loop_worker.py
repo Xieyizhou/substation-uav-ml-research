@@ -14,6 +14,7 @@ from src.study.flight_budget import closed_loop_timeout_s
 from src.study.flight_progress_watchdog import wait_for_study_flight
 from src.study.formal_spec import DEFAULT_FORMAL_SPEC, freeze_formal_study
 from src.study.comparison import closed_loop_gate
+from src.study.challenge_receipt import inspect_challenge_receipt
 from src.study.mission_result import (
     landed_mission_status,
     mission_metrics,
@@ -188,12 +189,33 @@ def _verify_replay_receipt(
 
 def _prepare_tier(
     registry, study_id, results_dir, tier, replay_gate_path, comparison_spec_path,
-    qualification_study_id, flight_timeout_s,
+    qualification_study_id, flight_timeout_s, challenge_receipt_path,
 ):
     if tier != "formal":
         return None
     if replay_gate_path is None:
         raise ValueError("formal execution requires --replay-gate")
+    model_id = registry.get_study(study_id)["candidate_model"]
+    candidates = ([Path(challenge_receipt_path)] if challenge_receipt_path else sorted(
+        Path(results_dir).glob("*/challenge/challenge_receipt.json"),
+        key=lambda path: path.stat().st_mtime_ns, reverse=True,
+    ))
+    challenge = None
+    for path in candidates:
+        try:
+            value = inspect_challenge_receipt(
+                path, project_root=ROOT, registry_path=registry.path,
+                require_current=True,
+            )
+        except (KeyError, OSError, TypeError, ValueError):
+            continue
+        if value.get("model_id") == model_id and value.get("passed") is True:
+            challenge = value
+            break
+    if challenge is None:
+        raise ValueError(
+            "formal execution requires a current passed capability challenge receipt"
+        )
     qualification_study_id = qualification_study_id or study_id
     replay = _verify_replay_receipt(
         registry, study_id, replay_gate_path, qualification_study_id
@@ -253,6 +275,7 @@ def execute_flight_tier(
     replay_gate_path=None,
     comparison_spec_path=DEFAULT_FORMAL_SPEC,
     qualification_study_id=None,
+    challenge_receipt_path=None,
     scenario_id=None,
 ):
     """Execute one flight tier sequentially and stop on the first failure."""
@@ -264,6 +287,7 @@ def execute_flight_tier(
     formal_receipt = _prepare_tier(
         registry, study_id, results_dir, tier, replay_gate_path,
         comparison_spec_path, qualification_study_id, flight_timeout_s,
+        challenge_receipt_path,
     )
     scheduled = ingest_results(registry, study_id, tier, results_dir)
     queue = json.loads(Path(scheduled["run_queue"]).read_text(encoding="utf-8"))

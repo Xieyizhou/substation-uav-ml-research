@@ -15,6 +15,7 @@ from src.inspection.lidar import lidar_summary
 from src.inspection.runtime import LocalProcessAdapter, runtime_status
 from src.inspection.research import research_summary
 from src.sandbox.profiles import sandbox_profile
+from src.sandbox.preflight import preflight_summary
 
 
 def serialize(value):
@@ -56,6 +57,9 @@ class InspectionService:
 
     def acceptance(self):
         return serialize(acceptance_summary(self.config))
+
+    def preflight(self):
+        return serialize(preflight_summary(self.config, self.process_adapter))
 
     def recordings(self):
         results = []

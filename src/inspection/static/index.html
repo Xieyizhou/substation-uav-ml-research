@@ -21,6 +21,7 @@
     <button class="tab" data-full-profile data-tab="research">ML results</button>
     <button class="tab" data-full-profile data-tab="lidar">LiDAR gates</button>
     <button class="tab" data-tab="experiments">Experiments</button>
+    <button class="tab" data-full-profile data-tab="preflight">Preflight</button>
     <button class="tab" data-tab="doctor">Sandbox doctor</button>
     <button class="tab" data-tab="operator">Operator</button>
     <button class="tab" data-full-profile data-tab="logs">Live logs</button>
@@ -43,6 +44,15 @@
       <article class="gate-controls">
         <div><h3>Managed gate controls</h3><p class="operator-note">Replay is offline. Closed-loop continuation runs one pending flight and preserves the existing single-instance and process cleanup rules.</p></div>
         <div class="controls"><button id="lidar-replay-start">Revalidate replay</button><button id="lidar-closed-start">Run next closed-loop flight</button><button id="lidar-stop" class="danger" disabled>Stop active job</button></div>
+      </article>
+    </section>
+    <section id="preflight" class="panel">
+      <div class="section-head"><div><p class="kicker">LARGE JOB ENTRY</p><h2>Preflight gate</h2></div><span id="preflight-badge"></span></div>
+      <p class="operator-note">Large LiDAR gates remain blocked until the environment is ready and a three-flight capability challenge matches the current clean commit and model.</p>
+      <div id="preflight-checks" class="acceptance-grid"></div>
+      <article class="gate-controls">
+        <div><h3>Capability challenge</h3><div id="challenge-summary"></div></div>
+        <div class="controls"><button id="challenge-start">Run three-flight challenge</button><button id="challenge-stop" class="danger" disabled>Stop active job</button></div>
       </article>
     </section>
     <section id="research" class="panel">
@@ -91,6 +101,7 @@
             <option data-full-profile value="training-smoke-v2">Run v2 smoke training</option>
             <option data-full-profile value="package-inspect-v2">Verify frozen v2 package</option>
             <option data-full-profile value="lidar-replay-gate">Revalidate LiDAR replay</option>
+            <option data-full-profile value="lidar-challenge-gate">Run LiDAR capability challenge</option>
             <option data-full-profile id="lidar-closed-option" value="lidar-closed-loop-next">Run next LiDAR closed-loop flight</option>
           </select>
           <select id="operator-scenario"></select>
