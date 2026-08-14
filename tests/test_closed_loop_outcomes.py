@@ -41,7 +41,7 @@ class ClosedLoopOutcomeTests(unittest.TestCase):
     @patch("src.study.closed_loop_worker.mission_metrics", return_value={"mission_success": 0})
     @patch("src.study.closed_loop_worker.landed_mission_status")
     @patch("src.study.closed_loop_worker._new_flight_log")
-    @patch("src.study.closed_loop_worker.wait_process")
+    @patch("src.study.closed_loop_worker.wait_for_study_flight")
     @patch("src.study.closed_loop_worker.stop_process")
     @patch("src.study.closed_loop_worker.ensure_process_running")
     @patch("src.study.closed_loop_worker.start_process")

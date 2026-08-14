@@ -16,6 +16,8 @@ FIXED_OVERHEAD_S = 360.0
 OUTBOUND_SPEED_M_S = 0.5
 RETURN_SPEED_M_S = 0.3
 SCHEDULING_MARGIN = 1.35
+MAX_PROGRESS_EXTENSION_S = 900.0
+PROGRESS_STALL_WINDOW_S = 45.0
 
 
 def flight_timeout_policy(override_s=None):
@@ -28,6 +30,8 @@ def flight_timeout_policy(override_s=None):
         "min_timeout_s": MIN_TIMEOUT_S,
         "outbound_speed_m_s": OUTBOUND_SPEED_M_S,
         "override_s": None if override_s is None else float(override_s),
+        "progress_extension_max_s": MAX_PROGRESS_EXTENSION_S,
+        "progress_stall_window_s": PROGRESS_STALL_WINDOW_S,
         "return_speed_m_s": RETURN_SPEED_M_S,
         "scheduling_margin": SCHEDULING_MARGIN,
     }

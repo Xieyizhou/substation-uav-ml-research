@@ -219,7 +219,7 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     @patch("src.study.closed_loop_worker.mission_metrics", return_value={})
     @patch("src.study.closed_loop_worker.landed_mission_status")
     @patch("src.study.closed_loop_worker._new_flight_log")
-    @patch("src.study.closed_loop_worker.wait_process")
+    @patch("src.study.closed_loop_worker.wait_for_study_flight")
     @patch("src.study.closed_loop_worker.stop_process")
     @patch("src.study.closed_loop_worker.ensure_process_running")
     @patch("src.study.closed_loop_worker.start_process")
@@ -264,6 +264,7 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         )
         self.assertEqual(result["executed"], 1)
         self.assertEqual(result["completed"], 1)
+        self.assertTrue(run_one.call_args.kwargs["allow_progress_extension"])
         self.assertTrue(self.result_path.is_file())
         self.assertEqual(
             self.registry.runs(self.study_id)[0]["status"], "completed"
@@ -285,7 +286,7 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     @patch("src.study.closed_loop_worker.mission_metrics")
     @patch("src.study.closed_loop_worker.landed_mission_status")
     @patch("src.study.closed_loop_worker._new_flight_log")
-    @patch("src.study.closed_loop_worker.wait_process")
+    @patch("src.study.closed_loop_worker.wait_for_study_flight")
     @patch("src.study.closed_loop_worker.stop_process")
     @patch("src.study.closed_loop_worker.ensure_process_running")
     @patch("src.study.closed_loop_worker.start_process")
