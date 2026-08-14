@@ -193,7 +193,7 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         self.assertEqual(topic, "/world/test/scan")
         ensure.assert_called_once()
 
-    def test_only_preflight_mavsdk_failure_is_retryable(self):
+    def test_preflight_transport_failures_without_telemetry_are_retryable(self):
         attempt = self.root / "attempt"
         attempt.mkdir()
         (attempt / "flight.log").write_text(
@@ -205,6 +205,15 @@ class ClosedLoopWorkerTests(unittest.TestCase):
         ))
         self.assertFalse(_is_retryable_startup_failure(
             CollectionProcessError("flight task exceeded timeout"), attempt
+        ))
+        (attempt / "flight.log").write_text(
+            "sensor gazebo_lidar_2d did not become ready within 20s: "
+            "waiting for first scan\n",
+            encoding="utf-8",
+        )
+        self.assertTrue(_is_retryable_startup_failure(
+            CollectionProcessError("expected one new flight log, found 0"),
+            attempt,
         ))
 
     @patch("src.study.closed_loop_worker.mission_metrics", return_value={})

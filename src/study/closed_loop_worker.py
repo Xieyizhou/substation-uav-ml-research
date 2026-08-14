@@ -98,10 +98,11 @@ def _is_retryable_startup_failure(error, attempt_root):
         )
     except OSError:
         return False
-    return (
-        "expected one new flight log, found 0" in str(error)
-        and "MAVSDK connection failed" in flight_output
+    transport_failed = "MAVSDK connection failed" in flight_output
+    first_scan_missing = "did not become ready within" in flight_output and (
+        "waiting for first scan" in flight_output
     )
+    return "expected one new flight log, found 0" in str(error) and (transport_failed or first_scan_missing)
 
 
 def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeout_s):
