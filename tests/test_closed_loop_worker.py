@@ -291,23 +291,53 @@ class ClosedLoopWorkerTests(unittest.TestCase):
     @patch("src.study.closed_loop_worker.start_process")
     @patch("src.study.closed_loop_worker._probe_lidar", return_value="/scan")
     @patch("src.study.closed_loop_worker._run_setup")
-    def test_run_rejects_nonzero_process_with_failed_terminal_status(
+    def test_run_accepts_nonzero_process_with_classified_mission_failure(
         self, setup, probe, start, ensure, stop, wait, new_log, status, metrics
     ):
         start.side_effect = [object(), object()]
         wait.side_effect = CollectionProcessError("flight exited with code 1")
         new_log.return_value = self.root / "failed.csv"
-        status.return_value = {"status": "failed", "landing_confirmed": True}
+        status.return_value = {
+            "status": "failed", "landing_confirmed": True,
+            "message": "TimeoutError: Timed out before reaching WP05",
+        }
+        metrics.return_value = {"mission_success": 0, "landing_success": 1}
         row = {
             "setup_commands": [], "launcher_environment": {},
             "launcher_command": ["launcher"],
             "flight_command": ["python", "main.py", "task"],
             "oracle_planner_config": "planner.json",
         }
-        with self.assertRaisesRegex(CollectionProcessError, "exited with code 1"):
-            _run_one(row, self.root / "run-failed", startup_timeout_s=1.0,
-                     probe_timeout_s=1.0, flight_timeout_s=1.0)
-        metrics.assert_not_called()
+        _, result, mission = _run_one(
+            row, self.root / "run-failed", startup_timeout_s=1.0,
+            probe_timeout_s=1.0, flight_timeout_s=1.0,
+        )
+        self.assertEqual(result["mission_success"], 0)
+        self.assertEqual(mission["status"], "failed")
+
+    @patch("src.study.closed_loop_worker._run_one")
+    @patch("src.study.closed_loop_worker.ingest_results")
+    def test_worker_ingests_classified_mission_failure_and_continues(
+        self, ingest, run_one
+    ):
+        flight_log = self.root / "failed-flight.csv"
+        flight_log.write_text("elapsed_s\n0\n")
+        run_one.return_value = (
+            flight_log,
+            {"mission_success": 0, "landing_success": 1},
+            {
+                "status": "failed", "landing_confirmed": True,
+                "message": "TimeoutError: Timed out before reaching WP05",
+            },
+        )
+        ingest.side_effect = self.ingest
+        result = execute_closed_loop(
+            self.registry_path, self.study_id, self.root, max_runs=1
+        )
+        self.assertEqual(result["completed"], 1)
+        payload = json.loads(self.result_path.read_text())
+        self.assertEqual(payload["mission"]["outcome_class"], "mission_failure")
+        self.assertEqual(payload["metrics"]["mission_success"], 0)
 
     @patch("src.study.closed_loop_worker._run_one")
     @patch("src.study.closed_loop_worker.ingest_results")

@@ -16,6 +16,7 @@ from src.study.comparison import closed_loop_gate
 from src.study.mission_result import (
     landed_mission_status,
     mission_metrics,
+    mission_outcome_class,
     result_payload,
 )
 from src.study.registry import ResearchRegistry
@@ -134,13 +135,9 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
             process_error = error
         log_path = _new_flight_log(before)
         mission_status = landed_mission_status(log_path)
-        mission_failed = mission_status["status"] == "failed"
-        if process_error is not None:
+        outcome_class = mission_outcome_class(mission_status)
+        if process_error is not None and outcome_class != "mission_failure":
             raise process_error
-        if mission_failed:
-            raise CollectionProcessError(
-                "flight process exited successfully with a failed mission status"
-            )
         metrics = mission_metrics(
             log_path, row["oracle_planner_config"], mission_status
         )
@@ -217,10 +214,6 @@ def _execute_row(
                 row, run_root, startup_timeout_s=startup_timeout_s,
                 probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
             )
-            if mission_status.get("status") != "completed":
-                raise CollectionProcessError(
-                    "formal run did not complete its mission"
-                )
             write_json(
                 row["result_path"],
                 result_payload(
