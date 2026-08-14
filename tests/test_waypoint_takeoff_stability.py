@@ -87,7 +87,7 @@ class ContinuousStabilityTests(unittest.IsolatedAsyncioTestCase):
             AsyncMock(),
         ) as wait:
             await wait_for_takeoff_hover(latest, 2.5, 10.0)
-        self.assertEqual(wait.await_args.kwargs["timeout_s"], 30.0)
+        self.assertEqual(wait.await_args.kwargs["timeout_s"], 60.0)
         self.assertEqual(wait.await_args.kwargs["stage"], "takeoff hover")
         self.assertTrue(wait.await_args.args[1]())
         latest["position_velocity"].position.down_m = -0.5

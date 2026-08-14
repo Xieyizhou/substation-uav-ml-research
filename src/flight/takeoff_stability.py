@@ -103,7 +103,7 @@ async def wait_for_ground_stability(latest, telemetry_timeout_s, *, timeout_s=10
 
 
 async def wait_for_takeoff_hover(
-    latest, target_altitude_m, telemetry_timeout_s, *, timeout_s=30.0
+    latest, target_altitude_m, telemetry_timeout_s, *, timeout_s=60.0
 ):
     minimum_altitude_m = max(0.75, target_altitude_m * 0.6)
 
