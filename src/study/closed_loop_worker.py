@@ -11,6 +11,7 @@ import time
 
 from src.ml.artifacts import object_sha256, write_json
 from src.study.flight_budget import closed_loop_timeout_s
+from src.study.flight_progress_watchdog import wait_for_study_flight
 from src.study.formal_spec import DEFAULT_FORMAL_SPEC, freeze_formal_study
 from src.study.comparison import closed_loop_gate
 from src.study.mission_result import (
@@ -26,7 +27,6 @@ from src.vision.collection.process import (
     ensure_process_running,
     start_process,
     stop_process,
-    wait_process,
 )
 ROOT = Path(__file__).resolve().parents[2]
 FLIGHT_TIERS = frozenset({"closed-loop", "formal"})
@@ -106,7 +106,10 @@ def _is_retryable_startup_failure(error, attempt_root):
     return "expected one new flight log, found 0" in str(error) and (transport_failed or first_scan_missing)
 
 
-def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeout_s):
+def _run_one(
+    row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeout_s,
+    allow_progress_extension=False,
+):
     run_root.mkdir(parents=True, exist_ok=True)
     launcher = flight = None
     before = set((ROOT / "data/logs").glob("astar_*.csv"))
@@ -130,7 +133,10 @@ def _run_one(row, run_root, *, startup_timeout_s, probe_timeout_s, flight_timeou
         flight = start_process("flight task", command, run_root / "flight.log")
         process_error = None
         try:
-            wait_process(flight, flight_timeout_s)
+            wait_for_study_flight(
+                flight, flight_timeout_s, before_logs=before,
+                allow_progress_extension=allow_progress_extension,
+            )
         except CollectionProcessError as error:
             process_error = error
         log_path = _new_flight_log(before)
@@ -213,6 +219,7 @@ def _execute_row(
             log_path, metrics, mission_status = _run_one(
                 row, run_root, startup_timeout_s=startup_timeout_s,
                 probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
+                allow_progress_extension=flight_timeout_s is None,
             )
             write_json(
                 row["result_path"],
