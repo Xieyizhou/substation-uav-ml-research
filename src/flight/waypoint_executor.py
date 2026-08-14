@@ -20,6 +20,7 @@ from src.flight.flight_config import (
 )
 from src.flight.flight_state import (
     ensure_critical_telemetry_fresh,
+    finish_or_raise_waypoint_timeout,
     horizontal_command_speed,
     horizontal_distance_to_waypoint,
     local_position,
@@ -49,7 +50,6 @@ from src.flight.takeoff_stability import (
     validate_takeoff_stability,
     wait_for_takeoff_hover,
 )
-
 
 def configure_runtime(settings):
     global MAX_HORIZONTAL_SPEED_M_S, MAX_VERTICAL_SPEED_M_S, MIN_RISK_SPEED_M_S
@@ -327,7 +327,7 @@ async def fly_to_waypoint(
     print_waypoint_timeout_debug(
         waypoint, latest, perception_config, perception_detector, last_command
     )
-    raise TimeoutError(f"Timed out before reaching {waypoint['name']}")
+    return finish_or_raise_waypoint_timeout(waypoint, target_errors(local_position(latest), waypoint), REACHED_HORIZONTAL_ERROR_M, REACHED_VERTICAL_ERROR_M)
 
 
 async def fly_waypoint_route(

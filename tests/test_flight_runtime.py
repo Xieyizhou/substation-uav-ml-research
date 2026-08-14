@@ -1,11 +1,14 @@
+import asyncio
 import json
 import tempfile
 import unittest
 from asyncio import sleep
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 from src.flight import fly_astar_path
+from src.flight.landing_manager import stable_ground_state
 from src.flight.fly_astar_path import (
     run_flight,
     status_path_for_log,
@@ -42,6 +45,40 @@ class RuntimeTimeoutTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_landing_confirmation_succeeds(self):
         self.assertTrue(await wait_until_landed({"in_air": False}, timeout_s=1))
+
+    async def test_stable_ground_state_confirms_delayed_px4_landing_flag(self):
+        position_velocity = SimpleNamespace(
+            position=SimpleNamespace(down_m=0.06),
+            velocity=SimpleNamespace(
+                north_m_s=0.01, east_m_s=-0.08, down_m_s=0.01,
+            ),
+        )
+        latest = {
+            "in_air": True, "flight_mode": "LAND",
+            "position_velocity": position_velocity,
+            "updated_at": {
+                "position_velocity": asyncio.get_running_loop().time(),
+            },
+        }
+        self.assertTrue(await wait_until_landed(
+            latest, timeout_s=1, stable_duration_s=0,
+        ))
+        latest["updated_at"]["position_velocity"] -= 3.0
+        self.assertFalse(stable_ground_state(latest))
+
+    async def test_ground_fallback_rejects_motion_or_non_land_mode(self):
+        position_velocity = SimpleNamespace(
+            position=SimpleNamespace(down_m=0.06),
+            velocity=SimpleNamespace(
+                north_m_s=0.3, east_m_s=0.0, down_m_s=0.01,
+            ),
+        )
+        latest = {
+            "in_air": True, "flight_mode": "HOLD",
+            "position_velocity": position_velocity,
+        }
+        with self.assertRaises(TimeoutError):
+            await wait_until_landed(latest, timeout_s=0)
 
 
 class RunStatusTests(unittest.TestCase):
