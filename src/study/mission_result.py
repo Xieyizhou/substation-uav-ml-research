@@ -14,6 +14,15 @@ from src.study.quality_metrics import lidar_quality_metrics
 from src.vision.collection.process import CollectionProcessError
 
 
+MISSION_FAILURE_MARKERS = (
+    "timed out before reaching",
+    "waypoint timeout",
+    "dangerobstacledetected",
+    "route blocked",
+    "no safe path",
+)
+
+
 def landed_mission_status(log_path):
     value = json.loads(
         Path(log_path).with_suffix(".status.json").read_text(encoding="utf-8")
@@ -23,6 +32,18 @@ def landed_mission_status(log_path):
     if value.get("landing_confirmed") is not True:
         raise CollectionProcessError("flight ended without confirmed landing")
     return value
+
+
+def mission_outcome_class(mission_status):
+    if mission_status.get("status") == "completed":
+        return "mission_success"
+    message = str(mission_status.get("message", "")).lower()
+    if any(marker in message for marker in MISSION_FAILURE_MARKERS):
+        return "mission_failure"
+    raise CollectionProcessError(
+        "failed flight is not a classified mission outcome: "
+        + (message or "missing failure reason")
+    )
 
 
 def mission_metrics(log_path, planner_path, mission_status):
@@ -60,6 +81,7 @@ def result_payload(row, log_path, metrics, mission_status, formal_receipt):
         "metrics": metrics,
         "mission": {
             "status": mission_status["status"],
+            "outcome_class": mission_outcome_class(mission_status),
             "message": mission_status.get("message", ""),
             "landing_confirmed": mission_status["landing_confirmed"],
         },

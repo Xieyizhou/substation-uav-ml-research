@@ -7,6 +7,7 @@ from src.ml.artifacts import write_json
 from src.study.mission_result import (
     landed_mission_status,
     mission_metrics,
+    mission_outcome_class,
     result_payload,
 )
 from src.vision.collection.process import CollectionProcessError
@@ -31,6 +32,19 @@ class StudyMissionResultTests(unittest.TestCase):
         write_json(status_path, {"status": "failed", "landing_confirmed": False})
         with self.assertRaisesRegex(CollectionProcessError, "confirmed landing"):
             landed_mission_status(log_path)
+
+    def test_outcome_class_separates_mission_and_infrastructure_failures(self):
+        self.assertEqual(
+            mission_outcome_class({"status": "completed"}), "mission_success"
+        )
+        self.assertEqual(mission_outcome_class({
+            "status": "failed",
+            "message": "TimeoutError: Timed out before reaching WP05",
+        }), "mission_failure")
+        with self.assertRaisesRegex(CollectionProcessError, "not a classified"):
+            mission_outcome_class({
+                "status": "failed", "message": "PX4 connection was lost",
+            })
 
     @patch("src.study.mission_result.lidar_quality_metrics", return_value={})
     @patch("src.study.mission_result.obstacle_collision_report")
@@ -75,6 +89,7 @@ class StudyMissionResultTests(unittest.TestCase):
             {"formal_study_identity_sha256": "a" * 64},
         )
         self.assertEqual(payload["mission"]["status"], "failed")
+        self.assertEqual(payload["mission"]["outcome_class"], "mission_failure")
         self.assertEqual(payload["metrics"]["mission_success"], 0)
         self.assertEqual(payload["formal_study_identity_sha256"], "a" * 64)
 
