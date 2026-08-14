@@ -15,7 +15,7 @@
     "ml_lidar",
     "geometric_ml_fusion"
   ],
-  "purpose": "Exercise obstacle detection, replanning, route replacement, and safe completion before a large flight matrix.",
+  "purpose": "Exercise obstacle detection, replanning, route replacement, and safe completion against one controlled route blocker before a large flight matrix.",
   "scenarios": [
     {
       "map_id": "simple",
