@@ -6,6 +6,11 @@ from unittest.mock import patch
 
 from src.inspection.config import InspectionConfig
 from src.ml.artifacts import object_sha256
+from src.sandbox.app_smoke import run_app_smoke
+from src.sandbox.beta_install import (
+    inspect_beta_install_gate,
+    run_beta_install_gate,
+)
 from src.sandbox.bootstrap import bootstrap_sandbox, inspect_bootstrap
 from src.sandbox.demo_workflow import inspect_demo, run_demo
 from src.sandbox.profiles import sandbox_profile
@@ -90,6 +95,59 @@ class SandboxReleaseTests(unittest.TestCase):
             "bootstrap", "demo_workflow", "doctor", "web_assets",
         })
         self.assertTrue(inspect_release_gate(output / "release_gate.json")["passed"])
+
+    @patch("src.sandbox.app_smoke._read")
+    @patch("src.sandbox.app_smoke.create_server")
+    def test_app_smoke_checks_shell_apis_and_demo_boundary(self, server, read):
+        fake = server.return_value
+        fake.server_address = ("127.0.0.1", 43210)
+        fake.serve_forever.return_value = None
+
+        def response(url):
+            if url.endswith("/"):
+                return 200, "text/html", b"sandbox"
+            if url.endswith("/api/profile"):
+                return 200, "application/json", json.dumps({
+                    "profile_id": "demo", "flight_enabled": False,
+                }).encode()
+            return 200, "application/json", b'{"ready": true}'
+
+        read.side_effect = response
+        result = run_app_smoke(self.root)
+        self.assertTrue(result["passed"])
+        fake.shutdown.assert_called_once()
+        fake.server_close.assert_called_once()
+
+    @patch("src.sandbox.beta_install.git_commit", return_value=COMMIT)
+    @patch("src.sandbox.beta_install._workflow_checks")
+    @patch("src.sandbox.beta_install._run_check")
+    @patch("src.sandbox.beta_install._tracked_files")
+    def test_beta_gate_uses_clean_copy_and_is_tamper_evident(
+        self, tracked, run_check, workflow, _commit,
+    ):
+        source = self.root / "main.py"
+        source.write_text("print('demo')\n", encoding="utf-8")
+        tracked.return_value = (("main.py", source),)
+        run_check.return_value = {
+            "name": "clean_virtual_environment", "passed": True,
+        }
+        workflow.return_value = [
+            {"name": name, "passed": True} for name in (
+                "bootstrap", "demo_run", "demo_inspect", "release_gate",
+                "release_inspect", "app_smoke",
+            )
+        ]
+        output = self.root / "beta"
+        result = run_beta_install_gate(self.root, output)
+        receipt = output / "beta_install_gate.json"
+        self.assertTrue(result["passed"])
+        self.assertEqual(len(result["checks"]), 8)
+        self.assertTrue(inspect_beta_install_gate(receipt)["passed"])
+        value = json.loads(receipt.read_text())
+        value["passed"] = False
+        receipt.write_text(json.dumps(value))
+        with self.assertRaisesRegex(ValueError, "identity mismatch"):
+            inspect_beta_install_gate(receipt)
 
 
 if __name__ == "__main__":

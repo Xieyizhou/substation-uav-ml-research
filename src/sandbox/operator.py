@@ -10,15 +10,9 @@ import threading
 from src.inspection.runtime import LocalProcessAdapter, runtime_status
 from src.sandbox import job_recovery
 from src.sandbox.failure_classification import classify_failure
-from src.sandbox.job_commands import build_command
-from src.sandbox.job_models import (
-    SandboxJobStore, TERMINAL_STATES, new_preparing_job, utc_now,
-)
+from src.sandbox.job_models import SandboxJobStore, TERMINAL_STATES, new_preparing_job, utc_now
 from src.sandbox.job_process import (
-    ownership_is_held,
-    process_alive,
-    start_job_process,
-    stop_job_pid,
+    ownership_is_held, process_alive, start_job_process, stop_job_pid,
     stop_job_process,
 )
 from src.sandbox.job_runtime import monitor_process
@@ -31,6 +25,12 @@ from src.sandbox.storage_policy import OutputBudgetExceeded, require_output_budg
 
 class OperatorBusy(RuntimeError):
     pass
+
+
+def build_command(*args, **kwargs):
+    from src.sandbox.job_commands import build_command as implementation
+
+    return implementation(*args, **kwargs)
 
 
 class SandboxOperator:
