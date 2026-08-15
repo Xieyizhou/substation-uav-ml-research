@@ -28,16 +28,44 @@ fi
 
 release_root="$project_root/dist/releases"
 app="$project_root/dist/UAV Research Sandbox.app"
-archive="$release_root/UAV-Research-Sandbox-v${version}-macos-arm64.zip"
-checksum="$archive.sha256"
+architecture=$(uname -m)
+release_name="UAV-Research-Sandbox-v${version}-macos-${architecture}"
+archive="$release_root/${release_name}.zip"
+dmg="$release_root/${release_name}.dmg"
+manifest="$release_root/${release_name}-release.json"
+checksums="$release_root/${release_name}-SHA256SUMS"
 
 mkdir -p "$release_root"
-rm -f "$archive" "$checksum"
+staging=$(mktemp -d "$release_root/.macos-preview.XXXXXX")
+trap 'rm -rf "$staging"' EXIT HUP INT TERM
+
+rm -f "$archive" "$dmg" "$manifest" "$checksums"
 ditto -c -k --sequesterRsrc --keepParent "$app" "$archive"
+ditto "$app" "$staging/UAV Research Sandbox.app"
+ln -s /Applications "$staging/Applications"
+cp "$project_root/docs/MACOS_PREVIEW_INSTALL.txt" "$staging/README.txt"
+hdiutil create -quiet -volname "UAV Research Sandbox" \
+  -srcfolder "$staging" -format UDZO "$dmg"
+
+/usr/bin/python3 "$project_root/scripts/macos_release_manifest.py" create \
+  --version "$version" \
+  --architecture "$architecture" \
+  --output "$manifest" \
+  "$archive" "$dmg"
+
 (
   cd "$release_root"
-  shasum -a 256 "$(basename "$archive")" > "$(basename "$checksum")"
+  shasum -a 256 \
+    "$(basename "$archive")" \
+    "$(basename "$dmg")" \
+    "$(basename "$manifest")" > "$(basename "$checksums")"
 )
 
+/usr/bin/python3 "$project_root/scripts/macos_release_manifest.py" verify \
+  --manifest "$manifest" \
+  --checksums "$checksums"
+
 echo "Created $archive"
-echo "Created $checksum"
+echo "Created $dmg"
+echo "Created $manifest"
+echo "Created $checksums"

@@ -68,15 +68,22 @@ UAV_SANDBOX_PROJECT_ROOT="$PWD" \
   "dist/UAV Research Sandbox.app/Contents/MacOS/UAVSandboxApp"
 ```
 
-## Preview archive
+## Preview installer
 
-Create a versioned ZIP and matching checksum from the repository root:
+Create a versioned DMG, ZIP, release manifest, and checksum list from the
+repository root:
 
 ```bash
-./scripts/package_macos_release.sh 0.2.1
+./scripts/package_macos_release.sh 0.3.0
 cd dist/releases
-shasum -a 256 -c UAV-Research-Sandbox-v0.2.1-macos-arm64.zip.sha256
+shasum -a 256 -c UAV-Research-Sandbox-v0.3.0-macos-*-SHA256SUMS
 ```
+
+The DMG presents the App beside an Applications shortcut and includes a short
+installation note. The ZIP is retained for automated or scripted installation.
+The JSON release manifest records the artifact hashes, architecture, signing
+tier, and external repository/runtime requirements so downstream tooling cannot
+mistake the preview for a standalone simulator.
 
 After an App-managed Development flight smoke completes, bind its job receipt,
 flight summary, source commit, cleanup status, and versions into one local gate:
@@ -93,9 +100,10 @@ simulator process remains, the tracked worktree changed, the scenario is blind,
 or PNG dataset payloads were produced.
 
 The manual **macOS preview release** GitHub Actions workflow runs Swift tests,
-builds the application, verifies its ad-hoc signature and checksum, and
-publishes both files as a GitHub prerelease. It never packages datasets, model
-weights, simulator installations, or local experiment outputs.
+builds the application, verifies its ad-hoc signature and release checksums,
+and publishes the DMG, ZIP, manifest, and checksum list as a GitHub prerelease.
+It never packages datasets, model weights, simulator installations, or local
+experiment outputs.
 
 ## Distribution boundary
 

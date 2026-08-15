@@ -1,0 +1,12 @@
+UAV Research Sandbox — macOS Developer Preview
+
+1. Drag UAV Research Sandbox.app to the Applications shortcut.
+2. Clone the project repository and create its Python virtual environment.
+3. Install PX4 and Gazebo only if you want to run simulator workflows.
+4. Open the App, select the repository, and start with Demo Profile.
+5. Use Get started to verify Development prerequisites before a flight.
+
+This preview is ad-hoc signed and is not a standalone simulator installer.
+It does not contain datasets, model weights, experiment outputs, PX4, Gazebo,
+or a Python runtime. For build, security, and troubleshooting details, see:
+https://github.com/Xieyizhou/substation-uav-ml-research/blob/main/docs/MACOS_APP.md

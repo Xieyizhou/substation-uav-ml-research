@@ -161,10 +161,11 @@ available in the same window:
 open "dist/UAV Research Sandbox.app"
 ```
 
-Create a versioned preview archive and SHA256 checksum with:
+Create a versioned preview DMG, ZIP, release manifest, and SHA256 checksum list
+with:
 
 ```bash
-./scripts/package_macos_release.sh 0.2.1
+./scripts/package_macos_release.sh 0.3.0
 ```
 
 It currently uses the repository's Python environment and keeps PX4/Gazebo as
