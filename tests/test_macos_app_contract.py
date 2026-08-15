@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import plistlib
+import struct
 import unittest
 
 
@@ -19,6 +20,14 @@ class MacOSAppContractTests(unittest.TestCase):
             "io.github.xieyizhou.uav-research-sandbox",
         )
         self.assertEqual(value["CFBundlePackageType"], "APPL")
+        self.assertEqual(value["CFBundleIconFile"], "AppIcon")
+        self.assertEqual(value["CFBundleShortVersionString"], "0.2.0")
+
+    def test_icon_master_is_square_1024_png(self):
+        payload = (APP_ROOT / "Resources/AppIcon.png").read_bytes()
+        self.assertEqual(payload[:8], b"\x89PNG\r\n\x1a\n")
+        width, height = struct.unpack(">II", payload[16:24])
+        self.assertEqual((width, height), (1024, 1024))
 
     def test_native_shell_keeps_loopback_boundary(self):
         model = (
@@ -38,6 +47,16 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertIn('dist/UAV Research Sandbox.app', script)
         self.assertNotIn("data/research", script)
         self.assertNotIn("models/", script)
+        self.assertIn("scripts/create_icns.py", script)
+
+    def test_status_home_reads_only_loopback_endpoints(self):
+        model = (
+            APP_ROOT / "Sources/UAVSandboxApp/SandboxStatusModel.swift"
+        ).read_text(encoding="utf-8")
+        for endpoint in ("profile", "runtime", "doctor", "storage", "operator"):
+            self.assertIn(f'"api/{endpoint}"', model)
+        self.assertNotIn("operator/start", model)
+        self.assertNotIn("operator/stop", model)
 
 
 if __name__ == "__main__":

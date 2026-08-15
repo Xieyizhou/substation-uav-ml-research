@@ -8,7 +8,7 @@ rules.
 
 ## Current scope
 
-The first native milestone provides:
+The native application provides:
 
 - repository selection and validation;
 - Demo, Development, and Formal profile selection;
@@ -17,6 +17,9 @@ The first native milestone provides:
 - loopback-only service health checks;
 - connection to an already-running local service without taking ownership;
 - an embedded `WKWebView` restricted to loopback navigation;
+- a native read-only status page for profile, environment, runtime, storage,
+  and managed-job health;
+- a stable application icon and versioned bundle metadata;
 - bounded service logs; and
 - graceful interrupt, terminate, and kill fallback for a service started by
   the App.
@@ -41,6 +44,10 @@ require a matching compiler and SDK; installing a stable Xcode release is the
 recommended development setup. The script creates an ad-hoc-signed local
 application, and the generated `dist/` directory is ignored by Git.
 
+The status page polls five read-only loopback endpoints every five seconds. It
+does not receive the operator token and cannot start or stop flight jobs. Use
+the **Workbench** section for the existing, guarded workflow controls.
+
 If the App cannot infer the repository, choose it from the start screen. The
 folder must contain `main.py` and `src/sandbox`. For scripted launches, the
 initial folder can be supplied to the executable with:
@@ -50,10 +57,27 @@ UAV_SANDBOX_PROJECT_ROOT="$PWD" \
   "dist/UAV Research Sandbox.app/Contents/MacOS/UAVSandboxApp"
 ```
 
+## Preview archive
+
+Create a versioned ZIP and matching checksum from the repository root:
+
+```bash
+./scripts/package_macos_release.sh 0.2.0
+cd dist/releases
+shasum -a 256 -c UAV-Research-Sandbox-v0.2.0-macos-arm64.zip.sha256
+```
+
+The manual **macOS preview release** GitHub Actions workflow runs Swift tests,
+builds the application, verifies its ad-hoc signature and checksum, and
+publishes both files as a GitHub prerelease. It never packages datasets, model
+weights, simulator installations, or local experiment outputs.
+
 ## Distribution boundary
 
-The local `.app` is not yet a public installer. GitHub distribution requires a
-stable application icon, Developer ID signing, hardened-runtime entitlements,
-notarization, release archives, and a clean-machine installation gate. A later
-milestone may bundle the dependency-free Demo source and runtime, while the
-full simulator remains an explicitly detected external toolchain.
+The preview archive is not a standalone public installer. It is ad-hoc signed,
+is intended for Apple Silicon development machines, and still uses a selected
+repository plus its Python environment. Public distribution still requires a
+Developer ID certificate, hardened-runtime entitlements, notarization, and a
+clean-machine Gatekeeper test. A later milestone may bundle the
+dependency-free Demo source and runtime; the full simulator remains an
+explicitly detected external toolchain.

@@ -16,6 +16,26 @@ esac
 build_root="$package_root/.build/$configuration"
 binary="$build_root/UAVSandboxApp"
 
+build_icon() {
+  source_icon="$package_root/Resources/AppIcon.png"
+  iconset="$build_root/AppIcon.iconset"
+  icon_file="$build_root/AppIcon.icns"
+  if [ ! -f "$source_icon" ]; then
+    echo "App icon source is missing: $source_icon" >&2
+    exit 1
+  fi
+  rm -rf "$iconset"
+  mkdir -p "$iconset"
+  for size in 16 32 128 256 512; do
+    double=$((size * 2))
+    sips -z "$size" "$size" "$source_icon" \
+      --out "$iconset/icon_${size}x${size}.png" >/dev/null
+    sips -z "$double" "$double" "$source_icon" \
+      --out "$iconset/icon_${size}x${size}@2x.png" >/dev/null
+  done
+  python3 "$project_root/scripts/create_icns.py" "$iconset" "$icon_file"
+}
+
 build_with_command_line_tools() {
   sdk=/Library/Developer/CommandLineTools/SDKs/MacOSX15.4.sdk
   if [ ! -d "$sdk" ]; then
@@ -43,6 +63,9 @@ build_with_command_line_tools() {
     -o "$binary" \
     "$package_root/Sources/UAVSandboxApp/UAVSandboxApp.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxAppModel.swift" \
+    "$package_root/Sources/UAVSandboxApp/SandboxStatusModels.swift" \
+    "$package_root/Sources/UAVSandboxApp/SandboxStatusModel.swift" \
+    "$package_root/Sources/UAVSandboxApp/NativeDashboardView.swift" \
     "$package_root/Sources/UAVSandboxApp/ContentView.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxWebView.swift"
 }
@@ -59,12 +82,15 @@ if [ ! -x "$binary" ]; then
   exit 1
 fi
 
+build_icon
+
 destination="$project_root/dist/UAV Research Sandbox.app"
 contents="$destination/Contents"
 rm -rf "$destination"
 mkdir -p "$contents/MacOS" "$contents/Resources"
 cp "$binary" "$contents/MacOS/UAVSandboxApp"
 cp "$package_root/Resources/Info.plist" "$contents/Info.plist"
+cp "$build_root/AppIcon.icns" "$contents/Resources/AppIcon.icns"
 
 if command -v codesign >/dev/null 2>&1; then
   codesign --force --sign - --timestamp=none "$destination"
