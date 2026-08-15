@@ -151,17 +151,26 @@ synthetic features and is explicitly excluded from formal research evidence.
 
 ### Native macOS shell
 
-The optional SwiftUI shell manages the same loopback Sandbox service and opens
-the existing workbench in a native window:
+The optional SwiftUI application manages the same loopback Sandbox service. A
+native status page summarizes the active profile, environment checks, managed
+job, runtime processes, and storage. The complete browser workbench remains
+available in the same window:
 
 ```bash
 ./scripts/build_macos_app.sh release
 open "dist/UAV Research Sandbox.app"
 ```
 
+Create a versioned preview archive and SHA256 checksum with:
+
+```bash
+./scripts/package_macos_release.sh 0.2.0
+```
+
 It currently uses the repository's Python environment and keeps PX4/Gazebo as
 external development dependencies. See [the macOS App guide](docs/MACOS_APP.md)
-for the supported profiles, build requirements, and distribution boundary.
+for profiles, build requirements, preview releases, and the distribution
+boundary.
 
 Run the complete offline release check with:
 

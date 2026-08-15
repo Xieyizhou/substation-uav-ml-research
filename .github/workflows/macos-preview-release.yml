@@ -1,0 +1,46 @@
+name: macOS preview release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Preview version without a leading v
+        required: true
+        default: 0.2.0
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build macOS preview
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Swift tests
+        run: swift test --package-path apps/macos/SandboxApp
+
+      - name: Build preview archive
+        run: ./scripts/package_macos_release.sh "${{ inputs.version }}"
+
+      - name: Verify application and checksum
+        run: |
+          codesign --verify --deep --strict "dist/UAV Research Sandbox.app"
+          cd dist/releases
+          shasum -a 256 -c "UAV-Research-Sandbox-v${{ inputs.version }}-macos-arm64.zip.sha256"
+
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "macos-preview-v${{ inputs.version }}"
+          "dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-arm64.zip"
+          "dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-arm64.zip.sha256"
+          --target "${{ github.sha }}"
+          --title "UAV Research Sandbox macOS preview v${{ inputs.version }}"
+          --prerelease
+          --generate-notes

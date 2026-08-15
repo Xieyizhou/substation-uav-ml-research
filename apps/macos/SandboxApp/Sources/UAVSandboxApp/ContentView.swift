@@ -1,22 +1,39 @@
+import AppKit
 import SandboxAppCore
 import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var model: SandboxAppModel
+    @StateObject private var status = SandboxStatusModel()
     @State private var showLogs = false
+    @State private var section = AppSection.status
 
     var body: some View {
         VStack(spacing: 0) {
             header
             Divider()
             if let url = model.webURL {
-                SandboxWebView(url: url)
+                if section == .status {
+                    NativeDashboardView(status: status) {
+                        Task { await status.refresh(baseURL: url) }
+                    }
+                } else {
+                    SandboxWebView(url: url)
+                }
             } else {
                 setup
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
         .sheet(isPresented: $showLogs) { logSheet }
+        .onChange(of: model.webURL) { url in
+            if let url {
+                section = .status
+                status.start(baseURL: url)
+            } else {
+                status.stop()
+            }
+        }
         .onReceive(NotificationCenter.default.publisher(
             for: NSApplication.willTerminateNotification
         )) { _ in
@@ -26,14 +43,10 @@ struct ContentView: View {
 
     private var header: some View {
         HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 11)
-                    .fill(Color.accentColor.gradient)
-                Image(systemName: "airplane.circle.fill")
-                    .font(.system(size: 23, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .frame(width: 44, height: 44)
+            Image(nsImage: NSApplication.shared.applicationIconImage)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 44, height: 44)
             VStack(alignment: .leading, spacing: 2) {
                 Text("UAV Research Sandbox")
                     .font(.headline)
@@ -43,6 +56,17 @@ struct ContentView: View {
                     .lineLimit(1)
             }
             Spacer()
+            if model.webURL != nil {
+                Picker("Section", selection: $section) {
+                    Label("Status", systemImage: "gauge.with.dots.needle.67percent")
+                        .tag(AppSection.status)
+                    Label("Workbench", systemImage: "rectangle.3.group")
+                        .tag(AppSection.workbench)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 230)
+            }
             Button {
                 showLogs = true
             } label: {
@@ -156,4 +180,9 @@ struct ContentView: View {
         .padding(20)
         .frame(minWidth: 720, minHeight: 460)
     }
+}
+
+private enum AppSection: Hashable {
+    case status
+    case workbench
 }
