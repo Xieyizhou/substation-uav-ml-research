@@ -149,6 +149,20 @@ Open `http://127.0.0.1:8765`, choose **Experiments**, and run **Demo
 classifier**. The result is an identity-bound workflow example built from
 synthetic features and is explicitly excluded from formal research evidence.
 
+### Native macOS shell
+
+The optional SwiftUI shell manages the same loopback Sandbox service and opens
+the existing workbench in a native window:
+
+```bash
+./scripts/build_macos_app.sh release
+open "dist/UAV Research Sandbox.app"
+```
+
+It currently uses the repository's Python environment and keeps PX4/Gazebo as
+external development dependencies. See [the macOS App guide](docs/MACOS_APP.md)
+for the supported profiles, build requirements, and distribution boundary.
+
 Run the complete offline release check with:
 
 ```bash
@@ -255,6 +269,7 @@ parameter-forwarding example.
 | `src/inspection/` | Read-only sandbox observations, recording browser, and aggregate ML lifecycle results |
 | `src/sandbox/` | Allowlisted local jobs, single-instance control, bounded execution, and job history |
 | `src/study/` | SQLite registry, tier matrices, resumable queues, gates, and paired statistics |
+| `apps/macos/SandboxApp/` | Native SwiftUI shell for the controlled local Sandbox service |
 | `src/maps/` | Map catalog, target selection, and Gazebo marker synchronization |
 | `src/logging/` | Telemetry, metrics, plots, reports, and comparisons |
 | `scripts/flight/experiments/` | Reproducible four-stage experiment launchers |
