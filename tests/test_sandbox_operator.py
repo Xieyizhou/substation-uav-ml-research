@@ -11,9 +11,12 @@ from unittest.mock import Mock, patch
 
 from src.inspection.config import InspectionConfig
 from src.inspection.app import create_server
+from src.ml.artifacts import object_sha256
 from src.sandbox.job_commands import SandboxCommand, build_command
 from src.sandbox.job_models import SandboxJob, SandboxJobStore, utc_now
+from src.sandbox.job_process import ownership_is_held, start_job_process
 from src.sandbox.operator import OperatorBusy, SandboxOperator
+from src.sandbox.workflow import materialize_workflow_recipe
 
 
 HASH = "a" * 64
@@ -197,6 +200,23 @@ class SandboxOperatorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "identity mismatch"):
             store.read(job.job_id)
 
+    def test_job_store_reads_legacy_record_without_recovery_fields(self):
+        store = SandboxJobStore(self.config.sandbox_jobs_root)
+        job = SandboxJob("job-legacy", "doctor", "complete", utc_now(), 5.0)
+        store.write(job)
+        path = store.directory(job.job_id) / "job.json"
+        record = json.loads(path.read_text())
+        record.pop("ownership_token")
+        record.pop("recovered")
+        record.pop("job_identity_sha256")
+        record["job_identity_sha256"] = object_sha256(record)
+        path.write_text(json.dumps(record), encoding="utf-8")
+
+        restored = store.read(job.job_id)
+
+        self.assertIsNone(restored.ownership_token)
+        self.assertFalse(restored.recovered)
+
     def test_managed_job_completes_and_persists_bounded_log(self):
         command = SandboxCommand(
             "doctor",
@@ -207,6 +227,7 @@ class SandboxOperatorTests(unittest.TestCase):
         with patch("src.sandbox.operator.build_command", return_value=command):
             started = operator.start("doctor")
             self.assertEqual(started["state"], "preparing")
+            self.assertNotIn("ownership_token", started)
             status = self.wait_idle(operator)
         self.assertEqual(status["history"][0]["state"], "complete")
         self.assertIn("sandbox-ready", "\n".join(operator.log(started["job_id"])))
@@ -248,6 +269,118 @@ class SandboxOperatorTests(unittest.TestCase):
             operator = SandboxOperator(self.config, EmptyProcesses())
             with self.assertRaisesRegex(OperatorBusy, "interrupted sandbox job"):
                 operator.start("doctor")
+
+    def test_completed_process_result_is_recovered_after_restart(self):
+        store = SandboxJobStore(self.config.sandbox_jobs_root)
+        token = "result-owner"
+        job = SandboxJob(
+            "job-result", "doctor", "running", utc_now(), 60.0,
+            pid=43210, ownership_token=token,
+        )
+        store.write(job)
+        materialize_workflow_recipe(
+            self.root, store, job,
+            SandboxCommand("doctor", (sys.executable, "-c", "pass"), 60.0),
+        )
+        store.process_result_path(job.job_id).write_text(json.dumps({
+            "process_result_schema_version": 1,
+            "exit_code": 0,
+            "ended_at": utc_now(),
+            "ownership_token": token,
+        }), encoding="utf-8")
+
+        operator = SandboxOperator(self.config, EmptyProcesses())
+
+        recovered = operator.store.read(job.job_id)
+        self.assertEqual(recovered.state, "complete")
+        self.assertTrue(recovered.recovered)
+        self.assertTrue((store.directory(job.job_id) / "workflow_receipt.json").is_file())
+
+    def test_running_owned_process_is_adopted_after_restart(self):
+        store = SandboxJobStore(self.config.sandbox_jobs_root)
+        token = "live-owner"
+        job = SandboxJob(
+            "job-live", "doctor", "running", utc_now(), 5.0,
+            ownership_token=token,
+        )
+        store.write(job)
+        materialize_workflow_recipe(
+            self.root, store, job,
+            SandboxCommand("doctor", (sys.executable, "-c", "pass"), 5.0),
+        )
+        process, handle = start_job_process(
+            (sys.executable, "-c", "import time; time.sleep(.4)"),
+            store.log_path(job.job_id), self.root,
+            store.process_result_path(job.job_id),
+            store.ownership_path(job.job_id), token,
+        )
+        job.pid = process.pid
+        store.write(job)
+        deadline = time.monotonic() + 2.0
+        while not ownership_is_held(store.ownership_path(job.job_id), token):
+            if time.monotonic() >= deadline:
+                self.fail("managed process did not acquire its ownership lock")
+            time.sleep(0.01)
+        try:
+            operator = SandboxOperator(self.config, EmptyProcesses())
+            self.assertTrue(operator.status()["active_job"]["recovered"])
+            status = self.wait_idle(operator)
+            self.assertEqual(status["history"][0]["state"], "complete")
+            self.assertTrue(status["history"][0]["recovered"])
+        finally:
+            process.wait(timeout=2.0)
+            handle.close()
+
+    def test_live_pid_with_wrong_ownership_is_not_adopted(self):
+        store = SandboxJobStore(self.config.sandbox_jobs_root)
+        interrupted = SandboxJob(
+            "job-reused", "doctor", "running", utc_now(), 60.0,
+            pid=43210, ownership_token="expected-owner",
+        )
+        store.write(interrupted)
+        with (
+            patch("src.sandbox.operator.process_alive", return_value=True),
+            patch("src.sandbox.operator.ownership_is_held", return_value=False),
+        ):
+            operator = SandboxOperator(self.config, EmptyProcesses())
+        recovered = operator.store.read(interrupted.job_id)
+        self.assertEqual(recovered.state, "failed")
+        self.assertIn("could not be safely adopted", recovered.diagnostics[-1])
+
+    def test_adopted_process_can_be_stopped_safely(self):
+        store = SandboxJobStore(self.config.sandbox_jobs_root)
+        token = "stoppable-owner"
+        job = SandboxJob(
+            "job-stoppable", "doctor", "running", utc_now(), 60.0,
+            ownership_token=token,
+        )
+        store.write(job)
+        materialize_workflow_recipe(
+            self.root, store, job,
+            SandboxCommand("doctor", (sys.executable, "-c", "pass"), 60.0),
+        )
+        process, handle = start_job_process(
+            (sys.executable, "-c", "import time; time.sleep(30)"),
+            store.log_path(job.job_id), self.root,
+            store.process_result_path(job.job_id),
+            store.ownership_path(job.job_id), token,
+        )
+        job.pid = process.pid
+        store.write(job)
+        deadline = time.monotonic() + 2.0
+        while not ownership_is_held(store.ownership_path(job.job_id), token):
+            if time.monotonic() >= deadline:
+                self.fail("managed process did not acquire its ownership lock")
+            time.sleep(0.01)
+        try:
+            operator = SandboxOperator(self.config, EmptyProcesses())
+            operator.stop(job.job_id)
+            status = self.wait_idle(operator)
+            self.assertEqual(status["history"][0]["state"], "failed")
+            self.assertTrue(status["history"][0]["stop_requested"])
+        finally:
+            process.wait(timeout=2.0)
+            handle.close()
 
     def test_http_mutations_require_server_token(self):
         fake = FakeOperator()

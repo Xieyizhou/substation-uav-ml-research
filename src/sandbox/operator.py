@@ -4,20 +4,23 @@ from __future__ import annotations
 
 import fcntl
 import html
-from pathlib import Path
+import secrets
 import threading
 import time
 
 from src.inspection.runtime import LocalProcessAdapter, runtime_status
+from src.sandbox import job_recovery
 from src.sandbox.job_commands import build_command
 from src.sandbox.job_models import (
-    SandboxJob,
-    SandboxJobStore,
-    TERMINAL_STATES,
-    new_job_id,
-    utc_now,
+    SandboxJob, SandboxJobStore, TERMINAL_STATES, new_job_id, utc_now,
 )
-from src.sandbox.job_process import process_alive, start_job_process, stop_job_process
+from src.sandbox.job_process import (
+    ownership_is_held,
+    process_alive,
+    start_job_process,
+    stop_job_pid,
+    stop_job_process,
+)
 from src.sandbox.workflow import (
     materialize_workflow_receipt,
     materialize_workflow_recipe,
@@ -45,15 +48,85 @@ class SandboxOperator:
         for job in self.store.list(200):
             if job.state in TERMINAL_STATES:
                 continue
-            job.state = "failed"
-            job.ended_at = utc_now()
+            try:
+                result = job_recovery.read_process_result(self.store, job.job_id)
+            except (OSError, ValueError, TypeError) as error:
+                job.state, job.ended_at = "failed", utc_now()
+                job.error = f"invalid managed process result: {error}"
+                self.store.write(job)
+                continue
+            if result is not None:
+                job.recovered = True
+                job.diagnostics.append("managed result recovered after operator restart")
+                job_recovery.apply_process_result(job, result)
+                self._finish_recovered(job)
+                continue
+            alive = process_alive(job.pid)
+            owned = alive and ownership_is_held(
+                self.store.ownership_path(job.job_id), job.ownership_token
+            )
+            if self._active is None and owned:
+                self._adopt(job)
+                continue
+            job.state, job.ended_at = "failed", utc_now()
             job.error = "operator exited before recording a terminal job state"
-            if process_alive(job.pid):
+            if alive:
                 self._orphan_pids.append(job.pid)
                 job.diagnostics.append(
-                    "recorded process is still alive; inspect runtime before starting"
+                    "live process identity could not be safely adopted"
                 )
             self.store.write(job)
+
+    def _adopt(self, job):
+        self._acquire_lock()
+        job.state = "running"
+        job.recovered = True
+        job.diagnostics.append("managed process adopted after operator restart")
+        self.store.write(job)
+        self._active = job
+        self._thread = threading.Thread(
+            target=self._monitor_recovered,
+            args=(job,), name=f"sandbox-recovered-{job.action}", daemon=True,
+        )
+        self._thread.start()
+
+    def _monitor_recovered(self, job):
+        def ownership_released():
+            return not ownership_is_held(
+                self.store.ownership_path(job.job_id), job.ownership_token
+            )
+
+        try:
+            while not ownership_released():
+                if self._stop_requested.wait(0.2):
+                    job.state, job.stop_requested = "stopping", True
+                    self.store.write(job)
+                    if process_alive(job.pid):
+                        stop_job_pid(job.pid, stopped=ownership_released)
+                    break
+                if job_recovery.elapsed_seconds(job) > job.timeout_s:
+                    job.error = f"job exceeded {job.timeout_s:.0f}s timeout"
+                    if process_alive(job.pid):
+                        stop_job_pid(job.pid, stopped=ownership_released)
+                    break
+            result = job_recovery.read_process_result(self.store, job.job_id)
+            if result is not None:
+                job_recovery.apply_process_result(job, result)
+            else:
+                job.state = "failed"
+                job.error = job.error or "managed process ended without an exit record"
+                job.ended_at = utc_now()
+        except Exception as error:
+            job.state, job.ended_at = "failed", utc_now()
+            job.error = f"recovery failed: {type(error).__name__}: {error}"
+        self._finish_recovered(job)
+
+    def _finish_recovered(self, job):
+        job_recovery.finalize_recovered(self.config.project_root, self.store, job)
+        with self._guard:
+            if self._active is job:
+                self._active = None
+                self._release_lock()
 
     def _acquire_lock(self):
         path = self.config.sandbox_operator_root / "active.lock"
@@ -103,6 +176,7 @@ class SandboxOperator:
                 timeout_s=command.timeout_s,
                 sensitive=command.sensitive,
                 scenario_id=command.scenario_id,
+                ownership_token=secrets.token_hex(16),
             )
             try:
                 self.store.write(job)
@@ -125,14 +199,16 @@ class SandboxOperator:
                 daemon=True,
             )
             self._thread.start()
-            return job.to_record()
+            return job.to_public_record()
 
     def _run(self, job, argv, recipe):
         process = handle = None
         started = time.monotonic()
         try:
             process, handle = start_job_process(
-                argv, self.store.log_path(job.job_id), self.config.project_root
+                argv, self.store.log_path(job.job_id), self.config.project_root,
+                self.store.process_result_path(job.job_id),
+                self.store.ownership_path(job.job_id), job.ownership_token,
             )
             with self._guard:
                 job.state = "running"
@@ -150,17 +226,13 @@ class SandboxOperator:
                     job.error = f"job exceeded {job.timeout_s:.0f}s timeout"
                     stop_job_process(process)
                     break
-            job.exit_code = process.poll()
-            if job.exit_code == 0 and not job.stop_requested and job.error is None:
-                job.state = "complete"
+            result = job_recovery.read_process_result(self.store, job.job_id)
+            if result is not None:
+                job_recovery.apply_process_result(job, result)
             else:
+                job.exit_code = process.poll()
                 job.state = "failed"
-                if job.error is None:
-                    job.error = (
-                        "job stopped by request"
-                        if job.stop_requested
-                        else f"job exited with code {job.exit_code}"
-                    )
+                job.error = job.error or "managed process ended without an exit record"
         except Exception as error:
             job.state = "failed"
             job.error = f"{type(error).__name__}: {error}"
@@ -170,7 +242,7 @@ class SandboxOperator:
             if handle is not None and not handle.closed:
                 handle.close()
             job.ended_at = utc_now()
-            self._append_diagnostics(job)
+            job_recovery.append_diagnostics(self.store, job)
             with self._guard:
                 self.store.write(job)
                 try:
@@ -184,22 +256,6 @@ class SandboxOperator:
                 self._active = None
                 self._release_lock()
 
-    def _append_diagnostics(self, job):
-        if job.state != "failed" or job.sensitive:
-            return
-        try:
-            lines = self.store.log_path(job.job_id).read_text(
-                encoding="utf-8", errors="replace"
-            ).splitlines()
-        except OSError:
-            return
-        noteworthy = [
-            line.strip()
-            for line in lines
-            if any(word in line.lower() for word in ("error", "failed", "timeout"))
-        ]
-        job.diagnostics.extend(noteworthy[-5:])
-
     def stop(self, job_id):
         with self._guard:
             if self._active is None or self._active.job_id != job_id:
@@ -208,15 +264,15 @@ class SandboxOperator:
             self._active.stop_requested = True
             self.store.write(self._active)
             self._stop_requested.set()
-            return self._active.to_record()
+            return self._active.to_public_record()
 
     def status(self):
         with self._guard:
-            active = None if self._active is None else self._active.to_record()
+            active = None if self._active is None else self._active.to_public_record()
         return {
             "state": "idle" if active is None else active["state"],
             "active_job": active,
-            "history": [job.to_record() for job in self.store.list(20)],
+            "history": [job.to_public_record() for job in self.store.list(20)],
         }
 
     def log(self, job_id, limit=200):

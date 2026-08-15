@@ -38,9 +38,11 @@ class SandboxJob:
     started_at: str | None = None
     ended_at: str | None = None
     pid: int | None = None
+    ownership_token: str | None = None
     exit_code: int | None = None
     error: str | None = None
     stop_requested: bool = False
+    recovered: bool = False
     diagnostics: list[str] = field(default_factory=list)
     sandbox_job_schema_version: int = 1
 
@@ -53,6 +55,11 @@ class SandboxJob:
     def to_record(self):
         record = asdict(self)
         record["job_identity_sha256"] = object_sha256(record)
+        return record
+
+    def to_public_record(self):
+        record = self.to_record()
+        record.pop("ownership_token", None)
         return record
 
     @classmethod
@@ -76,6 +83,12 @@ class SandboxJobStore:
 
     def log_path(self, job_id):
         return self.directory(job_id) / "job.log"
+
+    def process_result_path(self, job_id):
+        return self.directory(job_id) / "process_result.json"
+
+    def ownership_path(self, job_id):
+        return self.directory(job_id) / "process.owner"
 
     def write(self, job):
         directory = self.directory(job.job_id)

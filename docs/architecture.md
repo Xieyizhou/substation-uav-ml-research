@@ -81,7 +81,10 @@ optional plotting or flight dependencies.
 operator. `workflow_commands.py` maps browser choices to allow-listed visual,
 LiDAR, or acceptance commands. `workflow.py` wraps every managed execution in
 an identity-bound recipe and receipt without changing the specialized visual
-or LiDAR artifact schemas.
+or LiDAR artifact schemas. Each command runs through a wrapper that holds an
+ownership-token file lock and writes an atomic exit sidecar. A restarted App
+adopts a live job only while its PID and ownership lock still match; otherwise
+it fails closed rather than signalling an unrelated process.
 
 The acceptance orchestrator in `sandbox/acceptance.py` composes verified
 evidence from existing subsystems. Process lifecycle checks remain isolated in
