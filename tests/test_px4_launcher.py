@@ -15,21 +15,27 @@ LAUNCHER = PROJECT_ROOT / "scripts" / "flight" / "start_px4_substation.sh"
 
 
 class Px4LauncherPathTests(unittest.TestCase):
-    def test_launcher_force_stops_verified_stale_gazebo_server(self):
+    def test_launcher_blocks_conflicts_without_killing_external_runtime(self):
         launcher_text = LAUNCHER.read_text()
-        self.assertIn('[[ "$stale_command" == *"gz sim"* ]]', launcher_text)
-        self.assertIn('[[ "$stale_command" == *"$WORLD_DST"* ]]', launcher_text)
-        self.assertIn('kill -KILL "$stale_pid"', launcher_text)
+        self.assertIn("another PX4 instance is already running", launcher_text)
+        self.assertIn("another Gazebo Sim instance is already running", launcher_text)
+        self.assertNotIn("killall", launcher_text)
+        self.assertNotIn('kill -KILL "$stale_pid"', launcher_text)
 
     def test_launcher_prefers_opencv4_and_refreshes_px4_configuration(self):
         launcher_text = LAUNCHER.read_text()
         self.assertIn("brew --prefix opencv@4", launcher_text)
-        self.assertIn("brew install opencv@4", launcher_text)
+        self.assertIn("UAV_SANDBOX_OPENCV_PREFIX", launcher_text)
         self.assertIn('-DOpenCV_DIR="$OpenCV_DIR"', launcher_text)
         self.assertIn("brew --prefix qt@5", launcher_text)
-        self.assertIn("brew install qt@5", launcher_text)
+        self.assertIn("UAV_SANDBOX_QT_PREFIX", launcher_text)
         self.assertIn('-DQt5_DIR="$Qt5_DIR"', launcher_text)
         self.assertIn("-U 'GSTREAMER_*'", launcher_text)
+
+    def test_launcher_rejects_unverified_old_python_fallback(self):
+        launcher_text = LAUNCHER.read_text()
+        self.assertIn("sys.version_info < (3, 11)", launcher_text)
+        self.assertNotIn('MAP_PYTHON="$(command -v python3 || true)"', launcher_text)
 
     def test_research_vehicle_uses_registered_x500_airframe_target(self):
         launcher_text = LAUNCHER.read_text()

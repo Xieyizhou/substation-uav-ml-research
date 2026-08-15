@@ -14,10 +14,20 @@ if [ "${1:-}" = "--profile" ]; then
   shift 2
 fi
 
-python_bin=python3
-if [ -x .venv/bin/python ]; then
-  python_bin=.venv/bin/python
-fi
+python_bin=
+for candidate in .venv/bin/python "${UAV_SANDBOX_PYTHON:-}" \
+  /opt/homebrew/bin/python3 /usr/local/bin/python3 /usr/bin/python3; do
+  [ -n "$candidate" ] || continue
+  [ -x "$candidate" ] || continue
+  if "$candidate" -c 'import importlib.util,sys; raise SystemExit(0 if sys.version_info >= (3,11) and importlib.util.find_spec("mavsdk") else 1)' 2>/dev/null; then
+    python_bin=$candidate
+    break
+  fi
+done
+[ -n "$python_bin" ] || {
+  echo "No compatible Python 3.11+ runtime with mavsdk was found." >&2
+  exit 1
+}
 
 "$python_bin" main.py sandbox --project-root "$project_root" \
   --profile "$profile" bootstrap >/dev/null

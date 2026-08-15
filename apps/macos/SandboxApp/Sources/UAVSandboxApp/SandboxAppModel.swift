@@ -12,12 +12,14 @@ final class SandboxAppModel: ObservableObject {
     @Published var logLines: [String] = []
     @Published var webURL: URL?
     @Published var embeddedDemoReady = false
-
+    @Published var runtimeAssessment: RuntimeAssessment?
+    @Published var runtimeRefreshing = false
     private let port: UInt16 = 8765
     private var process: Process?
     private var outputPipe: Pipe?
     private var ownsServer = false
-
+    let runtimeManager = RuntimeCompatibilityManager()
+    var runtimeSelection = RuntimeSelection()
     init() {
         let stored = UserDefaults.standard.string(forKey: "sandboxProjectRoot")
         let workingRoot = ProjectLocator.suggestedRoot()
@@ -26,10 +28,10 @@ final class SandboxAppModel: ObservableObject {
         }
         projectRoot = stored ?? workingRoot?.path ?? bundleRoot?.path ?? ""
     }
-
     var canStart: Bool {
         switch state {
-        case .idle, .failed: return profile == .demo || !projectRoot.isEmpty
+        case .idle, .failed:
+            return profile == .demo || runtimeAssessment?.ready == true
         default: return false
         }
     }
@@ -66,7 +68,10 @@ final class SandboxAppModel: ObservableObject {
         if panel.runModal() == .OK, let url = panel.url {
             projectRoot = url.path
             UserDefaults.standard.set(url.path, forKey: "sandboxProjectRoot")
+            runtimeSelection = RuntimeSelection()
+            runtimeAssessment = nil
             if case .failed = state { state = .idle }
+            Task { await refreshRuntime() }
         }
     }
 
@@ -82,10 +87,12 @@ final class SandboxAppModel: ObservableObject {
         let selectedPort = port
         Task {
             do {
+                let runtime = try await runtimeForLaunch(profile: selectedProfile)
                 try await connectOrLaunch(
                     root: root,
                     profile: selectedProfile,
-                    port: selectedPort
+                    port: selectedPort,
+                    runtime: runtime
                 )
             } catch {
                 state = .failed(error.localizedDescription)
@@ -110,9 +117,10 @@ final class SandboxAppModel: ObservableObject {
     private func connectOrLaunch(
         root: URL,
         profile: SandboxProfile,
-        port: UInt16
+        port: UInt16,
+        runtime: VerifiedRuntimeProfile
     ) async throws {
-        let project = try ProjectLocator.locate(root: root)
+        let project = try ProjectLocator.locate(root: root, runtime: runtime)
         UserDefaults.standard.set(project.root.path, forKey: "sandboxProjectRoot")
         if let runningProfile = await runningProfile() {
             guard runningProfile == profile.rawValue else {
@@ -127,6 +135,8 @@ final class SandboxAppModel: ObservableObject {
             append("Connected to the existing loopback Sandbox service.")
             return
         }
+        let conflicts = RuntimeConflictChecker().conflicts()
+        if !conflicts.isEmpty { throw AppFailure.externalRuntimeConflict(conflicts) }
         let result = try await bootstrap(project: project, profile: profile, port: port)
         guard result.exitCode == 0 else { throw AppFailure.bootstrap(result.output) }
         append(result.output)
@@ -247,7 +257,7 @@ final class SandboxAppModel: ObservableObject {
         return false
     }
 
-    private func append(_ text: String) {
+    func append(_ text: String) {
         let incoming = text.split(whereSeparator: \.isNewline).map(String.init)
         guard !incoming.isEmpty else { return }
         logLines.append(contentsOf: incoming)

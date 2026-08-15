@@ -13,7 +13,8 @@ The native application provides:
 - a repository-free, native Demo classifier with a deterministic saved artifact;
 - repository selection and validation for Development and Formal;
 - Demo, Development, and Formal profile selection;
-- `.venv/bin/python` discovery with a `PATH` fallback;
+- verified runtime discovery for Python, PX4, Gazebo, OpenCV, and Qt;
+- persistent absolute runtime paths with lightweight launch-time revalidation;
 - profile bootstrap before launch;
 - loopback-only service health checks;
 - connection to an already-running local service without taking ownership;
@@ -35,6 +36,52 @@ status. It detects the project interpreter, PX4 checkout and SITL build,
 Gazebo, MAVSDK, and simulation worlds. Installation remains an explicit user
 operation: the App exposes copyable commands and official documentation, then
 rechecks the environment without running a package manager itself.
+
+## Runtime compatibility
+
+Standalone Demo never invokes the Runtime Compatibility Manager. Development
+and Formal use this sequence before starting the Python service:
+
+```text
+Discover → Inspect → Validate → Select → Persist → Revalidate
+```
+
+The project virtual environment has first priority. A saved and previously
+verified Python is considered next, followed by compatible candidates found in
+known command locations. Python older than 3.11 or missing `mavsdk` is not
+selected. ML-only packages such as PyTorch and ONNX remain optional for the
+basic Development runtime.
+
+PX4 inspection verifies the Git checkout, required SITL/Gazebo source
+structure, current commit, and available tag description. Gazebo inspection
+runs the selected absolute `gz` executable and verifies its Sim major version;
+finding a command named `gz` is not sufficient. OpenCV prefers `opencv@4`, and
+Qt prefers `qt@5`.
+
+The version-controlled policy is
+`config/sandbox/runtime_compatibility.json`. A verified local selection is
+stored at:
+
+```text
+~/Library/Application Support/UAV Research Sandbox/runtime-profile.json
+```
+
+The file records the project, component paths, versions and identities, result,
+and validation time. Development permits an untested compatible version with a
+warning; Formal blocks untested runtimes. Missing, unsupported, or changed
+runtime identities block both profiles until the user selects **Check runtime**
+or chooses a different Python, PX4 checkout, or Gazebo executable.
+
+The selected paths are passed to the service and flight launcher through a
+controlled environment. The verified tool directories lead `PATH`, and the
+launcher also receives explicit Python, Gazebo, PX4, OpenCV, and Qt paths. The
+App never changes a PX4 branch, upgrades Homebrew packages, modifies shell
+profiles, or terminates simulator processes it does not own. A likely external
+PX4/Gazebo collision blocks launch with the process identity instead.
+
+Multiple Python, PX4, or Gazebo installations may therefore coexist. Changing
+or removing a saved executable, changing PX4 `HEAD`, or replacing a versioned
+dependency produces `changed_since_validation` rather than a silent fallback.
 
 The App version, Sandbox product milestone, operator API, and gate schema are
 separate compatibility identities. Their shared source is
@@ -69,6 +116,10 @@ initial folder can be supplied to the executable with:
 UAV_SANDBOX_PROJECT_ROOT="$PWD" \
   "dist/UAV Research Sandbox.app/Contents/MacOS/UAVSandboxApp"
 ```
+
+The start screen also provides manual selectors for the Python executable, PX4
+root, and `gz` executable. These choices are inspected before they are saved;
+selecting a path never installs, upgrades, removes, or rewrites that runtime.
 
 ## Preview installer
 

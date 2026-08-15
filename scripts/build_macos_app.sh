@@ -56,6 +56,11 @@ build_with_command_line_tools() {
     -o "$build_root/libSandboxAppCore.a" \
     "$package_root/Sources/SandboxAppCore/ProjectConfiguration.swift" \
     "$package_root/Sources/SandboxAppCore/ProcessExecution.swift" \
+    "$package_root/Sources/SandboxAppCore/RuntimeModels.swift" \
+    "$package_root/Sources/SandboxAppCore/RuntimeProfileStore.swift" \
+    "$package_root/Sources/SandboxAppCore/RuntimeInspection.swift" \
+    "$package_root/Sources/SandboxAppCore/RuntimeCompatibilityManager.swift" \
+    "$package_root/Sources/SandboxAppCore/RuntimeConflict.swift" \
     "$package_root/Sources/SandboxAppCore/StandaloneDemoModels.swift" \
     "$package_root/Sources/SandboxAppCore/StandaloneDemo.swift"
   swiftc -parse-as-library -swift-version 5 "$optimization" \
@@ -67,10 +72,12 @@ build_with_command_line_tools() {
     "$package_root/Sources/UAVSandboxApp/SandboxAppFailures.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxAppState.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxAppModel.swift" \
+    "$package_root/Sources/UAVSandboxApp/SandboxRuntimeModel.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxStatusModels.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxStatusModel.swift" \
     "$package_root/Sources/UAVSandboxApp/NativeDashboardView.swift" \
     "$package_root/Sources/UAVSandboxApp/StandaloneDemoView.swift" \
+    "$package_root/Sources/UAVSandboxApp/RuntimeCompatibilityView.swift" \
     "$package_root/Sources/UAVSandboxApp/ContentView.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxWebView.swift"
 }

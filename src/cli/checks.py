@@ -3,27 +3,21 @@
 from __future__ import annotations
 
 import argparse
-import importlib.util
-import shutil
 import sys
-from pathlib import Path
 
 from src.cli.process import PROJECT_ROOT, forwarded_args, run_module
+from src.runtime_compatibility import inspect_runtime
 
 
 def check_environment():
-    checks = [
-        ("Python 3.11+", sys.version_info >= (3, 11), sys.version.split()[0]),
-        ("MAVSDK package", importlib.util.find_spec("mavsdk") is not None, "Python import"),
-        ("Gazebo gz command", shutil.which("gz") is not None, shutil.which("gz") or "not found"),
-        ("PX4 source", (Path.home() / "PX4-Autopilot").is_dir(), "~/PX4-Autopilot"),
-    ]
+    report = inspect_runtime(PROJECT_ROOT, "development")
     print("\nEnvironment Check")
     print("=" * 68)
-    for label, passed, detail in checks:
-        print(f"{'PASS' if passed else 'FAIL':<5} {label:<20} {detail}")
+    for item in report["components"]:
+        passed = item["status"] in {"compatible", "compatible_with_warning", "untested"}
+        print(f"{'PASS' if passed else 'FAIL':<5} {item['title']:<20} {item['detail']}")
     print("=" * 68)
-    return 0 if all(passed for _, passed, _ in checks) else 1
+    return 0 if report["ready"] else 1
 
 
 def run_tests(map_only=False, arguments=None):

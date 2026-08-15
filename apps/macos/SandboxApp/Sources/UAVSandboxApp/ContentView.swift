@@ -36,6 +36,8 @@ struct ContentView: View {
                 status.stop()
             }
         }
+        .onChange(of: model.profile) { _ in model.profileChanged() }
+        .task { model.profileChanged() }
         .onReceive(NotificationCenter.default.publisher(
             for: NSApplication.willTerminateNotification
         )) { _ in
@@ -146,6 +148,9 @@ struct ContentView: View {
                     }
                     .labelsHidden()
                     .frame(width: 170)
+                }
+                if model.profile.requiresProject {
+                    RuntimeCompatibilityView(model: model)
                 }
                 Divider()
                 HStack {

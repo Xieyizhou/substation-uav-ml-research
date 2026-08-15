@@ -1,6 +1,7 @@
 """Static contract checks for the native macOS Sandbox shell."""
 
 from pathlib import Path
+import json
 import plistlib
 import struct
 import unittest
@@ -76,6 +77,40 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertIn("profile == .demo", model)
         self.assertIn("StandaloneDemo.swift", build)
         self.assertIn("StandaloneDemoView.swift", build)
+
+    def test_advanced_profiles_use_persisted_verified_runtime(self):
+        project = (
+            APP_ROOT / "Sources/SandboxAppCore/ProjectConfiguration.swift"
+        ).read_text(encoding="utf-8")
+        model = (
+            APP_ROOT / "Sources/UAVSandboxApp/SandboxAppModel.swift"
+        ).read_text(encoding="utf-8")
+        launcher = (ROOT / "scripts/flight/start_px4_substation.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("VerifiedRuntimeProfile", project)
+        for variable in (
+            "UAV_SANDBOX_PYTHON",
+            "UAV_SANDBOX_GZ_EXECUTABLE",
+            "PX4_ROOT",
+            "UAV_SANDBOX_OPENCV_PREFIX",
+            "UAV_SANDBOX_QT_PREFIX",
+        ):
+            self.assertIn(variable, project)
+        self.assertIn("runtimeForLaunch", model)
+        self.assertNotIn("killall", launcher)
+
+    def test_runtime_compatibility_manifest_is_explicit(self):
+        manifest = json.loads(
+            (ROOT / "config/sandbox/runtime_compatibility.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        self.assertEqual(manifest["schema_version"], 1)
+        self.assertEqual(manifest["python"]["minimum_version"], "3.11")
+        self.assertEqual(manifest["gazebo"]["tested_sim_major_versions"], [8])
+        self.assertEqual(manifest["opencv"]["preferred_formula"], "opencv@4")
+        self.assertEqual(manifest["qt"]["preferred_formula"], "qt@5")
 
     def test_packaging_script_targets_generated_dist_only(self):
         script = (ROOT / "scripts/build_macos_app.sh").read_text(encoding="utf-8")

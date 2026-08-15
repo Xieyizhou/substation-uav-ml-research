@@ -18,11 +18,15 @@ public enum SandboxProfile: String, CaseIterable, Identifiable, Sendable {
 
 public struct SandboxProject: Equatable, Sendable {
     public let root: URL
-    public let python: URL
+    public let runtime: VerifiedRuntimeProfile
 
-    public init(root: URL, python: URL) {
+    public init(root: URL, runtime: VerifiedRuntimeProfile) {
         self.root = root
-        self.python = python
+        self.runtime = runtime
+    }
+
+    public var python: URL {
+        URL(fileURLWithPath: runtime.pythonExecutable)
     }
 
     public var mainScript: URL {
@@ -36,17 +40,32 @@ public struct SandboxProject: Equatable, Sendable {
         let inherited = (base["PATH"] ?? "/usr/bin:/bin")
             .split(separator: ":")
             .map(String.init)
-        let preferred = [
-            root.appendingPathComponent(".venv/bin").path,
+        let verified = [
+            python.deletingLastPathComponent().path,
+            URL(fileURLWithPath: runtime.gazeboExecutable).deletingLastPathComponent().path,
+            URL(fileURLWithPath: runtime.qtPrefix).appendingPathComponent("bin").path,
+            URL(fileURLWithPath: runtime.openCVPrefix).appendingPathComponent("bin").path,
+        ]
+        let fallback = [
             "/opt/homebrew/bin", "/opt/homebrew/sbin",
             "/usr/local/bin", "/usr/local/sbin",
         ]
         var seen = Set<String>()
-        let folders = (preferred + inherited).filter {
+        let folders = (verified + fallback + inherited).filter {
             !$0.isEmpty && seen.insert($0).inserted
         }
         environment["PATH"] = folders.joined(separator: ":")
         environment["UAV_SANDBOX_PROJECT_ROOT"] = root.path
+        environment["UAV_SANDBOX_PYTHON"] = runtime.pythonExecutable
+        environment["UAV_SANDBOX_GZ_EXECUTABLE"] = runtime.gazeboExecutable
+        environment["PX4_ROOT"] = runtime.px4Root
+        environment["OpenCV_DIR"] = URL(fileURLWithPath: runtime.openCVPrefix)
+            .appendingPathComponent("lib/cmake/opencv4").path
+        environment["Qt5_DIR"] = URL(fileURLWithPath: runtime.qtPrefix)
+            .appendingPathComponent("lib/cmake/Qt5").path
+        environment["UAV_SANDBOX_OPENCV_PREFIX"] = runtime.openCVPrefix
+        environment["UAV_SANDBOX_QT_PREFIX"] = runtime.qtPrefix
+        environment["UAV_SANDBOX_RUNTIME_PROFILE"] = RuntimeProfileStore().fileURL.path
         return environment
     }
 
@@ -75,7 +94,6 @@ public struct SandboxProject: Equatable, Sendable {
 public enum ProjectValidationError: LocalizedError, Equatable {
     case missingMainScript
     case missingSandboxPackage
-    case missingPython
 
     public var errorDescription: String? {
         switch self {
@@ -83,8 +101,6 @@ public enum ProjectValidationError: LocalizedError, Equatable {
             return "The selected folder does not contain main.py."
         case .missingSandboxPackage:
             return "The selected folder does not contain src/sandbox."
-        case .missingPython:
-            return "No usable Python 3 executable was found."
         }
     }
 }
@@ -92,9 +108,19 @@ public enum ProjectValidationError: LocalizedError, Equatable {
 public enum ProjectLocator {
     public static func locate(
         root: URL,
-        environment: [String: String] = ProcessInfo.processInfo.environment,
+        runtime: VerifiedRuntimeProfile,
         fileManager: FileManager = .default
     ) throws -> SandboxProject {
+        let normalized = try validate(root: root, fileManager: fileManager)
+        guard URL(fileURLWithPath: runtime.projectRoot).standardizedFileURL == normalized
+        else { throw ProjectValidationError.missingMainScript }
+        return SandboxProject(root: normalized, runtime: runtime)
+    }
+
+    public static func validate(
+        root: URL,
+        fileManager: FileManager = .default
+    ) throws -> URL {
         let normalized = root.standardizedFileURL
         guard fileManager.fileExists(
             atPath: normalized.appendingPathComponent("main.py").path
@@ -106,14 +132,7 @@ public enum ProjectLocator {
         ) else {
             throw ProjectValidationError.missingSandboxPackage
         }
-        guard let python = pythonURL(
-            root: normalized,
-            environment: environment,
-            fileManager: fileManager
-        ) else {
-            throw ProjectValidationError.missingPython
-        }
-        return SandboxProject(root: normalized, python: python)
+        return normalized
     }
 
     public static func suggestedRoot(
@@ -135,26 +154,4 @@ public enum ProjectLocator {
         return nil
     }
 
-    private static func pythonURL(
-        root: URL,
-        environment: [String: String],
-        fileManager: FileManager
-    ) -> URL? {
-        let virtualEnvironment = root.appendingPathComponent(".venv/bin/python")
-        if fileManager.isExecutableFile(atPath: virtualEnvironment.path) {
-            return virtualEnvironment
-        }
-        let searchPath = environment["PATH"]
-            ?? "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
-        for name in ["python3", "python"] {
-            for folder in searchPath.split(separator: ":") {
-                let candidate = URL(fileURLWithPath: String(folder))
-                    .appendingPathComponent(name)
-                if fileManager.isExecutableFile(atPath: candidate.path) {
-                    return candidate
-                }
-            }
-        }
-        return nil
-    }
 }

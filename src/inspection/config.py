@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import os
 from pathlib import Path
 
 
@@ -39,12 +40,13 @@ class InspectionConfig:
 
         root = Path(project_root).resolve()
         selected = sandbox_profile(profile)
+        px4_root = Path(os.environ.get("PX4_ROOT", Path.home() / "PX4-Autopilot"))
         if selected.profile_id == "demo":
             return cls(
                 root,
                 root / "config/sandbox/demo_collection_plan.json",
                 root / "outputs/sandbox/demo/collection",
-                Path.home() / "PX4-Autopilot",
+                px4_root,
                 profile=selected.profile_id,
             )
         collection = root / "data/research/visual_collection_v2"
@@ -53,7 +55,7 @@ class InspectionConfig:
             root / "benchmarks/visual_static_v2/collection_plan.json"
         )
         return cls(
-            root, plan, collection, Path.home() / "PX4-Autopilot",
+            root, plan, collection, px4_root,
             profile=selected.profile_id,
         )
 

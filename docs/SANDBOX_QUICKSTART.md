@@ -137,6 +137,17 @@ Install PX4 and Gazebo separately, then start the development profile:
 ./scripts/run_sandbox_app.sh --profile development
 ```
 
+In the native macOS App, select **Development** and review **Runtime
+compatibility** before starting. The App prefers the repository `.venv`,
+inspects the PX4 Git identity and Gazebo Sim version, and saves verified
+absolute paths under `~/Library/Application Support/UAV Research
+Sandbox/runtime-profile.json`. Use the Python, PX4, or Gazebo selector when
+multiple installations exist. `untested` is a Development warning but a Formal
+block; `missing`, `unsupported`, and `changed_since_validation` always block.
+
+The App does not install or upgrade packages, change the PX4 checkout, edit a
+shell profile, or terminate an unrelated PX4/Gazebo process.
+
 The setup page checks the active project virtual environment, PX4 checkout and
 SITL build, Gazebo command-line tools, MAVSDK, and tracked SDF worlds. A ready
 result means the local prerequisites are present; the existing Preflight and
@@ -216,6 +227,10 @@ tracked source files or formal research data.
 
 - **Port already in use:** start with `--port 8876` or stop the existing App.
 - **Python is too old:** install Python 3.11+ and retry.
+- **Runtime changed:** select **Check runtime** to inspect and explicitly accept
+  the new identity; do not continue if the change was unexpected.
+- **External simulator conflict:** stop the identified PX4 or Gazebo instance
+  explicitly. The App intentionally does not use `killall`.
 - **Bootstrap identity mismatch:** restore
   `config/sandbox/demo_collection_plan.json` from Git.
 - **Demo result identity mismatch:** create a new output directory or remove

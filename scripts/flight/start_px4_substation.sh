@@ -51,11 +51,20 @@ PROJECT_ROOT="$(cd -- "$PROJECT_ROOT" && pwd)"
 MAP_SWITCHER="$PROJECT_ROOT/scripts/maps/switch_map.py"
 TARGET_PREPARER="$PROJECT_ROOT/scripts/maps/prepare_selected_world.py"
 VEHICLE_PREPARER="$PROJECT_ROOT/scripts/maps/prepare_research_vehicle.py"
-MAP_PYTHON="$PROJECT_ROOT/.venv/bin/python"
+MAP_PYTHON="${UAV_SANDBOX_PYTHON:-$PROJECT_ROOT/.venv/bin/python}"
 if [[ ! -x "$MAP_PYTHON" ]]; then
-  MAP_PYTHON="$(command -v python3 || true)"
+  MAP_PYTHON=""
+  while IFS= read -r candidate; do
+    if [[ -x "$candidate" ]] && "$candidate" -c \
+      'import sys; raise SystemExit(sys.version_info < (3, 11))' 2>/dev/null; then
+      MAP_PYTHON="$candidate"
+      break
+    fi
+  done < <(type -aP python3 2>/dev/null || true)
 fi
-[[ -n "$MAP_PYTHON" ]] || fail "Python 3 was not found. Create .venv or install python3."
+[[ -n "$MAP_PYTHON" ]] || fail \
+  "Compatible Python 3.11+ was not found. Create .venv or select a verified runtime."
+GZ_EXECUTABLE="${UAV_SANDBOX_GZ_EXECUTABLE:-$(command -v gz || true)}"
 
 if [[ -z "${WORLD_NAME+x}" ]] && [[ -f "$MAP_SWITCHER" ]]; then
   MAP_ID="$("$MAP_PYTHON" "$MAP_SWITCHER" current --field id)"
@@ -96,7 +105,7 @@ echo
 [[ -d "$PX4_ROOT" ]] || fail "PX4 root directory not found: $PX4_ROOT"
 [[ -f "$PX4_ROOT/Makefile" ]] || fail "PX4 Makefile not found: $PX4_ROOT/Makefile"
 command -v make >/dev/null 2>&1 || fail "make command not found"
-command -v gz >/dev/null 2>&1 || fail "Gazebo 'gz' command not found"
+[[ -x "$GZ_EXECUTABLE" ]] || fail "Verified Gazebo 'gz' executable not found: $GZ_EXECUTABLE"
 if [[ "$MAP_ID" != "custom" ]]; then
   [[ -f "$TARGET_PREPARER" ]] || fail "target world preparer not found: $TARGET_PREPARER"
   "$MAP_PYTHON" "$TARGET_PREPARER" --help >/dev/null || fail \
@@ -128,65 +137,14 @@ if [[ -f "$PX4_PID_FILE" ]]; then
   rm -f "$PX4_PID_FILE"
 fi
 
-# Gazebo Sim starts its server as an independent process. If the terminal or
-# PX4 launcher is killed abruptly, that server can survive after the PID file
-# is removed and prevent the next launch from loading this world correctly.
-# Only clean servers whose command line references this project's exact world.
-stale_gazebo_pids=()
-while IFS= read -r candidate_pid; do
-  [[ "$candidate_pid" =~ ^[0-9]+$ ]] || continue
-  candidate_command="$(ps -p "$candidate_pid" -o command= 2>/dev/null || true)"
-  if [[ "$candidate_command" == *"gz sim"* ]] && [[ "$candidate_command" == *"$WORLD_DST"* ]]; then
-    stale_gazebo_pids+=("$candidate_pid")
-  fi
-done < <(pgrep -f "$WORLD_DST" 2>/dev/null || true)
-
-if (( ${#stale_gazebo_pids[@]} > 0 )); then
-  echo "Cleaning stale Gazebo server(s) for $WORLD_NAME: ${stale_gazebo_pids[*]}"
-  for stale_pid in "${stale_gazebo_pids[@]}"; do
-    kill -TERM "$stale_pid" 2>/dev/null || true
-  done
-
-  for _ in {1..50}; do
-    servers_still_running=false
-    for stale_pid in "${stale_gazebo_pids[@]}"; do
-      if kill -0 "$stale_pid" 2>/dev/null; then
-        servers_still_running=true
-        break
-      fi
-    done
-    [[ "$servers_still_running" == false ]] && break
-    sleep 0.1
-  done
-
-  for stale_pid in "${stale_gazebo_pids[@]}"; do
-    if kill -0 "$stale_pid" 2>/dev/null; then
-      stale_command="$(ps -p "$stale_pid" -o command= 2>/dev/null || true)"
-      if [[ "$stale_command" == *"gz sim"* ]] && [[ "$stale_command" == *"$WORLD_DST"* ]]; then
-        echo "Stale Gazebo server PID $stale_pid ignored SIGTERM; sending SIGKILL."
-        kill -KILL "$stale_pid" 2>/dev/null || true
-      fi
-    fi
-  done
-
-  for _ in {1..20}; do
-    servers_still_running=false
-    for stale_pid in "${stale_gazebo_pids[@]}"; do
-      if kill -0 "$stale_pid" 2>/dev/null; then
-        servers_still_running=true
-        break
-      fi
-    done
-    [[ "$servers_still_running" == false ]] && break
-    sleep 0.1
-  done
-
-  for stale_pid in "${stale_gazebo_pids[@]}"; do
-    if kill -0 "$stale_pid" 2>/dev/null; then
-      echo "ERROR: stale Gazebo server PID $stale_pid did not stop after SIGKILL."
-      exit 1
-    fi
-  done
+# Never terminate simulator processes not owned by this launcher. A concurrent
+# PX4 or Gazebo instance can share ports and transport namespaces, so fail with
+# a precise conflict instead of relying on global process cleanup.
+if pgrep -x px4 >/dev/null 2>&1; then
+  fail "another PX4 instance is already running; stop it explicitly before launch"
+fi
+if pgrep -f '(^|/)gz sim' >/dev/null 2>&1; then
+  fail "another Gazebo Sim instance is already running; stop it explicitly before launch"
 fi
 
 echo "Copying world file into PX4 Gazebo worlds folder..."
@@ -242,7 +200,9 @@ else
   echo "PX4 .venv not found, continuing without activating it."
 fi
 
-if command -v brew >/dev/null 2>&1; then
+if [[ -n "${UAV_SANDBOX_OPENCV_PREFIX:-}" ]]; then
+  OPENCV_PREFIX="$UAV_SANDBOX_OPENCV_PREFIX"
+elif command -v brew >/dev/null 2>&1; then
   if brew --prefix opencv@4 >/dev/null 2>&1; then
     OPENCV_PREFIX="$(brew --prefix opencv@4)"
   elif brew --prefix opencv >/dev/null 2>&1; then
@@ -250,31 +210,34 @@ if command -v brew >/dev/null 2>&1; then
   else
     OPENCV_PREFIX=""
   fi
+fi
 
-  if [[ -n "$OPENCV_PREFIX" ]]; then
-    export OpenCV_DIR="$OPENCV_PREFIX/lib/cmake/opencv4"
-    export CMAKE_PREFIX_PATH="$OPENCV_PREFIX${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
-    export PKG_CONFIG_PATH="$OPENCV_PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-    OPENCV_LEGACY_HEADER="$OPENCV_PREFIX/include/opencv4/opencv2/core/types_c.h"
-    [[ -f "$OPENCV_LEGACY_HEADER" ]] || fail \
-      "PX4 requires OpenCV 4 compatibility. Install it with: brew install opencv@4"
-    echo "OpenCV compatibility prefix: $OPENCV_PREFIX"
-    echo "OpenCV_DIR=$OpenCV_DIR"
-  fi
+if [[ -n "${OPENCV_PREFIX:-}" ]]; then
+  export OpenCV_DIR="${OpenCV_DIR:-$OPENCV_PREFIX/lib/cmake/opencv4}"
+  export CMAKE_PREFIX_PATH="$OPENCV_PREFIX${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+  export PKG_CONFIG_PATH="$OPENCV_PREFIX/lib/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+  OPENCV_LEGACY_HEADER="$OPENCV_PREFIX/include/opencv4/opencv2/core/types_c.h"
+  [[ -f "$OPENCV_LEGACY_HEADER" ]] || fail \
+    "PX4 requires OpenCV 4 compatibility. Select a verified opencv@4 runtime."
+  echo "OpenCV compatibility prefix: $OPENCV_PREFIX"
+  echo "OpenCV_DIR=$OpenCV_DIR"
+fi
 
+if [[ -n "${UAV_SANDBOX_QT_PREFIX:-}" ]]; then
+  QT5_PREFIX="$UAV_SANDBOX_QT_PREFIX"
+elif command -v brew >/dev/null 2>&1; then
   if brew --prefix qt@5 >/dev/null 2>&1; then
     QT5_PREFIX="$(brew --prefix qt@5)"
-    QT5_CONFIG="$QT5_PREFIX/lib/cmake/Qt5/Qt5Config.cmake"
-    [[ -f "$QT5_CONFIG" ]] || fail \
-      "Qt 5 CMake configuration was not found: $QT5_CONFIG"
-    export Qt5_DIR="$QT5_PREFIX/lib/cmake/Qt5"
-    export CMAKE_PREFIX_PATH="$QT5_PREFIX${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
-    echo "Qt 5 compatibility prefix: $QT5_PREFIX"
-    echo "Qt5_DIR=$Qt5_DIR"
-  else
-    fail "Gazebo GUI libraries require Qt 5. Install it with: brew install qt@5"
   fi
 fi
+
+[[ -n "${QT5_PREFIX:-}" ]] || fail "Verified Qt 5 runtime was not found"
+QT5_CONFIG="$QT5_PREFIX/lib/cmake/Qt5/Qt5Config.cmake"
+[[ -f "$QT5_CONFIG" ]] || fail "Qt 5 CMake configuration was not found: $QT5_CONFIG"
+export Qt5_DIR="${Qt5_DIR:-$QT5_PREFIX/lib/cmake/Qt5}"
+export CMAKE_PREFIX_PATH="$QT5_PREFIX${CMAKE_PREFIX_PATH:+:$CMAKE_PREFIX_PATH}"
+echo "Qt 5 compatibility prefix: $QT5_PREFIX"
+echo "Qt5_DIR=$Qt5_DIR"
 
 echo
 echo "Launching PX4 SITL..."

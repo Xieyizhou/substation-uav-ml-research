@@ -136,8 +136,9 @@ map management, and reporting into small modules under `src/`.
 
 ## Quick Start: App Demo
 
-The tracked Demo Profile runs with Python 3.11+ and does not require local
-datasets, trained weights, PX4, Gazebo, or third-party Python packages:
+The native Demo Profile does not require Python, a repository, local datasets,
+trained weights, PX4, or Gazebo. The repository-hosted browser workflow uses
+Python 3.11+:
 
 ```bash
 git clone https://github.com/Xieyizhou/substation-uav-ml-research.git
@@ -170,7 +171,11 @@ with:
 
 Demo Profile runs entirely inside the App without a repository or Python.
 Development and Formal continue to use the repository's Python environment and
-keep PX4/Gazebo as external dependencies. See [the macOS App guide](docs/MACOS_APP.md)
+keep PX4/Gazebo as external dependencies. Before launch, the App discovers and
+validates Python, PX4, Gazebo, OpenCV, and Qt, then saves their absolute paths in
+the user's Application Support directory. Multiple installations may coexist;
+the App does not silently use the first incompatible command on `PATH`. See
+[the macOS App guide](docs/MACOS_APP.md)
 for profiles, build requirements, preview releases, and the distribution boundary.
 
 Run the complete offline release check with:
@@ -197,8 +202,9 @@ outputs, and the first experiment walkthrough.
 
 ## Full Simulator Setup
 
-Prerequisites: Python 3.11+, PX4 SITL/Gazebo, and a local
-`~/PX4-Autopilot` checkout.
+Prerequisites: Python 3.11+, PX4 SITL/Gazebo, and a compatible PX4 checkout.
+`~/PX4-Autopilot` remains the default, while `PX4_ROOT` and the App's manual
+runtime chooser support other locations.
 
 ```bash
 python3 -m venv .venv

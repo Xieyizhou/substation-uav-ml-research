@@ -31,6 +31,13 @@ dataset collector so formal evidence cannot leak into training.
 Machine-readable dataset, model, and study-result contracts live in
 `config/schemas/`.
 
+`sandbox/runtime_compatibility.json` is the version-controlled compatibility
+policy for the macOS App and local environment check. It records the minimum
+and tested Python versions, required Development imports, tested PX4 commit
+identities, expected Gazebo Sim major/distribution, and the OpenCV/Qt families.
+It does not install or pin external runtimes. Machine-specific verified paths
+are stored in the user's Application Support directory and are never tracked.
+
 The coordinated map catalog in `config/maps/catalog.json` also defines five
 safe A* destination presets per map. The selected target is stored under
 `.runtime/selected_targets.json`; obstacle config files remain deterministic and

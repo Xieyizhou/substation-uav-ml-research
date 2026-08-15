@@ -9,6 +9,7 @@ import shutil
 import sys
 
 from src.inspection.config import InspectionConfig
+from src.runtime_compatibility import inspect_runtime
 
 
 PX4_SETUP_URL = "https://docs.px4.io/main/en/dev_setup/dev_env"
@@ -25,6 +26,7 @@ class SetupItem:
     action: str = ""
     command: str = ""
     docs_url: str = ""
+    compatibility_status: str = "compatible"
 
     def to_record(self):
         return self.__dict__
@@ -62,21 +64,38 @@ class LocalSetupProbe:
 
 
 def inspect_setup(config: InspectionConfig, probe=None) -> SetupReport:
+    local_runtime = None
+    if probe is None:
+        try:
+            local_runtime = inspect_runtime(config.project_root, config.profile)
+        except (OSError, ValueError):
+            # Older project roots and isolated callers may not have a runtime
+            # manifest. Keep the read-only setup report available; App launch
+            # still requires the verified manifest before advanced profiles run.
+            local_runtime = None
     probe = probe or LocalSetupProbe()
     simulator_required = config.profile != "demo"
+    runtime = ({item["component_id"]: item for item in local_runtime["components"]}
+               if local_runtime else {})
     items = (
-        _python_item(probe),
+        _runtime_item(runtime["python"], True, config.profile) if runtime else _python_item(probe),
         _executable_item(probe, "git", "Git", True, "Install Git or Xcode Command Line Tools."),
         _project_environment_item(config, probe, simulator_required),
-        _px4_checkout_item(config, simulator_required),
+        _runtime_item(runtime["px4"], simulator_required, config.profile)
+        if runtime else _px4_checkout_item(config, simulator_required),
         _px4_build_item(config, simulator_required),
-        _executable_item(
+        _runtime_item(runtime["gazebo"], simulator_required, config.profile)
+        if runtime else _executable_item(
             probe, "gz", "Gazebo command-line tools", simulator_required,
             "Install Gazebo Harmonic, then reopen the App.",
             "brew tap osrf/simulation && brew install gz-harmonic",
             GAZEBO_SETUP_URL,
         ),
         _module_item(probe, "mavsdk", "MAVSDK Python", simulator_required),
+        *(() if not runtime else (
+            _runtime_item(runtime["opencv"], simulator_required, config.profile),
+            _runtime_item(runtime["qt"], simulator_required, config.profile),
+        )),
         _world_item(config, simulator_required),
     )
     required = tuple(item for item in items if item.required)
@@ -95,6 +114,17 @@ def inspect_setup(config: InspectionConfig, probe=None) -> SetupReport:
 def _item(item_id, title, found, required, detail, action="", command="", docs_url=""):
     status = "ready" if found else "missing" if required else "optional"
     return SetupItem(item_id, title, status, required, detail, action, command, docs_url)
+
+
+def _runtime_item(value, required, profile):
+    compatibility = value["status"]
+    allowed = compatibility in {"compatible", "compatible_with_warning"}
+    allowed = allowed or (compatibility == "untested" and profile != "formal")
+    status = "ready" if allowed else "missing" if required else "optional"
+    return SetupItem(
+        value["component_id"], value["title"], status, required,
+        value["detail"], compatibility_status=compatibility,
+    )
 
 
 def _python_item(probe):

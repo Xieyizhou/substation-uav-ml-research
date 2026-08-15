@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "python": {
+    "minimum_version": "3.11",
+    "tested_minor_versions": [
+      "3.11",
+      "3.13",
+      "3.14"
+    ],
+    "required_development_packages": [
+      "mavsdk"
+    ],
+    "optional_ml_packages": [
+      "torch",
+      "onnx",
+      "onnxruntime",
+      "ultralytics"
+    ]
+  },
+  "px4": {
+    "version_policy": "tested_commits_or_warning",
+    "tested_commits": [
+      "6e569d87b977d0579966a4cae78abc275aa9aaf3"
+    ],
+    "required_paths": [
+      "Makefile",
+      "CMakeLists.txt",
+      "Tools/simulation/gz"
+    ]
+  },
+  "gazebo": {
+    "expected_distribution": "Harmonic",
+    "tested_sim_major_versions": [
+      8
+    ]
+  },
+  "opencv": {
+    "preferred_formula": "opencv@4",
+    "expected_major_version": 4
+  },
+  "qt": {
+    "preferred_formula": "qt@5",
+    "expected_major_version": 5
+  }
+}
