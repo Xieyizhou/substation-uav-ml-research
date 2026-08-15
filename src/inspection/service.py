@@ -41,6 +41,11 @@ class InspectionService:
 
         return load_sandbox_version(self.config.project_root).to_record()
 
+    def setup(self):
+        from src.inspection.setup import inspect_setup
+
+        return inspect_setup(self.config).to_record()
+
     def dashboard(self):
         from src.inspection.dashboard import dashboard
 

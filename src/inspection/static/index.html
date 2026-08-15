@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/research.css">
   <link rel="stylesheet" href="/experiments.css">
   <link rel="stylesheet" href="/profile.css">
+  <link rel="stylesheet" href="/setup.css">
 </head>
 <body>
   <header>
@@ -17,6 +18,7 @@
     <button id="refresh">Refresh observations</button>
   </header>
   <nav>
+    <button class="tab" data-tab="setup">Get started</button>
     <button class="tab active" data-tab="overview">Overview</button>
     <button class="tab" data-full-profile data-tab="research">ML results</button>
     <button class="tab" data-full-profile data-tab="lidar">LiDAR gates</button>
@@ -28,6 +30,14 @@
     <button class="tab" data-full-profile data-tab="frames">Recordings</button>
   </nav>
   <main>
+    <section id="setup" class="panel">
+      <div class="setup-hero">
+        <div><p class="kicker">FIRST RUN</p><h2>Prepare this Mac</h2><p>Check the selected profile before starting simulator or ML workflows. Nothing is installed or launched from this page.</p></div>
+        <div id="setup-progress" class="setup-progress"></div>
+      </div>
+      <div id="setup-items" class="setup-grid"></div>
+      <article class="setup-next"><div><h3>Next step</h3><p id="setup-next-step"></p></div><button id="setup-check">Check again</button></article>
+    </section>
     <section id="overview" class="panel active">
       <div class="section-head"><div><p class="kicker">COLLECTION</p><h2>Experiment overview</h2></div><p id="updated"></p></div>
       <div id="progress" class="progress-card"></div>
@@ -141,6 +151,7 @@
   </dialog>
   <div id="action-status" class="action-status" role="alert" aria-live="assertive"></div>
   <footer><span id="version-label">Version unavailable</span> · Local actions use fixed commands, one-job locking, bounded timeouts, and process-group cleanup.</footer>
+  <script src="/setup.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

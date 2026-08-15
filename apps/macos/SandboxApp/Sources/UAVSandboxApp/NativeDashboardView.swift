@@ -75,10 +75,10 @@ struct NativeDashboardView: View {
             HStack(spacing: 14) {
                 MetricCard(
                     title: value.profile.title,
-                    value: value.profile.flightEnabled ? "Flight ready" : "Demo only",
-                    detail: "\(value.profile.availableWorkflows.count) workflows",
+                    value: value.setup.ready ? "Environment ready" : "Setup needed",
+                    detail: "\(value.setup.requiredReadyCount) / \(value.setup.requiredCount) requirements",
                     symbol: "square.stack.3d.up",
-                    tint: .blue
+                    tint: value.setup.ready ? .green : .orange
                 )
                 MetricCard(
                     title: "Managed operator",

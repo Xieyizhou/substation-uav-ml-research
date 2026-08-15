@@ -36,6 +36,11 @@ Open [http://127.0.0.1:8765](http://127.0.0.1:8765). The launcher performs an
 idempotent bootstrap before starting the loopback-only server. Press `Ctrl-C`
 in the terminal to stop it.
 
+Open **Get started** after launch. The page evaluates requirements for the
+selected profile, separates required items from optional simulator features,
+and provides copyable commands or official PX4/Gazebo documentation. It never
+executes installation commands. Select **Check again** after making changes.
+
 To use another port:
 
 ```bash
@@ -131,6 +136,11 @@ Install PX4 and Gazebo separately, then start the development profile:
 ```bash
 ./scripts/run_sandbox_app.sh --profile development
 ```
+
+The setup page checks the active project virtual environment, PX4 checkout and
+SITL build, Gazebo command-line tools, MAVSDK, and tracked SDF worlds. A ready
+result means the local prerequisites are present; the existing Preflight and
+flight-smoke gates still decide whether a real managed flight may start.
 
 The development profile discovers the local v2 collection plan when present
 and enables managed flight, collection, replay, training-view, and validation

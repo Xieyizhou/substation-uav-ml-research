@@ -2,6 +2,7 @@ import Foundation
 
 struct SandboxStatusSnapshot {
     let version: VersionSnapshot
+    let setup: SetupSnapshot
     let profile: ProfileSnapshot
     let runtime: [RuntimeSnapshot]
     let checks: [DoctorSnapshot]
@@ -12,6 +13,18 @@ struct SandboxStatusSnapshot {
     var passedCheckCount: Int { checks.filter { $0.status == "pass" }.count }
     var warningCheckCount: Int { checks.filter { $0.status == "warning" }.count }
     var failedCheckCount: Int { checks.filter { $0.status == "failure" }.count }
+}
+
+struct SetupSnapshot: Decodable {
+    let ready: Bool
+    let requiredReadyCount: Int
+    let requiredCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case ready
+        case requiredReadyCount = "required_ready_count"
+        case requiredCount = "required_count"
+    }
 }
 
 struct VersionSnapshot: Decodable {

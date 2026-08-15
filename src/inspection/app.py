@@ -71,6 +71,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.profile())
         if path == "/api/version":
             return self._json(self.service.version())
+        if path == "/api/setup":
+            return self._json(self.service.setup())
         if path == "/api/dashboard":
             return self._json(self.service.dashboard())
         if path == "/api/runtime":
@@ -117,7 +119,7 @@ class InspectionHandler(BaseHTTPRequestHandler):
         name = "index.html" if path == "/" else path.lstrip("/")
         if name not in {
             "index.html", "app.js", "style.css", "operator.css", "research.css",
-            "experiments.css",
+            "experiments.css", "setup.css", "setup.js",
             "profile.css",
         }:
             return self._json({"error": "not found"}, 404)

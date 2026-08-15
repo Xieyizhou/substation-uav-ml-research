@@ -40,6 +40,7 @@ def _contract_checks(config):
             (static / name).is_file() for name in (
                 "index.html", "app.js", "style.css", "operator.css",
                 "research.css", "experiments.css", "profile.css",
+                "setup.css", "setup.js",
             )
         ),
         "contract_version": version_valid,
@@ -84,7 +85,7 @@ def run_app_smoke(project_root):
     try:
         status, content_type, body = _read(f"{base}/")
         checks["app_shell"] = status == 200 and content_type == "text/html" and bool(body)
-        for name in ("profile", "version", "storage", "operator"):
+        for name in ("profile", "version", "setup", "storage", "operator"):
             status, content_type, body = _read(f"{base}/api/{name}")
             value = json.loads(body)
             checks[f"api_{name}"] = (

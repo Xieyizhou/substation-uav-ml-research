@@ -32,6 +32,7 @@ class SandboxReleaseTests(unittest.TestCase):
         for name in (
             "index.html", "app.js", "style.css", "operator.css",
             "research.css", "experiments.css", "profile.css",
+            "setup.css", "setup.js",
         ):
             (static / name).write_text(name)
         version = {

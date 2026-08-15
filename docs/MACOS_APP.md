@@ -28,6 +28,12 @@ PX4, Gazebo, datasets, model weights, and the Python environment are not
 bundled. Development and Formal profiles continue to use the repository's
 installed dependencies. Demo Profile remains the portable first-run path.
 
+After the local service starts, **Get started** presents profile-aware setup
+status. It detects the project interpreter, PX4 checkout and SITL build,
+Gazebo, MAVSDK, and simulation worlds. Installation remains an explicit user
+operation: the App exposes copyable commands and official documentation, then
+rechecks the environment without running a package manager itself.
+
 The App version, Sandbox product milestone, operator API, and gate schema are
 separate compatibility identities. Their shared source is
 `config/sandbox/version.json`; the native status page displays both the App and

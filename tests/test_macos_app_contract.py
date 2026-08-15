@@ -63,7 +63,9 @@ class MacOSAppContractTests(unittest.TestCase):
         model = (
             APP_ROOT / "Sources/UAVSandboxApp/SandboxStatusModel.swift"
         ).read_text(encoding="utf-8")
-        for endpoint in ("profile", "version", "runtime", "doctor", "storage", "operator"):
+        for endpoint in (
+            "profile", "version", "setup", "runtime", "doctor", "storage", "operator"
+        ):
             self.assertIn(f'"api/{endpoint}"', model)
         self.assertNotIn("operator/start", model)
         self.assertNotIn("operator/stop", model)

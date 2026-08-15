@@ -37,6 +37,7 @@ def run_release_gate(config, output):
         for name in (
             "index.html", "app.js", "style.css", "operator.css",
             "research.css", "experiments.css", "profile.css",
+            "setup.css", "setup.js",
         )
     )
     asset_identity = object_sha256({

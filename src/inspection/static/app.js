@@ -2,11 +2,12 @@ const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,opera
 const api=async path=>{const r=await fetch(path,{cache:'no-store'});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const post=async(path,value)=>{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Sandbox-Token':operatorToken},body:JSON.stringify(value)});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('#'+b.dataset.tab).classList.add('active')});
+function activateTab(name){document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));const tab=document.querySelector(`.tab[data-tab="${name}"]`);tab?.classList.add('active');$('#'+name)?.classList.add('active')}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateTab(b.dataset.tab));
 
 async function refresh(){
-  const [profile,version,dash,runtime,doctor,recs,available,operator,research,experiments,lidar,acceptance,preflight]=await Promise.all([api('/api/profile'),api('/api/version'),api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments'),api('/api/lidar'),api('/api/acceptance'),api('/api/preflight')]);
-  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderProfile(profile);renderVersion(version);renderDashboard(dash,runtime);renderResearch(research);renderExperiments(experiments);renderLidar(lidar);renderAcceptance(acceptance);renderPreflight(preflight);renderDoctor(doctor);renderSelectors();renderOperator(operator);
+  const [profile,version,setup,dash,runtime,doctor,recs,available,operator,research,experiments,lidar,acceptance,preflight]=await Promise.all([api('/api/profile'),api('/api/version'),api('/api/setup'),api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments'),api('/api/lidar'),api('/api/acceptance'),api('/api/preflight')]);
+  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderProfile(profile);renderVersion(version);renderSetup(setup);renderDashboard(dash,runtime);renderResearch(research);renderExperiments(experiments);renderLidar(lidar);renderAcceptance(acceptance);renderPreflight(preflight);renderDoctor(doctor);renderSelectors();renderOperator(operator);
   $('#updated').textContent=`Observed ${new Date().toLocaleTimeString()}`;
 }
 const pct=v=>v==null?'—':`${(Number(v)*100).toFixed(2)}%`;
