@@ -27,16 +27,18 @@ import Testing
     let fixture = try RuntimeFixture()
     let python = try fixture.executable(".venv/bin/python")
     fixture.runner.pythonVersions[python.path] = "3.14.1"
+    let manual = fixture.root.appendingPathComponent("custom-opencv/4.14.0")
+    try FileManager.default.createDirectory(at: manual, withIntermediateDirectories: true)
     let selection = RuntimeSelection(
         px4Root: fixture.px4, gazeboExecutable: fixture.gz,
-        openCVPrefix: fixture.opencv
+        openCVPrefix: manual
     )
     let manager = fixture.manager(path: fixture.root.appendingPathComponent("empty"))
     let assessment = try manager.validateAndPersist(
         projectRoot: fixture.root, profile: .development, selection: selection
     )
-    #expect(assessment.selected?.openCVPrefix == fixture.opencv.path)
-    #expect(fixture.store.load()?.openCVPrefix == fixture.opencv.path)
+    #expect(assessment.selected?.openCVPrefix == manual.path)
+    #expect(fixture.store.load()?.openCVPrefix == manual.path)
 }
 
 @Test func unrelatedFormulaDirectoryCannotBorrowHomebrewVersion() throws {
