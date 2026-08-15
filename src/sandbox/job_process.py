@@ -2,27 +2,62 @@
 
 from __future__ import annotations
 
+import fcntl
 import os
 from pathlib import Path
 import signal
 import subprocess
+import sys
 import time
 
 
-def start_job_process(argv, log_path, project_root):
+def start_job_process(
+    argv, log_path, project_root, result_path=None,
+    ownership_path=None, ownership_token=None,
+):
     path = Path(log_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     handle = path.open("a", encoding="utf-8")
     handle.write(f"\nACTION START: {argv[2] if len(argv) > 2 else argv[0]}\n")
     handle.flush()
+    managed = result_path is not None
+    if managed and (ownership_path is None or not ownership_token):
+        raise ValueError("managed process ownership is required")
+    command = tuple(argv) if not managed else (
+        sys.executable, str(Path(__file__).with_name("process_runner.py")),
+        "--result", str(result_path),
+        "--ownership", str(ownership_path),
+        "--token", ownership_token,
+        "--", *argv,
+    )
     process = subprocess.Popen(
-        argv,
+        command,
         cwd=project_root,
         stdout=handle,
         stderr=subprocess.STDOUT,
         start_new_session=True,
     )
     return process, handle
+
+
+def ownership_is_held(path, expected_token):
+    if not expected_token:
+        return False
+    try:
+        handle = Path(path).open("r+", encoding="utf-8")
+        if handle.readline().strip() != expected_token:
+            handle.close()
+            return False
+        try:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            handle.close()
+            return True
+        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        handle.close()
+    except OSError:
+        return False
+    return False
 
 
 def _snapshot_process_groups(root_pid):
@@ -79,6 +114,24 @@ def stop_job_process(process, *, interrupt_s=20.0, terminate_s=10.0):
         return code
     _signal_groups(groups, signal.SIGKILL)
     return _wait(process, 5.0)
+
+
+def stop_job_pid(
+    pid, *, interrupt_s=20.0, terminate_s=10.0, stopped=None,
+):
+    groups = _snapshot_process_groups(int(pid))
+    has_stopped = stopped or (lambda: not process_alive(pid))
+    for number, timeout in (
+        (signal.SIGINT, interrupt_s), (signal.SIGTERM, terminate_s),
+        (signal.SIGKILL, 5.0),
+    ):
+        _signal_groups(groups, number)
+        deadline = time.monotonic() + timeout
+        while not has_stopped() and time.monotonic() < deadline:
+            time.sleep(0.1)
+        if has_stopped():
+            return True
+    return False
 
 
 def process_alive(pid):

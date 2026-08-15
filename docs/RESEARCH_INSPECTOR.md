@@ -121,7 +121,10 @@ Jobs follow `preparing → running → stopping → complete/failed`. Metadata,
 diagnostics, and logs are stored under `outputs/sandbox/operator/jobs`. A file
 lock permits only one managed job across app processes. Each action has a
 bounded timeout, and stopping uses interrupt, terminate, then kill only for
-the process groups descended from that job.
+the process groups descended from that job. After an App restart, a completed
+exit sidecar is finalized automatically. A live job is adopted only when its
+persisted ownership token remains actively locked; a reused PID is never
+stopped.
 
 ## Safety boundary
 
