@@ -11,7 +11,7 @@ from src.vision.contracts.identity_validation import required_text
 
 
 WORKFLOW_RECIPE_SCHEMA_VERSION = 1
-WORKFLOW_RECEIPT_SCHEMA_VERSION = 1
+WORKFLOW_RECEIPT_SCHEMA_VERSION = 2
 
 
 @dataclass(frozen=True)
@@ -131,6 +131,16 @@ def materialize_workflow_receipt(project_root, store, job, recipe):
         "ended_at": job.ended_at,
         "exit_code": job.exit_code,
         "stop_requested": job.stop_requested,
+        "failure": None if job.failure_code is None else {
+            "code": job.failure_code,
+            "retryable": job.failure_retryable,
+            "message": job.error,
+        },
+        "resource_budget": {
+            "output_budget_bytes": job.output_budget_bytes,
+            "disk_reserve_bytes": job.disk_reserve_bytes,
+            "disk_free_bytes_at_start": job.disk_free_bytes_at_start,
+        },
         "diagnostics": list(job.diagnostics),
         "log_sha256": file_sha256(log) if log.is_file() and not job.sensitive else None,
         "outputs": _output_records(project_root, recipe.expected_outputs),

@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import time
 
 from src.sandbox.job_models import utc_now
+from src.sandbox.failure_classification import classify_failure
 from src.sandbox.workflow import WorkflowRecipe, materialize_workflow_receipt
+from src.sandbox.storage_policy import output_budget_violation
 
 
 def read_process_result(store, job_id):
@@ -31,6 +34,13 @@ def elapsed_seconds(job):
         return 0.0
     started = datetime.fromisoformat(job.started_at)
     return max(0.0, (datetime.now(timezone.utc) - started).total_seconds())
+
+
+def recovered_budget_violation(config, job, next_check):
+    now = time.monotonic()
+    if now < next_check:
+        return None, next_check
+    return output_budget_violation(config, job), now + 2.0
 
 
 def apply_process_result(job, value):
@@ -68,6 +78,7 @@ def append_diagnostics(store, job):
 
 def finalize_recovered(project_root, store, job):
     append_diagnostics(store, job)
+    classify_failure(job)
     store.write(job)
     try:
         recipe = read_workflow_recipe(store, job.job_id)
@@ -75,4 +86,5 @@ def finalize_recovered(project_root, store, job):
     except Exception as error:
         job.state, job.ended_at = "failed", job.ended_at or utc_now()
         job.error = f"workflow receipt failed: {error}"
+        classify_failure(job)
         store.write(job)

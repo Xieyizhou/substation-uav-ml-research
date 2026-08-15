@@ -156,6 +156,17 @@ python main.py study challenge-receipt-inspect \
 
 ## Runtime Files
 
+Inspect generated output use without changing files:
+
+```bash
+python main.py sandbox storage
+```
+
+Use `retention-plan` followed by `retention-inspect` to preview old generated
+Sandbox outputs. Nothing is removed until `retention-apply` is supplied the
+exact plan identity; formal profile output and research datasets are never
+eligible.
+
 Demo runtime files are kept outside version control:
 
 ```text

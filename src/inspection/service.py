@@ -16,6 +16,7 @@ from src.inspection.runtime import LocalProcessAdapter, runtime_status
 from src.inspection.research import research_summary
 from src.sandbox.profiles import sandbox_profile
 from src.sandbox.preflight import preflight_summary
+from src.sandbox.storage_policy import storage_summary
 
 
 def serialize(value):
@@ -60,6 +61,9 @@ class InspectionService:
 
     def preflight(self):
         return serialize(preflight_summary(self.config, self.process_adapter))
+
+    def storage(self):
+        return serialize(storage_summary(self.config))
 
     def recordings(self):
         results = []
