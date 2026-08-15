@@ -48,7 +48,7 @@ private func temporaryProject(withPython: Bool) throws -> URL {
         )
         FileManager.default.createFile(atPath: python.path, contents: Data("#!\n".utf8))
         try FileManager.default.setAttributes(
-            [.posixPermissions: 0o755], atPath: python.path
+            [.posixPermissions: 0o755], ofItemAtPath: python.path
         )
     }
     return root
