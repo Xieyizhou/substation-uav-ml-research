@@ -16,6 +16,7 @@ from src.sandbox.job_commands import SandboxCommand, build_command
 from src.sandbox.job_models import SandboxJob, SandboxJobStore, utc_now
 from src.sandbox.job_process import ownership_is_held, start_job_process
 from src.sandbox.operator import OperatorBusy, SandboxOperator
+from src.sandbox.storage_policy import OutputBudgetExceeded
 from src.sandbox.workflow import materialize_workflow_recipe
 
 
@@ -206,8 +207,12 @@ class SandboxOperatorTests(unittest.TestCase):
         store.write(job)
         path = store.directory(job.job_id) / "job.json"
         record = json.loads(path.read_text())
-        record.pop("ownership_token")
-        record.pop("recovered")
+        for name in (
+            "ownership_token", "recovered", "output_budget_bytes",
+            "disk_free_bytes_at_start", "disk_reserve_bytes",
+            "failure_code", "failure_retryable",
+        ):
+            record.pop(name)
         record.pop("job_identity_sha256")
         record["job_identity_sha256"] = object_sha256(record)
         path.write_text(json.dumps(record), encoding="utf-8")
@@ -216,6 +221,8 @@ class SandboxOperatorTests(unittest.TestCase):
 
         self.assertIsNone(restored.ownership_token)
         self.assertFalse(restored.recovered)
+        self.assertEqual(restored.output_budget_bytes, 0)
+        self.assertIsNone(restored.failure_code)
 
     def test_managed_job_completes_and_persists_bounded_log(self):
         command = SandboxCommand(
@@ -230,10 +237,62 @@ class SandboxOperatorTests(unittest.TestCase):
             self.assertNotIn("ownership_token", started)
             status = self.wait_idle(operator)
         self.assertEqual(status["history"][0]["state"], "complete")
+        self.assertGreater(status["history"][0]["output_budget_bytes"], 0)
         self.assertIn("sandbox-ready", "\n".join(operator.log(started["job_id"])))
         directory = operator.store.directory(started["job_id"])
         self.assertTrue((directory / "workflow_recipe.json").is_file())
         self.assertTrue((directory / "workflow_receipt.json").is_file())
+        receipt = json.loads((directory / "workflow_receipt.json").read_text())
+        self.assertIsNone(receipt["failure"])
+        self.assertGreater(receipt["resource_budget"]["output_budget_bytes"], 0)
+
+    def test_output_budget_failure_blocks_before_job_creation(self):
+        command = SandboxCommand("doctor", (sys.executable, "-c", "pass"), 5.0)
+        operator = SandboxOperator(self.config, EmptyProcesses())
+        with (
+            patch("src.sandbox.operator.build_command", return_value=command),
+            patch(
+                "src.sandbox.operator.require_output_budget",
+                side_effect=OutputBudgetExceeded("disk budget unavailable"),
+            ),
+        ):
+            with self.assertRaisesRegex(OperatorBusy, "disk budget"):
+                operator.start("doctor")
+        self.assertEqual(operator.store.list(), [])
+
+    def test_nonzero_exit_has_structured_failure_receipt(self):
+        command = SandboxCommand(
+            "doctor", (sys.executable, "-c", "raise SystemExit(7)"), 5.0,
+        )
+        operator = SandboxOperator(self.config, EmptyProcesses())
+        with patch("src.sandbox.operator.build_command", return_value=command):
+            started = operator.start("doctor")
+            status = self.wait_idle(operator)
+        failed = status["history"][0]
+        self.assertEqual(failed["failure_code"], "command_failed")
+        self.assertTrue(failed["failure_retryable"])
+        receipt = json.loads((
+            operator.store.directory(started["job_id"]) / "workflow_receipt.json"
+        ).read_text())
+        self.assertEqual(receipt["failure"]["code"], "command_failed")
+
+    def test_runtime_output_budget_violation_stops_job(self):
+        command = SandboxCommand(
+            "doctor", (sys.executable, "-c", "import time; time.sleep(30)"), 60.0,
+        )
+        operator = SandboxOperator(self.config, EmptyProcesses())
+        with (
+            patch("src.sandbox.operator.build_command", return_value=command),
+            patch(
+                "src.sandbox.job_runtime.output_budget_violation",
+                return_value="disk budget exceeded: test allowance",
+            ),
+        ):
+            operator.start("doctor")
+            status = self.wait_idle(operator)
+        failed = status["history"][0]
+        self.assertEqual(failed["failure_code"], "resource_exhausted")
+        self.assertIn("disk budget exceeded", failed["error"])
 
     def test_single_instance_lock_and_safe_stop(self):
         command = SandboxCommand(
@@ -258,6 +317,8 @@ class SandboxOperatorTests(unittest.TestCase):
             first.store.directory(started["job_id"]) / "workflow_receipt.json"
         ).read_text())
         self.assertEqual(receipt["state"], "stopped")
+        self.assertEqual(receipt["failure"]["code"], "user_cancelled")
+        self.assertTrue(receipt["failure"]["retryable"])
 
     def test_live_interrupted_job_blocks_a_new_operator_job(self):
         store = SandboxJobStore(self.config.sandbox_jobs_root)
@@ -430,6 +491,10 @@ class SandboxOperatorTests(unittest.TestCase):
             preflight = connection.getresponse()
             self.assertEqual(preflight.status, 200)
             self.assertFalse(json.loads(preflight.read())["ready_for_large_lidar"])
+            connection.request("GET", "/api/storage")
+            storage = connection.getresponse()
+            self.assertEqual(storage.status, 200)
+            self.assertEqual(json.loads(storage.read())["profile"], "development")
             connection.request(
                 "POST",
                 "/api/operator/start",

@@ -6,13 +6,13 @@ import fcntl
 import html
 import secrets
 import threading
-import time
 
 from src.inspection.runtime import LocalProcessAdapter, runtime_status
 from src.sandbox import job_recovery
+from src.sandbox.failure_classification import classify_failure
 from src.sandbox.job_commands import build_command
 from src.sandbox.job_models import (
-    SandboxJob, SandboxJobStore, TERMINAL_STATES, new_job_id, utc_now,
+    SandboxJobStore, TERMINAL_STATES, new_preparing_job, utc_now,
 )
 from src.sandbox.job_process import (
     ownership_is_held,
@@ -21,10 +21,12 @@ from src.sandbox.job_process import (
     stop_job_pid,
     stop_job_process,
 )
+from src.sandbox.job_runtime import monitor_process
 from src.sandbox.workflow import (
     materialize_workflow_receipt,
     materialize_workflow_recipe,
 )
+from src.sandbox.storage_policy import OutputBudgetExceeded, require_output_budget
 
 
 class OperatorBusy(RuntimeError):
@@ -53,6 +55,7 @@ class SandboxOperator:
             except (OSError, ValueError, TypeError) as error:
                 job.state, job.ended_at = "failed", utc_now()
                 job.error = f"invalid managed process result: {error}"
+                classify_failure(job)
                 self.store.write(job)
                 continue
             if result is not None:
@@ -75,6 +78,7 @@ class SandboxOperator:
                 job.diagnostics.append(
                     "live process identity could not be safely adopted"
                 )
+            classify_failure(job)
             self.store.write(job)
 
     def _adopt(self, job):
@@ -97,10 +101,20 @@ class SandboxOperator:
             )
 
         try:
+            next_storage_check = 0.0
             while not ownership_released():
                 if self._stop_requested.wait(0.2):
                     job.state, job.stop_requested = "stopping", True
                     self.store.write(job)
+                    if process_alive(job.pid):
+                        stop_job_pid(job.pid, stopped=ownership_released)
+                    break
+                violation = job_recovery.recovered_budget_violation(
+                    self.config, job, next_storage_check
+                )
+                next_storage_check = violation[1]
+                if violation[0]:
+                    job.error = violation[0]
                     if process_alive(job.pid):
                         stop_job_pid(job.pid, stopped=ownership_released)
                     break
@@ -162,21 +176,18 @@ class SandboxOperator:
                     + ", ".join(str(pid) for pid in self._orphan_pids)
                 )
             command = build_command(self.config, action, scenario_id, parameters)
+            try:
+                budget = require_output_budget(self.config, command.action)
+            except OutputBudgetExceeded as error:
+                raise OperatorBusy(str(error)) from error
             conflicts = self._runtime_conflicts() if command.requires_runtime_idle else []
             if conflicts:
                 raise OperatorBusy(
                     "runtime processes already exist: " + ", ".join(conflicts)
                 )
             self._acquire_lock()
-            job = SandboxJob(
-                job_id=new_job_id(action),
-                action=command.action,
-                state="preparing",
-                created_at=utc_now(),
-                timeout_s=command.timeout_s,
-                sensitive=command.sensitive,
-                scenario_id=command.scenario_id,
-                ownership_token=secrets.token_hex(16),
+            job = new_preparing_job(
+                action, command, budget, secrets.token_hex(16),
             )
             try:
                 self.store.write(job)
@@ -187,6 +198,7 @@ class SandboxOperator:
                 job.state = "failed"
                 job.ended_at = utc_now()
                 job.error = f"workflow recipe failed: {error}"
+                classify_failure(job)
                 self.store.write(job)
                 self._release_lock()
                 raise
@@ -203,7 +215,6 @@ class SandboxOperator:
 
     def _run(self, job, argv, recipe):
         process = handle = None
-        started = time.monotonic()
         try:
             process, handle = start_job_process(
                 argv, self.store.log_path(job.job_id), self.config.project_root,
@@ -215,17 +226,9 @@ class SandboxOperator:
                 job.started_at = utc_now()
                 job.pid = process.pid
                 self.store.write(job)
-            while process.poll() is None:
-                if self._stop_requested.wait(0.2):
-                    job.state = "stopping"
-                    job.stop_requested = True
-                    self.store.write(job)
-                    stop_job_process(process)
-                    break
-                if time.monotonic() - started > job.timeout_s:
-                    job.error = f"job exceeded {job.timeout_s:.0f}s timeout"
-                    stop_job_process(process)
-                    break
+            monitor_process(
+                process, job, self._stop_requested, self.store, self.config
+            )
             result = job_recovery.read_process_result(self.store, job.job_id)
             if result is not None:
                 job_recovery.apply_process_result(job, result)
@@ -243,6 +246,7 @@ class SandboxOperator:
                 handle.close()
             job.ended_at = utc_now()
             job_recovery.append_diagnostics(self.store, job)
+            classify_failure(job)
             with self._guard:
                 self.store.write(job)
                 try:
@@ -252,6 +256,7 @@ class SandboxOperator:
                 except Exception as error:
                     job.state = "failed"
                     job.error = f"workflow receipt failed: {error}"
+                    classify_failure(job)
                     self.store.write(job)
                 self._active = None
                 self._release_lock()

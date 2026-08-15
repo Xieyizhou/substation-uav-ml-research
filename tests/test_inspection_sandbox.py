@@ -245,7 +245,7 @@ class BoundaryTests(InspectionFixture):
         before = {path: (path.stat().st_mtime_ns, path.read_bytes()) for path in paths}
         service = InspectionService(self.config, EmptyProcesses())
         service.dashboard(); service.runtime(); service.logs("dev-s", "flight", 10)
-        service.frames("dev-r", 1, 1); service.progress("dev-r")
+        service.frames("dev-r", 1, 1); service.progress("dev-r"); service.storage()
         after = {path: (path.stat().st_mtime_ns, path.read_bytes()) for path in paths}
         self.assertEqual(before, after)
 
@@ -261,8 +261,10 @@ class SandboxCliTests(InspectionFixture):
 
     def test_help_exposes_local_inspection_workflow(self):
         help_text = sandbox.build_parser().format_help()
-        for command in ("bootstrap", "doctor", "status", "serve", "demo-run",
-                        "release-gate"):
+        for command in (
+            "bootstrap", "doctor", "status", "storage", "retention-plan",
+            "serve", "demo-run", "release-gate",
+        ):
             self.assertIn(command, help_text)
 
 

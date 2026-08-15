@@ -8,7 +8,9 @@ import json
 from pathlib import Path
 
 from src.inspection.config import InspectionConfig
+from src.sandbox.profile_cli import register_profile_commands
 from src.sandbox.profiles import PROFILE_NAMES
+from src.sandbox.storage_cli import handle_storage_command, register_storage_commands
 
 
 def _command(module, name):
@@ -23,20 +25,8 @@ def build_parser():
     parser.add_argument("--project-root", type=Path, default=Path.cwd())
     parser.add_argument("--profile", choices=PROFILE_NAMES, default="development")
     commands = parser.add_subparsers(dest="command", required=True)
-    bootstrap = commands.add_parser(
-        "bootstrap", help="Initialize the selected local sandbox profile"
-    )
-    bootstrap.add_argument("--output", type=Path)
-    bootstrap_inspect = commands.add_parser(
-        "bootstrap-inspect", help="Validate a sandbox bootstrap receipt"
-    )
-    bootstrap_inspect.add_argument("--input", type=Path, required=True)
-    commands.add_parser("doctor", help="Check dependencies, paths, and disk space")
-    commands.add_parser("status", help="Show collection and runtime status")
-    challenge = commands.add_parser(
-        "challenge-run", help="Run a fresh three-flight LiDAR capability gate"
-    )
-    challenge.add_argument("--model-id", required=True)
+    register_profile_commands(commands)
+    register_storage_commands(commands)
     serve = commands.add_parser("serve", help="Run the controlled local sandbox app")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8765)
@@ -102,22 +92,6 @@ def build_parser():
         "acceptance-inspect", help="Validate a Sandbox v1 acceptance result"
     )
     acceptance_inspect.add_argument("--input", type=Path, required=True)
-    demo = commands.add_parser(
-        "demo-run", help="Run the dependency-free demonstration workflow"
-    )
-    demo.add_argument("--output", type=Path, required=True)
-    demo_inspect = commands.add_parser(
-        "demo-inspect", help="Validate a demonstration workflow result"
-    )
-    demo_inspect.add_argument("--input", type=Path, required=True)
-    release = commands.add_parser(
-        "release-gate", help="Run the offline Sandbox v0.1 release gate"
-    )
-    release.add_argument("--output", type=Path, required=True)
-    release_inspect = commands.add_parser(
-        "release-gate-inspect", help="Validate a Sandbox v0.1 gate result"
-    )
-    release_inspect.add_argument("--input", type=Path, required=True)
     return parser
 
 
@@ -128,6 +102,14 @@ def _print(value):
 def main(argv=None):
     args = build_parser().parse_args(argv)
     config = InspectionConfig.for_profile(args.project_root, args.profile)
+    try:
+        storage = handle_storage_command(args, config)
+    except (FileNotFoundError, OSError, TypeError, ValueError) as error:
+        print(f"Sandbox storage failed: {error}")
+        return 1
+    if storage is not None:
+        _print(storage)
+        return 0
     if args.command == "bootstrap":
         bootstrap_sandbox = _command("src.sandbox.bootstrap", "bootstrap_sandbox")
         try:

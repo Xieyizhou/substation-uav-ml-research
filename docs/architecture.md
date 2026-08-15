@@ -86,6 +86,18 @@ ownership-token file lock and writes an atomic exit sidecar. A restarted App
 adopts a live job only while its PID and ownership lock still match; otherwise
 it fails closed rather than signalling an unrelated process.
 
+`storage_policy.py` enforces an action-level output allowance plus the
+configured free-space reserve before a managed command starts. The runtime
+supervisor checks both limits again while the command is running and performs
+the normal bounded process-group stop if either limit is crossed.
+`failure_classification.py` converts terminal errors into stable, retry-aware
+codes stored in job and workflow receipts. `retention.py` is deliberately
+separate from execution: it can only prune direct children of allow-listed
+`outputs/sandbox` groups after an identity-bound preview, a 24-hour minimum
+age, an idle-operator check, tree revalidation, and explicit confirmation.
+Formal profile output, datasets, and model directories are outside this
+retention boundary.
+
 The acceptance orchestrator in `sandbox/acceptance.py` composes verified
 evidence from existing subsystems. Process lifecycle checks remain isolated in
 `sandbox/supervisor_gate.py`; the inspector only reads their resulting hashes

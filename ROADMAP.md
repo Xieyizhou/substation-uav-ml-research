@@ -62,7 +62,7 @@ The runner uses 30 paired scenarios × four conditions, not the previous
 - [x] Block large LiDAR gates when the challenge receipt is missing, stale,
   changed, or belongs to another model.
 - [x] Recover or explicitly adopt a still-running owned job after App restart.
-- [ ] Add output budgets, retention policy, and structured failure classes.
+- [x] Add output budgets, retention policy, and structured failure classes.
 - [ ] Complete a GitHub Beta installation gate on a clean supported machine.
 
 ## v0.4 — Four-class equipment perception

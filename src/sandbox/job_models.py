@@ -39,8 +39,13 @@ class SandboxJob:
     ended_at: str | None = None
     pid: int | None = None
     ownership_token: str | None = None
+    output_budget_bytes: int = 0
+    disk_free_bytes_at_start: int | None = None
+    disk_reserve_bytes: int = 0
     exit_code: int | None = None
     error: str | None = None
+    failure_code: str | None = None
+    failure_retryable: bool | None = None
     stop_requested: bool = False
     recovered: bool = False
     diagnostics: list[str] = field(default_factory=list)
@@ -51,6 +56,8 @@ class SandboxJob:
             raise ValueError(f"unsupported sandbox job state: {self.state}")
         if not self.job_id or Path(self.job_id).name != self.job_id:
             raise ValueError("invalid sandbox job identifier")
+        if self.output_budget_bytes < 0 or self.disk_reserve_bytes < 0:
+            raise ValueError("sandbox output budgets cannot be negative")
 
     def to_record(self):
         record = asdict(self)
@@ -116,3 +123,15 @@ class SandboxJobStore:
             except (OSError, ValueError, json.JSONDecodeError, TypeError):
                 continue
         return jobs
+
+
+def new_preparing_job(action, command, budget, ownership_token):
+    return SandboxJob(
+        job_id=new_job_id(action), action=command.action, state="preparing",
+        created_at=utc_now(), timeout_s=command.timeout_s,
+        sensitive=command.sensitive, scenario_id=command.scenario_id,
+        ownership_token=ownership_token,
+        output_budget_bytes=budget["budget_bytes"],
+        disk_free_bytes_at_start=budget["free_bytes"],
+        disk_reserve_bytes=budget["reserve_bytes"],
+    )

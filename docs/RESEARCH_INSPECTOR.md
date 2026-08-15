@@ -126,6 +126,33 @@ exit sidecar is finalized automatically. A live job is adopted only when its
 persisted ownership token remains actively locked; a reused PID is never
 stopped.
 
+Every managed action has a conservative output budget. A job starts only when
+the filesystem has enough free space for that allowance and the configured
+reserve. The same allowance and reserve are checked during execution so a
+runaway output is stopped and classified before it consumes the remaining
+disk. Failed jobs expose a stable failure code (`user_cancelled`,
+`deadline_exceeded`, `resource_exhausted`, `dependency_unavailable`,
+`artifact_invalid`, `runtime_unavailable`, `recovery_unsafe`,
+`command_failed`, or `internal_error`) and whether retry is reasonable.
+
+Storage inspection and pruning remain separate operations:
+
+```bash
+python main.py sandbox storage
+python main.py sandbox retention-plan \
+  --output outputs/sandbox/retention/manual.json
+python main.py sandbox retention-inspect \
+  --input outputs/sandbox/retention/manual.json
+python main.py sandbox retention-apply \
+  --input outputs/sandbox/retention/manual.json \
+  --confirm-identity PLAN_IDENTITY_FROM_INSPECT
+```
+
+The plan keeps recent entries, excludes anything newer than 24 hours, and is
+revalidated immediately before removal. Applying is refused while a managed
+job is active or when using the formal profile. The policy never includes
+`data/research`, model weights, or arbitrary paths.
+
 ## Safety boundary
 
 - The browser chooses only fixed actions and approved non-blind scenarios.
