@@ -78,6 +78,7 @@ jobs:
       - name: Check all flight shell syntax
         run: |
           bash -n scripts/run_sandbox_app.sh
+          sh -n scripts/build_macos_app.sh
           for script in scripts/flight/*.sh scripts/flight/experiments/*.sh; do
             bash -n "$script"
           done
@@ -90,3 +91,22 @@ jobs:
           --obstacle-config config/substation_obstacles.json
           --return-home
           --altitude 1.5
+
+  macos-app:
+    name: Native macOS App
+    runs-on: macos-15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Run Swift tests
+        run: swift test --package-path apps/macos/SandboxApp
+
+      - name: Build local application bundle
+        run: ./scripts/build_macos_app.sh release
+
+      - name: Validate bundle metadata and signature
+        run: |
+          plutil -lint "dist/UAV Research Sandbox.app/Contents/Info.plist"
+          codesign --verify --deep --strict "dist/UAV Research Sandbox.app"

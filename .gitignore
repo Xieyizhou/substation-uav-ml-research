@@ -99,6 +99,10 @@ outputs/*
 
 # Local simulator/cache/temp output when generated inside this repo
 build/
+**/.build/
+.swiftpm/
+**/.swiftpm/
+dist/
 logs/
 runs/
 tmp/
