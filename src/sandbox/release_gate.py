@@ -9,14 +9,15 @@ from src.inspection.doctor import run_doctor
 from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
 from src.sandbox.bootstrap import bootstrap_sandbox, inspect_bootstrap
 from src.sandbox.demo_workflow import inspect_demo, run_demo
+from src.sandbox.gate_outcome import check_outcome, validate_outcome
 
 
 RELEASE_VERSION = "0.1.0"
-RELEASE_GATE_SCHEMA_VERSION = 1
+RELEASE_GATE_SCHEMA_VERSION = 2
 
 
 def _check(passed, identity=None, detail=None):
-    return {"passed": bool(passed), "identity": identity, "detail": detail}
+    return {**check_outcome(passed, detail=detail), "identity": identity}
 
 
 def run_release_gate(config, output):
@@ -74,9 +75,13 @@ def inspect_release_gate(path):
     supplied = value.pop("release_gate_identity_sha256", None)
     if supplied != object_sha256(value):
         raise ValueError("sandbox release gate identity mismatch")
+    if value.get("release_gate_schema_version") != RELEASE_GATE_SCHEMA_VERSION:
+        raise ValueError("unsupported sandbox release gate schema")
     if value.get("release_version") != RELEASE_VERSION:
         raise ValueError("unsupported sandbox release version")
     passed = all(item.get("passed") is True for item in value.get("checks", {}).values())
+    for item in value.get("checks", {}).values():
+        validate_outcome(item)
     if value.get("passed") is not passed:
         raise ValueError("sandbox release gate status is inconsistent")
     return {**value, "release_gate_identity_sha256": supplied}

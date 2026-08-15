@@ -118,6 +118,23 @@ class SandboxReleaseTests(unittest.TestCase):
         fake.shutdown.assert_called_once()
         fake.server_close.assert_called_once()
 
+    @patch("src.sandbox.app_smoke.create_server", side_effect=PermissionError("denied"))
+    def test_app_smoke_classifies_restricted_loopback_environment(self, _server):
+        result = run_app_smoke(self.root)
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["outcome"], "environment_unavailable")
+        self.assertEqual(result["reason_code"], "loopback_bind_denied")
+
+    @patch("src.sandbox.app_smoke._read", side_effect=OSError("closed"))
+    @patch("src.sandbox.app_smoke.create_server")
+    def test_app_smoke_classifies_loopback_contract_failure(self, server, _read):
+        fake = server.return_value
+        fake.server_address = ("127.0.0.1", 43210)
+        result = run_app_smoke(self.root)
+        self.assertFalse(result["passed"])
+        self.assertEqual(result["outcome"], "product_failure")
+        self.assertEqual(result["reason_code"], "loopback_contract_failed")
+
     @patch("src.sandbox.beta_install.git_commit", return_value=COMMIT)
     @patch("src.sandbox.beta_install._workflow_checks")
     @patch("src.sandbox.beta_install._run_check")
@@ -130,9 +147,11 @@ class SandboxReleaseTests(unittest.TestCase):
         tracked.return_value = (("main.py", source),)
         run_check.return_value = {
             "name": "clean_virtual_environment", "passed": True,
+            "outcome": "passed", "reason_code": None,
         }
         workflow.return_value = [
-            {"name": name, "passed": True} for name in (
+            {"name": name, "passed": True, "outcome": "passed",
+             "reason_code": None} for name in (
                 "bootstrap", "demo_run", "demo_inspect", "release_gate",
                 "release_inspect", "app_smoke",
             )
@@ -148,6 +167,38 @@ class SandboxReleaseTests(unittest.TestCase):
         receipt.write_text(json.dumps(value))
         with self.assertRaisesRegex(ValueError, "identity mismatch"):
             inspect_beta_install_gate(receipt)
+
+    @patch("src.sandbox.beta_install.git_commit", return_value=COMMIT)
+    @patch("src.sandbox.beta_install._workflow_checks")
+    @patch("src.sandbox.beta_install._run_check")
+    @patch("src.sandbox.beta_install._tracked_files")
+    def test_beta_gate_fails_closed_when_loopback_is_unavailable(
+        self, tracked, run_check, workflow, _commit,
+    ):
+        source = self.root / "main.py"
+        source.write_text("print('demo')\n", encoding="utf-8")
+        tracked.return_value = (("main.py", source),)
+        run_check.return_value = {
+            "name": "clean_virtual_environment", "passed": True,
+            "outcome": "passed", "reason_code": None,
+        }
+        workflow.return_value = [
+            {"name": name, "passed": True, "outcome": "passed",
+             "reason_code": None} for name in (
+                "bootstrap", "demo_run", "demo_inspect", "release_gate",
+                "release_inspect",
+            )
+        ] + [{
+            "name": "app_smoke", "passed": False,
+            "outcome": "environment_unavailable",
+            "reason_code": "loopback_bind_denied",
+        }]
+        output = self.root / "beta-unavailable"
+        result = run_beta_install_gate(self.root, output)
+        self.assertFalse(result["passed"])
+        self.assertFalse(inspect_beta_install_gate(
+            output / "beta_install_gate.json"
+        )["passed"])
 
 
 if __name__ == "__main__":

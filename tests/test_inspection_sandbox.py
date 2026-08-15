@@ -24,7 +24,15 @@ class EmptyProcesses:
 
 class SecretProcess:
     def processes(self):
-        return (ProcessRecord(42, "px4 --token private-value"),)
+        return (ProcessRecord(42, 1, "/opt/px4", ("px4", "--token", "private-value")),)
+
+
+class Processes:
+    def __init__(self, *records):
+        self.records = records
+
+    def processes(self):
+        return self.records
 
 
 class InspectionFixture(unittest.TestCase):
@@ -171,11 +179,49 @@ class LogAndRuntimeTests(InspectionFixture):
         self.assertIn('"pid": 42', rendered)
         self.assertNotIn("private-value", rendered)
 
+    def test_shell_and_search_text_do_not_create_runtime_false_positives(self):
+        adapter = Processes(
+            ProcessRecord(10, 1, "/bin/zsh", (
+                "zsh", "-c", "rg 'px4|gz sim|collection-run' logs",
+            )),
+            ProcessRecord(11, 10, "/usr/bin/rg", ("rg", "px4", "flight.log")),
+        )
+        self.assertTrue(all(not item.alive for item in runtime_status(adapter)))
+
+    def test_executable_and_argument_tokens_identify_real_runtime(self):
+        adapter = Processes(
+            ProcessRecord(20, 1, "/tmp/px4", ("px4",)),
+            ProcessRecord(21, 1, "/opt/gz", ("gz", "sim", "world.sdf")),
+            ProcessRecord(22, 1, "/venv/python", (
+                "python", "main.py", "visual", "collection-run",
+            )),
+            ProcessRecord(23, 1, "/venv/python", (
+                "python", "main.py", "visual", "collection-record",
+            )),
+            ProcessRecord(24, 1, "/venv/python", (
+                "python", "scripts/flight/run_task.py", "training",
+            )),
+        )
+        items = {item.name: item for item in runtime_status(adapter)}
+        self.assertTrue(all(item.alive for item in items.values()))
+        self.assertEqual(items["Gazebo"].pid, 21)
+
     def test_process_inspection_failure_is_reported_as_unavailable(self):
         with patch("src.inspection.runtime.subprocess.run", side_effect=OSError):
             items = runtime_status(LocalProcessAdapter())
         self.assertTrue(all(not item.available for item in items))
         self.assertTrue(all("unavailable" in item.detail for item in items))
+
+    def test_local_adapter_parses_structured_process_fields(self):
+        result = type("Result", (), {
+            "returncode": 0,
+            "stdout": " 42  1 /opt/px4 px4 --instance 0\n",
+        })()
+        with patch("src.inspection.runtime.subprocess.run", return_value=result):
+            records = LocalProcessAdapter().processes()
+        self.assertEqual(records, (
+            ProcessRecord(42, 1, "/opt/px4", ("px4", "--instance", "0")),
+        ))
 
 
 class FrameTests(InspectionFixture):

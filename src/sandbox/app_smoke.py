@@ -10,9 +10,13 @@ from urllib.request import urlopen
 from src.inspection.app import create_server
 from src.inspection.config import InspectionConfig
 from src.ml.artifacts import object_sha256
+from src.sandbox.gate_outcome import (
+    ENVIRONMENT_UNAVAILABLE, PASSED, PRODUCT_FAILURE,
+)
+from src.sandbox.profiles import sandbox_profile
 
 
-APP_SMOKE_SCHEMA_VERSION = 1
+APP_SMOKE_SCHEMA_VERSION = 2
 
 
 def _read(url):
@@ -20,13 +24,54 @@ def _read(url):
         return response.status, response.headers.get_content_type(), response.read()
 
 
+def _contract_checks(config):
+    static = config.project_root / "src/inspection/static"
+    return {
+        "contract_profile": (
+            config.profile == "demo"
+            and sandbox_profile(config.profile).flight_enabled is False
+        ),
+        "contract_assets": all(
+            (static / name).is_file() for name in ("index.html", "app.js", "style.css")
+        ),
+    }
+
+
+def _result(checks, outcome, reason_code=None, detail=None):
+    result = {
+        "app_smoke_schema_version": APP_SMOKE_SCHEMA_VERSION,
+        "profile": "demo",
+        "checks": checks,
+        "outcome": outcome,
+        "reason_code": reason_code,
+        "detail": detail,
+        "passed": outcome == PASSED and all(checks.values()),
+    }
+    result["app_smoke_identity_sha256"] = object_sha256(result)
+    return result
+
+
 def run_app_smoke(project_root):
     config = InspectionConfig.for_profile(Path(project_root), "demo")
-    server = create_server(config, port=0)
+    checks = _contract_checks(config)
+    if not all(checks.values()):
+        return _result(checks, PRODUCT_FAILURE, "app_contract_failed")
+    try:
+        server = create_server(config, port=0)
+    except PermissionError as error:
+        return _result(
+            checks, ENVIRONMENT_UNAVAILABLE, "loopback_bind_denied",
+            f"{type(error).__name__}: {error}",
+        )
+    except OSError as error:
+        return _result(
+            checks, PRODUCT_FAILURE, "loopback_start_failed",
+            f"{type(error).__name__}: {error}",
+        )
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     base = f"http://127.0.0.1:{server.server_address[1]}"
-    checks = {}
+    failure = None
     try:
         status, content_type, body = _read(f"{base}/")
         checks["app_shell"] = status == 200 and content_type == "text/html" and bool(body)
@@ -43,23 +88,29 @@ def run_app_smoke(project_root):
             and profile.get("profile_id") == "demo"
             and profile.get("flight_enabled") is False
         )
+    except (OSError, ValueError, json.JSONDecodeError) as error:
+        failure = f"{type(error).__name__}: {error}"
     finally:
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
-    result = {
-        "app_smoke_schema_version": APP_SMOKE_SCHEMA_VERSION,
-        "profile": "demo",
-        "checks": checks,
-        "passed": all(checks.values()),
-    }
-    result["app_smoke_identity_sha256"] = object_sha256(result)
-    return result
+    if failure is not None:
+        return _result(
+            checks, PRODUCT_FAILURE, "loopback_contract_failed", failure,
+        )
+    return _result(
+        checks, PASSED if all(checks.values()) else PRODUCT_FAILURE,
+        None if all(checks.values()) else "loopback_contract_failed",
+    )
 
 
 def main():
-    print(json.dumps(run_app_smoke(Path.cwd()), indent=2, sort_keys=True))
+    result = run_app_smoke(Path.cwd())
+    print(json.dumps(result, indent=2, sort_keys=True))
+    if result["outcome"] == ENVIRONMENT_UNAVAILABLE:
+        return 2
+    return 0 if result["passed"] else 1
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

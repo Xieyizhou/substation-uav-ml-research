@@ -13,9 +13,12 @@ import tempfile
 import time
 
 from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
+from src.sandbox.gate_outcome import (
+    ENVIRONMENT_UNAVAILABLE, PASSED, PRODUCT_FAILURE, validate_outcome,
+)
 
 
-BETA_INSTALL_SCHEMA_VERSION = 1
+BETA_INSTALL_SCHEMA_VERSION = 2
 BETA_INSTALL_VERSION = "1.0.0"
 
 
@@ -76,9 +79,20 @@ def _run_check(name, argv, cwd, environment, timeout):
             [str(item) for item in argv], cwd=cwd, env=environment,
             capture_output=True, text=True, timeout=timeout,
         )
+        outcome = PASSED if result.returncode == 0 else (
+            ENVIRONMENT_UNAVAILABLE
+            if name == "app_smoke" and result.returncode == 2
+            else PRODUCT_FAILURE
+        )
         return {
             "name": name,
             "passed": result.returncode == 0,
+            "outcome": outcome,
+            "reason_code": (
+                None if outcome == PASSED else
+                "loopback_bind_denied" if outcome == ENVIRONMENT_UNAVAILABLE else
+                "command_failed"
+            ),
             "return_code": result.returncode,
             "duration_s": round(time.monotonic() - started, 3),
             "stdout_tail": _tail(result.stdout),
@@ -88,6 +102,8 @@ def _run_check(name, argv, cwd, environment, timeout):
         return {
             "name": name,
             "passed": False,
+            "outcome": PRODUCT_FAILURE,
+            "reason_code": "command_start_failed",
             "return_code": None,
             "duration_s": round(time.monotonic() - started, 3),
             "stdout_tail": None,
@@ -140,9 +156,16 @@ def run_beta_install_gate(project_root, output, python_executable=None):
         source.mkdir()
         try:
             source_identity = _copy_source(root, source)
-            checks.append({"name": "source_copy", "passed": True, **source_identity})
+            checks.append({
+                "name": "source_copy", "passed": True, "outcome": PASSED,
+                "reason_code": None, **source_identity,
+            })
         except (OSError, subprocess.SubprocessError, ValueError) as error:
-            checks.append({"name": "source_copy", "passed": False, "detail": str(error)})
+            checks.append({
+                "name": "source_copy", "passed": False,
+                "outcome": PRODUCT_FAILURE, "reason_code": "source_copy_failed",
+                "detail": str(error),
+            })
         virtual_environment = temporary_root / "venv"
         environment = _environment(temporary_root / "home", virtual_environment)
         if checks[-1]["passed"]:
@@ -183,11 +206,15 @@ def inspect_beta_install_gate(path):
     supplied = value.pop("beta_install_identity_sha256", None)
     if supplied != object_sha256(value):
         raise ValueError("beta installation gate identity mismatch")
+    if value.get("beta_install_schema_version") != BETA_INSTALL_SCHEMA_VERSION:
+        raise ValueError("unsupported beta installation gate schema")
     if value.get("beta_install_version") != BETA_INSTALL_VERSION:
         raise ValueError("unsupported beta installation gate version")
     passed = len(value.get("checks", [])) == 8 and all(
         check.get("passed") is True for check in value.get("checks", [])
     )
+    for check in value.get("checks", []):
+        validate_outcome(check)
     if value.get("passed") is not passed:
         raise ValueError("beta installation gate status is inconsistent")
     return {**value, "beta_install_identity_sha256": supplied}
