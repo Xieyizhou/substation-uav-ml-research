@@ -1,0 +1,11 @@
+UAV Research Sandbox — notarized macOS Beta
+
+1. Drag UAV Research Sandbox.app into Applications.
+2. Open the App normally from Applications.
+3. Start with the built-in Demo profile; it requires no repository or simulator.
+4. For Development or Formal, choose a compatible project repository and
+   validate Python, PX4, Gazebo, OpenCV, and Qt in Runtime candidates.
+
+This Beta is Developer ID signed and Apple-notarized. macOS should identify the
+developer without requiring an Open Anyway override. The App never installs,
+updates, or removes external simulator runtimes automatically.

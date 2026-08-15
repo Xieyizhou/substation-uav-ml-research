@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create and verify the macOS developer-preview release manifest."""
+"""Create and verify macOS preview, unsigned Beta, and notarized manifests."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 import zipfile
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 4
 FORBIDDEN_PARTS = {
     "data",
     "models",
@@ -43,14 +43,17 @@ def create_manifest(args: argparse.Namespace) -> None:
     payload = {
         "architecture": args.architecture,
         "artifacts": [artifact_record(path) for path in artifacts],
-        "distribution_tier": "developer_preview",
+        "distribution_tier": args.distribution_tier,
         "advanced_profiles_require_project_repository": True,
         "advanced_profiles_require_python_environment": True,
         "external_simulator_toolchain": True,
         "macos_app_version": args.version,
         "release_schema_version": SCHEMA_VERSION,
-        "signing": "ad_hoc",
+        "notarization": args.notarization,
+        "signing": args.signing,
+        "source_commit_sha": args.source_commit_sha,
         "standalone_demo_included": True,
+        "tracked_worktree_clean": args.tracked_worktree_clean == "true",
     }
     output = Path(args.output)
     output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
@@ -83,8 +86,9 @@ def verify_manifest(args: argparse.Namespace) -> None:
     payload = json.loads(manifest_path.read_text())
     if payload.get("release_schema_version") != SCHEMA_VERSION:
         raise SystemExit("unsupported release manifest schema")
-    if payload.get("distribution_tier") != "developer_preview":
-        raise SystemExit("release must be marked as a developer preview")
+    tier = payload.get("distribution_tier")
+    if tier not in {"developer_preview", "unsigned_beta", "notarized_beta"}:
+        raise SystemExit("unsupported distribution tier")
     if payload.get("standalone_demo_included") is not True:
         raise SystemExit("preview must declare its standalone Demo")
     required_flags = (
@@ -94,8 +98,23 @@ def verify_manifest(args: argparse.Namespace) -> None:
     )
     if any(payload.get(flag) is not True for flag in required_flags):
         raise SystemExit("preview must declare its external runtime dependencies")
-    if payload.get("signing") != "ad_hoc":
-        raise SystemExit("preview must declare its signing tier")
+    if tier == "developer_preview" and (
+        payload.get("signing"), payload.get("notarization")
+    ) != ("ad_hoc", "not_requested"):
+        raise SystemExit("preview must use ad-hoc signing without notarization")
+    if tier == "unsigned_beta" and (
+        payload.get("signing"), payload.get("notarization")
+    ) != ("ad_hoc", "not_requested"):
+        raise SystemExit("unsigned Beta must use ad-hoc signing without notarization")
+    if tier == "notarized_beta" and (
+        payload.get("signing"), payload.get("notarization")
+    ) != ("developer_id", "stapled"):
+        raise SystemExit("notarized Beta must be Developer ID signed and notarized")
+    if tier != "developer_preview" and payload.get("tracked_worktree_clean") is not True:
+        raise SystemExit("Beta must be built from a clean tracked worktree")
+    commit = payload.get("source_commit_sha", "")
+    if len(commit) != 40 or any(character not in "0123456789abcdef" for character in commit):
+        raise SystemExit("release source commit identity is invalid")
 
     expected = parse_checksums(Path(args.checksums))
     release_root = manifest_path.parent
@@ -126,7 +145,7 @@ def verify_manifest(args: argparse.Namespace) -> None:
     manifest_digest = sha256(manifest_path)
     if expected.get(manifest_path.name) != manifest_digest:
         raise SystemExit("manifest checksum mismatch")
-    print(f"Verified macOS preview release {payload['macos_app_version']}")
+    print(f"Verified macOS {tier} release {payload['macos_app_version']}")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -135,6 +154,22 @@ def build_parser() -> argparse.ArgumentParser:
     create = commands.add_parser("create")
     create.add_argument("--version", required=True)
     create.add_argument("--architecture", required=True)
+    create.add_argument(
+        "--distribution-tier",
+        choices=("developer_preview", "unsigned_beta", "notarized_beta"),
+        default="developer_preview",
+    )
+    create.add_argument(
+        "--signing", choices=("ad_hoc", "developer_id"), default="ad_hoc"
+    )
+    create.add_argument(
+        "--notarization", choices=("not_requested", "stapled"),
+        default="not_requested",
+    )
+    create.add_argument("--source-commit-sha", required=True)
+    create.add_argument(
+        "--tracked-worktree-clean", choices=("true", "false"), required=True
+    )
     create.add_argument("--output", required=True)
     create.add_argument("artifacts", nargs="+")
     create.set_defaults(handler=create_manifest)

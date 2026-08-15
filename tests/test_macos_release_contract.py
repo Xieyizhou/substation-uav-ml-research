@@ -1,7 +1,9 @@
-"""Release-boundary checks for the macOS preview artifact."""
+"""Release-boundary checks for macOS preview and Beta artifacts."""
 
 from pathlib import Path
 import hashlib
+import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -43,7 +45,7 @@ class MacOSReleaseContractTests(unittest.TestCase):
         tool = ROOT / "scripts/macos_release_manifest.py"
         with tempfile.TemporaryDirectory() as temporary_directory:
             release_root = Path(temporary_directory)
-            prefix = "UAV-Research-Sandbox-v0.4.0-macos-arm64"
+            prefix = "UAV-Research-Sandbox-v0.5.0-macos-arm64"
             archive = release_root / f"{prefix}.zip"
             disk_image = release_root / f"{prefix}.dmg"
             manifest = release_root / "release.json"
@@ -60,9 +62,13 @@ class MacOSReleaseContractTests(unittest.TestCase):
                     str(tool),
                     "create",
                     "--version",
-                    "0.4.0",
+                    "0.5.0",
                     "--architecture",
                     "arm64",
+                    "--source-commit-sha",
+                    "a" * 40,
+                    "--tracked-worktree-clean",
+                    "false",
                     "--output",
                     str(manifest),
                     str(archive),
@@ -117,6 +123,129 @@ class MacOSReleaseContractTests(unittest.TestCase):
         self.assertIn("*-release.json", workflow)
         self.assertIn("*-SHA256SUMS", workflow)
         self.assertNotIn("APPLE_", workflow)
+
+    def test_unsigned_beta_is_verifiable_and_requires_clean_sources(self):
+        script = (ROOT / "scripts/package_macos_release.sh").read_text(
+            encoding="utf-8"
+        )
+        wrapper = (ROOT / "scripts/package_macos_beta.sh").read_text(
+            encoding="utf-8"
+        )
+        workflow = (
+            ROOT / ".github/workflows/macos-beta-release.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("--unsigned-beta", wrapper)
+        self.assertIn("unsigned_beta", script)
+        self.assertIn("Beta packaging requires a clean tracked worktree", script)
+        self.assertIn("MACOS_UNSIGNED_BETA_INSTALL.txt", script)
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertIn("package_macos_beta.sh", workflow)
+        self.assertIn("codesign --verify", workflow)
+        self.assertNotIn("MACOS_DEVELOPER_ID", workflow)
+        self.assertNotIn("spctl --assess", workflow)
+        self.assertIn("--prerelease", workflow)
+
+    def test_notarized_packager_requires_developer_id_and_profile(self):
+        script = (ROOT / "scripts/package_macos_release.sh").read_text(
+            encoding="utf-8"
+        )
+        build = (ROOT / "scripts/build_macos_app.sh").read_text(encoding="utf-8")
+        wrapper = (ROOT / "scripts/package_macos_notarized_beta.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("--notarize", wrapper)
+        self.assertIn("MACOS_CODESIGN_IDENTITY", script)
+        self.assertIn("MACOS_NOTARY_PROFILE", script)
+        self.assertIn("notarytool submit", script)
+        self.assertIn("stapler staple", script)
+        self.assertIn("--options runtime", build)
+
+        environment = os.environ.copy()
+        environment.pop("MACOS_CODESIGN_IDENTITY", None)
+        environment.pop("MACOS_NOTARY_PROFILE", None)
+        failed = subprocess.run(
+            [str(ROOT / "scripts/package_macos_notarized_beta.sh"), "0.5.0"],
+            cwd=ROOT,
+            env=environment,
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(failed.returncode, 0)
+        self.assertIn("MACOS_CODESIGN_IDENTITY", failed.stderr)
+
+    def test_notarized_manifest_requires_signed_and_stapled_identity(self):
+        tool = ROOT / "scripts/macos_release_manifest.py"
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            release_root = Path(temporary_directory)
+            prefix = "UAV-Research-Sandbox-v0.5.0-macos-arm64"
+            archive = release_root / f"{prefix}.zip"
+            disk_image = release_root / f"{prefix}.dmg"
+            manifest = release_root / f"{prefix}-release.json"
+            checksums = release_root / f"{prefix}-SHA256SUMS"
+            with zipfile.ZipFile(archive, "w") as bundle:
+                bundle.writestr(
+                    "UAV Research Sandbox.app/Contents/Info.plist", "beta"
+                )
+            disk_image.write_bytes(b"disk-image")
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(tool),
+                    "create",
+                    "--version",
+                    "0.5.0",
+                    "--architecture",
+                    "arm64",
+                    "--distribution-tier",
+                    "notarized_beta",
+                    "--signing",
+                    "developer_id",
+                    "--notarization",
+                    "stapled",
+                    "--source-commit-sha",
+                    "b" * 40,
+                    "--tracked-worktree-clean",
+                    "true",
+                    "--output",
+                    str(manifest),
+                    str(archive),
+                    str(disk_image),
+                ],
+                check=True,
+            )
+            checksums.write_text(
+                f"{self._sha256(archive)}  {archive.name}\n"
+                f"{self._sha256(disk_image)}  {disk_image.name}\n"
+                f"{self._sha256(manifest)}  {manifest.name}\n"
+            )
+            self._run_verify(tool, manifest, checksums, check=True)
+            payload = json.loads(manifest.read_text())
+            payload["signing"] = "ad_hoc"
+            payload["notarization"] = "not_requested"
+            manifest.write_text(json.dumps(payload))
+            failed = self._run_verify(tool, manifest, checksums)
+            self.assertNotEqual(failed.returncode, 0)
+            self.assertIn("Developer ID signed and notarized", failed.stderr)
+
+    def test_notarized_workflow_is_manual_and_cleans_credentials(self):
+        workflow = (
+            ROOT / ".github/workflows/macos-notarized-beta-release.yml"
+        ).read_text(encoding="utf-8")
+        self.assertIn("workflow_dispatch:", workflow)
+        self.assertNotIn("pull_request:", workflow)
+        for secret in (
+            "MACOS_DEVELOPER_ID_P12_BASE64",
+            "MACOS_DEVELOPER_ID_P12_PASSWORD",
+            "MACOS_DEVELOPER_ID_APPLICATION",
+            "APP_STORE_CONNECT_KEY_P8_BASE64",
+            "APP_STORE_CONNECT_KEY_ID",
+            "APP_STORE_CONNECT_ISSUER_ID",
+        ):
+            self.assertIn(secret, workflow)
+        self.assertIn("spctl --assess", workflow)
+        self.assertIn("stapler validate", workflow)
+        self.assertIn("security delete-keychain", workflow)
+        self.assertIn("--prerelease", workflow)
 
 
 if __name__ == "__main__":

@@ -2,9 +2,9 @@ import Foundation
 
 public struct RuntimeCompatibilityManager: @unchecked Sendable {
     public let store: RuntimeProfileStore
-    private let inspector: RuntimeInspector
-    private let fileManager: FileManager
-    private let environment: [String: String]
+    let inspector: RuntimeInspector
+    let fileManager: FileManager
+    let environment: [String: String]
 
     public init(
         store: RuntimeProfileStore = RuntimeProfileStore(),
@@ -41,16 +41,18 @@ public struct RuntimeCompatibilityManager: @unchecked Sendable {
             manifest: manifest, root: root, profile: profile
         )
         var formulaEnvironment = environment
-        if let saved {
-            formulaEnvironment["UAV_SANDBOX_OPENCV_PREFIX"] = saved.openCVPrefix
-            formulaEnvironment["UAV_SANDBOX_QT_PREFIX"] = saved.qtPrefix
-        }
-        let opencv = inspector.formula(
+        formulaEnvironment["UAV_SANDBOX_OPENCV_PREFIX"] = selection.openCVPrefix?.path
+            ?? saved?.openCVPrefix ?? environment["UAV_SANDBOX_OPENCV_PREFIX"]
+        formulaEnvironment["UAV_SANDBOX_QT_PREFIX"] = selection.qtPrefix?.path
+            ?? saved?.qtPrefix ?? environment["UAV_SANDBOX_QT_PREFIX"]
+        let opencv = inspectFormula(
             id: "opencv", title: "OpenCV", rule: manifest.opencv,
+            selected: selection.openCVPrefix,
             environment: formulaEnvironment, root: root
         )
-        let qt = inspector.formula(
+        let qt = inspectFormula(
             id: "qt", title: "Qt", rule: manifest.qt,
+            selected: selection.qtPrefix,
             environment: formulaEnvironment, root: root
         )
         var components = [python, px4, gazebo, opencv, qt]
@@ -94,6 +96,28 @@ public struct RuntimeCompatibilityManager: @unchecked Sendable {
         return RuntimeAssessment(
             components: components, overall: overall,
             blockers: blockers, selected: selected
+        )
+    }
+
+    private func inspectFormula(
+        id: String,
+        title: String,
+        rule: RuntimeCompatibilityManifest.Formula,
+        selected: URL?,
+        environment: [String: String],
+        root: URL
+    ) -> RuntimeComponent {
+        if let selected,
+           !fileManager.fileExists(atPath: selected.standardizedFileURL.path) {
+            return RuntimeComponent(
+                id: id, title: title, status: .missing,
+                path: selected.standardizedFileURL.path,
+                detail: "Selected \(title) prefix no longer exists."
+            )
+        }
+        return inspector.formula(
+            id: id, title: title, rule: rule,
+            environment: environment, root: root
         )
     }
 

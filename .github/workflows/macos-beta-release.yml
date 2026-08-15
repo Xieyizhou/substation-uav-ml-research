@@ -1,10 +1,10 @@
-name: macOS preview release
+name: macOS unsigned Beta release
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: Preview version without a leading v
+        description: Beta version without a leading v
         required: true
         default: 0.5.0
         type: string
@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   package:
-    name: Build macOS preview
+    name: Build verifiable unsigned Beta
     runs-on: macos-15
 
     steps:
@@ -24,25 +24,25 @@ jobs:
       - name: Run Swift tests
         run: swift test --package-path apps/macos/SandboxApp
 
-      - name: Build preview package
-        run: ./scripts/package_macos_release.sh "${{ inputs.version }}"
+      - name: Build unsigned Beta
+        run: ./scripts/package_macos_beta.sh "${{ inputs.version }}"
 
-      - name: Verify application and release contents
+      - name: Verify bundle and release identities
         run: |
-          codesign --verify --deep --strict "dist/UAV Research Sandbox.app"
+          codesign --verify --deep --strict --verbose=2 "dist/UAV Research Sandbox.app"
           cd dist/releases
           shasum -a 256 -c "UAV-Research-Sandbox-v${{ inputs.version }}-macos-"*"-SHA256SUMS"
 
-      - name: Publish prerelease
+      - name: Publish unsigned Beta prerelease
         env:
           GH_TOKEN: ${{ github.token }}
         run: >-
-          gh release create "macos-preview-v${{ inputs.version }}"
+          gh release create "macos-beta-v${{ inputs.version }}"
           dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-*.zip
           dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-*.dmg
           dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-*-release.json
           dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-*-SHA256SUMS
           --target "${{ github.sha }}"
-          --title "UAV Research Sandbox macOS preview v${{ inputs.version }}"
+          --title "UAV Research Sandbox unsigned macOS Beta v${{ inputs.version }}"
+          --notes "Unsigned Beta: integrity-verified and ad-hoc signed, but not Apple-notarized. See the included installation note."
           --prerelease
-          --generate-notes

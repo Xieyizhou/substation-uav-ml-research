@@ -1,0 +1,104 @@
+name: macOS notarized Beta release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Beta version without a leading v
+        required: true
+        default: 0.5.0
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build signed and notarized Beta
+    runs-on: macos-15
+    env:
+      KEYCHAIN_PASSWORD: ${{ github.run_id }}-${{ github.run_attempt }}
+      NOTARY_PROFILE: uav-sandbox-notary
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Require release credentials
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_P12_PASSWORD }}
+          SIGNING_IDENTITY: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION }}
+          NOTARY_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_P8_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          for value in CERTIFICATE_BASE64 CERTIFICATE_PASSWORD SIGNING_IDENTITY \
+            NOTARY_KEY_BASE64 NOTARY_KEY_ID NOTARY_ISSUER_ID; do
+            test -n "${!value}" || { echo "Missing required secret: $value" >&2; exit 2; }
+          done
+
+      - name: Import Developer ID certificate
+        env:
+          CERTIFICATE_BASE64: ${{ secrets.MACOS_DEVELOPER_ID_P12_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          certificate="$RUNNER_TEMP/developer-id.p12"
+          keychain="$RUNNER_TEMP/uav-beta.keychain-db"
+          printf '%s' "$CERTIFICATE_BASE64" | base64 -D > "$certificate"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+          security import "$certificate" -k "$keychain" \
+            -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" "$keychain"
+          security list-keychains -d user -s "$keychain"
+
+      - name: Configure App Store Connect notarization
+        env:
+          NOTARY_KEY_BASE64: ${{ secrets.APP_STORE_CONNECT_KEY_P8_BASE64 }}
+          NOTARY_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+        run: |
+          key="$RUNNER_TEMP/AuthKey_${NOTARY_KEY_ID}.p8"
+          printf '%s' "$NOTARY_KEY_BASE64" | base64 -D > "$key"
+          xcrun notarytool store-credentials "$NOTARY_PROFILE" \
+            --key "$key" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID"
+
+      - name: Run Swift tests
+        run: swift test --package-path apps/macos/SandboxApp
+
+      - name: Build, notarize, and staple Beta
+        env:
+          MACOS_CODESIGN_IDENTITY: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION }}
+          MACOS_NOTARY_PROFILE: ${{ env.NOTARY_PROFILE }}
+        run: ./scripts/package_macos_notarized_beta.sh "${{ inputs.version }}"
+
+      - name: Verify Gatekeeper and release identities
+        run: |
+          codesign --verify --deep --strict --verbose=2 "dist/UAV Research Sandbox.app"
+          spctl --assess --type execute --verbose=2 "dist/UAV Research Sandbox.app"
+          xcrun stapler validate "dist/UAV Research Sandbox.app"
+          cd dist/releases
+          shasum -a 256 -c "UAV-Research-Sandbox-v${{ inputs.version }}-macos-"*"-SHA256SUMS"
+
+      - name: Publish notarized Beta prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          gh release create "macos-notarized-beta-v${{ inputs.version }}"
+          dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-*.zip
+          dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-*.dmg
+          dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-*-release.json
+          dist/releases/UAV-Research-Sandbox-v${{ inputs.version }}-macos-*-SHA256SUMS
+          --target "${{ github.sha }}"
+          --title "UAV Research Sandbox notarized macOS Beta v${{ inputs.version }}"
+          --prerelease
+          --generate-notes
+
+      - name: Remove temporary signing credentials
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/uav-beta.keychain-db" || true
+          rm -f "$RUNNER_TEMP/developer-id.p12" "$RUNNER_TEMP"/AuthKey_*.p8

@@ -16,6 +16,7 @@ extension SandboxAppModel {
     func profileChanged() {
         if profile == .demo {
             runtimeAssessment = nil
+            runtimeCandidates = []
             return
         }
         Task { await refreshRuntime() }
@@ -24,6 +25,7 @@ extension SandboxAppModel {
     func refreshRuntime(persist: Bool = false) async {
         guard profile != .demo, !projectRoot.isEmpty else {
             runtimeAssessment = nil
+            runtimeCandidates = []
             return
         }
         runtimeRefreshing = true
@@ -33,23 +35,32 @@ extension SandboxAppModel {
         let selection = runtimeSelection
         let manager = runtimeManager
         do {
-            let assessment = try await Task.detached {
+            let result = try await Task.detached {
+                let assessment: RuntimeAssessment
                 if persist {
-                    return try manager.validateAndPersist(
+                    assessment = try manager.validateAndPersist(
+                        projectRoot: root, profile: selectedProfile,
+                        selection: selection
+                    )
+                } else {
+                    assessment = try manager.assess(
                         projectRoot: root, profile: selectedProfile,
                         selection: selection
                     )
                 }
-                return try manager.assess(
+                let candidates = try manager.discoverCandidates(
                     projectRoot: root, profile: selectedProfile,
-                    selection: selection
+                    selection: selection, assessment: assessment
                 )
+                return (assessment, candidates)
             }.value
-            runtimeAssessment = assessment
-            if persist, assessment.ready {
+            runtimeAssessment = result.0
+            runtimeCandidates = result.1
+            if persist, result.0.ready {
                 append("Saved verified runtime profile at \(manager.store.fileURL.path).")
             }
         } catch {
+            runtimeCandidates = []
             runtimeAssessment = RuntimeAssessment(
                 components: [], overall: .missing,
                 blockers: [error.localizedDescription], selected: nil
@@ -77,6 +88,36 @@ extension SandboxAppModel {
         chooseFile(title: "Choose the gz executable") { url in
             self.runtimeSelection.gazeboExecutable = url
         }
+    }
+
+    func chooseOpenCV() {
+        chooseDirectory(title: "Choose the OpenCV 4 prefix") { url in
+            self.runtimeSelection.openCVPrefix = url
+        }
+    }
+
+    func chooseQt() {
+        chooseDirectory(title: "Choose the Qt 5 prefix") { url in
+            self.runtimeSelection.qtPrefix = url
+        }
+    }
+
+    func selectRuntimeCandidate(_ candidate: RuntimeCandidate) {
+        let url = URL(fileURLWithPath: candidate.path).standardizedFileURL
+        switch candidate.componentID {
+        case "python": runtimeSelection.pythonExecutable = url
+        case "px4": runtimeSelection.px4Root = url
+        case "gazebo": runtimeSelection.gazeboExecutable = url
+        case "opencv": runtimeSelection.openCVPrefix = url
+        case "qt": runtimeSelection.qtPrefix = url
+        default: return
+        }
+        validateRuntime()
+    }
+
+    func resetRuntimeSelection() {
+        runtimeSelection = RuntimeSelection()
+        validateRuntime()
     }
 
     private func chooseFile(title: String, update: (URL) -> Void) {

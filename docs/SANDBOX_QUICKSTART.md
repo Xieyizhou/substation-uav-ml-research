@@ -141,9 +141,11 @@ In the native macOS App, select **Development** and review **Runtime
 compatibility** before starting. The App prefers the repository `.venv`,
 inspects the PX4 Git identity and Gazebo Sim version, and saves verified
 absolute paths under `~/Library/Application Support/UAV Research
-Sandbox/runtime-profile.json`. Use the Python, PX4, or Gazebo selector when
-multiple installations exist. `untested` is a Development warning but a Formal
-block; `missing`, `unsupported`, and `changed_since_validation` always block.
+Sandbox/runtime-profile.json`. Open **Candidates…** when multiple installations
+exist: Python, PX4, Gazebo, OpenCV, and Qt candidates show their discovery
+source, version, compatibility, and selected path. A manual choice is inspected
+before it is persisted. `untested` is a Development warning but a Formal block;
+`missing`, `unsupported`, and `changed_since_validation` always block.
 
 The App does not install or upgrade packages, change the PX4 checkout, edit a
 shell profile, or terminate an unrelated PX4/Gazebo process.

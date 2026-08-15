@@ -13,6 +13,7 @@ final class SandboxAppModel: ObservableObject {
     @Published var webURL: URL?
     @Published var embeddedDemoReady = false
     @Published var runtimeAssessment: RuntimeAssessment?
+    @Published var runtimeCandidates: [RuntimeCandidateGroup] = []
     @Published var runtimeRefreshing = false
     private let port: UInt16 = 8765
     private var process: Process?
@@ -35,7 +36,6 @@ final class SandboxAppModel: ObservableObject {
         default: return false
         }
     }
-
     var canStop: Bool {
         switch state {
         case .online, .connected: return true
@@ -70,6 +70,7 @@ final class SandboxAppModel: ObservableObject {
             UserDefaults.standard.set(url.path, forKey: "sandboxProjectRoot")
             runtimeSelection = RuntimeSelection()
             runtimeAssessment = nil
+            runtimeCandidates = []
             if case .failed = state { state = .idle }
             Task { await refreshRuntime() }
         }

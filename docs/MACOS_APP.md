@@ -14,6 +14,7 @@ The native application provides:
 - repository selection and validation for Development and Formal;
 - Demo, Development, and Formal profile selection;
 - verified runtime discovery for Python, PX4, Gazebo, OpenCV, and Qt;
+- an inspected candidate list for every runtime component, with explicit selection;
 - persistent absolute runtime paths with lightweight launch-time revalidation;
 - profile bootstrap before launch;
 - loopback-only service health checks;
@@ -70,7 +71,11 @@ The file records the project, component paths, versions and identities, result,
 and validation time. Development permits an untested compatible version with a
 warning; Formal blocks untested runtimes. Missing, unsupported, or changed
 runtime identities block both profiles until the user selects **Check runtime**
-or chooses a different Python, PX4 checkout, or Gazebo executable.
+or chooses another inspected candidate. **Candidates…** shows repository,
+manual, saved, environment, `PATH`, default-location, and Homebrew discoveries;
+each row reports its version and compatibility result. Manual selection also
+supports OpenCV and Qt prefixes. **Use automatic priority** clears all manual
+overrides and reruns deterministic discovery.
 
 The selected paths are passed to the service and flight launcher through a
 controlled environment. The verified tool directories lead `PATH`, and the
@@ -117,9 +122,10 @@ UAV_SANDBOX_PROJECT_ROOT="$PWD" \
   "dist/UAV Research Sandbox.app/Contents/MacOS/UAVSandboxApp"
 ```
 
-The start screen also provides manual selectors for the Python executable, PX4
-root, and `gz` executable. These choices are inspected before they are saved;
-selecting a path never installs, upgrades, removes, or rewrites that runtime.
+The start screen and candidate sheet provide manual selectors for the Python
+executable, PX4 root, `gz` executable, OpenCV prefix, and Qt prefix. These
+choices are inspected before they are saved; selecting a path never installs,
+upgrades, removes, or rewrites that runtime.
 
 ## Preview installer
 
@@ -127,9 +133,9 @@ Create a versioned DMG, ZIP, release manifest, and checksum list from the
 repository root:
 
 ```bash
-./scripts/package_macos_release.sh 0.4.0
+./scripts/package_macos_release.sh 0.5.0
 cd dist/releases
-shasum -a 256 -c UAV-Research-Sandbox-v0.4.0-macos-*-SHA256SUMS
+shasum -a 256 -c UAV-Research-Sandbox-v0.5.0-macos-*-SHA256SUMS
 ```
 
 The DMG presents the App beside an Applications shortcut and includes a short
@@ -158,11 +164,68 @@ and publishes the DMG, ZIP, manifest, and checksum list as a GitHub prerelease.
 It never packages datasets, model weights, simulator installations, or local
 experiment outputs.
 
+## Unsigned Beta installer
+
+The current Beta is intended for repeatable GitHub distribution before Apple
+Developer credentials are available. It is built only from a clean tracked
+worktree, records the exact source commit, creates a versioned ZIP and DMG, and
+binds their byte counts and SHA256 identities into a verified release manifest:
+
+```bash
+./scripts/package_macos_beta.sh 0.5.0
+cd dist/releases
+shasum -a 256 -c UAV-Research-Sandbox-v0.5.0-macos-*-SHA256SUMS
+```
+
+The manual **macOS unsigned Beta release** workflow repeats Swift tests and
+release verification on a fresh GitHub macOS runner before publishing a
+prerelease. The App is ad-hoc signed so it can execute locally, but it has no
+Developer ID identity and is not Apple-notarized. The included installation
+note directs users to macOS **Open Anyway** if Gatekeeper blocks first launch;
+it never asks users to disable Gatekeeper.
+
+This is a reproducible build procedure and a cryptographically verifiable
+artifact identity, not a claim that ZIP or DMG bytes are bit-for-bit identical
+across SDK versions. The source commit, architecture, App version, build tier,
+artifact hashes, and external-runtime boundary are sufficient to reproduce and
+audit the same release inputs.
+
+## Future notarized Beta pipeline
+
+The notarized Beta uses the same bundle boundary, but requires a Developer ID Application
+certificate, hardened-runtime signing, Apple notarization, and stapled tickets
+for both the App and DMG. The release command deliberately fails before
+building when either credential is absent:
+
+```bash
+MACOS_CODESIGN_IDENTITY="Developer ID Application: Example (TEAMID)" \
+MACOS_NOTARY_PROFILE="uav-sandbox-notary" \
+  ./scripts/package_macos_notarized_beta.sh 0.5.0
+```
+
+Create the named notary profile with `xcrun notarytool store-credentials` first.
+The manual **macOS notarized Beta release** workflow performs the same checks on
+GitHub's macOS runner and publishes a prerelease only after `codesign`,
+Gatekeeper, stapler, manifest, and checksum verification pass. Configure these
+repository secrets:
+
+- `MACOS_DEVELOPER_ID_P12_BASE64`
+- `MACOS_DEVELOPER_ID_P12_PASSWORD`
+- `MACOS_DEVELOPER_ID_APPLICATION`
+- `APP_STORE_CONNECT_KEY_P8_BASE64`
+- `APP_STORE_CONNECT_KEY_ID`
+- `APP_STORE_CONNECT_ISSUER_ID`
+
+The workflow deletes its temporary keychain and credential files even when a
+release step fails. The Beta manifest must declare `developer_id` signing and
+`stapled` notarization; an ad-hoc artifact cannot pass as Beta.
+
 ## Distribution boundary
 
-The preview is ad-hoc signed and intended for Apple Silicon development
-machines. Its Demo is standalone; Development and Formal still use a selected
-repository plus its Python environment. Public distribution still requires a
-Developer ID certificate, hardened-runtime entitlements, notarization, and a
-clean-machine Gatekeeper test. The full simulator remains an explicitly
-detected external toolchain.
+The preview and unsigned Beta are ad-hoc signed; only the latter requires clean
+sources and records a Beta provenance contract. The future notarized Beta adds
+Developer ID and Apple trust without changing the product boundary: Demo is
+standalone, while Development and Formal still require a selected repository,
+Python environment, and external simulator toolchain. A public stable release
+should additionally pass a clean-machine install and flight smoke on each
+supported macOS/architecture combination.

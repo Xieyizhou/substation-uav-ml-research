@@ -235,7 +235,18 @@ public struct RuntimeInspector: @unchecked Sendable {
         _ name: String, prefix: URL,
         environment: [String: String], root: URL
     ) -> String? {
+        let resolved = prefix.resolvingSymlinksInPath()
+        if let version = firstVersion(in: resolved.lastPathComponent) {
+            return version
+        }
         for brew in brewCandidates(environment) where fileManager.isExecutableFile(atPath: brew.path) {
+            guard let prefixResult = try? runner.run(brew, ["--prefix", name], at: root),
+                  prefixResult.exitCode == 0 else { continue }
+            let installed = URL(fileURLWithPath: prefixResult.output
+                .trimmingCharacters(in: .whitespacesAndNewlines)).standardizedFileURL
+            let matches = installed == prefix.standardizedFileURL
+                || installed.resolvingSymlinksInPath() == resolved
+            guard matches else { continue }
             if let result = try? runner.run(brew, ["list", "--versions", name], at: root) {
                 for line in result.output.split(whereSeparator: \.isNewline) {
                     let fields = line.split(whereSeparator: \.isWhitespace)
@@ -246,8 +257,7 @@ public struct RuntimeInspector: @unchecked Sendable {
                 }
             }
         }
-        let resolved = prefix.resolvingSymlinksInPath().lastPathComponent
-        return firstVersion(in: resolved)
+        return nil
     }
 
     private func brewCandidates(_ environment: [String: String]) -> [URL] {

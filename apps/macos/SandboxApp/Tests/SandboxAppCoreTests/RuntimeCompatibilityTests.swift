@@ -2,7 +2,7 @@ import Foundation
 import SandboxAppCore
 import Testing
 
-private final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
+final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     var pythonVersions: [String: String] = [:]
     var px4Commits: [String: String] = [:]
     var gazeboVersions: [String: String] = [:]
@@ -208,7 +208,7 @@ private final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
 }
 }
 
-private final class RuntimeFixture {
+final class RuntimeFixture {
     let root: URL
     let runner = FakeRunner()
     let px4: URL

@@ -166,17 +166,26 @@ Create a versioned preview DMG, ZIP, release manifest, and SHA256 checksum list
 with:
 
 ```bash
-./scripts/package_macos_release.sh 0.4.0
+./scripts/package_macos_release.sh 0.5.0
 ```
 
 Demo Profile runs entirely inside the App without a repository or Python.
 Development and Formal continue to use the repository's Python environment and
 keep PX4/Gazebo as external dependencies. Before launch, the App discovers and
-validates Python, PX4, Gazebo, OpenCV, and Qt, then saves their absolute paths in
-the user's Application Support directory. Multiple installations may coexist;
-the App does not silently use the first incompatible command on `PATH`. See
+validates Python, PX4, Gazebo, OpenCV, and Qt. **Candidates…** lists every known
+installation with its source, version, compatibility result, and selected path;
+the choice is saved in the user's Application Support directory. Multiple
+installations may coexist, and the App does not silently use the first
+incompatible command on `PATH`. See
 [the macOS App guide](docs/MACOS_APP.md)
-for profiles, build requirements, preview releases, and the distribution boundary.
+for profiles, build requirements, preview, unsigned Beta, and future notarized
+Beta releases, plus the distribution boundary.
+
+Build the current integrity-verifiable unsigned Beta from a clean tracked
+worktree with `./scripts/package_macos_beta.sh 0.5.0`. Its manifest binds the
+source commit and artifact SHA256 identities while explicitly declaring that it
+is not Apple-notarized. The repository also retains a separate Developer ID and
+notarization workflow for future signed releases.
 
 Run the complete offline release check with:
 

@@ -1,0 +1,14 @@
+UAV Research Sandbox — unsigned macOS Beta
+
+1. Drag UAV Research Sandbox.app into Applications.
+2. Open the App from Applications.
+3. If macOS blocks the first launch, open System Settings > Privacy & Security,
+   verify the App name, and choose Open Anyway. Do not disable Gatekeeper.
+4. Start with the built-in Demo profile; it requires no repository or simulator.
+5. For Development or Formal, choose a compatible project repository and
+   validate Python, PX4, Gazebo, OpenCV, and Qt in Runtime candidates.
+
+This Beta is ad-hoc signed for integrity during local execution. It is not
+Developer ID signed or Apple-notarized, and the release manifest states that
+boundary explicitly. The App never installs, updates, or removes external
+simulator runtimes automatically.

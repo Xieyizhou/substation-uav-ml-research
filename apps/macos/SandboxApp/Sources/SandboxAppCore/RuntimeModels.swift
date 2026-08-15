@@ -125,15 +125,21 @@ public struct RuntimeSelection: Equatable, Sendable {
     public var pythonExecutable: URL?
     public var px4Root: URL?
     public var gazeboExecutable: URL?
+    public var openCVPrefix: URL?
+    public var qtPrefix: URL?
 
     public init(
         pythonExecutable: URL? = nil,
         px4Root: URL? = nil,
-        gazeboExecutable: URL? = nil
+        gazeboExecutable: URL? = nil,
+        openCVPrefix: URL? = nil,
+        qtPrefix: URL? = nil
     ) {
         self.pythonExecutable = pythonExecutable
         self.px4Root = px4Root
         self.gazeboExecutable = gazeboExecutable
+        self.openCVPrefix = openCVPrefix
+        self.qtPrefix = qtPrefix
     }
 }
 

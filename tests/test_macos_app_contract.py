@@ -22,7 +22,7 @@ class MacOSAppContractTests(unittest.TestCase):
         )
         self.assertEqual(value["CFBundlePackageType"], "APPL")
         self.assertEqual(value["CFBundleIconFile"], "AppIcon")
-        self.assertEqual(value["CFBundleShortVersionString"], "0.4.0")
+        self.assertEqual(value["CFBundleShortVersionString"], "0.5.0")
 
     def test_bundle_version_matches_shared_manifest(self):
         import json
@@ -118,6 +118,27 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertNotIn("data/research", script)
         self.assertNotIn("models/", script)
         self.assertIn("scripts/create_icns.py", script)
+
+    def test_advanced_runtime_candidate_picker_covers_every_component(self):
+        discovery = (
+            APP_ROOT / "Sources/SandboxAppCore/RuntimeCandidateDiscovery.swift"
+        ).read_text(encoding="utf-8")
+        view = (
+            APP_ROOT / "Sources/UAVSandboxApp/RuntimeCandidateView.swift"
+        ).read_text(encoding="utf-8")
+        build = (ROOT / "scripts/build_macos_app.sh").read_text(encoding="utf-8")
+        for component in ("python", "px4", "gazebo", "opencv", "qt"):
+            self.assertIn(f'"{component}"', discovery)
+        for label in (
+            "Python executable…",
+            "PX4 checkout…",
+            "Gazebo executable…",
+            "OpenCV 4 prefix…",
+            "Qt 5 prefix…",
+        ):
+            self.assertIn(label, view)
+        self.assertIn("RuntimeCandidateDiscovery.swift", build)
+        self.assertIn("RuntimeCandidateView.swift", build)
 
     def test_status_home_reads_only_loopback_endpoints(self):
         model = (

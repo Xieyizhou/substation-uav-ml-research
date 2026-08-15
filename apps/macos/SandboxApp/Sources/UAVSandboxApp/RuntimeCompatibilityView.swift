@@ -3,6 +3,7 @@ import SwiftUI
 
 struct RuntimeCompatibilityView: View {
     @ObservedObject var model: SandboxAppModel
+    @State private var showCandidates = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -35,6 +36,7 @@ struct RuntimeCompatibilityView: View {
                 Button("Python…") { model.choosePython() }
                 Button("PX4…") { model.choosePX4() }
                 Button("Gazebo…") { model.chooseGazebo() }
+                Button("Candidates…") { showCandidates = true }
                 Spacer()
                 if model.runtimeRefreshing { ProgressView().controlSize(.small) }
                 Button("Check runtime") { model.validateRuntime() }
@@ -44,6 +46,9 @@ struct RuntimeCompatibilityView: View {
         }
         .padding(12)
         .background(Color(nsColor: .controlBackgroundColor), in: RoundedRectangle(cornerRadius: 10))
+        .sheet(isPresented: $showCandidates) {
+            RuntimeCandidateView(model: model, isPresented: $showCandidates)
+        }
     }
 
     private func component(_ item: RuntimeComponent) -> some View {

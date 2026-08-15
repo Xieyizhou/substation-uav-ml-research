@@ -57,9 +57,11 @@ build_with_command_line_tools() {
     "$package_root/Sources/SandboxAppCore/ProjectConfiguration.swift" \
     "$package_root/Sources/SandboxAppCore/ProcessExecution.swift" \
     "$package_root/Sources/SandboxAppCore/RuntimeModels.swift" \
+    "$package_root/Sources/SandboxAppCore/RuntimeCandidateModels.swift" \
     "$package_root/Sources/SandboxAppCore/RuntimeProfileStore.swift" \
     "$package_root/Sources/SandboxAppCore/RuntimeInspection.swift" \
     "$package_root/Sources/SandboxAppCore/RuntimeCompatibilityManager.swift" \
+    "$package_root/Sources/SandboxAppCore/RuntimeCandidateDiscovery.swift" \
     "$package_root/Sources/SandboxAppCore/RuntimeConflict.swift" \
     "$package_root/Sources/SandboxAppCore/StandaloneDemoModels.swift" \
     "$package_root/Sources/SandboxAppCore/StandaloneDemo.swift"
@@ -78,6 +80,7 @@ build_with_command_line_tools() {
     "$package_root/Sources/UAVSandboxApp/NativeDashboardView.swift" \
     "$package_root/Sources/UAVSandboxApp/StandaloneDemoView.swift" \
     "$package_root/Sources/UAVSandboxApp/RuntimeCompatibilityView.swift" \
+    "$package_root/Sources/UAVSandboxApp/RuntimeCandidateView.swift" \
     "$package_root/Sources/UAVSandboxApp/ContentView.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxWebView.swift"
 }
@@ -105,7 +108,13 @@ cp "$package_root/Resources/Info.plist" "$contents/Info.plist"
 cp "$build_root/AppIcon.icns" "$contents/Resources/AppIcon.icns"
 
 if command -v codesign >/dev/null 2>&1; then
-  codesign --force --sign - --timestamp=none "$destination"
+  signing_identity=${MACOS_CODESIGN_IDENTITY:--}
+  if [ "$signing_identity" = "-" ]; then
+    codesign --force --sign - --timestamp=none "$destination"
+  else
+    codesign --force --sign "$signing_identity" \
+      --options runtime --timestamp "$destination"
+  fi
 fi
 
 echo "Built $destination"
