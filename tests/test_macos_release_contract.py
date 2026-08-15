@@ -15,6 +15,7 @@ class MacOSReleaseContractTests(unittest.TestCase):
         self.assertIn("ditto -c -k", script)
         self.assertIn("shasum -a 256", script)
         self.assertIn("CFBundleShortVersionString", script)
+        self.assertIn("config/sandbox/version.json", script)
         self.assertIn("dist/releases", script)
         self.assertNotIn("data/research", script)
         self.assertNotIn("models/", script)

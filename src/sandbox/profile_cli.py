@@ -10,6 +10,10 @@ from src.sandbox.beta_install import (
 )
 from src.sandbox.bootstrap import bootstrap_sandbox, inspect_bootstrap
 from src.sandbox.demo_workflow import inspect_demo, run_demo
+from src.sandbox.development_app_gate import (
+    inspect_development_app_gate,
+    run_development_app_gate,
+)
 from src.sandbox.release_gate import inspect_release_gate, run_release_gate
 
 
@@ -17,6 +21,7 @@ COMMANDS = frozenset({
     "bootstrap", "bootstrap-inspect", "demo-run", "demo-inspect",
     "release-gate", "release-gate-inspect", "beta-install-gate",
     "beta-install-gate-inspect",
+    "development-app-gate", "development-app-gate-inspect",
 })
 
 
@@ -53,6 +58,18 @@ def register_profile_commands(commands):
         "beta-install-gate-inspect", help="Validate a Beta installation result"
     )
     beta_inspect.add_argument("--input", type=Path, required=True)
+    development = commands.add_parser(
+        "development-app-gate",
+        help="Bind one App-managed Development flight to release evidence",
+    )
+    development.add_argument("--workflow-receipt", type=Path, required=True)
+    development.add_argument("--flight-summary", type=Path, required=True)
+    development.add_argument("--output", type=Path, required=True)
+    development_inspect = commands.add_parser(
+        "development-app-gate-inspect",
+        help="Validate a Development App flight gate receipt",
+    )
+    development_inspect.add_argument("--input", type=Path, required=True)
     commands.add_parser("doctor", help="Check dependencies, paths, and disk space")
     commands.add_parser("status", help="Show collection and runtime status")
     challenge = commands.add_parser(
@@ -83,5 +100,14 @@ def handle_profile_command(args, config):
     if args.command == "beta-install-gate":
         result = run_beta_install_gate(config.project_root, args.output)
         return result, 0 if result["passed"] else 1
-    result = inspect_beta_install_gate(args.input)
+    if args.command == "beta-install-gate-inspect":
+        result = inspect_beta_install_gate(args.input)
+        return result, 0 if result["passed"] else 1
+    if args.command == "development-app-gate":
+        result = run_development_app_gate(
+            config.project_root, args.workflow_receipt,
+            args.flight_summary, args.output,
+        )
+        return result, 0 if result["passed"] else 1
+    result = inspect_development_app_gate(args.input)
     return result, 0 if result["passed"] else 1

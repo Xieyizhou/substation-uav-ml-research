@@ -32,6 +32,11 @@ struct NativeDashboardView: View {
                     .font(.system(size: 28, weight: .bold, design: .rounded))
                 Text("A read-only view of the local service, environment, and managed job.")
                     .foregroundStyle(.secondary)
+                if let version = status.snapshot?.version {
+                    Text("App \(version.macosAppVersion) · Sandbox \(version.sandboxProductVersion)")
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                }
             }
             Spacer()
             if let updated = status.lastUpdated {

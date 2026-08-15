@@ -36,6 +36,11 @@ class InspectionService:
     def profile(self):
         return sandbox_profile(self.config.profile).to_record()
 
+    def version(self):
+        from src.sandbox.version import load_sandbox_version
+
+        return load_sandbox_version(self.config.project_root).to_record()
+
     def dashboard(self):
         from src.inspection.dashboard import dashboard
 

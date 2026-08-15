@@ -26,6 +26,77 @@
   color: var(--red);
 }
 
+#action-dialog {
+  border: 0;
+  border-radius: 16px;
+  box-shadow: 0 22px 70px rgb(15 23 42 / 28%);
+  max-width: 520px;
+  padding: 0;
+  width: calc(100% - 40px);
+}
+
+#action-dialog::backdrop {
+  background: rgb(15 23 42 / 48%);
+}
+
+.action-dialog-card {
+  padding: 24px;
+}
+
+.action-dialog-card h2 {
+  margin: 8px 0;
+}
+
+.action-dialog-card p {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.action-dialog-card dl {
+  background: var(--paper);
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto 1fr;
+  padding: 12px;
+}
+
+.action-dialog-card dt {
+  color: var(--muted);
+}
+
+.action-dialog-card dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.action-dialog-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.action-status {
+  background: #fff2f2;
+  border: 1px solid #efb2b2;
+  border-radius: 10px;
+  bottom: 20px;
+  color: var(--red);
+  display: none;
+  left: 50%;
+  max-width: 680px;
+  padding: 12px 16px;
+  position: fixed;
+  transform: translateX(-50%);
+  z-index: 20;
+}
+
+.action-status.visible {
+  display: block;
+}
+
 .operator-grid {
   grid-template-columns: minmax(300px, .8fr) minmax(0, 1.2fr);
 }

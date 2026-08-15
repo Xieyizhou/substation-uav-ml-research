@@ -2,7 +2,9 @@
 set -eu
 
 project_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-version=${1:-0.2.0}
+version_manifest="$project_root/config/sandbox/version.json"
+manifest_version=$(/usr/bin/python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["macos_app_version"])' "$version_manifest")
+version=${1:-$manifest_version}
 bundle_plist="$project_root/apps/macos/SandboxApp/Resources/Info.plist"
 
 case "$version" in
@@ -13,6 +15,10 @@ case "$version" in
 esac
 
 bundle_version=$(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$bundle_plist")
+if [ "$manifest_version" != "$bundle_version" ]; then
+  echo "version manifest $manifest_version does not match bundle version $bundle_version" >&2
+  exit 2
+fi
 if [ "$version" != "$bundle_version" ]; then
   echo "release version $version does not match bundle version $bundle_version" >&2
   exit 2

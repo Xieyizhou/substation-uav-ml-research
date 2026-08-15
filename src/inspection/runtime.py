@@ -85,6 +85,12 @@ def _process_role(process: ProcessRecord) -> str | None:
         item.lower() for item in process.argv[1:]
     }:
         return "Gazebo"
+    python_process = executable.startswith("python") or argv0.startswith("python")
+    direct_flight_script = executable in {
+        "run_task.py", "fly_astar.py", "fly_astar_path.py",
+    }
+    if not python_process and not direct_flight_script:
+        return None
     if _has_sequence(process.argv, ("visual", "collection-run")):
         return "collection runner"
     if any(_has_sequence(process.argv, ("visual", command)) for command in (

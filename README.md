@@ -164,7 +164,7 @@ open "dist/UAV Research Sandbox.app"
 Create a versioned preview archive and SHA256 checksum with:
 
 ```bash
-./scripts/package_macos_release.sh 0.2.0
+./scripts/package_macos_release.sh 0.2.1
 ```
 
 It currently uses the repository's Python environment and keeps PX4/Gazebo as

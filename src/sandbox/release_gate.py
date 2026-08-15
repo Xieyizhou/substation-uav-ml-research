@@ -10,9 +10,9 @@ from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
 from src.sandbox.bootstrap import bootstrap_sandbox, inspect_bootstrap
 from src.sandbox.demo_workflow import inspect_demo, run_demo
 from src.sandbox.gate_outcome import check_outcome, validate_outcome
+from src.sandbox.version import load_sandbox_version
 
 
-RELEASE_VERSION = "0.1.0"
 RELEASE_GATE_SCHEMA_VERSION = 2
 
 
@@ -24,6 +24,9 @@ def run_release_gate(config, output):
     if config.profile != "demo":
         raise ValueError("Sandbox v0.1 release gate requires the demo profile")
     root = Path(output)
+    versions = load_sandbox_version(config.project_root)
+    if versions.gate_schema_version != RELEASE_GATE_SCHEMA_VERSION:
+        raise ValueError("release gate schema does not match version manifest")
     bootstrap = bootstrap_sandbox(config, root / "bootstrap.json")
     demo = run_demo(config.project_root, root / "demo")
     verified_bootstrap = inspect_bootstrap(root / "bootstrap.json")
@@ -31,7 +34,10 @@ def run_release_gate(config, output):
     doctor = run_doctor(config)
     required_assets = tuple(
         config.project_root / "src/inspection/static" / name
-        for name in ("index.html", "app.js", "style.css", "profile.css")
+        for name in (
+            "index.html", "app.js", "style.css", "operator.css",
+            "research.css", "experiments.css", "profile.css",
+        )
     )
     asset_identity = object_sha256({
         path.name: file_sha256(path) for path in required_assets if path.is_file()
@@ -55,7 +61,8 @@ def run_release_gate(config, output):
     }
     record = {
         "release_gate_schema_version": RELEASE_GATE_SCHEMA_VERSION,
-        "release_version": RELEASE_VERSION,
+        "release_version": versions.sandbox_product_version,
+        "versions": versions.to_record(),
         "profile": config.profile,
         "software_commit_sha": git_commit(config.project_root),
         "checks": checks,
@@ -77,8 +84,11 @@ def inspect_release_gate(path):
         raise ValueError("sandbox release gate identity mismatch")
     if value.get("release_gate_schema_version") != RELEASE_GATE_SCHEMA_VERSION:
         raise ValueError("unsupported sandbox release gate schema")
-    if value.get("release_version") != RELEASE_VERSION:
-        raise ValueError("unsupported sandbox release version")
+    versions = value.get("versions", {})
+    if value.get("release_version") != versions.get("sandbox_product_version"):
+        raise ValueError("sandbox release version is inconsistent")
+    if versions.get("gate_schema_version") != RELEASE_GATE_SCHEMA_VERSION:
+        raise ValueError("sandbox release gate version is inconsistent")
     passed = all(item.get("passed") is True for item in value.get("checks", {}).values())
     for item in value.get("checks", {}).values():
         validate_outcome(item)

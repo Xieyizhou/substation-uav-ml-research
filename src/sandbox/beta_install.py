@@ -16,6 +16,7 @@ from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
 from src.sandbox.gate_outcome import (
     ENVIRONMENT_UNAVAILABLE, PASSED, PRODUCT_FAILURE, validate_outcome,
 )
+from src.sandbox.version import load_sandbox_version
 
 
 BETA_INSTALL_SCHEMA_VERSION = 2
@@ -180,6 +181,7 @@ def run_beta_install_gate(project_root, output, python_executable=None):
     record = {
         "beta_install_schema_version": BETA_INSTALL_SCHEMA_VERSION,
         "beta_install_version": BETA_INSTALL_VERSION,
+        "versions": load_sandbox_version(root).to_record(),
         "profile": "demo",
         "source_commit_sha": git_commit(root),
         "source_identity": source_identity,
@@ -210,6 +212,8 @@ def inspect_beta_install_gate(path):
         raise ValueError("unsupported beta installation gate schema")
     if value.get("beta_install_version") != BETA_INSTALL_VERSION:
         raise ValueError("unsupported beta installation gate version")
+    if value.get("versions", {}).get("gate_schema_version") != BETA_INSTALL_SCHEMA_VERSION:
+        raise ValueError("beta installation gate version is inconsistent")
     passed = len(value.get("checks", [])) == 8 and all(
         check.get("passed") is True for check in value.get("checks", [])
     )

@@ -14,6 +14,7 @@ from src.sandbox.gate_outcome import (
     ENVIRONMENT_UNAVAILABLE, PASSED, PRODUCT_FAILURE,
 )
 from src.sandbox.profiles import sandbox_profile
+from src.sandbox.version import load_sandbox_version
 
 
 APP_SMOKE_SCHEMA_VERSION = 2
@@ -26,14 +27,22 @@ def _read(url):
 
 def _contract_checks(config):
     static = config.project_root / "src/inspection/static"
+    try:
+        version_valid = bool(load_sandbox_version(config.project_root).macos_app_version)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        version_valid = False
     return {
         "contract_profile": (
             config.profile == "demo"
             and sandbox_profile(config.profile).flight_enabled is False
         ),
         "contract_assets": all(
-            (static / name).is_file() for name in ("index.html", "app.js", "style.css")
+            (static / name).is_file() for name in (
+                "index.html", "app.js", "style.css", "operator.css",
+                "research.css", "experiments.css", "profile.css",
+            )
         ),
+        "contract_version": version_valid,
     }
 
 
@@ -75,7 +84,7 @@ def run_app_smoke(project_root):
     try:
         status, content_type, body = _read(f"{base}/")
         checks["app_shell"] = status == 200 and content_type == "text/html" and bool(body)
-        for name in ("profile", "storage", "operator"):
+        for name in ("profile", "version", "storage", "operator"):
             status, content_type, body = _read(f"{base}/api/{name}")
             value = json.loads(body)
             checks[f"api_{name}"] = (

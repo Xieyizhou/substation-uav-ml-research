@@ -28,6 +28,11 @@ PX4, Gazebo, datasets, model weights, and the Python environment are not
 bundled. Development and Formal profiles continue to use the repository's
 installed dependencies. Demo Profile remains the portable first-run path.
 
+The App version, Sandbox product milestone, operator API, and gate schema are
+separate compatibility identities. Their shared source is
+`config/sandbox/version.json`; the native status page displays both the App and
+Sandbox versions.
+
 ## Build
 
 Run from the repository root:
@@ -62,10 +67,24 @@ UAV_SANDBOX_PROJECT_ROOT="$PWD" \
 Create a versioned ZIP and matching checksum from the repository root:
 
 ```bash
-./scripts/package_macos_release.sh 0.2.0
+./scripts/package_macos_release.sh 0.2.1
 cd dist/releases
-shasum -a 256 -c UAV-Research-Sandbox-v0.2.0-macos-arm64.zip.sha256
+shasum -a 256 -c UAV-Research-Sandbox-v0.2.1-macos-arm64.zip.sha256
 ```
+
+After an App-managed Development flight smoke completes, bind its job receipt,
+flight summary, source commit, cleanup status, and versions into one local gate:
+
+```bash
+.venv/bin/python main.py sandbox --profile development development-app-gate \
+  --workflow-receipt outputs/sandbox/operator/jobs/JOB_ID/workflow_receipt.json \
+  --flight-summary outputs/sandbox/flight_smoke/RUN_ID/summary.json \
+  --output outputs/sandbox/development-app-gate/latest
+```
+
+The gate fails if the mission was not completed with confirmed landing, a
+simulator process remains, the tracked worktree changed, the scenario is blind,
+or PNG dataset payloads were produced.
 
 The manual **macOS preview release** GitHub Actions workflow runs Swift tests,
 builds the application, verifies its ad-hoc signature and checksum, and

@@ -21,7 +21,17 @@ class MacOSAppContractTests(unittest.TestCase):
         )
         self.assertEqual(value["CFBundlePackageType"], "APPL")
         self.assertEqual(value["CFBundleIconFile"], "AppIcon")
-        self.assertEqual(value["CFBundleShortVersionString"], "0.2.0")
+        self.assertEqual(value["CFBundleShortVersionString"], "0.2.1")
+
+    def test_bundle_version_matches_shared_manifest(self):
+        import json
+
+        version = json.loads(
+            (ROOT / "config/sandbox/version.json").read_text(encoding="utf-8")
+        )
+        with (APP_ROOT / "Resources/Info.plist").open("rb") as handle:
+            plist = plistlib.load(handle)
+        self.assertEqual(plist["CFBundleShortVersionString"], version["macos_app_version"])
 
     def test_icon_master_is_square_1024_png(self):
         payload = (APP_ROOT / "Resources/AppIcon.png").read_bytes()
@@ -53,7 +63,7 @@ class MacOSAppContractTests(unittest.TestCase):
         model = (
             APP_ROOT / "Sources/UAVSandboxApp/SandboxStatusModel.swift"
         ).read_text(encoding="utf-8")
-        for endpoint in ("profile", "runtime", "doctor", "storage", "operator"):
+        for endpoint in ("profile", "version", "runtime", "doctor", "storage", "operator"):
             self.assertIn(f'"api/{endpoint}"', model)
         self.assertNotIn("operator/start", model)
         self.assertNotIn("operator/stop", model)

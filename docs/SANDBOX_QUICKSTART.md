@@ -137,6 +137,12 @@ and enables managed flight, collection, replay, training-view, and validation
 actions. The App still enforces one active job, bounded timeouts, safe process
 cleanup, non-blind browsing, and fixed command construction.
 
+For a macOS preview release, follow the offline and clean-install gates with
+one App-managed Development flight smoke on a simulator host. The
+`development-app-gate` command binds its workflow receipt and flight summary
+to the current clean commit and verifies that PX4, Gazebo, the flight task, and
+recording processes have all stopped.
+
 ## Preflight Before Large LiDAR Jobs
 
 Open **Preflight** before a multi-flight LiDAR gate. The page combines the

@@ -69,6 +69,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.doctor())
         if path == "/api/profile":
             return self._json(self.service.profile())
+        if path == "/api/version":
+            return self._json(self.service.version())
         if path == "/api/dashboard":
             return self._json(self.service.dashboard())
         if path == "/api/runtime":

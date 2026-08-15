@@ -127,7 +127,20 @@
     </section>
   </main>
   <dialog id="viewer"><button id="close-viewer">Close</button><div class="canvas-wrap"><img id="full-image"><canvas id="overlay"></canvas></div><div id="frame-detail"></div></dialog>
-  <footer>Local actions use fixed commands, one-job locking, bounded timeouts, and process-group cleanup.</footer>
+  <dialog id="action-dialog" aria-labelledby="action-dialog-title" aria-describedby="action-dialog-detail">
+    <form method="dialog" class="action-dialog-card">
+      <span class="eyebrow">CONFIRM CONTROLLED ACTION</span>
+      <h2 id="action-dialog-title">Confirm action</h2>
+      <p id="action-dialog-detail"></p>
+      <dl id="action-dialog-facts"></dl>
+      <div class="action-dialog-controls">
+        <button value="cancel">Cancel</button>
+        <button id="action-dialog-confirm" value="confirm">Confirm</button>
+      </div>
+    </form>
+  </dialog>
+  <div id="action-status" class="action-status" role="alert" aria-live="assertive"></div>
+  <footer><span id="version-label">Version unavailable</span> · Local actions use fixed commands, one-job locking, bounded timeouts, and process-group cleanup.</footer>
   <script src="/app.js"></script>
 </body>
 </html>

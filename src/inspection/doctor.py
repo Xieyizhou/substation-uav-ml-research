@@ -18,11 +18,24 @@ def _check(name, passed, explanation, action="", warning=False):
 
 def run_doctor(config: InspectionConfig) -> tuple[DoctorCheck, ...]:
     version_ok = sys.version_info >= (3, 11)
+    executable = Path(sys.executable).resolve()
+    expected = (config.project_root / ".venv/bin/python").resolve()
+    expected_present = expected.is_file()
+    project_environment = executable == expected
     checks = [
         _check(
-            "Python", version_ok, f"Python {sys.version.split()[0]}",
+            "Python", version_ok,
+            f"Python {sys.version.split()[0]} at {executable}",
             "Use Python 3.11 or newer.",
-        )
+        ),
+        _check(
+            "Python environment", project_environment or not expected_present,
+            "Using the project virtual environment" if project_environment else (
+                f"Using {executable}; project environment is {expected}"
+                if expected_present else "No project .venv was found"
+            ),
+            f"Run commands with {expected}.", warning=True,
+        ),
     ]
     for executable in ("git", "gz", "make"):
         found = shutil.which(executable)

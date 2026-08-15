@@ -1,6 +1,7 @@
 import Foundation
 
 struct SandboxStatusSnapshot {
+    let version: VersionSnapshot
     let profile: ProfileSnapshot
     let runtime: [RuntimeSnapshot]
     let checks: [DoctorSnapshot]
@@ -11,6 +12,20 @@ struct SandboxStatusSnapshot {
     var passedCheckCount: Int { checks.filter { $0.status == "pass" }.count }
     var warningCheckCount: Int { checks.filter { $0.status == "warning" }.count }
     var failedCheckCount: Int { checks.filter { $0.status == "failure" }.count }
+}
+
+struct VersionSnapshot: Decodable {
+    let sandboxProductVersion: String
+    let macosAppVersion: String
+    let operatorAPIVersion: String
+    let gateSchemaVersion: Int
+
+    enum CodingKeys: String, CodingKey {
+        case sandboxProductVersion = "sandbox_product_version"
+        case macosAppVersion = "macos_app_version"
+        case operatorAPIVersion = "operator_api_version"
+        case gateSchemaVersion = "gate_schema_version"
+    }
 }
 
 struct ProfileSnapshot: Decodable {

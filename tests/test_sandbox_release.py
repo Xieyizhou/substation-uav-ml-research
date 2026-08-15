@@ -18,6 +18,7 @@ from src.sandbox.release_gate import inspect_release_gate, run_release_gate
 
 
 COMMIT = "a" * 40
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 class SandboxReleaseTests(unittest.TestCase):
@@ -28,8 +29,20 @@ class SandboxReleaseTests(unittest.TestCase):
         (self.root / "simulation/worlds/demo.sdf").write_text("<sdf/>")
         static = self.root / "src/inspection/static"
         static.mkdir(parents=True)
-        for name in ("index.html", "app.js", "style.css", "profile.css"):
+        for name in (
+            "index.html", "app.js", "style.css", "operator.css",
+            "research.css", "experiments.css", "profile.css",
+        ):
             (static / name).write_text(name)
+        version = {
+            "sandbox_product_version": "0.1.0",
+            "macos_app_version": "0.2.1",
+            "operator_api_version": "1.0",
+            "gate_schema_version": 2,
+        }
+        version_path = self.root / "config/sandbox/version.json"
+        version_path.parent.mkdir(parents=True, exist_ok=True)
+        version_path.write_text(json.dumps(version))
         plan = {
             "collection_plan_schema_version": 1,
             "profile": "demo",
@@ -38,7 +51,7 @@ class SandboxReleaseTests(unittest.TestCase):
         }
         plan["collection_plan_identity_sha256"] = object_sha256(plan)
         path = self.root / "config/sandbox/demo_collection_plan.json"
-        path.parent.mkdir(parents=True)
+        path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(plan))
         self.config = InspectionConfig.for_profile(self.root, "demo")
 
@@ -134,6 +147,16 @@ class SandboxReleaseTests(unittest.TestCase):
         self.assertFalse(result["passed"])
         self.assertEqual(result["outcome"], "product_failure")
         self.assertEqual(result["reason_code"], "loopback_contract_failed")
+
+    def test_operator_actions_use_accessible_in_page_confirmation(self):
+        script = (PROJECT_ROOT / "src/inspection/static/app.js").read_text()
+        markup = (PROJECT_ROOT / "src/inspection/static/index.html").read_text()
+        self.assertNotIn("confirm(", script)
+        self.assertNotIn("alert(", script)
+        self.assertIn("requestConfirmation", script)
+        self.assertIn("event.key==='Escape'", script)
+        self.assertIn('id="action-dialog"', markup)
+        self.assertIn('aria-live="assertive"', markup)
 
     @patch("src.sandbox.beta_install.git_commit", return_value=COMMIT)
     @patch("src.sandbox.beta_install._workflow_checks")

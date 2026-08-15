@@ -185,6 +185,9 @@ class LogAndRuntimeTests(InspectionFixture):
                 "zsh", "-c", "rg 'px4|gz sim|collection-run' logs",
             )),
             ProcessRecord(11, 10, "/usr/bin/rg", ("rg", "px4", "flight.log")),
+            ProcessRecord(12, 10, "/usr/bin/rg", (
+                "rg", "visual", "collection-run", "src",
+            )),
         )
         self.assertTrue(all(not item.alive for item in runtime_status(adapter)))
 
@@ -295,6 +298,18 @@ class BoundaryTests(InspectionFixture):
         after = {path: (path.stat().st_mtime_ns, path.read_bytes()) for path in paths}
         self.assertEqual(before, after)
 
+    def test_version_manifest_is_exposed_as_a_read_only_record(self):
+        version = {
+            "sandbox_product_version": "0.1.0",
+            "macos_app_version": "0.2.1",
+            "operator_api_version": "1.0",
+            "gate_schema_version": 2,
+        }
+        self.write_json(self.root / "config/sandbox/version.json", version)
+        self.assertEqual(
+            InspectionService(self.config, EmptyProcesses()).version(), version
+        )
+
 
 class SandboxCliTests(InspectionFixture):
     def test_doctor_and_status_are_read_only(self):
@@ -310,6 +325,7 @@ class SandboxCliTests(InspectionFixture):
         for command in (
             "bootstrap", "doctor", "status", "storage", "retention-plan",
             "serve", "demo-run", "release-gate", "beta-install-gate",
+            "development-app-gate",
         ):
             self.assertIn(command, help_text)
 

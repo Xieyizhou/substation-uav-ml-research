@@ -93,6 +93,7 @@ def run_flight_smoke(
     events_path = root / "flight_events.jsonl"
     launcher = flight = None
     started = time.monotonic()
+    started_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     status = "failed"
     error_message = ""
     try:
@@ -135,13 +136,15 @@ def run_flight_smoke(
         stop_process(flight)
         stop_process(launcher)
         write_json(root / "summary.json", {
-            "flight_smoke_schema_version": 1,
+            "flight_smoke_schema_version": 2,
             "run_type": "sandbox_flight_smoke",
             "status": status,
             "error": error_message or None,
             "scenario_id": row["scenario_id"],
             "dataset_role": row.get("dataset_role"),
             "duration_s": round(time.monotonic() - started, 3),
+            "started_at": started_at,
+            "ended_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "mission_completed": _mission_completed(events_path),
             "code_commit": git_commit(),
             "logs": {

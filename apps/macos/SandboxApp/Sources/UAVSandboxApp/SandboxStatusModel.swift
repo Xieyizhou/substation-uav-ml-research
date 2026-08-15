@@ -39,11 +39,13 @@ final class SandboxStatusModel: ObservableObject {
         if snapshot == nil { phase = .loading }
         do {
             let profile: ProfileSnapshot = try await fetch("api/profile", from: baseURL)
+            let version: VersionSnapshot = try await fetch("api/version", from: baseURL)
             let runtime: [RuntimeSnapshot] = try await fetch("api/runtime", from: baseURL)
             let checks: [DoctorSnapshot] = try await fetch("api/doctor", from: baseURL)
             let storage: StorageSnapshot = try await fetch("api/storage", from: baseURL)
             let operatorStatus: OperatorSnapshot = try await fetch("api/operator", from: baseURL)
             snapshot = SandboxStatusSnapshot(
+                version: version,
                 profile: profile,
                 runtime: runtime,
                 checks: checks,
