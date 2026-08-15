@@ -263,7 +263,7 @@ class SandboxCliTests(InspectionFixture):
         help_text = sandbox.build_parser().format_help()
         for command in (
             "bootstrap", "doctor", "status", "storage", "retention-plan",
-            "serve", "demo-run", "release-gate",
+            "serve", "demo-run", "release-gate", "beta-install-gate",
         ):
             self.assertIn(command, help_text)
 

@@ -40,6 +40,16 @@ jobs:
           python main.py sandbox --profile demo release-gate-inspect
           --input outputs/sandbox/demo/release-gate/ci/release_gate.json
 
+      - name: Run clean-install Beta gate
+        run: >-
+          python main.py sandbox --profile demo beta-install-gate
+          --output outputs/sandbox/demo/beta-install/ci
+
+      - name: Inspect Beta installation receipt
+        run: >-
+          python main.py sandbox --profile demo beta-install-gate-inspect
+          --input outputs/sandbox/demo/beta-install/ci/beta_install_gate.json
+
   offline-validation:
     runs-on: ubuntu-latest
 

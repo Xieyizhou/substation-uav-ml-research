@@ -17,6 +17,13 @@ were completed on 2026-07-28. Six live-LiDAR round trips completed with
 confirmed landing, no physical collisions, and no inflated-buffer entries. A
 300-frame slice of the stability capture also passed deterministic replay.
 
+Sandbox v1 is now locally Beta-ready. Its clean-install gate builds a
+Git-tracked source copy, creates a fresh virtual environment, runs bootstrap
+and the deterministic Demo, inspects both receipts, and verifies the loopback
+App shell plus its profile, storage, and operator APIs. The gate passed on
+Darwin arm64 with Python 3.11 and 3.14; GitHub Actions runs the same gate on
+Python 3.11 and 3.13 without project dependencies or research artifacts.
+
 ## Active Workflow
 
 Run public commands through `main.py` from the repository root:
@@ -139,19 +146,19 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Next Priorities
 
-1. Collect and audit the 50 frozen v2 visual recordings across development,
-   validation, and blind layouts.
-2. Build the v2 composite dataset and deterministic phase/size-balanced
-   training view.
-3. Train one YOLO11n v2 candidate, freeze its validation threshold, and pass
-   the three static ONNX equivalence gates.
-4. Run the paired blind comparison once, then execute the nine static replay
-   conditions without changing the frozen model.
+1. Confirm the clean-install matrix on GitHub and publish the first Sandbox
+   Beta for outside users.
+2. Collect installation and first-run feedback before expanding the App or
+   simulator setup surface.
+3. Run one documented development-profile simulator workflow end to end from
+   the App on a clean host with PX4 and Gazebo installed.
+4. Use the stabilized sandbox to iterate map complexity, flight speed, and
+   safety trade-offs without treating exploratory runs as formal evidence.
 
 ## Release State
 
-- Current research milestone: the visual v1 baseline is frozen; v2 formal
-  collection and the paired blind comparison remain pending.
+- Current product milestone: Sandbox v1 has passed its local Beta installation
+  gate; the remote clean-install matrix and public Beta publication are next.
 - No research release tag is implied until the reviewed summary is committed
   and explicitly published.
 - The predecessor resume demo and its releases remain in

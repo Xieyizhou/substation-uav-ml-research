@@ -8,7 +8,7 @@ import json
 from pathlib import Path
 
 from src.inspection.config import InspectionConfig
-from src.sandbox.profile_cli import register_profile_commands
+from src.sandbox.profile_cli import handle_profile_command, register_profile_commands
 from src.sandbox.profiles import PROFILE_NAMES
 from src.sandbox.storage_cli import handle_storage_command, register_storage_commands
 
@@ -110,22 +110,15 @@ def main(argv=None):
     if storage is not None:
         _print(storage)
         return 0
-    if args.command == "bootstrap":
-        bootstrap_sandbox = _command("src.sandbox.bootstrap", "bootstrap_sandbox")
-        try:
-            _print(bootstrap_sandbox(config, args.output))
-        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
-            print(f"Sandbox bootstrap failed: {error}")
-            return 1
-        return 0
-    if args.command == "bootstrap-inspect":
-        inspect_bootstrap = _command("src.sandbox.bootstrap", "inspect_bootstrap")
-        try:
-            _print(inspect_bootstrap(args.input))
-        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
-            print(f"Sandbox bootstrap failed: {error}")
-            return 1
-        return 0
+    try:
+        profile = handle_profile_command(args, config)
+    except (FileNotFoundError, KeyError, OSError, RuntimeError, TypeError, ValueError) as error:
+        print(f"Sandbox profile command failed: {error}")
+        return 1
+    if profile is not None:
+        value, return_code = profile
+        _print(value)
+        return return_code
     if args.command == "doctor":
         InspectionService = _command("src.inspection.service", "InspectionService")
         service = InspectionService(config)
@@ -247,44 +240,6 @@ def main(argv=None):
             result = inspect_acceptance(args.input)
         except (FileNotFoundError, OSError, TypeError, ValueError) as error:
             print(f"Sandbox acceptance failed: {error}")
-            return 1
-        _print(result)
-        return 0 if result["passed"] else 1
-    if args.command == "demo-run":
-        run_demo = _command("src.sandbox.demo_workflow", "run_demo")
-        try:
-            result = run_demo(config.project_root, args.output)
-        except (FileNotFoundError, OSError, TypeError, ValueError) as error:
-            print(f"Sandbox demo failed: {error}")
-            return 1
-        _print(result)
-        return 0 if result["result"]["passed"] else 1
-    if args.command == "demo-inspect":
-        inspect_demo = _command("src.sandbox.demo_workflow", "inspect_demo")
-        try:
-            result = inspect_demo(args.input)
-        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
-            print(f"Sandbox demo failed: {error}")
-            return 1
-        _print(result)
-        return 0 if result["passed"] else 1
-    if args.command == "release-gate":
-        run_release_gate = _command("src.sandbox.release_gate", "run_release_gate")
-        try:
-            result = run_release_gate(config, args.output)
-        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
-            print(f"Sandbox release gate failed: {error}")
-            return 1
-        _print(result)
-        return 0 if result["passed"] else 1
-    if args.command == "release-gate-inspect":
-        inspect_release_gate = _command(
-            "src.sandbox.release_gate", "inspect_release_gate"
-        )
-        try:
-            result = inspect_release_gate(args.input)
-        except (FileNotFoundError, KeyError, OSError, TypeError, ValueError) as error:
-            print(f"Sandbox release gate failed: {error}")
             return 1
         _print(result)
         return 0 if result["passed"] else 1

@@ -156,6 +156,18 @@ python3 main.py sandbox --profile demo release-gate \
   --output outputs/sandbox/demo/release-gate/local
 ```
 
+Before publishing or reviewing a Beta, reproduce a first-time installation in
+a tracked-source copy and fresh virtual environment:
+
+```bash
+python3 main.py sandbox --profile demo beta-install-gate \
+  --output outputs/sandbox/demo/beta-install/local
+```
+
+This gate uses no network access. It runs bootstrap, the deterministic Demo,
+receipt inspection, and a loopback App smoke check without using the current
+virtual environment or local research data.
+
 See the [Sandbox quick start](docs/SANDBOX_QUICKSTART.md) for profile boundaries,
 outputs, and the first experiment walkthrough.
 

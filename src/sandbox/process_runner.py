@@ -2,6 +2,13 @@
 
 from __future__ import annotations
 
+import sys
+
+# Direct execution otherwise places ``src/sandbox`` first on sys.path, where
+# operator.py can shadow Python's standard-library operator module.
+if not __package__ and sys.path:
+    sys.path.pop(0)
+
 import argparse
 from datetime import datetime, timezone
 import fcntl

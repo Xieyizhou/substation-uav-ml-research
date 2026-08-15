@@ -99,8 +99,22 @@ python3 main.py sandbox --profile demo release-gate-inspect \
   --input outputs/sandbox/demo/release-gate/local/release_gate.json
 ```
 
-The same gate runs in GitHub Actions on Python 3.11 and 3.13 without installing
-project dependencies.
+The clean-install Beta gate goes one step further: it copies only Git-tracked
+files, creates a new virtual environment with an isolated home directory, and
+repeats bootstrap, Demo execution, receipt inspection, and a loopback App
+smoke check:
+
+```bash
+python3 main.py sandbox --profile demo beta-install-gate \
+  --output outputs/sandbox/demo/beta-install/local
+
+python3 main.py sandbox --profile demo beta-install-gate-inspect \
+  --input outputs/sandbox/demo/beta-install/local/beta_install_gate.json
+```
+
+No package download, dataset, model weight, PX4, or Gazebo is used. Both the
+release gate and clean-install gate run in GitHub Actions on Python 3.11 and
+3.13.
 
 ## Enable the Full Simulator
 
