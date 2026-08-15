@@ -120,7 +120,8 @@ final class SandboxAppModel: ObservableObject {
                             port: selectedPort,
                             command: "bootstrap"
                         ),
-                        directory: project.root
+                        directory: project.root,
+                        environment: project.runtimeEnvironment()
                     )
                 }.value
                 guard result.exitCode == 0 else {
@@ -175,6 +176,7 @@ final class SandboxAppModel: ObservableObject {
         child.executableURL = project.python
         child.arguments = project.arguments(profile: profile, port: port, command: "serve")
         child.currentDirectoryURL = project.root
+        child.environment = project.runtimeEnvironment()
         child.standardOutput = pipe
         child.standardError = pipe
         pipe.fileHandleForReading.readabilityHandler = { [weak self] handle in

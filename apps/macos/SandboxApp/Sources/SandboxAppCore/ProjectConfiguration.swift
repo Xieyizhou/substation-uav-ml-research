@@ -25,6 +25,27 @@ public struct SandboxProject: Equatable, Sendable {
         root.appendingPathComponent("main.py")
     }
 
+    public func runtimeEnvironment(
+        base: [String: String] = ProcessInfo.processInfo.environment
+    ) -> [String: String] {
+        var environment = base
+        let inherited = (base["PATH"] ?? "/usr/bin:/bin")
+            .split(separator: ":")
+            .map(String.init)
+        let preferred = [
+            root.appendingPathComponent(".venv/bin").path,
+            "/opt/homebrew/bin", "/opt/homebrew/sbin",
+            "/usr/local/bin", "/usr/local/sbin",
+        ]
+        var seen = Set<String>()
+        let folders = (preferred + inherited).filter {
+            !$0.isEmpty && seen.insert($0).inserted
+        }
+        environment["PATH"] = folders.joined(separator: ":")
+        environment["UAV_SANDBOX_PROJECT_ROOT"] = root.path
+        return environment
+    }
+
     public func arguments(
         profile: SandboxProfile,
         port: UInt16,
@@ -119,7 +140,8 @@ public enum ProjectLocator {
         if fileManager.isExecutableFile(atPath: virtualEnvironment.path) {
             return virtualEnvironment
         }
-        let searchPath = environment["PATH"] ?? "/usr/local/bin:/usr/bin:/bin"
+        let searchPath = environment["PATH"]
+            ?? "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
         for name in ["python3", "python"] {
             for folder in searchPath.split(separator: ":") {
                 let candidate = URL(fileURLWithPath: String(folder))

@@ -14,13 +14,15 @@ public enum ProcessExecution {
     public static func run(
         executable: URL,
         arguments: [String],
-        directory: URL
+        directory: URL,
+        environment: [String: String]? = nil
     ) throws -> ProcessResult {
         let process = Process()
         let pipe = Pipe()
         process.executableURL = executable
         process.arguments = arguments
         process.currentDirectoryURL = directory
+        process.environment = environment
         process.standardOutput = pipe
         process.standardError = pipe
         try process.run()

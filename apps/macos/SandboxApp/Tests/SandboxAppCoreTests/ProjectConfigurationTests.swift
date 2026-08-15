@@ -29,6 +29,22 @@ import Testing
     ) == root)
 }
 
+@Test func runtimeEnvironmentAddsHomebrewToFinderStylePath() throws {
+    let root = try temporaryProject(withPython: true)
+    let project = try ProjectLocator.locate(root: root, environment: ["PATH": "/usr/bin:/bin"])
+    let environment = project.runtimeEnvironment(base: [
+        "PATH": "/usr/bin:/bin", "EXISTING": "preserved",
+    ])
+    let folders = environment["PATH"]?.split(separator: ":").map(String.init)
+    #expect(folders == [
+        root.appendingPathComponent(".venv/bin").path,
+        "/opt/homebrew/bin", "/opt/homebrew/sbin",
+        "/usr/local/bin", "/usr/local/sbin", "/usr/bin", "/bin",
+    ])
+    #expect(environment["EXISTING"] == "preserved")
+    #expect(environment["UAV_SANDBOX_PROJECT_ROOT"] == root.path)
+}
+
 private func temporaryProject(withPython: Bool) throws -> URL {
     let root = FileManager.default.temporaryDirectory
         .appendingPathComponent(UUID().uuidString)

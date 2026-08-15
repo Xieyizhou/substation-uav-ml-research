@@ -52,6 +52,18 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertIn('http://127.0.0.1:', model)
         self.assertIn('"127.0.0.1", "localhost", "::1"', web_view)
 
+    def test_native_service_and_jobs_share_homebrew_aware_path(self):
+        project = (
+            APP_ROOT / "Sources/SandboxAppCore/ProjectConfiguration.swift"
+        ).read_text(encoding="utf-8")
+        model = (
+            APP_ROOT / "Sources/UAVSandboxApp/SandboxAppModel.swift"
+        ).read_text(encoding="utf-8")
+        self.assertIn('"/opt/homebrew/bin"', project)
+        self.assertIn('"/usr/local/bin"', project)
+        self.assertEqual(model.count("project.runtimeEnvironment()"), 2)
+        self.assertIn("child.environment = project.runtimeEnvironment()", model)
+
     def test_packaging_script_targets_generated_dist_only(self):
         script = (ROOT / "scripts/build_macos_app.sh").read_text(encoding="utf-8")
         self.assertIn('dist/UAV Research Sandbox.app', script)
