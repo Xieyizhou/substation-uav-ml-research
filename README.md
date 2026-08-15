@@ -165,13 +165,13 @@ Create a versioned preview DMG, ZIP, release manifest, and SHA256 checksum list
 with:
 
 ```bash
-./scripts/package_macos_release.sh 0.3.0
+./scripts/package_macos_release.sh 0.4.0
 ```
 
-It currently uses the repository's Python environment and keeps PX4/Gazebo as
-external development dependencies. See [the macOS App guide](docs/MACOS_APP.md)
-for profiles, build requirements, preview releases, and the distribution
-boundary.
+Demo Profile runs entirely inside the App without a repository or Python.
+Development and Formal continue to use the repository's Python environment and
+keep PX4/Gazebo as external dependencies. See [the macOS App guide](docs/MACOS_APP.md)
+for profiles, build requirements, preview releases, and the distribution boundary.
 
 Run the complete offline release check with:
 

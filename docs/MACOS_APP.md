@@ -1,16 +1,17 @@
 # macOS Sandbox App
 
-The native macOS shell starts and supervises the existing local Sandbox HTTP
-service. It does not duplicate flight, simulator, collection, or ML logic.
-Those workflows remain in the Python application and keep their existing
-allowlists, single-job lock, timeouts, output budgets, receipts, and recovery
-rules.
+The native macOS application includes a small deterministic Demo runtime and
+starts the existing local Sandbox HTTP service for Development and Formal. It
+does not duplicate flight, simulator, collection, or training logic. Those
+workflows remain in the Python application and keep their existing allowlists,
+single-job lock, timeouts, output budgets, receipts, and recovery rules.
 
 ## Current scope
 
 The native application provides:
 
-- repository selection and validation;
+- a repository-free, native Demo classifier with a deterministic saved artifact;
+- repository selection and validation for Development and Formal;
 - Demo, Development, and Formal profile selection;
 - `.venv/bin/python` discovery with a `PATH` fallback;
 - profile bootstrap before launch;
@@ -26,7 +27,8 @@ The native application provides:
 
 PX4, Gazebo, datasets, model weights, and the Python environment are not
 bundled. Development and Formal profiles continue to use the repository's
-installed dependencies. Demo Profile remains the portable first-run path.
+installed dependencies. Demo Profile is compiled into the App and writes its
+latest deterministic result under the user's Application Support directory.
 
 After the local service starts, **Get started** presents profile-aware setup
 status. It detects the project interpreter, PX4 checkout and SITL build,
@@ -74,16 +76,16 @@ Create a versioned DMG, ZIP, release manifest, and checksum list from the
 repository root:
 
 ```bash
-./scripts/package_macos_release.sh 0.3.0
+./scripts/package_macos_release.sh 0.4.0
 cd dist/releases
-shasum -a 256 -c UAV-Research-Sandbox-v0.3.0-macos-*-SHA256SUMS
+shasum -a 256 -c UAV-Research-Sandbox-v0.4.0-macos-*-SHA256SUMS
 ```
 
 The DMG presents the App beside an Applications shortcut and includes a short
 installation note. The ZIP is retained for automated or scripted installation.
 The JSON release manifest records the artifact hashes, architecture, signing
-tier, and external repository/runtime requirements so downstream tooling cannot
-mistake the preview for a standalone simulator.
+tier, included standalone Demo, and advanced-profile dependencies so downstream
+tooling cannot mistake the preview for a standalone simulator.
 
 After an App-managed Development flight smoke completes, bind its job receipt,
 flight summary, source commit, cleanup status, and versions into one local gate:
@@ -107,10 +109,9 @@ experiment outputs.
 
 ## Distribution boundary
 
-The preview archive is not a standalone public installer. It is ad-hoc signed,
-is intended for Apple Silicon development machines, and still uses a selected
+The preview is ad-hoc signed and intended for Apple Silicon development
+machines. Its Demo is standalone; Development and Formal still use a selected
 repository plus its Python environment. Public distribution still requires a
 Developer ID certificate, hardened-runtime entitlements, notarization, and a
-clean-machine Gatekeeper test. A later milestone may bundle the
-dependency-free Demo source and runtime; the full simulator remains an
-explicitly detected external toolchain.
+clean-machine Gatekeeper test. The full simulator remains an explicitly
+detected external toolchain.

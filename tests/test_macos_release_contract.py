@@ -33,8 +33,9 @@ class MacOSReleaseContractTests(unittest.TestCase):
             encoding="utf-8"
         )
         self.assertIn('"developer_preview"', script)
-        self.assertIn('"requires_project_repository"', script)
-        self.assertIn('"requires_python_environment"', script)
+        self.assertIn('"standalone_demo_included"', script)
+        self.assertIn('"advanced_profiles_require_project_repository"', script)
+        self.assertIn('"advanced_profiles_require_python_environment"', script)
         self.assertIn('"external_simulator_toolchain"', script)
         self.assertIn('"ad_hoc"', script)
 
@@ -42,7 +43,7 @@ class MacOSReleaseContractTests(unittest.TestCase):
         tool = ROOT / "scripts/macos_release_manifest.py"
         with tempfile.TemporaryDirectory() as temporary_directory:
             release_root = Path(temporary_directory)
-            prefix = "UAV-Research-Sandbox-v0.3.0-macos-arm64"
+            prefix = "UAV-Research-Sandbox-v0.4.0-macos-arm64"
             archive = release_root / f"{prefix}.zip"
             disk_image = release_root / f"{prefix}.dmg"
             manifest = release_root / "release.json"
@@ -59,7 +60,7 @@ class MacOSReleaseContractTests(unittest.TestCase):
                     str(tool),
                     "create",
                     "--version",
-                    "0.3.0",
+                    "0.4.0",
                     "--architecture",
                     "arm64",
                     "--output",

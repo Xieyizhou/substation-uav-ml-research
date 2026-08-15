@@ -21,7 +21,7 @@ class MacOSAppContractTests(unittest.TestCase):
         )
         self.assertEqual(value["CFBundlePackageType"], "APPL")
         self.assertEqual(value["CFBundleIconFile"], "AppIcon")
-        self.assertEqual(value["CFBundleShortVersionString"], "0.3.0")
+        self.assertEqual(value["CFBundleShortVersionString"], "0.4.0")
 
     def test_bundle_version_matches_shared_manifest(self):
         import json
@@ -63,6 +63,19 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertIn('"/usr/local/bin"', project)
         self.assertEqual(model.count("project.runtimeEnvironment()"), 2)
         self.assertIn("child.environment = project.runtimeEnvironment()", model)
+
+    def test_demo_runtime_does_not_require_repository_or_python(self):
+        project = (
+            APP_ROOT / "Sources/SandboxAppCore/ProjectConfiguration.swift"
+        ).read_text(encoding="utf-8")
+        model = (
+            APP_ROOT / "Sources/UAVSandboxApp/SandboxAppModel.swift"
+        ).read_text(encoding="utf-8")
+        build = (ROOT / "scripts/build_macos_app.sh").read_text(encoding="utf-8")
+        self.assertIn("self != .demo", project)
+        self.assertIn("profile == .demo", model)
+        self.assertIn("StandaloneDemo.swift", build)
+        self.assertIn("StandaloneDemoView.swift", build)
 
     def test_packaging_script_targets_generated_dist_only(self):
         script = (ROOT / "scripts/build_macos_app.sh").read_text(encoding="utf-8")

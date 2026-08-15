@@ -6,33 +6,12 @@ import SandboxAppCore
 
 @MainActor
 final class SandboxAppModel: ObservableObject {
-    enum State: Equatable {
-        case idle
-        case preparing
-        case starting
-        case online
-        case connected
-        case stopping
-        case failed(String)
-
-        var label: String {
-            switch self {
-            case .idle: return "Idle"
-            case .preparing: return "Preparing"
-            case .starting: return "Starting"
-            case .online: return "Online"
-            case .connected: return "Connected"
-            case .stopping: return "Stopping"
-            case .failed: return "Needs attention"
-            }
-        }
-    }
-
     @Published var state: State = .idle
     @Published var profile: SandboxProfile = .demo
     @Published var projectRoot = ""
     @Published var logLines: [String] = []
     @Published var webURL: URL?
+    @Published var embeddedDemoReady = false
 
     private let port: UInt16 = 8765
     private var process: Process?
@@ -50,7 +29,7 @@ final class SandboxAppModel: ObservableObject {
 
     var canStart: Bool {
         switch state {
-        case .idle, .failed: return !projectRoot.isEmpty
+        case .idle, .failed: return profile == .demo || !projectRoot.isEmpty
         default: return false
         }
     }
@@ -65,12 +44,16 @@ final class SandboxAppModel: ObservableObject {
     var statusDetail: String {
         if case let .failed(message) = state { return message }
         switch state {
+        case .online where embeddedDemoReady:
+            return "Built-in Demo is running entirely in this App."
         case .online: return "Local service is managed by this App."
         case .connected: return "Using an existing local service. Stop will only disconnect."
         case .preparing: return "Validating the project and initializing the profile."
         case .starting: return "Waiting for the loopback service to become ready."
         case .stopping: return "Requesting graceful shutdown."
-        default: return "Select the repository and start a profile."
+        default: return profile == .demo
+            ? "Start immediately with the built-in Demo."
+            : "Select the repository and start a profile."
         }
     }
 
@@ -89,54 +72,21 @@ final class SandboxAppModel: ObservableObject {
 
     func start() {
         guard canStart else { return }
-        state = .preparing
-        logLines = []
-        webURL = nil
+        prepareForStart()
+        if profile == .demo {
+            startEmbeddedDemo()
+            return
+        }
         let root = URL(fileURLWithPath: projectRoot)
         let selectedProfile = profile
         let selectedPort = port
         Task {
             do {
-                let project = try ProjectLocator.locate(root: root)
-                UserDefaults.standard.set(project.root.path, forKey: "sandboxProjectRoot")
-                if let runningProfile = await runningProfile() {
-                    guard runningProfile == selectedProfile.rawValue else {
-                        throw AppFailure.profileConflict(
-                            running: runningProfile,
-                            selected: selectedProfile.rawValue
-                        )
-                    }
-                    ownsServer = false
-                    webURL = serverURL
-                    state = .connected
-                    append("Connected to the existing loopback Sandbox service.")
-                    return
-                }
-                let result = try await Task.detached {
-                    try ProcessExecution.run(
-                        executable: project.python,
-                        arguments: project.arguments(
-                            profile: selectedProfile,
-                            port: selectedPort,
-                            command: "bootstrap"
-                        ),
-                        directory: project.root,
-                        environment: project.runtimeEnvironment()
-                    )
-                }.value
-                guard result.exitCode == 0 else {
-                    throw AppFailure.bootstrap(result.output)
-                }
-                append(result.output)
-                try launch(project: project, profile: selectedProfile)
-                state = .starting
-                guard await waitUntilReady(expectedProfile: selectedProfile) else {
-                    stopOwnedProcess()
-                    throw AppFailure.startupTimeout
-                }
-                webURL = serverURL
-                state = .online
-                append("Sandbox service is ready at \(serverURL.absoluteString)")
+                try await connectOrLaunch(
+                    root: root,
+                    profile: selectedProfile,
+                    port: selectedPort
+                )
             } catch {
                 state = .failed(error.localizedDescription)
                 append("Start failed: \(error.localizedDescription)")
@@ -144,8 +94,80 @@ final class SandboxAppModel: ObservableObject {
         }
     }
 
+    private func prepareForStart() {
+        state = .preparing
+        logLines = []
+        webURL = nil
+        embeddedDemoReady = false
+    }
+
+    private func startEmbeddedDemo() {
+        embeddedDemoReady = true
+        state = .online
+        append("Started the repository-free built-in Demo runtime.")
+    }
+
+    private func connectOrLaunch(
+        root: URL,
+        profile: SandboxProfile,
+        port: UInt16
+    ) async throws {
+        let project = try ProjectLocator.locate(root: root)
+        UserDefaults.standard.set(project.root.path, forKey: "sandboxProjectRoot")
+        if let runningProfile = await runningProfile() {
+            guard runningProfile == profile.rawValue else {
+                throw AppFailure.profileConflict(
+                    running: runningProfile,
+                    selected: profile.rawValue
+                )
+            }
+            ownsServer = false
+            webURL = serverURL
+            state = .connected
+            append("Connected to the existing loopback Sandbox service.")
+            return
+        }
+        let result = try await bootstrap(project: project, profile: profile, port: port)
+        guard result.exitCode == 0 else { throw AppFailure.bootstrap(result.output) }
+        append(result.output)
+        try launch(project: project, profile: profile)
+        state = .starting
+        guard await waitUntilReady(expectedProfile: profile) else {
+            stopOwnedProcess()
+            throw AppFailure.startupTimeout
+        }
+        webURL = serverURL
+        state = .online
+        append("Sandbox service is ready at \(serverURL.absoluteString)")
+    }
+
+    private func bootstrap(
+        project: SandboxProject,
+        profile: SandboxProfile,
+        port: UInt16
+    ) async throws -> ProcessResult {
+        try await Task.detached {
+            try ProcessExecution.run(
+                executable: project.python,
+                arguments: project.arguments(
+                    profile: profile,
+                    port: port,
+                    command: "bootstrap"
+                ),
+                directory: project.root,
+                environment: project.runtimeEnvironment()
+            )
+        }.value
+    }
+
     func stop() {
         guard canStop else { return }
+        if embeddedDemoReady {
+            embeddedDemoReady = false
+            state = .idle
+            append("Stopped the built-in Demo runtime.")
+            return
+        }
         if !ownsServer {
             webURL = nil
             state = .idle
@@ -252,6 +274,7 @@ final class SandboxAppModel: ObservableObject {
         process = nil
         ownsServer = false
         webURL = nil
+        embeddedDemoReady = false
         if state == .stopping { state = .idle }
     }
 
@@ -262,30 +285,5 @@ final class SandboxAppModel: ObservableObject {
         if process.isRunning { process.terminate() }
         for _ in 0..<20 where process.isRunning { usleep(100_000) }
         if process.isRunning { kill(process.processIdentifier, SIGKILL) }
-    }
-}
-
-private struct ProfileResponse: Decodable {
-    let profileID: String
-
-    enum CodingKeys: String, CodingKey {
-        case profileID = "profile_id"
-    }
-}
-
-private enum AppFailure: LocalizedError {
-    case bootstrap(String)
-    case profileConflict(running: String, selected: String)
-    case startupTimeout
-
-    var errorDescription: String? {
-        switch self {
-        case let .bootstrap(output):
-            return "Profile bootstrap failed. \(output.trimmingCharacters(in: .whitespacesAndNewlines))"
-        case let .profileConflict(running, selected):
-            return "Port 8765 already hosts the \(running) profile. Stop it or select \(running) instead of \(selected)."
-        case .startupTimeout:
-            return "The local Sandbox service did not become ready within 15 seconds."
-        }
     }
 }

@@ -115,6 +115,6 @@ jobs:
 
       - name: Validate preview packaging
         run: |
-          ./scripts/package_macos_release.sh 0.3.0
+          ./scripts/package_macos_release.sh 0.4.0
           cd dist/releases
-          shasum -a 256 -c UAV-Research-Sandbox-v0.3.0-macos-*-SHA256SUMS
+          shasum -a 256 -c UAV-Research-Sandbox-v0.4.0-macos-*-SHA256SUMS

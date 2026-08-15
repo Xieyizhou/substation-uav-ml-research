@@ -10,6 +10,10 @@ public enum SandboxProfile: String, CaseIterable, Identifiable, Sendable {
     public var displayName: String {
         rawValue.capitalized
     }
+
+    public var requiresProject: Bool {
+        self != .demo
+    }
 }
 
 public struct SandboxProject: Equatable, Sendable {

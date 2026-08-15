@@ -10,7 +10,7 @@ from pathlib import Path
 import zipfile
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 FORBIDDEN_PARTS = {
     "data",
     "models",
@@ -44,12 +44,13 @@ def create_manifest(args: argparse.Namespace) -> None:
         "architecture": args.architecture,
         "artifacts": [artifact_record(path) for path in artifacts],
         "distribution_tier": "developer_preview",
+        "advanced_profiles_require_project_repository": True,
+        "advanced_profiles_require_python_environment": True,
         "external_simulator_toolchain": True,
         "macos_app_version": args.version,
         "release_schema_version": SCHEMA_VERSION,
-        "requires_project_repository": True,
-        "requires_python_environment": True,
         "signing": "ad_hoc",
+        "standalone_demo_included": True,
     }
     output = Path(args.output)
     output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n")
@@ -84,10 +85,11 @@ def verify_manifest(args: argparse.Namespace) -> None:
         raise SystemExit("unsupported release manifest schema")
     if payload.get("distribution_tier") != "developer_preview":
         raise SystemExit("release must be marked as a developer preview")
-    if payload.get("requires_project_repository") is not True:
-        raise SystemExit("preview must declare its repository dependency")
+    if payload.get("standalone_demo_included") is not True:
+        raise SystemExit("preview must declare its standalone Demo")
     required_flags = (
-        "requires_python_environment",
+        "advanced_profiles_require_project_repository",
+        "advanced_profiles_require_python_environment",
         "external_simulator_toolchain",
     )
     if any(payload.get(flag) is not True for flag in required_flags):

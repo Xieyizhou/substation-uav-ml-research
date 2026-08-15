@@ -55,17 +55,22 @@ build_with_command_line_tools() {
     -emit-module-path "$build_root/SandboxAppCore.swiftmodule" \
     -o "$build_root/libSandboxAppCore.a" \
     "$package_root/Sources/SandboxAppCore/ProjectConfiguration.swift" \
-    "$package_root/Sources/SandboxAppCore/ProcessExecution.swift"
+    "$package_root/Sources/SandboxAppCore/ProcessExecution.swift" \
+    "$package_root/Sources/SandboxAppCore/StandaloneDemoModels.swift" \
+    "$package_root/Sources/SandboxAppCore/StandaloneDemo.swift"
   swiftc -parse-as-library -swift-version 5 "$optimization" \
     -sdk "$sdk" -target "$target" \
     -module-cache-path "$build_root/module-cache" \
     -I "$build_root" -L "$build_root" -lSandboxAppCore \
     -o "$binary" \
     "$package_root/Sources/UAVSandboxApp/UAVSandboxApp.swift" \
+    "$package_root/Sources/UAVSandboxApp/SandboxAppFailures.swift" \
+    "$package_root/Sources/UAVSandboxApp/SandboxAppState.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxAppModel.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxStatusModels.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxStatusModel.swift" \
     "$package_root/Sources/UAVSandboxApp/NativeDashboardView.swift" \
+    "$package_root/Sources/UAVSandboxApp/StandaloneDemoView.swift" \
     "$package_root/Sources/UAVSandboxApp/ContentView.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxWebView.swift"
 }

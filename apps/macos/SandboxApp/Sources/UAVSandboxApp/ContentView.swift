@@ -12,7 +12,9 @@ struct ContentView: View {
         VStack(spacing: 0) {
             header
             Divider()
-            if let url = model.webURL {
+            if model.embeddedDemoReady {
+                StandaloneDemoView()
+            } else if let url = model.webURL {
                 if section == .status {
                     NativeDashboardView(status: status) {
                         Task { await status.refresh(baseURL: url) }
@@ -56,7 +58,7 @@ struct ContentView: View {
                     .lineLimit(1)
             }
             Spacer()
-            if model.webURL != nil {
+            if model.webURL != nil && !model.embeddedDemoReady {
                 Picker("Section", selection: $section) {
                     Label("Status", systemImage: "gauge.with.dots.needle.67percent")
                         .tag(AppSection.status)
@@ -112,19 +114,28 @@ struct ContentView: View {
             VStack(spacing: 8) {
                 Text("Start the local Sandbox")
                     .font(.system(size: 28, weight: .semibold))
-                Text("The App manages the existing loopback service. Simulator and ML workflows remain in the Python project.")
+                Text(model.profile == .demo
+                    ? "Run a deterministic ML example without installing Python, PX4, Gazebo, or the project repository."
+                    : "The App manages the existing loopback service. Simulator and ML workflows remain in the Python project.")
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: 570)
             }
             VStack(alignment: .leading, spacing: 16) {
-                LabeledContent("Project") {
-                    HStack {
-                        Text(model.projectRoot.isEmpty ? "Not selected" : model.projectRoot)
-                            .foregroundStyle(model.projectRoot.isEmpty ? .secondary : .primary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
-                        Button("Choose…") { model.chooseProject() }
+                if model.profile.requiresProject {
+                    LabeledContent("Project") {
+                        HStack {
+                            Text(model.projectRoot.isEmpty ? "Not selected" : model.projectRoot)
+                                .foregroundStyle(model.projectRoot.isEmpty ? .secondary : .primary)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            Button("Choose…") { model.chooseProject() }
+                        }
+                    }
+                } else {
+                    LabeledContent("Runtime") {
+                        Label("Included in the App", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
                     }
                 }
                 LabeledContent("Profile") {
