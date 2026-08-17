@@ -132,6 +132,14 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertNotIn("models/", script)
         self.assertIn("scripts/create_icns.py", script)
 
+    def test_ci_packaging_version_comes_from_shared_manifest(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        packaging = workflow.split("- name: Validate preview packaging", 1)[1]
+        self.assertIn("config/sandbox/version.json", packaging)
+        self.assertIn('["macos_app_version"]', packaging)
+        self.assertIn('package_macos_release.sh "$version"', packaging)
+        self.assertNotRegex(packaging, r"package_macos_release\.sh [0-9]+\.[0-9]+\.[0-9]+")
+
     def test_advanced_runtime_candidate_picker_covers_every_component(self):
         discovery = (
             APP_ROOT / "Sources/SandboxAppCore/RuntimeCandidateDiscovery.swift"

@@ -1,3 +1,4 @@
 mavsdk
 matplotlib
 pandas
+PyYAML>=6.0.3

@@ -115,6 +115,7 @@ jobs:
 
       - name: Validate preview packaging
         run: |
-          ./scripts/package_macos_release.sh 0.5.0
+          version=$(python3 -c 'import json; print(json.load(open("config/sandbox/version.json"))["macos_app_version"])')
+          ./scripts/package_macos_release.sh "$version"
           cd dist/releases
-          shasum -a 256 -c UAV-Research-Sandbox-v0.5.0-macos-*-SHA256SUMS
+          shasum -a 256 -c "UAV-Research-Sandbox-v${version}-macos-$(uname -m)-SHA256SUMS"
