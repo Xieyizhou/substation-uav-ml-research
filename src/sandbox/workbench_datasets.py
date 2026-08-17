@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 import json
+import math
 from pathlib import Path
 import shutil
 
@@ -13,6 +14,7 @@ from src.sandbox.workbench_models import WorkbenchDataset
 
 
 IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg"}
+BOX_SERIALIZATION_EPSILON = 1e-6
 
 
 def _yaml(path: Path):
@@ -72,14 +74,31 @@ def _validate_label(path, mapping, source_names):
             raise ValueError(f"{path}:{number}: unmapped class {source_class}")
         values = [float(value) for value in fields[1:]]
         x, y, width, height = values
-        if width <= 0 or height <= 0 or any(value < 0 or value > 1 for value in values):
+        if (not all(math.isfinite(value) for value in values)
+                or width <= 0 or height <= 0
+                or any(value < 0 or value > 1 for value in values)):
             raise ValueError(f"{path}:{number}: invalid normalized box")
-        if x - width / 2 < 0 or x + width / 2 > 1 or y - height / 2 < 0 or y + height / 2 > 1:
+        x_min, x_max = x - width / 2, x + width / 2
+        y_min, y_max = y - height / 2, y + height / 2
+        if (x_min < -BOX_SERIALIZATION_EPSILON
+                or x_max > 1 + BOX_SERIALIZATION_EPSILON
+                or y_min < -BOX_SERIALIZATION_EPSILON
+                or y_max > 1 + BOX_SERIALIZATION_EPSILON):
             raise ValueError(f"{path}:{number}: box extends outside the image")
+        x_min, x_max = max(0.0, x_min), min(1.0, x_max)
+        y_min, y_max = max(0.0, y_min), min(1.0, y_max)
+        normalized = (
+            (x_min + x_max) / 2,
+            (y_min + y_max) / 2,
+            x_max - x_min,
+            y_max - y_min,
+        )
         target = mapping[source_class]
         target_index = EQUIPMENT_CLASSES.index(target)
         objects[target] += 1
-        rendered.append(" ".join([str(target_index), *fields[1:]]))
+        rendered.append(" ".join(
+            [str(target_index), *(f"{value:.8f}" for value in normalized)]
+        ))
     return objects, "\n".join(rendered) + "\n"
 
 

@@ -74,6 +74,19 @@ class WorkbenchDatasetTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "outside"):
             import_yolo_dataset(self.source, self.output, "outside")
 
+    def test_normalizes_rounding_at_image_edge_but_rejects_non_finite_box(self):
+        self.sample("train", "edge", "0 0.069720 0.5 0.139441 0.2\n")
+        self.sample("val", "valid", "")
+        import_yolo_dataset(self.source, self.output, "edge-rounding")
+        label = self.output / "edge-rounding/labels/train/train-000000.txt"
+        values = [float(value) for value in label.read_text().split()[1:]]
+        self.assertGreaterEqual(values[0] - values[2] / 2, 0.0)
+        (self.source / "labels/train/edge.txt").write_text(
+            "0 nan 0.5 0.2 0.2\n", encoding="utf-8"
+        )
+        with self.assertRaisesRegex(ValueError, "invalid normalized box"):
+            import_yolo_dataset(self.source, self.output, "non-finite")
+
     def test_discovers_native_training_identity_without_rewriting_it(self):
         identity = self.root / "data/research/visual_yolo_native/identity"
         identity.mkdir(parents=True)
