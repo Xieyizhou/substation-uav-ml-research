@@ -76,6 +76,80 @@ final class SandboxAppModel: ObservableObject {
         }
     }
 
+    func importYOLODataset(canonicalToSourceID: [String: Int]) {
+        guard profile == .development, webURL != nil else {
+            append("YOLO import requires the running Development profile.")
+            return
+        }
+        guard canonicalToSourceID.count == 4,
+              Set(canonicalToSourceID.values).count == 4 else {
+            append("YOLO import requires four distinct source class IDs.")
+            return
+        }
+        let panel = NSOpenPanel()
+        panel.title = "Choose a YOLO Detect dataset"
+        panel.message = "Select the folder containing dataset.yaml."
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        guard panel.runModal() == .OK, let source = panel.url else { return }
+        let datasetID = Self.importDatasetID(source.lastPathComponent)
+        Task {
+            do {
+                try await startDatasetImport(
+                    source: source, datasetID: datasetID,
+                    canonicalToSourceID: canonicalToSourceID
+                )
+                append("Started managed YOLO dataset import as \(datasetID).")
+            } catch {
+                append("Dataset import failed: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    private func startDatasetImport(
+        source: URL, datasetID: String, canonicalToSourceID: [String: Int]
+    ) async throws {
+        guard let webURL else { throw AppFailure.startupTimeout }
+        let operatorURL = webURL.appendingPathComponent("api/operator")
+        let (data, response) = try await URLSession.shared.data(from: operatorURL)
+        guard (response as? HTTPURLResponse)?.statusCode == 200,
+              let object = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let token = object["operator_token"] as? String else {
+            throw AppFailure.startupTimeout
+        }
+        var request = URLRequest(url: operatorURL.appendingPathComponent("start"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(token, forHTTPHeaderField: "X-Sandbox-Token")
+        let sourceToCanonical = Dictionary(uniqueKeysWithValues:
+            canonicalToSourceID.map { (String($0.value), $0.key) })
+        request.httpBody = try JSONSerialization.data(withJSONObject: [
+            "action": "workbench-dataset-import",
+            "parameters": [
+                "source": source.path, "dataset_id": datasetID,
+                "class_map": sourceToCanonical,
+            ],
+        ])
+        let (result, postResponse) = try await URLSession.shared.data(for: request)
+        guard (postResponse as? HTTPURLResponse)?.statusCode == 202 else {
+            let message = (try? JSONSerialization.jsonObject(with: result))
+                .flatMap { $0 as? [String: Any] }?["error"] as? String
+            throw NSError(domain: "UAVSandbox", code: 1,
+                          userInfo: [NSLocalizedDescriptionKey: message ?? "Import was rejected."])
+        }
+    }
+
+    nonisolated private static func importDatasetID(_ name: String) -> String {
+        let slug = name.lowercased().map { character in
+            character.isLetter || character.isNumber ? character : "-"
+        }
+        let collapsed = String(slug).split(separator: "-").joined(separator: "-")
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        return String("import-\(collapsed)-\(formatter.string(from: Date()))".prefix(64))
+    }
+
     func start() {
         guard canStart else { return }
         prepareForStart()
@@ -197,6 +271,22 @@ final class SandboxAppModel: ObservableObject {
         guard ownsServer else { return }
         Self.stopGracefully(process)
         finishStoppedProcess()
+    }
+
+    func managedJobIsActive() -> Bool {
+        guard ownsServer,
+              let data = try? Data(contentsOf: serverURL.appendingPathComponent("api/operator")),
+              let value = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return false }
+        return value["active_job"] is [String: Any]
+    }
+
+    func detachServiceForActiveJob() {
+        outputPipe?.fileHandleForReading.readabilityHandler = nil
+        process?.terminationHandler = nil
+        outputPipe = nil
+        process = nil
+        ownsServer = false
     }
 
     private var serverURL: URL {

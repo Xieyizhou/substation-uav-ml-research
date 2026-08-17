@@ -146,9 +146,22 @@ cd substation-uav-ml-research
 ./scripts/run_sandbox_app.sh
 ```
 
-Open `http://127.0.0.1:8765`, choose **Experiments**, and run **Demo
+Open `http://127.0.0.1:8765`, choose **Workbench**, and run **Demo
 classifier**. The result is an identity-bound workflow example built from
 synthetic features and is explicitly excluded from formal research evidence.
+
+Development Profile also provides a visual model workbench for real YOLO11n
+experiments. It registers native visual training views or imports a standard
+YOLO Detect directory, then runs a bounded recipe through training, validation,
+static ONNX export, PT/ONNX equivalence, ordered replay, and an optional paired
+baseline comparison. PX4 and Gazebo are not required for this offline path.
+
+```bash
+python main.py sandbox --profile development workbench-recipe-create \
+  --experiment-id visual-smoke-01 --dataset-id visual_yolo_v2 --preset smoke
+python main.py sandbox --profile development workbench-run \
+  --recipe outputs/sandbox/workbench/runs/visual-smoke-01/recipe.json
+```
 
 ### Native macOS shell
 
@@ -166,7 +179,7 @@ Create a versioned preview DMG, ZIP, release manifest, and SHA256 checksum list
 with:
 
 ```bash
-./scripts/package_macos_release.sh 0.5.0
+./scripts/package_macos_release.sh 0.6.0
 ```
 
 Demo Profile runs entirely inside the App without a repository or Python.
@@ -182,7 +195,7 @@ for profiles, build requirements, preview, unsigned Beta, and future notarized
 Beta releases, plus the distribution boundary.
 
 Build the current integrity-verifiable unsigned Beta from a clean tracked
-worktree with `./scripts/package_macos_beta.sh 0.5.0`. Its manifest binds the
+worktree with `./scripts/package_macos_beta.sh 0.6.0`. Its manifest binds the
 source commit and artifact SHA256 identities while explicitly declaring that it
 is not Apple-notarized. The repository also retains a separate Developer ID and
 notarization workflow for future signed releases.

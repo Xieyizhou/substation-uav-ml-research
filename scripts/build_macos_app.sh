@@ -71,6 +71,7 @@ build_with_command_line_tools() {
     -I "$build_root" -L "$build_root" -lSandboxAppCore \
     -o "$binary" \
     "$package_root/Sources/UAVSandboxApp/UAVSandboxApp.swift" \
+    "$package_root/Sources/UAVSandboxApp/AppDelegate.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxAppFailures.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxAppState.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxAppModel.swift" \

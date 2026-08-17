@@ -62,8 +62,45 @@ registry, refuses completed studies, and always adds `--max-runs 1`. It uses
 the same single-job lock, runtime conflict checks, timeout, stop sequence, and
 job history as the other managed workflows.
 
-The Experiments tab provides a dependency-free Demo classifier plus selectors for visual ONNX replay,
-LiDAR replay, one pending LiDAR closed-loop flight, and Sandbox v1 acceptance.
+The Workbench tab provides a dependency-free Demo classifier plus a complete
+Development Profile YOLO11n experiment path. Native training identities can be
+registered without mutation, while standard YOLO Detect directories are
+audited and copied into an immutable managed view. Source class IDs must map to
+transformer, switchgear, capacitor bank, and reactor before import.
+
+A workbench recipe binds its dataset identity, YOLO11n weight hash, preset,
+allow-listed parameters, seed, environment, output directory, and optional
+baseline package. Smoke, Quick, and Full presets are available; the browser can
+only adjust epochs, patience, input size, batch, device, and worker count.
+Training records its current phase, epoch, ETA, checkpoint, and stable failure
+code. Completion automatically runs fixed validation, validation-only threshold
+selection, one static FP32 ONNX export, a bounded class-stratified equivalence
+gate, ordered replay, and an optional same-membership baseline comparison.
+
+The App uses a native folder picker for imports. Browser requests never carry a
+filesystem path, model path, threshold, blind partition, or command string.
+Closing the App window leaves a job running. Explicitly quitting while a job is
+active offers keep-running, safe-stop, and cancel choices; stopped training
+retains `last.pt` for an explicit resume.
+
+The same controlled actions are available from the CLI:
+
+```bash
+python main.py sandbox --profile development workbench-dataset-import \
+  --source /path/to/yolo --dataset-id imported-substation-v1 \
+  --class-map 0=transformer --class-map 1=switchgear \
+  --class-map 2=capacitor_bank --class-map 3=reactor
+python main.py sandbox --profile development workbench-recipe-create \
+  --experiment-id visual-smoke-01 --dataset-id imported-substation-v1 \
+  --preset smoke
+python main.py sandbox --profile development workbench-run \
+  --recipe outputs/sandbox/workbench/runs/visual-smoke-01/recipe.json
+python main.py sandbox --profile development workbench-inspect \
+  --input outputs/sandbox/workbench/runs/visual-smoke-01
+```
+
+The same tab retains selectors for visual ONNX replay, LiDAR replay, one pending
+LiDAR closed-loop flight, and Sandbox v1 acceptance.
 Only workflow-specific safe fields are shown; paths, thresholds, models, and
 blind partitions cannot be supplied by the browser.
 

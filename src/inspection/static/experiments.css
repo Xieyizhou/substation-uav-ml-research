@@ -1,5 +1,46 @@
 .experiment-launch { margin-bottom: 14px; }
 
+.workbench-readiness {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.workbench-grid { align-items: stretch; margin-bottom: 14px; }
+.workbench-grid > article { min-width: 0; }
+.class-map-grid { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 12px 0; }
+.class-map-grid label { color: var(--muted); display: grid; font-size: 10px; gap: 4px; letter-spacing: .04em; text-transform: uppercase; }
+.class-map-grid input { background: #fff; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font: inherit; padding: 8px 10px; }
+
+.dataset-list { display: grid; gap: 8px; margin-top: 12px; }
+
+.dataset-row {
+  align-items: center;
+  background: #f7f8f6;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  display: flex;
+  justify-content: space-between;
+  padding: 12px;
+  text-align: left;
+}
+
+.dataset-row span:first-child { min-width: 0; }
+.dataset-row b, .dataset-row small { display: block; overflow-wrap: anywhere; }
+.dataset-row small { color: var(--muted); margin-top: 3px; }
+.dataset-row span:last-child { color: var(--muted); font-size: 11px; text-align: right; }
+.dataset-row span:last-child strong { color: var(--ink); }
+
+.workbench-form { display: grid; gap: 11px; margin-top: 12px; }
+.workbench-form label { color: var(--muted); display: grid; font-size: 11px; gap: 4px; letter-spacing: .04em; text-transform: uppercase; }
+.workbench-form input { background: #fff; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font: inherit; padding: 9px 12px; }
+.workbench-advanced { display: grid; gap: 8px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.workbench-active { margin-bottom: 22px; }
+.workbench-active .progress-track { margin-top: 12px; }
+.workflow-divider { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 28px; }
+.comparison-note { background: #e4f3ed; color: var(--green); font-size: 12px; margin: 12px 0 0; padding: 9px; }
+
 .experiment-form {
   align-items: end;
   display: grid;
@@ -114,4 +155,5 @@
   .experiment-form { grid-template-columns: 1fr; }
   .experiment-facts { grid-template-columns: repeat(2, 1fr); }
   .acceptance-grid { grid-template-columns: 1fr; }
+  .workbench-advanced { grid-template-columns: repeat(2, 1fr); }
 }

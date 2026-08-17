@@ -78,6 +78,19 @@ class InspectionConfig:
         return self.project_root / "outputs/sandbox" / suffix
 
     @property
+    def workbench_root(self) -> Path:
+        suffix = "workbench" if self.profile == "development" else f"{self.profile}/workbench"
+        return self.project_root / "outputs/sandbox" / suffix
+
+    @property
+    def workbench_datasets_root(self) -> Path:
+        return self.workbench_root / "datasets"
+
+    @property
+    def workbench_runs_root(self) -> Path:
+        return self.workbench_root / "runs"
+
+    @property
     def sandbox_bootstrap_root(self) -> Path:
         return self.project_root / "outputs/sandbox" / self.profile / "bootstrap"
 

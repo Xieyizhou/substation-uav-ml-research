@@ -22,7 +22,7 @@ class MacOSAppContractTests(unittest.TestCase):
         )
         self.assertEqual(value["CFBundlePackageType"], "APPL")
         self.assertEqual(value["CFBundleIconFile"], "AppIcon")
-        self.assertEqual(value["CFBundleShortVersionString"], "0.5.0")
+        self.assertEqual(value["CFBundleShortVersionString"], "0.6.0")
 
     def test_bundle_version_matches_shared_manifest(self):
         import json
@@ -52,6 +52,19 @@ class MacOSAppContractTests(unittest.TestCase):
         ).read_text(encoding="utf-8"))
         self.assertIn('http://127.0.0.1:', model)
         self.assertIn('"127.0.0.1", "localhost", "::1"', web_view)
+
+    def test_native_workbench_import_and_quit_are_controlled(self):
+        model = (APP_ROOT / "Sources/UAVSandboxApp/SandboxAppModel.swift").read_text()
+        web_view = (APP_ROOT / "Sources/UAVSandboxApp/SandboxWebView.swift").read_text()
+        delegate = (APP_ROOT / "Sources/UAVSandboxApp/AppDelegate.swift").read_text()
+        build = (ROOT / "scripts/build_macos_app.sh").read_text()
+        self.assertIn('"class_map": sourceToCanonical', model)
+        self.assertIn("statusCode == 202", model)
+        self.assertIn('host == "import-yolo"', web_view)
+        self.assertIn("four distinct source class IDs", model)
+        self.assertIn("Keep Task Running", delegate)
+        self.assertIn("Stop Task and Quit", delegate)
+        self.assertIn("AppDelegate.swift", build)
 
     def test_native_service_and_jobs_share_homebrew_aware_path(self):
         project = (

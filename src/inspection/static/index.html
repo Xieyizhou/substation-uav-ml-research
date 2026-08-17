@@ -22,7 +22,7 @@
     <button class="tab active" data-tab="overview">Overview</button>
     <button class="tab" data-full-profile data-tab="research">ML results</button>
     <button class="tab" data-full-profile data-tab="lidar">LiDAR gates</button>
-    <button class="tab" data-tab="experiments">Experiments</button>
+    <button class="tab" data-tab="experiments">Workbench</button>
     <button class="tab" data-full-profile data-tab="preflight">Preflight</button>
     <button class="tab" data-tab="doctor">Sandbox doctor</button>
     <button class="tab" data-tab="operator">Operator</button>
@@ -76,7 +76,40 @@
       <article><div class="section-head"><div><p class="kicker">STATIC ONNX REPLAY</p><h2>Resolution and scheduling matrix</h2></div><p id="replay-status"></p></div><div class="table-wrap"><table><thead><tr><th>Input</th><th>Policy</th><th>Source</th><th>FPS</th><th>P50</th><th>P95</th><th>Precision</th><th>Recall</th><th>Small recall</th></tr></thead><tbody id="replay-rows"></tbody></table></div><p id="replay-note" class="research-note"></p></article>
     </section>
     <section id="experiments" class="panel">
-      <div class="section-head"><div><p class="kicker">MANAGED WORKBENCH</p><h2>Reproducible workflows</h2></div><p>Identity-bound recipes · fixed inputs</p></div>
+      <div class="section-head"><div><p class="kicker">VISUAL MODEL LAB</p><h2>Model workbench</h2></div><p>Dataset → YOLO training → ONNX → replay</p></div>
+      <div id="workbench-readiness" class="workbench-readiness"></div>
+      <div class="two-col workbench-grid">
+        <article>
+          <div class="section-head"><div><h3>Datasets</h3><p>Native training views and audited YOLO imports</p></div><button id="workbench-import">Import YOLO dataset…</button></div>
+          <div class="class-map-grid" aria-label="YOLO source class mapping">
+            <label>Transformer ID<input id="map-transformer" type="number" min="0" value="0"></label>
+            <label>Switchgear ID<input id="map-switchgear" type="number" min="0" value="1"></label>
+            <label>Capacitor bank ID<input id="map-capacitor_bank" type="number" min="0" value="2"></label>
+            <label>Reactor ID<input id="map-reactor" type="number" min="0" value="3"></label>
+          </div>
+          <div id="workbench-datasets" class="dataset-list"></div>
+          <p class="operator-note">Set each source class ID before choosing a folder. Imports are copied into a managed immutable view.</p>
+        </article>
+        <article>
+          <h3>New training run</h3>
+          <div class="workbench-form">
+            <label>Experiment ID<input id="workbench-name" maxlength="64" autocomplete="off" placeholder="visual-smoke-01"></label>
+            <label>Dataset<select id="workbench-dataset"></select></label>
+            <label>Preset<select id="workbench-preset"><option value="smoke">Smoke · 1 epoch</option><option value="quick">Quick · 10 epochs</option><option value="full">Full · 100 epochs</option></select></label>
+            <div class="workbench-advanced">
+              <label>Epochs<input id="workbench-epochs" type="number" min="1" max="100"></label>
+              <label>Image size<select id="workbench-imgsz"><option>320</option><option>416</option><option>640</option></select></label>
+              <label>Batch<select id="workbench-batch"><option>1</option><option>2</option><option>4</option><option>8</option><option>16</option></select></label>
+              <label>Device<select id="workbench-device"><option value="auto">Auto</option><option value="mps">MPS</option><option value="cpu">CPU</option></select></label>
+            </div>
+            <button id="workbench-start">Create recipe and train</button>
+          </div>
+        </article>
+      </div>
+      <article class="workbench-active"><div class="section-head"><div><h3>Active / latest run</h3><p id="workbench-active-copy">No workbench run yet.</p></div><button id="workbench-resume" hidden>Resume checkpoint</button></div><div id="workbench-progress"></div></article>
+      <h3>Training results</h3>
+      <div id="workbench-runs" class="experiment-history"></div>
+      <div class="section-head workflow-divider"><div><p class="kicker">OTHER CONTROLLED FLOWS</p><h2>Evaluation and safety workflows</h2></div><p>Identity-bound recipes · fixed inputs</p></div>
       <article class="experiment-launch">
         <h3>New managed workflow</h3>
         <div class="experiment-form">

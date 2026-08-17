@@ -66,6 +66,16 @@ class InspectionService:
 
         return serialize(experiment_summaries(self.config))
 
+    def workbench(self):
+        from src.inspection.workbench import workbench_summary
+
+        return serialize(workbench_summary(self.config))
+
+    def workbench_run(self, experiment_id):
+        from src.inspection.workbench import workbench_run
+
+        return serialize(workbench_run(self.config, experiment_id))
+
     def lidar(self):
         from src.inspection.lidar import lidar_summary
 

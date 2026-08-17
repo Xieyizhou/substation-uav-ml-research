@@ -11,6 +11,9 @@ from src.inspection.config import InspectionConfig
 from src.sandbox.profile_cli import handle_profile_command, register_profile_commands
 from src.sandbox.profiles import PROFILE_NAMES
 from src.sandbox.storage_cli import handle_storage_command, register_storage_commands
+from src.sandbox.workbench_cli import (
+    handle_workbench_command, register_workbench_commands,
+)
 
 
 def _command(module, name):
@@ -27,6 +30,7 @@ def build_parser():
     commands = parser.add_subparsers(dest="command", required=True)
     register_profile_commands(commands)
     register_storage_commands(commands)
+    register_workbench_commands(commands)
     serve = commands.add_parser("serve", help="Run the controlled local sandbox app")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8765)
@@ -119,6 +123,14 @@ def main(argv=None):
         value, return_code = profile
         _print(value)
         return return_code
+    try:
+        workbench = handle_workbench_command(args, config)
+    except (FileNotFoundError, KeyError, OSError, RuntimeError, TypeError, ValueError) as error:
+        print(f"Sandbox workbench failed: {error}")
+        return 1
+    if workbench is not None:
+        _print(workbench)
+        return 0
     if args.command == "doctor":
         InspectionService = _command("src.inspection.service", "InspectionService")
         service = InspectionService(config)

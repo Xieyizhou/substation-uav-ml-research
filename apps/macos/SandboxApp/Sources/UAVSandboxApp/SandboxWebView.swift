@@ -3,9 +3,10 @@ import WebKit
 
 struct SandboxWebView: NSViewRepresentable {
     let url: URL
+    let onImportYOLO: ([String: Int]) -> Void
 
     func makeCoordinator() -> Coordinator {
-        Coordinator()
+        Coordinator(onImportYOLO: onImportYOLO)
     }
 
     func makeNSView(context: Context) -> WKWebView {
@@ -24,11 +25,33 @@ struct SandboxWebView: NSViewRepresentable {
     }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
+        let onImportYOLO: ([String: Int]) -> Void
+
+        init(onImportYOLO: @escaping ([String: Int]) -> Void) {
+            self.onImportYOLO = onImportYOLO
+        }
+
         func webView(
             _ webView: WKWebView,
             decidePolicyFor navigationAction: WKNavigationAction,
             decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
         ) {
+            if navigationAction.request.url?.scheme == "uav-sandbox",
+               navigationAction.request.url?.host == "import-yolo" {
+                let components = URLComponents(
+                    url: navigationAction.request.url!, resolvingAgainstBaseURL: false
+                )
+                let allowed = Set(["transformer", "switchgear", "capacitor_bank", "reactor"])
+                let mapping = Dictionary(uniqueKeysWithValues: (components?.queryItems ?? [])
+                    .compactMap { item -> (String, Int)? in
+                        guard allowed.contains(item.name), let value = item.value,
+                              let classID = Int(value), classID >= 0 else { return nil }
+                        return (item.name, classID)
+                    })
+                onImportYOLO(mapping)
+                decisionHandler(.cancel)
+                return
+            }
             guard let host = navigationAction.request.url?.host,
                   ["127.0.0.1", "localhost", "::1"].contains(host) else {
                 decisionHandler(.cancel)

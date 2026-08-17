@@ -88,19 +88,32 @@ def collect_predictions(
         verbose=False,
     ):
         stem = Path(result.path).stem
+        height, width = (int(value) for value in result.orig_shape)
         frames.append(
             {
                 "sample_id": stem,
-                "truth": _truth(label_root / f"{stem}.txt", input_size=imgsz),
+                "truth": _truth(
+                    label_root / f"{stem}.txt", width=width, height=height,
+                    input_size=imgsz,
+                ),
                 "predictions": _prediction_rows(result),
             }
         )
     return frames
 
 
-def _standard_metrics(model_path, dataset_yaml, *, split, device, imgsz):
+def _standard_metrics(
+    model_path, dataset_yaml, *, split, device, imgsz, output_root=None,
+):
     from ultralytics import YOLO
 
+    output_options = {}
+    if output_root is not None:
+        output_root = Path(output_root)
+        output_options = {
+            "project": str(output_root.parent), "name": output_root.name,
+            "exist_ok": True,
+        }
     metrics = YOLO(str(model_path)).val(
         data=str(dataset_yaml),
         split=split,
@@ -111,6 +124,7 @@ def _standard_metrics(model_path, dataset_yaml, *, split, device, imgsz):
         plots=True,
         rect=False,
         verbose=False,
+        **output_options,
     )
     box = metrics.box
     names = metrics.names

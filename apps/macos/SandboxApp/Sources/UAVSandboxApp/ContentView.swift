@@ -20,7 +20,9 @@ struct ContentView: View {
                         Task { await status.refresh(baseURL: url) }
                     }
                 } else {
-                    SandboxWebView(url: url)
+                    SandboxWebView(url: url) { mapping in
+                        model.importYOLODataset(canonicalToSourceID: mapping)
+                    }
                 }
             } else {
                 setup
@@ -38,11 +40,6 @@ struct ContentView: View {
         }
         .onChange(of: model.profile) { _ in model.profileChanged() }
         .task { model.profileChanged() }
-        .onReceive(NotificationCenter.default.publisher(
-            for: NSApplication.willTerminateNotification
-        )) { _ in
-            model.shutdownBeforeApplicationExit()
-        }
     }
 
     private var header: some View {

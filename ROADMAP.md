@@ -64,6 +64,8 @@ The runner uses 30 paired scenarios × four conditions, not the previous
 - [x] Recover or explicitly adopt a still-running owned job after App restart.
 - [x] Add output budgets, retention policy, and structured failure classes.
 - [x] Complete a GitHub Beta installation gate on a clean supported machine.
+- [x] Add an offline visual model workbench with audited YOLO import, bounded
+  recipes, checkpoint resume, ONNX equivalence, replay, and baseline comparison.
 
 ## v0.4 — Four-class equipment perception
 

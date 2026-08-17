@@ -21,6 +21,11 @@ ACTION_BUDGET_BYTES = {
     "experiment-run": 8 * GIB,
     "training-view-v2": 8 * GIB,
     "training-smoke-v2": 16 * GIB,
+    "workbench-run": 16 * GIB,
+    "workbench-resume": 16 * GIB,
+    "workbench-dataset-import": 16 * GIB,
+    "workbench-validate": 4 * GIB,
+    "workbench-replay": 4 * GIB,
     "collection-single": 8 * GIB,
     "collection-gate": 40 * GIB,
 }

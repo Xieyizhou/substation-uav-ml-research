@@ -24,6 +24,14 @@ App shell plus its profile, storage, and operator APIs. The gate passed on
 Darwin arm64 with Python 3.11 and 3.14; GitHub Actions runs the same gate on
 Python 3.11 and 3.13 without project dependencies or research artifacts.
 
+The Development Profile now includes an offline visual model workbench. It can
+register native visual training identities or import audited YOLO Detect data,
+then execute a development recipe through YOLO11n training, validation-only
+threshold selection, static ONNX export, PT/ONNX equivalence, ordered replay,
+and a same-membership baseline comparison. A 256/64, 1-epoch, 320-pixel smoke
+run completed the full chain locally on the M2 Pro. These outputs remain
+development experiments rather than frozen deployment packages.
+
 ## Active Workflow
 
 Run public commands through `main.py` from the repository root:
@@ -146,10 +154,10 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Next Priorities
 
-1. Confirm the clean-install matrix on GitHub and publish the first Sandbox
-   Beta for outside users.
-2. Collect installation and first-run feedback before expanding the App or
-   simulator setup surface.
+1. Publish an updated unsigned Beta containing the visual model workbench and
+   collect first-run feedback.
+2. Run a Quick workbench recipe on an independently imported YOLO dataset and
+   review its audit/error guidance.
 3. Run one documented development-profile simulator workflow end to end from
    the App on a clean host with PX4 and Gazebo installed.
 4. Use the stabilized sandbox to iterate map complexity, flight speed, and

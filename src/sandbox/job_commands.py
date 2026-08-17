@@ -13,6 +13,7 @@ from src.sandbox.workflow_commands import (
     build_workflow_command,
 )
 from src.sandbox.profiles import sandbox_profile
+from src.sandbox.workbench_commands import build_workbench_command
 from src.vision.collection.plan import collection_status
 from src.vision.collection.recording import scenario_by_id
 
@@ -174,6 +175,10 @@ def build_command(config, action, scenario_id=None, parameters=None):
     profile = sandbox_profile(config.profile)
     if action == "workflow-run":
         return build_workflow_command(config, parameters)
+    if action.startswith("workbench-"):
+        command = build_workbench_command(config, action, parameters)
+        if command is not None:
+            return command
     if not profile.flight_enabled and action != "doctor":
         raise ValueError(f"action is unavailable in {config.profile} profile")
     if action == "doctor":
