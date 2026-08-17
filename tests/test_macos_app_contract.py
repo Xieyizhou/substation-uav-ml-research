@@ -140,6 +140,22 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertIn('package_macos_release.sh "$version"', packaging)
         self.assertNotRegex(packaging, r"package_macos_release\.sh [0-9]+\.[0-9]+\.[0-9]+")
 
+    def test_github_workflows_use_node24_actions_and_no_stale_release_default(self):
+        workflows = list((ROOT / ".github/workflows").glob("*.yml"))
+        combined = "\n".join(path.read_text(encoding="utf-8") for path in workflows)
+        self.assertNotIn("actions/checkout@v4", combined)
+        self.assertNotIn("actions/setup-python@v5", combined)
+        self.assertIn("actions/checkout@v6", combined)
+        self.assertIn("actions/setup-python@v6", combined)
+        for name in (
+            "macos-beta-release.yml",
+            "macos-preview-release.yml",
+            "macos-notarized-beta-release.yml",
+        ):
+            workflow = (ROOT / ".github/workflows" / name).read_text(encoding="utf-8")
+            version_input = workflow.split("version:", 1)[1].split("permissions:", 1)[0]
+            self.assertNotIn("default:", version_input)
+
     def test_advanced_runtime_candidate_picker_covers_every_component(self):
         discovery = (
             APP_ROOT / "Sources/SandboxAppCore/RuntimeCandidateDiscovery.swift"

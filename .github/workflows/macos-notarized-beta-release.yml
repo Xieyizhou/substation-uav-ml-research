@@ -6,7 +6,6 @@ on:
       version:
         description: Beta version without a leading v
         required: true
-        default: 0.5.0
         type: string
 
 permissions:
@@ -22,7 +21,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Require release credentials
         env:
