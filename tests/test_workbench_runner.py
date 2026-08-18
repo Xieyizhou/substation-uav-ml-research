@@ -12,8 +12,11 @@ from src.ml.artifacts import file_sha256, write_json
 from src.sandbox.job_commands import build_command
 from src.sandbox.workbench_models import WorkbenchDataset
 from src.sandbox.workbench_recipe import materialize_workbench_recipe
-from src.sandbox.workbench_lifecycle import inspect_workbench_run
-from src.sandbox.workbench_runner import run_workbench_experiment
+from src.sandbox.workbench_lifecycle import (
+    inspect_workbench_run, replay_workbench_run,
+)
+from src.sandbox.workbench_run_guard import exclusive_workbench_run
+from src.sandbox.workbench_runner import _prepare_view, run_workbench_experiment
 from src.sandbox.workbench_equivalence import calibration_images
 
 
@@ -60,7 +63,10 @@ class WorkbenchRunnerTests(unittest.TestCase):
         validation = {
             "confidence_evaluation": {"selected": {"threshold": 0.42}}
         }
-        replay = {"replay_identity_sha256": "d" * 64}
+        replay = {
+            "model_sha256": file_sha256(onnx),
+            "replay_identity_sha256": "d" * 64,
+        }
         return best, last, onnx, validation, replay
 
     def test_runs_all_stages_and_writes_receipt(self):
@@ -99,6 +105,61 @@ class WorkbenchRunnerTests(unittest.TestCase):
         status = json.loads((self.run_root / "status.json").read_text())
         self.assertEqual(status["epoch"], 1)
         self.assertEqual(status["total_epochs"], 1)
+
+    def test_view_preparation_is_idempotent_for_existing_hardlinks(self):
+        parameters = self.recipe.parameters
+        view, first = _prepare_view(self.dataset, self.run_root, parameters)
+        second_view, second = _prepare_view(self.dataset, self.run_root, parameters)
+        self.assertEqual(second_view, view)
+        self.assertEqual(first["membership_sha256"], second["membership_sha256"])
+        self.assertEqual(second["link_modes"], {"existing": 4})
+
+    def test_completed_run_is_not_restarted_and_stale_status_is_repaired(self):
+        best, last, onnx, validation, replay = self.completed_stages()
+        with patch("src.sandbox.workbench_runner._train", return_value=(best, last)), \
+             patch("src.sandbox.workbench_runner.evaluate_workbench_model", return_value=(validation, [])), \
+             patch("src.sandbox.workbench_runner._export_and_gate",
+                   return_value=(onnx, [], {"passed": True})), \
+             patch("src.sandbox.workbench_runner.replay_workbench_model", return_value=replay):
+            write_json(self.run_root / "validation.json", validation)
+            write_json(self.run_root / "onnx_equivalence.json", {"passed": True})
+            write_json(self.run_root / "replay.json", replay)
+            expected = run_workbench_experiment(
+                self.root, self.imported, self.runs, self.run_root / "recipe.json"
+            )
+        write_json(self.run_root / "status.json", {"state": "running", "stage": "replay"})
+        with patch("src.sandbox.workbench_runner._prepare_view") as prepare:
+            actual = run_workbench_experiment(
+                self.root, self.imported, self.runs,
+                self.run_root / "recipe.json", resume=True,
+            )
+        prepare.assert_not_called()
+        self.assertEqual(actual, expected)
+        status = json.loads((self.run_root / "status.json").read_text())
+        self.assertEqual((status["state"], status["stage"]), ("complete", "complete"))
+
+    def test_run_directory_rejects_a_second_process_owner(self):
+        with exclusive_workbench_run(self.run_root):
+            with self.assertRaisesRegex(RuntimeError, "already running"):
+                with exclusive_workbench_run(self.run_root):
+                    self.fail("duplicate workbench owner was accepted")
+
+    def test_replay_refreshes_the_final_receipt(self):
+        best, _, onnx, validation, replay = self.completed_stages()
+        write_json(self.run_root / "validation.json", validation)
+        write_json(self.run_root / "onnx_equivalence.json", {"passed": True})
+        comparison = {"status": "complete"}
+        with patch(
+            "src.sandbox.workbench_lifecycle.replay_workbench_model",
+            return_value=replay,
+        ), patch(
+            "src.sandbox.workbench_lifecycle.compare_with_baseline",
+            return_value=comparison,
+        ):
+            result = replay_workbench_run(self.root, self.run_root)
+        self.assertEqual(result["receipt"]["onnx_model_sha256"], file_sha256(onnx))
+        status = json.loads((self.run_root / "status.json").read_text())
+        self.assertEqual((status["state"], status["stage"]), ("complete", "complete"))
 
     def test_failure_is_persisted_with_stable_code(self):
         with patch("src.sandbox.workbench_runner._train",

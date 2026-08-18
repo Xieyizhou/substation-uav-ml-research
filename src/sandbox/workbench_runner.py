@@ -8,9 +8,13 @@ import shutil
 import time
 
 from src.ml import EQUIPMENT_CLASSES
-from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
+from src.ml.artifacts import file_sha256, object_sha256, write_json
 from src.sandbox.workbench_datasets import resolve_workbench_dataset
 from src.sandbox.workbench_models import WorkbenchExperimentRecipe
+from src.sandbox.workbench_run_guard import (
+    exclusive_workbench_run, verified_completed_receipt,
+)
+from src.sandbox.workbench_receipt import materialize_workbench_receipt
 from src.vision.evaluation.detection_metrics import (
     select_confidence_threshold, threshold_metrics,
 )
@@ -40,6 +44,10 @@ def _evenly(paths, limit):
 
 def _link(source, destination):
     destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists():
+        if source.samefile(destination):
+            return "existing"
+        raise FileExistsError(f"workbench view target already exists: {destination}")
     try:
         destination.hardlink_to(source)
         return "hardlink"
@@ -206,6 +214,22 @@ def run_workbench_experiment(
     project_root, recipe_path = Path(project_root), Path(recipe_path)
     recipe = WorkbenchExperimentRecipe.from_record(json.loads(recipe_path.read_text()))
     run_root = Path(runs_root) / recipe.experiment_id
+    completed = verified_completed_receipt(run_root, recipe)
+    if completed is not None:
+        checkpoint = run_root / "training/weights/last.pt"
+        update_workbench_status(
+            run_root, recipe, state="complete", stage="complete", progress=1.0,
+            eta_seconds=0, error=None, failure_code=None,
+            checkpoint_available=checkpoint.is_file(),
+        )
+        return completed
+    with exclusive_workbench_run(run_root):
+        return _run_workbench_experiment(
+            project_root, imported_root, run_root, recipe, resume,
+        )
+
+
+def _run_workbench_experiment(project_root, imported_root, run_root, recipe, resume):
     dataset = resolve_workbench_dataset(project_root, imported_root, recipe.dataset_id)
     if dataset.dataset_identity_sha256 != recipe.dataset_identity_sha256:
         raise ValueError("workbench dataset identity changed")
@@ -233,21 +257,9 @@ def run_workbench_experiment(
         comparison = compare_with_baseline(
             project_root, view, run_root, recipe, replay
         )
-        receipt = {"workbench_receipt_schema_version": 1,
-                   "experiment_id": recipe.experiment_id,
-                   "recipe_identity_sha256": recipe.recipe_identity_sha256,
-                   "dataset_identity_sha256": recipe.dataset_identity_sha256,
-                   "software_commit_sha": git_commit(project_root),
-                   "dataset_role": "development", "formal_evidence": False,
-                   "best_weights_sha256": file_sha256(best),
-                   "onnx_model_sha256": file_sha256(onnx),
-                   "validation_sha256": file_sha256(run_root / "validation.json"),
-                   "equivalence_sha256": file_sha256(run_root / "onnx_equivalence.json"),
-                   "replay_identity_sha256": replay["replay_identity_sha256"],
-                   "comparison_status": comparison["status"],
-                   "passed": bool(gate["passed"])}
-        receipt["receipt_identity_sha256"] = object_sha256(receipt)
-        write_json(run_root / "receipt.json", receipt)
+        receipt = materialize_workbench_receipt(
+            project_root, run_root, recipe, best, onnx, gate, replay, comparison,
+        )
         update_workbench_status(run_root, recipe, state="complete", stage="complete", progress=1.0,
                 eta_seconds=0, checkpoint_available=last.is_file())
         return receipt

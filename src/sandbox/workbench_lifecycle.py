@@ -7,6 +7,7 @@ from pathlib import Path
 
 from src.sandbox.workbench_comparison import compare_with_baseline
 from src.sandbox.workbench_models import WorkbenchExperimentRecipe
+from src.sandbox.workbench_receipt import materialize_workbench_receipt
 from src.sandbox.workbench_runner import (
     evaluate_workbench_model,
     replay_workbench_model,
@@ -59,8 +60,14 @@ def replay_workbench_run(project_root, root):
     threshold = validation["confidence_evaluation"]["selected"]["threshold"]
     update_workbench_status(root, recipe, state="running", stage="replay", progress=0.0)
     result = replay_workbench_model(onnx, view, root, recipe, threshold)
-    compare_with_baseline(Path(project_root), view, root, recipe, result)
-    update_workbench_status(
-        root, recipe, state="complete", stage="replay_complete", progress=1.0
+    comparison = compare_with_baseline(Path(project_root), view, root, recipe, result)
+    best = root / "training/weights/best.pt"
+    receipt = materialize_workbench_receipt(
+        Path(project_root), root, recipe, best, onnx, gate, result, comparison,
     )
-    return result
+    update_workbench_status(
+        root, recipe, state="complete", stage="complete", progress=1.0,
+        eta_seconds=0, error=None, failure_code=None,
+        checkpoint_available=(root / "training/weights/last.pt").is_file(),
+    )
+    return {"replay": result, "receipt": receipt}
