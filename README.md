@@ -146,7 +146,7 @@ cd substation-uav-ml-research
 ./scripts/run_sandbox_app.sh
 ```
 
-Open `http://127.0.0.1:8765`, choose **Workbench**, and run **Demo
+Open `http://127.0.0.1:8765`, choose **Model Lab → Train**, and run **Demo
 classifier**. The result is an identity-bound workflow example built from
 synthetic features and is explicitly excluded from formal research evidence.
 
@@ -157,7 +157,7 @@ static ONNX export, PT/ONNX equivalence, ordered replay, and an optional paired
 baseline comparison. PX4 and Gazebo are not required for this offline path.
 
 Completed receipt-verified runs can also process a local PNG/JPEG from the
-native App. Workbench applies the model's frozen validation threshold, draws
+native App under **Model Lab → Test Image**. The model lab applies the frozen validation threshold, draws
 class/confidence boxes, records latency and hashes, and can compare two
 verified candidates on the same image. The browser cannot provide a filesystem
 path, arbitrary ONNX file, or threshold.
@@ -185,7 +185,7 @@ Create a versioned preview DMG, ZIP, release manifest, and SHA256 checksum list
 with:
 
 ```bash
-./scripts/package_macos_release.sh 0.6.4
+./scripts/package_macos_release.sh 0.6.5
 ```
 
 Demo Profile runs entirely inside the App without a repository or Python.
@@ -201,7 +201,7 @@ for profiles, build requirements, preview, unsigned Beta, and future notarized
 Beta releases, plus the distribution boundary.
 
 Build the current integrity-verifiable unsigned Beta from a clean tracked
-worktree with `./scripts/package_macos_beta.sh 0.6.4`. Its manifest binds the
+worktree with `./scripts/package_macos_beta.sh 0.6.5`. Its manifest binds the
 source commit and artifact SHA256 identities while explicitly declaring that it
 is not Apple-notarized. The repository also retains a separate Developer ID and
 notarization workflow for future signed releases.

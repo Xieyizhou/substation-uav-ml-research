@@ -160,10 +160,13 @@ class SandboxReleaseTests(unittest.TestCase):
         self.assertIn('aria-live="assertive"', markup)
 
     def test_navigation_survives_data_refresh_and_document_reload(self):
-        script = (PROJECT_ROOT / "src/inspection/static/app.js").read_text()
-        self.assertIn("history.replaceState(null,'',`#${name}`)", script)
-        self.assertIn("SandboxUIState.tabFromHash(location.hash)", script)
-        self.assertIn("activateTab(initialTab,false)", script)
+        script = (PROJECT_ROOT / "src/inspection/static/navigation.js").read_text()
+        state = (PROJECT_ROOT / "src/inspection/static/ui_state.js").read_text()
+        self.assertIn("history[method](null,'',`#${canonical}`)", script)
+        self.assertIn("SandboxUIState.routeFromHash(location.hash)", script)
+        self.assertIn("activate(SandboxUIState.routeFromHash(location.hash),false)", script)
+        self.assertIn("experiments:'model/train'", state)
+        self.assertIn("operator:'activity/jobs'", state)
 
     @patch("src.sandbox.beta_install.git_commit", return_value=COMMIT)
     @patch("src.sandbox.beta_install._workflow_checks")

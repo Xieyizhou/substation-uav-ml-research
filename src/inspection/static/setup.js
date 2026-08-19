@@ -1,4 +1,3 @@
-let setupFirstObservation=true;
 function renderSetup(value){
   const complete=value.required_count?Math.round(100*value.required_ready_count/value.required_count):100;
   $('#setup-progress').innerHTML=`<strong>${value.required_ready_count} / ${value.required_count}</strong><span>required items ready</span><div class="progress-track"><div class="progress-fill" style="width:${complete}%"></div></div>`;
@@ -6,8 +5,14 @@ function renderSetup(value){
   $('#setup-next-step').textContent=value.next_step;
   $('#setup-journey').innerHTML=(value.journey||[]).map((step,index)=>`<button class="journey-step ${esc(step.status)}" data-journey-tab="${esc(step.tab)}"><span>${index+1}</span><b>${esc(step.title)}</b><small>${esc(step.status)}</small></button>`).join('');
   $('#setup-artifacts').innerHTML=Object.entries(value.artifact_locations||{}).map(([name,path])=>`<span><b>${esc(name.replaceAll('_',' '))}</b><code>${esc(path)}</code></span>`).join('');
-  document.querySelectorAll('[data-journey-tab]').forEach(button=>button.onclick=()=>activateTab(button.dataset.journeyTab));
+  document.querySelectorAll('[data-journey-tab]').forEach(button=>button.onclick=()=>activateRoute(SandboxUIState.routeFromHash(`#${button.dataset.journeyTab}`)));
   document.querySelectorAll('.copy-command').forEach(button=>button.onclick=async()=>{try{await navigator.clipboard.writeText(button.dataset.command);button.textContent='Copied'}catch{actionError('Clipboard access is unavailable. Copy the command from Sandbox doctor.')}});
-  if(setupFirstObservation&&!value.ready){activateTab('setup')}setupFirstObservation=false;
+  const pending=(value.journey||[]).find(step=>step.status!=='complete');
+  const route=pending?SandboxUIState.routeFromHash(`#${pending.tab}`):'model/inference';
+  $('#home-next-title').textContent=pending?pending.title:'Test a verified model';
+  const nextCopy=String(value.next_step||'').replaceAll('Workbench','Model Lab');
+  $('#home-next-copy').textContent=pending?nextCopy:'Your core setup path is complete. Try a local image with a verified ONNX model or review the latest results.';
+  $('#home-next-action').textContent=pending?'Continue':'Test an image';
+  $('#home-next-action').onclick=()=>activateRoute(route);
 }
 window.addEventListener('DOMContentLoaded',()=>{$('#setup-check').onclick=()=>refresh().catch(error=>actionError(error.message))});

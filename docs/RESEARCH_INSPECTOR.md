@@ -7,7 +7,7 @@ lifecycle from training-view identity through frozen-package, paired blind,
 and static replay results. It can also run a small set of fixed workflows
 without exposing an arbitrary command shell.
 
-The LiDAR Gates tab reads the latest identity-bound validation replay receipt
+The **Results → LiDAR** page reads the latest identity-bound validation replay receipt
 and its matching closed-loop study. It reports gate state, model identity,
 replay quality and latency, completed flights, landings, collisions, safety
 buffer entries, sensor health, and live inference latency.
@@ -31,9 +31,17 @@ simulator actions. The port may be changed. The host is restricted to a
 loopback name or address; the operator is deliberately unavailable over the
 network.
 
+## Task navigation
+
+The interface has five primary pages: Home, Fly & Collect, Model Lab, Results,
+and Activity. Simulator and collection actions live in Fly & Collect; model
+data, training, run history, and image tests live in Model Lab; diagnostic
+history and logs live in Activity. The complete route and compatibility map is
+documented in [Sandbox task navigation](SANDBOX_UI_ARCHITECTURE.md).
+
 ## Managed workflows
 
-The Operator tab exposes fixed actions:
+Task pages expose fixed actions:
 
 - environment doctor;
 - one non-blind flight smoke run;
@@ -49,7 +57,7 @@ The Operator tab exposes fixed actions:
 - offline revalidation of the latest accepted LiDAR candidate;
 - one pending LiDAR closed-loop flight at a time.
 
-The ML Results tab is read-only. It exposes aggregate identities and metrics,
+The Results page is read-only. It exposes aggregate identities and metrics,
 including the controlled 416-pixel latency replicate, but does not expose
 blind images, per-frame predictions, labels, or scenario details. Formal blind
 evaluation remains unavailable as an App action and cannot be rerun from the
@@ -62,7 +70,7 @@ registry, refuses completed studies, and always adds `--max-runs 1`. It uses
 the same single-job lock, runtime conflict checks, timeout, stop sequence, and
 job history as the other managed workflows.
 
-The Workbench tab provides a dependency-free Demo classifier plus a complete
+The Model Lab provides a dependency-free Demo classifier plus a complete
 Development Profile YOLO11n experiment path. Native training identities can be
 registered without mutation, while standard YOLO Detect directories are
 audited and copied into an immutable managed view. Source class IDs must map to
@@ -109,8 +117,8 @@ python main.py sandbox --profile development workbench-inspect \
   --input outputs/sandbox/workbench/runs/visual-smoke-01
 ```
 
-The same tab retains selectors for visual ONNX replay, LiDAR replay, one pending
-LiDAR closed-loop flight, and Sandbox v1 acceptance.
+The Results page retains contextual controls for visual ONNX replay, LiDAR
+replay, one pending LiDAR closed-loop flight, and Sandbox v1 acceptance.
 Only workflow-specific safe fields are shown; paths, thresholds, models, and
 blind partitions cannot be supplied by the browser.
 

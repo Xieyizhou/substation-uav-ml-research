@@ -22,7 +22,7 @@ class MacOSAppContractTests(unittest.TestCase):
         )
         self.assertEqual(value["CFBundlePackageType"], "APPL")
         self.assertEqual(value["CFBundleIconFile"], "AppIcon")
-        self.assertEqual(value["CFBundleShortVersionString"], "0.6.4")
+        self.assertEqual(value["CFBundleShortVersionString"], "0.6.5")
 
     def test_bundle_version_matches_shared_manifest(self):
         import json
@@ -204,16 +204,14 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertIn("RuntimeCandidateDiscovery.swift", build)
         self.assertIn("RuntimeCandidateView.swift", build)
 
-    def test_status_home_reads_only_loopback_endpoints(self):
-        model = (
-            APP_ROOT / "Sources/UAVSandboxApp/SandboxStatusModel.swift"
+    def test_online_app_uses_web_home_without_double_navigation(self):
+        content = (
+            APP_ROOT / "Sources/UAVSandboxApp/ContentView.swift"
         ).read_text(encoding="utf-8")
-        for endpoint in (
-            "profile", "version", "setup", "runtime", "doctor", "storage", "operator"
-        ):
-            self.assertIn(f'"api/{endpoint}"', model)
-        self.assertNotIn("operator/start", model)
-        self.assertNotIn("operator/stop", model)
+        self.assertIn("SandboxWebView(", content)
+        self.assertNotIn("AppSection", content)
+        self.assertNotIn('Picker("Section"', content)
+        self.assertNotIn("NativeDashboardView(status:", content)
 
 
 if __name__ == "__main__":

@@ -130,7 +130,7 @@ class InspectionHandler(BaseHTTPRequestHandler):
         if name not in {
             "index.html", "app.js", "style.css", "operator.css", "research.css",
             "experiments.css", "setup.css", "setup.js",
-            "profile.css", "ui_state.js",
+            "profile.css", "ui_state.js", "navigation.css", "navigation.js",
         }:
             return self._json({"error": "not found"}, 404)
         self._file(STATIC_ROOT / name)

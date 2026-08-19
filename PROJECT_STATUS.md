@@ -30,6 +30,8 @@ confirmed landing, no physical collisions, and no inflated-buffer entries. A
 300-frame slice of the stability capture also passed deterministic replay.
 
 Sandbox v1 is now available as the integrity-verifiable unsigned 0.6.4 Beta.
+The 0.6.5 candidate reorganizes the App around Home, Fly & Collect, Model Lab,
+Results, and Activity without changing operator or artifact contracts.
 Its clean-install gate builds a
 Git-tracked source copy, creates a fresh virtual environment, runs bootstrap
 and the deterministic Demo, inspects both receipts, and verifies the loopback
@@ -68,6 +70,9 @@ identity-bound development result. A dual-model acceptance run completed on a
 - **Active:** stabilize public-Beta feedback and run the full-Xcode Swift/UI
   gates in CI; Command Line Tools-only machines now fail with a direct setup
   instruction instead of using an incompatible SDK/module cache.
+- **Complete in 0.6.5 candidate:** task-oriented navigation, bounded run and
+  inference history, contextual flight controls, canonical routes, and a
+  single web Home page in the native shell.
 - **Next:** apply the same verified inference boundary to recording replay and
   live Gazebo camera frames.
 - **Later:** detection-assisted scene and planning-map generation. Flight-ready

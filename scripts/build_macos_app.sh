@@ -77,9 +77,6 @@ build_with_command_line_tools() {
     "$package_root/Sources/UAVSandboxApp/SandboxAppState.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxAppModel.swift" \
     "$package_root/Sources/UAVSandboxApp/SandboxRuntimeModel.swift" \
-    "$package_root/Sources/UAVSandboxApp/SandboxStatusModels.swift" \
-    "$package_root/Sources/UAVSandboxApp/SandboxStatusModel.swift" \
-    "$package_root/Sources/UAVSandboxApp/NativeDashboardView.swift" \
     "$package_root/Sources/UAVSandboxApp/StandaloneDemoView.swift" \
     "$package_root/Sources/UAVSandboxApp/RuntimeCompatibilityView.swift" \
     "$package_root/Sources/UAVSandboxApp/RuntimeCandidateView.swift" \

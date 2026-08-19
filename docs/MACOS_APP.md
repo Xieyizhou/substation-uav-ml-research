@@ -135,9 +135,9 @@ Create a versioned DMG, ZIP, release manifest, and checksum list from the
 repository root:
 
 ```bash
-./scripts/package_macos_release.sh 0.6.4
+./scripts/package_macos_release.sh 0.6.5
 cd dist/releases
-shasum -a 256 -c UAV-Research-Sandbox-v0.6.4-macos-*-SHA256SUMS
+shasum -a 256 -c UAV-Research-Sandbox-v0.6.5-macos-*-SHA256SUMS
 ```
 
 The DMG presents the App beside an Applications shortcut and includes a short
@@ -174,9 +174,9 @@ worktree, records the exact source commit, creates a versioned ZIP and DMG, and
 binds their byte counts and SHA256 identities into a verified release manifest:
 
 ```bash
-./scripts/package_macos_beta.sh 0.6.4
+./scripts/package_macos_beta.sh 0.6.5
 cd dist/releases
-shasum -a 256 -c UAV-Research-Sandbox-v0.6.4-macos-*-SHA256SUMS
+shasum -a 256 -c UAV-Research-Sandbox-v0.6.5-macos-*-SHA256SUMS
 ```
 
 The manual **macOS unsigned Beta release** workflow repeats Swift tests and
@@ -202,7 +202,7 @@ building when either credential is absent:
 ```bash
 MACOS_CODESIGN_IDENTITY="Developer ID Application: Example (TEAMID)" \
 MACOS_NOTARY_PROFILE="uav-sandbox-notary" \
-  ./scripts/package_macos_notarized_beta.sh 0.6.4
+  ./scripts/package_macos_notarized_beta.sh 0.6.5
 ```
 
 Create the named notary profile with `xcrun notarytool store-credentials` first.

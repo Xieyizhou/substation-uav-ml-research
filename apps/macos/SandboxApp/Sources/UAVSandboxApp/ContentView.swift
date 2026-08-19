@@ -4,9 +4,7 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var model: SandboxAppModel
-    @StateObject private var status = SandboxStatusModel()
     @State private var showLogs = false
-    @State private var section = AppSection.status
 
     var body: some View {
         VStack(spacing: 0) {
@@ -15,38 +13,24 @@ struct ContentView: View {
             if model.embeddedDemoReady {
                 StandaloneDemoView()
             } else if let url = model.webURL {
-                if section == .status {
-                    NativeDashboardView(status: status) {
-                        Task { await status.refresh(baseURL: url) }
+                SandboxWebView(
+                    url: url,
+                    onImportYOLO: { mapping in
+                        model.importYOLODataset(canonicalToSourceID: mapping)
+                    },
+                    onInferImage: { experiment, comparison in
+                        model.inferImage(
+                            experimentID: experiment,
+                            comparisonExperimentID: comparison
+                        )
                     }
-                } else {
-                    SandboxWebView(
-                        url: url,
-                        onImportYOLO: { mapping in
-                            model.importYOLODataset(canonicalToSourceID: mapping)
-                        },
-                        onInferImage: { experiment, comparison in
-                            model.inferImage(
-                                experimentID: experiment,
-                                comparisonExperimentID: comparison
-                            )
-                        }
-                    )
-                }
+                )
             } else {
                 setup
             }
         }
         .background(Color(nsColor: .windowBackgroundColor))
         .sheet(isPresented: $showLogs) { logSheet }
-        .onChange(of: model.webURL) { url in
-            if let url {
-                section = .status
-                status.start(baseURL: url)
-            } else {
-                status.stop()
-            }
-        }
         .onChange(of: model.profile) { _ in model.profileChanged() }
         .task { model.profileChanged() }
     }
@@ -66,17 +50,6 @@ struct ContentView: View {
                     .lineLimit(1)
             }
             Spacer()
-            if model.webURL != nil && !model.embeddedDemoReady {
-                Picker("Section", selection: $section) {
-                    Label("Status", systemImage: "gauge.with.dots.needle.67percent")
-                        .tag(AppSection.status)
-                    Label("Workbench", systemImage: "rectangle.3.group")
-                        .tag(AppSection.workbench)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 230)
-            }
             Button {
                 showLogs = true
             } label: {
@@ -225,9 +198,4 @@ struct ContentView: View {
         .padding(20)
         .frame(minWidth: 720, minHeight: 460)
     }
-}
-
-private enum AppSection: Hashable {
-    case status
-    case workbench
 }

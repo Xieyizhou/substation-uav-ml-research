@@ -1,13 +1,32 @@
 (function(root){
-  const tabs=new Set(['setup','overview','research','lidar','experiments','preflight','doctor','operator','logs','frames']);
+  const routes=new Set([
+    'home','fly/run','fly/recordings','model/datasets','model/train',
+    'model/runs','model/inference','results/visual','results/lidar',
+    'results/acceptance','activity/jobs','activity/logs',
+    'activity/environment','activity/storage',
+  ]);
+  const defaults={home:'home',fly:'fly/run',model:'model/datasets',results:'results/visual',activity:'activity/jobs'};
+  const legacy={
+    setup:'home',overview:'home',experiments:'model/train',research:'results/visual',
+    lidar:'results/lidar',preflight:'results/lidar',frames:'fly/recordings',
+    operator:'activity/jobs',logs:'activity/logs',doctor:'activity/environment',
+  };
   const guidance={
     simulator_start_failed:'Check the simulator log and runtime compatibility before retrying.',
     flight_timeout:'Inspect the flight log and confirm the route reached a terminal state.',
     output_budget_exceeded:'Free managed output space, then start a new job.',
-    workbench_failed:'Open the selected job log; a checkpoint may be resumable from Workbench.',
+    workbench_failed:'Open the selected job log; a checkpoint may be resumable from Model Lab.',
   };
+  function normalize(hash,fallback='home'){
+    const value=decodeURIComponent(String(hash||'').replace(/^#/,''));
+    if(routes.has(value))return value;
+    if(legacy[value])return legacy[value];
+    if(defaults[value])return defaults[value];
+    return routes.has(fallback)?fallback:'home';
+  }
   root.SandboxUIState={
-    tabFromHash(hash,fallback='overview'){const value=String(hash||'').replace(/^#/,'');return tabs.has(value)?value:fallback},
+    routeFromHash:normalize,
+    primaryFor(route){return normalize(`#${route}`).split('/')[0]},
     failureGuidance(code){return guidance[code]||'Open the selected job log and inspect its diagnostics before retrying.'},
   };
 })(typeof globalThis==='undefined'?this:globalThis);

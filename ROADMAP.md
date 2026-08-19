@@ -33,6 +33,8 @@ does not count as research evidence.
   when only mismatched Command Line Tools/SDK modules are available.
 - [x] Add executable UI-state regression checks for tab persistence, polling,
   onboarding navigation, and controlled inference actions.
+- [x] Replace subsystem-oriented navigation with Home, Fly & Collect, Model
+  Lab, Results, and Activity task flows while retaining legacy links.
 - Keep advanced workflows repository-backed; do not bundle PX4, Gazebo,
   datasets, model weights, or the ML Python environment in the App.
 
