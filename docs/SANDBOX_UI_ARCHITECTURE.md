@@ -1,26 +1,55 @@
-# Sandbox task navigation
+# Sandbox research toolbox
 
-The Sandbox interface is organized around five user tasks rather than the
-underlying command and reporting subsystems.
+The desktop interface is organized as one experiment workspace with a fixed
+five-step research workflow. The top bar carries application and environment
+state; the left sidebar carries navigation; the main canvas carries the current
+task. This avoids stacking global and local tab bars above every page.
 
-| Main page | Purpose | Subpages |
+| Workflow step | Purpose | Existing routes |
 | --- | --- | --- |
-| Home | Show health, current work, storage, and one recommended next action | — |
-| Fly & Collect | Run simulator checks and collection tasks, then inspect recordings | Run, Recordings |
-| Model Lab | Prepare data, train a model, inspect runs, and test a local image | Datasets, Train, Runs, Test Image |
-| Results | Read visual, LiDAR, and acceptance evidence | Visual, LiDAR, Acceptance |
-| Activity | Diagnose jobs, logs, environment, and managed storage | Jobs, Logs, Environment, Storage |
+| Flight Console | Run simulator checks, collect a scenario, and inspect recordings | `#fly/run`, `#fly/recordings` |
+| Dataset Manager | Select, audit, import, and version training data | `#model/datasets` |
+| Training Studio | Create a bounded YOLO recipe and start or resume training | `#model/train` |
+| Model Tester | Run verified local image inference and model comparison | `#model/inference` |
+| Report Viewer | Read visual, LiDAR, and acceptance evidence | `#results/*` |
 
-The native macOS shell has no second section selector while the local service
-is online. The web Home page is the single entry point for both the packaged
-App and the repository launcher.
+Models, datasets, and result counts are available as project resources rather
+than workflow steps. Jobs, logs, environment checks, and managed storage are
+grouped under System. Existing APIs and operator safety boundaries are not
+changed by this presentation structure.
+
+The interface is designed for the macOS desktop window at 1024–1440 px. Mobile
+layouts are not a product target. The compact top toolbar keeps application
+identity, profile, health, and refresh actions in one row. The persistent
+sidebar keeps the experiment and its five-step workflow visible without
+requiring a long page header.
+
+## First-use path
+
+A new user should be able to follow one visible sequence without understanding
+the underlying commands:
+
+1. **System:** confirm environment readiness when the selected profile reports
+   a missing requirement.
+2. **Flight Console:** run one flight smoke before collecting a scenario or
+   attempting a five-scenario gate.
+3. **Dataset Manager:** register a native training view or import an
+   audited YOLO dataset.
+4. **Training Studio:** start a bounded recipe, monitor it, and
+   resume a checkpoint if necessary.
+5. **Model Tester:** optionally inspect a candidate on one local
+   image before relying on aggregate metrics.
+6. **Report Viewer:** review visual, LiDAR, and acceptance summaries, expanding
+   technical provenance only when needed.
+7. **System:** diagnose jobs, logs, environment, or storage when a task is
+   blocked; this is a support destination, not a required workflow step.
 
 ## Route compatibility
 
 New links use task routes such as `#model/train` and `#fly/recordings`.
 Existing bookmarks remain valid and are rewritten to their canonical route:
 
-- `#setup` and `#overview` → `#home`
+- `#home`, `#setup`, and `#overview` → `#model/datasets`
 - `#experiments` → `#model/train`
 - `#research` → `#results/visual`
 - `#lidar` and `#preflight` → `#results/lidar`

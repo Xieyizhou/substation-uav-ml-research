@@ -1,10 +1,10 @@
-const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,operatorToken='',lidarState=null,acceptanceState=null,preflightState=null,profileState=null,workbenchState=null,showAllRuns=false,showAllInferences=false,showAllJobs=false;
+const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,operatorToken='',lidarState=null,acceptanceState=null,preflightState=null,profileState=null,workbenchState=null,selectedWorkbenchDatasetId='',showAllRuns=false,showAllInferences=false,showAllJobs=false;
 const api=async path=>{const r=await fetch(path,{cache:'no-store'});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const post=async(path,value)=>{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Sandbox-Token':operatorToken},body:JSON.stringify(value)});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 async function refresh(){
   const [profile,version,setup,dash,runtime,doctor,storage,recs,available,operator,research,experiments,workbench,lidar,acceptance,preflight]=await Promise.all([api('/api/profile'),api('/api/version'),api('/api/setup'),api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/storage'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments'),api('/api/workbench'),api('/api/lidar'),api('/api/acceptance'),api('/api/preflight')]);
-  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderProfile(profile);renderVersion(version);renderSetup(setup);renderDashboard(dash,runtime);renderStorage(storage);renderResearch(research);renderExperiments(experiments);renderWorkbench(workbench);renderLidar(lidar);renderAcceptance(acceptance);renderPreflight(preflight);renderDoctor(doctor);renderSelectors();renderOperator(operator);
+  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderProfile(profile);renderVersion(version);renderSetup(setup);renderDashboard(dash,runtime);renderStorage(storage);renderResearch(research);renderExperiments(experiments);renderWorkbench(workbench);renderLidar(lidar);renderAcceptance(acceptance);renderPreflight(preflight);renderDoctor(doctor);renderSelectors();renderOperator(operator);renderDatasetSamples();
   $('#updated').textContent=`Observed ${new Date().toLocaleTimeString()}`;
 }
 const pct=v=>v==null?'—':`${(Number(v)*100).toFixed(2)}%`;
@@ -13,6 +13,7 @@ function renderProfile(value){profileState=value;$('#profile-badge').textContent
 function renderVersion(value){$('#version-label').textContent=`App ${value.macos_app_version} · Sandbox ${value.sandbox_product_version}`}
 function stageCard(label,value){const ok=value.status==='complete',detail=value.identity?.slice(0,12)||(ok?'verified result':'artifact unavailable');return `<div class="pipeline-stage ${ok?'ready':''}"><span class="badge ${ok?'pass':value.status==='invalid'?'failure':'warning'}">${esc(value.status)}</span><strong>${esc(label)}</strong><small>${esc(detail)}</small></div>`}
 function renderResearch(r){
+  $('#sidebar-result-count').textContent=String(r.complete_stage_count||0);
   $('#research-status').textContent=`${r.complete_stage_count} / ${r.stage_count} stages complete`;
   $('#research-pipeline').innerHTML=[['Training view',r.training_view],['Model package',r.model_package],['Paired blind',r.paired_blind],['Static replay',r.static_replay]].map(([label,value])=>stageCard(label,value)).join('<i aria-hidden="true">→</i>');
   const t=r.training_view;$('#training-summary').innerHTML=t.status==='complete'?`<div class="research-facts"><span>Training frames<b>${esc(t.train_frames)}</b></span><span>Selection validation<b>${esc(t.selection_validation_frames)}</b></span><span>Full validation<b>${esc(t.full_validation_frames)}</b></span><span>Sampling<b>${esc(t.algorithm)}</b></span></div><small class="artifact-path">${esc(t.path)}</small>`:`<p>Training view is ${esc(t.status)}.</p>`;
@@ -50,11 +51,16 @@ function applyWorkbenchPreset(){const value=workbenchPresets[$('#workbench-prese
 function eta(value){if(value==null)return 'ETA unavailable';const minutes=Math.ceil(Number(value)/60);return minutes<60?`about ${minutes} min remaining`:`about ${(minutes/60).toFixed(1)} h remaining`}
 function renderWorkbench(value){
   workbenchState=value;const ready=value.enabled&&Object.values(value.readiness||{}).every(Boolean);
+  $('#sidebar-model-count').textContent=String((value.verified_models||[]).length);
+  $('#sidebar-dataset-count').textContent=String((value.datasets||[]).length);
   $('#workbench-readiness').innerHTML=value.enabled?Object.entries(value.readiness).map(([name,passed])=>`<span class="badge ${passed?'pass':'failure'}">${esc(name.replaceAll('_',' '))}: ${passed?'ready':'missing'}</span>`).join(''):`<p>${esc(value.reason)}</p>`;
   const selected=$('#workbench-dataset').value;
   $('#workbench-dataset').innerHTML=value.datasets.map(row=>`<option value="${esc(row.dataset_id)}">${esc(row.dataset_id)} · ${esc(row.source_type)}</option>`).join('');
   if(selected&&value.datasets.some(row=>row.dataset_id===selected))$('#workbench-dataset').value=selected;
-  $('#workbench-datasets').innerHTML=value.datasets.length?value.datasets.map(row=>`<button class="dataset-row" data-dataset="${esc(row.dataset_id)}"><span><b>${esc(row.dataset_id)}</b><small>${esc(row.source_type)} · identity ${esc(row.dataset_identity_sha256.slice(0,12))}…</small></span><span><strong>${esc(row.split_counts.train||0)}</strong> train<br><strong>${esc(row.split_counts.validation||0)}</strong> validation</span></button>`).join(''):'<p class="experiment-empty">No audited workbench dataset is available.</p>';
+  if(!selectedWorkbenchDatasetId||!value.datasets.some(row=>row.dataset_id===selectedWorkbenchDatasetId))selectedWorkbenchDatasetId=value.datasets.find(row=>row.dataset_id==='visual_yolo_v2')?.dataset_id||value.datasets[0]?.dataset_id||'';
+  $('#workbench-datasets').innerHTML=value.datasets.length?value.datasets.map(row=>`<button class="dataset-row ${row.dataset_id===selectedWorkbenchDatasetId?'selected':''}" data-dataset="${esc(row.dataset_id)}"><span><b>${esc(row.dataset_id)}</b><small>${esc(row.source_type)} · identity ${esc(row.dataset_identity_sha256.slice(0,12))}…</small></span><span><strong>${esc(row.split_counts.train||0)}</strong> train<br><strong>${esc(row.split_counts.validation||0)}</strong> validation</span></button>`).join(''):'<p class="experiment-empty">No audited workbench dataset is available.</p>';
+  document.querySelectorAll('.dataset-row').forEach(button=>button.onclick=()=>{selectedWorkbenchDatasetId=button.dataset.dataset;renderWorkbench(workbenchState)});
+  renderWorkbenchDataset(value.datasets.find(row=>row.dataset_id===selectedWorkbenchDatasetId));
   $('#workbench-start').disabled=!ready||!value.datasets.length;
   $('#workbench-import').disabled=!value.enabled;
   if(!$('#workbench-name').value)applyWorkbenchPreset();
@@ -64,6 +70,24 @@ function renderWorkbench(value){
   $('#workbench-runs').innerHTML=visible.length?visible.map(row=>{const m=row.metrics||{},t=row.timing||{},delta=row.comparison||{};return `<article class="experiment-card"><header><span class="badge ${row.state==='complete'?'pass':row.state==='failed'?'failure':'warning'}">${esc(row.state)}</span><div><h3>${esc(row.experiment_id)}</h3><small>${esc(row.dataset_id)} · ${esc(row.preset)} · ${esc(row.parameters.imgsz)} px</small></div></header><div class="experiment-facts"><span>mAP50–95<b>${pct(m.map50_95)}</b></span><span>Macro F1<b>${pct(m.macro_f1)}</b></span><span>Recall<b>${pct(m.recall)}</b></span><span>Small recall<b>${pct(m.small_object_recall)}</b></span><span>No-target FPR<b>${pct(m.no_target_false_positive_rate)}</b></span><span>Replay P95<b>${fixed(t.p95_ms)} ms</b></span></div>${row.comparison_status==='complete'?`<p class="comparison-note">Baseline Δ macro-F1 ${pct(delta.macro_f1)} · small recall ${pct(delta.small_object_recall)}</p>`:''}${row.error?`<p class="experiment-error">${esc(row.error)}</p>`:''}</article>`}).join(''):'<article class="experiment-empty">No matching model workbench run.</article>';
   $('#workbench-runs-show-all').hidden=filtered.length<=6;$('#workbench-runs-show-all').textContent=showAllRuns?'Show recent':'Show all';
   renderWorkbenchInference(value);
+}
+function renderWorkbenchDataset(row){
+  if(!row)return;
+  const counts={};['train','validation'].forEach(split=>Object.entries(row.class_counts?.[split]||{}).forEach(([name,count])=>counts[name]=(counts[name]||0)+Number(count||0)));
+  const labels={transformer:'Power transformers and components',switchgear:'Switchgear and protection units',capacitor_bank:'Capacitor bank assemblies',reactor:'Reactor equipment and components'};
+  $('#dataset-current-name').textContent=row.dataset_id;
+  $('#dataset-current-source').textContent=row.source_type.replaceAll('_',' ');
+  $('#dataset-current-identity').textContent=`Identity ${row.dataset_identity_sha256.slice(0,16)}…`;
+  $('#dataset-train-count').textContent=Number(row.split_counts.train||0).toLocaleString();
+  $('#dataset-validation-count').textContent=Number(row.split_counts.validation||0).toLocaleString();
+  $('#dataset-source-type').textContent=row.source_type==='native_training_view'?'Native training view':'Imported YOLO view';
+  $('#dataset-object-count').textContent=Object.values(counts).reduce((a,b)=>a+b,0).toLocaleString();
+  $('#dataset-class-summary').innerHTML=['transformer','switchgear','capacitor_bank','reactor'].map((name,index)=>`<div class="class-summary-row"><span class="class-swatch">${index}</span><span><b>${esc(name.replaceAll('_',' '))}</b><small>${esc(labels[name])}</small></span><strong>${Number(counts[name]||0).toLocaleString()}</strong></div>`).join('');
+  if($('#workbench-dataset').querySelector(`option[value="${CSS.escape(row.dataset_id)}"]`))$('#workbench-dataset').value=row.dataset_id;
+}
+async function renderDatasetSamples(){
+  if(!recordings.length){$('#dataset-samples').innerHTML='<p>No recorded samples are available.</p>';return}
+  try{const pages=await Promise.all(recordings.slice(0,6).map((row,index)=>api(`/api/frames/${encodeURIComponent(row.recording_id)}?page=${24+index*72}&page_size=1`))),frames=pages.flatMap(value=>value.frames||[]);$('#dataset-samples').innerHTML=frames.map(frame=>`<figure><img loading="lazy" src="${esc(frame.image_url)}" alt="Recorded UAV sample"><figcaption>${esc(frame.width||'1920')}×${esc(frame.height||'1080')}</figcaption></figure>`).join('')||'<p>No recorded samples are available.</p>';if(frames[0])$('#dataset-cover').innerHTML=`<img src="${esc(frames[0].image_url)}" alt="Selected dataset sample">`}catch(error){$('#dataset-samples').innerHTML=`<p>${esc(error.message)}</p>`}
 }
 function renderWorkbenchInference(value){
   const models=value.verified_models||[],selected=$('#inference-primary').value,comparison=$('#inference-comparison').value;
@@ -106,6 +130,7 @@ function renderStorage(value){
   $('#home-storage-copy').textContent=`Sandbox outputs use ${bytes(value.sandbox_output_bytes)}. ${percent.toFixed(0)}% of the disk remains available.`;
   $('#storage-free').textContent=`${bytes(value.disk_free_bytes)} free`;
   $('#storage-summary').textContent=`${bytes(value.sandbox_output_bytes)} in managed Sandbox outputs · ${bytes(value.minimum_free_bytes)} minimum free-space reserve`;
+  $('#sidebar-storage').textContent=`${bytes(value.disk_free_bytes)} free`;
   $('#storage-locations').innerHTML=value.groups.length?value.groups.map(group=>`<article><p class="kicker">${esc(group.name)}</p><h3>${bytes(group.bytes)}</h3><code>${esc(value.sandbox_output_root)}/${esc(group.name)}</code></article>`).join(''):'<article><p class="kicker">EMPTY</p><h3>No managed outputs</h3><code>${esc(value.sandbox_output_root)}</code></article>';
 }
 function renderDoctor(checks){
@@ -171,6 +196,7 @@ $('#workbench-infer').onclick=()=>{const primary=$('#inference-primary').value,c
 $('#workbench-run-filter').oninput=()=>workbenchState&&renderWorkbench(workbenchState);
 $('#workbench-runs-show-all').onclick=()=>{showAllRuns=!showAllRuns;workbenchState&&renderWorkbench(workbenchState)};
 $('#workbench-inferences-show-all').onclick=()=>{showAllInferences=!showAllInferences;workbenchState&&renderWorkbenchInference(workbenchState)};
+$('#dataset-view-versions').onclick=()=>{$('.dataset-versions').open=true;$('.dataset-versions').scrollIntoView({behavior:'smooth',block:'center'})};
 $('#job-history-show-all').onclick=async()=>{showAllJobs=!showAllJobs;await refreshOperator()};
 function updateWorkflowInputs(){const workflow=$('#experiment-workflow').value,visual=workflow==='visual_replay';document.querySelectorAll('.visual-option').forEach(x=>x.hidden=!visual);const notes={demo_contract:'Trains and evaluates a tiny deterministic classifier on synthetic features. The result demonstrates workflow provenance and is never formal evidence.',visual_replay:'Visual replay uses non-blind validation data. Model package, threshold and membership cannot be overridden.',lidar_replay:'LiDAR replay revalidates the latest passed candidate with its fixed model and dataset identities.',lidar_closed_loop:'Closed-loop runs exactly one pending approved flight and requires a clean simulator runtime.',multimodal_acceptance:'Sandbox v1 acceptance binds existing visual, LiDAR and closed-loop evidence and runs offline supervisor lifecycle checks.'};$('#workflow-note').textContent=notes[workflow];}
 $('#experiment-workflow').onchange=updateWorkflowInputs;updateWorkflowInputs();

@@ -37,7 +37,7 @@ process.stdout.write(JSON.stringify(value));
         self.assertEqual(value["operator"], "activity/jobs")
         self.assertEqual(value["lidar"], "results/lidar")
         self.assertEqual(value["recording"], "fly/recordings")
-        self.assertEqual(value["invalid"], "home")
+        self.assertEqual(value["invalid"], "model/datasets")
         self.assertIn("flight log", value["guidance"])
 
     def test_polling_does_not_activate_or_reload_a_tab(self):
@@ -56,14 +56,34 @@ process.stdout.write(JSON.stringify(value));
         for identifier in (
             'id="setup-journey"', 'id="setup-artifacts"',
             'id="workbench-infer"', 'id="inference-primary"',
-            'id="inference-comparison"', 'data-route="home"',
+            'id="inference-comparison"', 'class="workspace-sidebar"',
             'data-route="fly/run"', 'data-route="model/datasets"',
             'data-route="results/visual"', 'data-route="activity/jobs"',
+            'id="dataset-class-summary"', 'id="dataset-samples"',
         ):
             self.assertIn(identifier, html)
         self.assertNotIn('id="operator-action"', html)
-        self.assertEqual(html.count('class="tab"'), 4)
-        self.assertEqual(html.count('class="tab active"'), 1)
+        self.assertEqual(html.count('class="workflow-step'), 5)
+        self.assertIn('class="workflow-step active"', html)
+        self.assertLess(
+            html.index('id="setup-journey"'), html.index('id="setup-progress"')
+        )
+
+    def test_desktop_navigation_uses_workflow_sidebar(self):
+        html = (STATIC / "index.html").read_text(encoding="utf-8")
+        css = (STATIC / "navigation.css").read_text(encoding="utf-8")
+        header = html.split('<header class="app-toolbar">', 1)[1].split(
+            "</header>", 1
+        )[0]
+        self.assertNotIn('class="primary-nav"', header)
+        self.assertIn('class="primary-nav"', html)
+        self.assertIn('class="workspace-sidebar"', html)
+        self.assertEqual(html.count('class="task-page-toolbar"'), 4)
+        self.assertEqual(html.count('class="secondary-nav"'), 4)
+        self.assertIn("body { min-width: 1024px; }", css)
+        self.assertIn("grid-template-columns: 315px", css)
+        self.assertIn(".dataset-summary-grid", css)
+        self.assertNotIn("max-width: 760px", css)
 
 
 if __name__ == "__main__":
