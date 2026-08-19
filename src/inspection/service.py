@@ -84,6 +84,46 @@ class InspectionService:
     def workbench_inference_image(self, inference_id, name):
         return self.config.workbench_inference_image(inference_id, name)
 
+    def maps(self):
+        from src.inspection.maps import map_studio_summary
+
+        return map_studio_summary(self.config)
+
+    def map_detail(self, map_id):
+        from src.inspection.maps import map_detail
+
+        return map_detail(self.config, map_id)
+
+    def map_save(self, record):
+        from src.inspection.maps import save_map_draft
+
+        return save_map_draft(self.config, record)
+
+    def map_delete(self, map_id):
+        from src.inspection.maps import delete_map_draft
+
+        return delete_map_draft(self.config, map_id)
+
+    def map_revision_create(self, map_id):
+        from src.inspection.maps import create_map_revision
+
+        return create_map_revision(self.config, map_id)
+
+    def map_import(self, payload):
+        from src.inspection.maps import import_map_bundle
+
+        return import_map_bundle(self.config, payload)
+
+    def map_revision_file(self, map_id, revision_id, name):
+        from src.inspection.maps import map_revision_file
+
+        return map_revision_file(self.config, map_id, revision_id, name)
+
+    def map_bundle_file(self, map_id, revision_id):
+        from src.inspection.maps import map_bundle_file
+
+        return map_bundle_file(self.config, map_id, revision_id)
+
     def lidar(self):
         from src.inspection.lidar import lidar_summary
 

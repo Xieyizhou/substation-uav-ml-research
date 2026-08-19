@@ -98,6 +98,11 @@ class InspectionConfig:
     def workbench_inference_root(self) -> Path:
         return self.workbench_root / "inference"
 
+    @property
+    def sandbox_maps_root(self) -> Path:
+        suffix = "maps" if self.profile == "development" else f"{self.profile}/maps"
+        return self.project_root / "outputs/sandbox" / suffix
+
     def workbench_inbox_file(self, name: str) -> Path:
         if not name or Path(name).name != name:
             raise AccessDenied("invalid workbench inbox filename")

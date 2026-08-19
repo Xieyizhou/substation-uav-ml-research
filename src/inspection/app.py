@@ -40,7 +40,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json({"error": "invalid sandbox operator token"}, 403)
         try:
             length = int(self.headers.get("Content-Length", "0"))
-            if length < 2 or length > 4096:
+            maximum = 2_800_000 if self.path == "/api/maps/import" else 500_000
+            if length < 2 or length > maximum:
                 raise ValueError("invalid JSON request size")
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             if not isinstance(body, dict):
@@ -55,6 +56,16 @@ class InspectionHandler(BaseHTTPRequestHandler):
                 )
             if self.path == "/api/operator/stop":
                 return self._json(self.service.operator_stop(body.get("job_id")))
+            if self.path == "/api/maps/draft":
+                return self._json(self.service.map_save(body.get("map")))
+            if self.path == "/api/maps/draft/delete":
+                return self._json(self.service.map_delete(body.get("map_id")))
+            if self.path == "/api/maps/revision":
+                return self._json(
+                    self.service.map_revision_create(body.get("map_id")), 201
+                )
+            if self.path == "/api/maps/import":
+                return self._json(self.service.map_import(body.get("bundle_base64")), 201)
             self._json({"error": "unknown endpoint"}, 404)
         except OperatorBusy as error:
             self._json({"error": str(error)}, 409)
@@ -83,6 +94,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.experiments())
         if path == "/api/workbench":
             return self._json(self.service.workbench())
+        if path == "/api/maps":
+            return self._json(self.service.maps())
         if path == "/api/lidar":
             return self._json(self.service.lidar())
         if path == "/api/acceptance":
@@ -101,6 +114,14 @@ class InspectionHandler(BaseHTTPRequestHandler):
                 "operator_token": self.operator_token,
             })
         parts = [unquote(item) for item in path.split("/") if item]
+        if len(parts) == 3 and parts[1] == "maps":
+            return self._json(self.service.map_detail(parts[2]))
+        if len(parts) == 6 and parts[1:3] == ["maps", "revision"]:
+            return self._file(
+                self.service.map_revision_file(parts[3], parts[4], parts[5])
+            )
+        if len(parts) == 5 and parts[1:3] == ["maps", "bundle"]:
+            return self._file(self.service.map_bundle_file(parts[3], parts[4]))
         if len(parts) == 4 and parts[1:3] == ["operator", "log"]:
             limit = int(query.get("limit", ["200"])[0])
             return self._json(self.service.operator_log(parts[3], limit))

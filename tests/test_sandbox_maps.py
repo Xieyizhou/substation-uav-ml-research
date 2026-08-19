@@ -10,6 +10,7 @@ from src.maps.sandbox_contracts import (
 from src.maps.sandbox_geometry import object_cells, objects_overlap
 from src.maps.sandbox_materialize import materialize_revision
 from src.maps.sandbox_routes import build_sandbox_route
+from src.maps.sandbox_store import SandboxMapStore
 from src.maps.sandbox_validation import validate_sandbox_map
 from src.planner.obstacle_config import build_obstacle_map, load_obstacle_config
 
@@ -91,6 +92,32 @@ class SandboxMapTests(unittest.TestCase):
                 for cell in item["cells"]
             }
             self.assertEqual(config["raw_obstacle_cells"], expected)
+
+    def test_store_round_trips_draft_revision_and_bundle(self):
+        with TemporaryDirectory() as temporary, TemporaryDirectory() as imported:
+            store = SandboxMapStore(temporary)
+            value = store.save_draft(sample_map())
+            self.assertEqual(store.read_draft(value.map_id), value)
+            root, revision = store.create_revision(value.map_id)
+            self.assertTrue((root / "identity.json").is_file())
+            payload = store.export_bundle(value.map_id, revision.revision_identity_sha256)
+            restored, identity = SandboxMapStore(imported).import_bundle(payload)
+            self.assertEqual(restored, value)
+            self.assertEqual(
+                identity["revision_identity_sha256"],
+                revision.revision_identity_sha256,
+            )
+
+    def test_store_rejects_path_traversal(self):
+        with TemporaryDirectory() as temporary:
+            store = SandboxMapStore(temporary)
+            store.save_draft(sample_map())
+            _, revision = store.create_revision("custom_station")
+            with self.assertRaisesRegex(ValueError, "unavailable"):
+                store.revision_file(
+                    "custom_station", revision.revision_identity_sha256,
+                    "../../map.json",
+                )
 
 
 if __name__ == "__main__":
