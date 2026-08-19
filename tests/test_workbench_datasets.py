@@ -35,7 +35,13 @@ class WorkbenchDatasetTests(unittest.TestCase):
 
     def sample(self, split, name, label):
         image = self.source / "images" / split / f"{name}.png"
-        Image.new("RGB", (16, 16), (hash(name) % 255, 12, 24)).save(image)
+        marker = f"{split}/{name}".encode("utf-8")
+        pixels = [(24, 12, 24)] * (16 * 16)
+        for index, byte in enumerate(marker):
+            pixels[index] = (byte, index, 24)
+        rendered = Image.new("RGB", (16, 16))
+        rendered.putdata(pixels)
+        rendered.save(image)
         (self.source / "labels" / split / f"{name}.txt").write_text(
             label, encoding="utf-8"
         )

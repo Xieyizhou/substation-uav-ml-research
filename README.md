@@ -179,7 +179,7 @@ Create a versioned preview DMG, ZIP, release manifest, and SHA256 checksum list
 with:
 
 ```bash
-./scripts/package_macos_release.sh 0.6.0
+./scripts/package_macos_release.sh 0.6.1
 ```
 
 Demo Profile runs entirely inside the App without a repository or Python.
@@ -195,7 +195,7 @@ for profiles, build requirements, preview, unsigned Beta, and future notarized
 Beta releases, plus the distribution boundary.
 
 Build the current integrity-verifiable unsigned Beta from a clean tracked
-worktree with `./scripts/package_macos_beta.sh 0.6.0`. Its manifest binds the
+worktree with `./scripts/package_macos_beta.sh 0.6.1`. Its manifest binds the
 source commit and artifact SHA256 identities while explicitly declaring that it
 is not Apple-notarized. The repository also retains a separate Developer ID and
 notarization workflow for future signed releases.

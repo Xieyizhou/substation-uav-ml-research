@@ -1,7 +1,64 @@
-# Sandbox Roadmap
+# Product and Research Roadmap
 
-The roadmap is evidence-gated. Interfaces or untrained model wrappers do not
-count as completed capabilities.
+The repository has two independent tracks. The Sandbox product track is gated
+by installability, safe local operation, repeatable workflows, and useful
+diagnostics. The research track is gated by experimental evidence. An
+unfinished research study does not block a Sandbox Beta, and a polished App
+does not count as research evidence.
+
+## Sandbox v1 — Local Beta core complete
+
+- [x] Provide a dependency-free Demo profile and local browser App.
+- [x] Enforce single-job execution, bounded timeouts, safe process-group stop,
+  persistent history, failure diagnostics, and controlled recovery.
+- [x] Add output budgets, retention policy, runtime compatibility checks, and
+  explicit Development/Formal dependency boundaries.
+- [x] Package a reproducible, integrity-verifiable unsigned macOS Beta.
+- [x] Add an offline visual model workbench with audited YOLO import, bounded
+  recipes, checkpoint resume, ONNX equivalence, replay, and comparison.
+- [x] Complete a full 640-pixel Workbench run through training, validation,
+  ONNX export, replay, and receipt verification.
+- [ ] Rebuild the latest unsigned Beta and repeat clean-install plus one
+  App-managed Development flight acceptance on the release commit.
+- [ ] Publish the GitHub Beta with a first-run guide and verified checksums.
+
+## Sandbox v1.1 — Public Beta stabilization
+
+- Validate Demo installation on the supported GitHub macOS matrix.
+- Validate one documented Development workflow from runtime discovery through
+  PX4/Gazebo flight, confirmed landing, cleanup, and receipt inspection.
+- Improve first-run guidance, artifact discovery, storage reporting, and
+  actionable failure summaries from early-user feedback.
+- Keep advanced workflows repository-backed; do not bundle PX4, Gazebo,
+  datasets, model weights, or the ML Python environment in the App.
+
+## Sandbox v1.2 — Visual inference workbench
+
+- Select a completed, receipt-verified Workbench candidate for local inference.
+- Accept a local PNG/JPEG through the native file picker, run its fixed ONNX
+  preprocessing and threshold, and render boxes, classes, confidence, and
+  latency without exposing arbitrary commands or model paths.
+- Save identity-bound inference results and support side-by-side candidate
+  comparison on the same image.
+- Extend the same boundary to recording replay and live Gazebo camera frames
+  after single-image inference is stable.
+
+## Sandbox v1.3 — Detection-assisted scene and planning maps
+
+- Convert multi-frame detections into observations with camera identity,
+  timestamp, pose, scale, and uncertainty; a single RGB image is not treated
+  as a flight-ready map.
+- Fuse calibrated multi-view images with depth or LiDAR to estimate equipment
+  positions and produce an editable scene layout.
+- Validate coordinate frames, free space, obstacle inflation, reachability,
+  and provenance before exporting an A* occupancy map or Gazebo scene.
+- Keep automatic output in draft status until a user reviews scale, geometry,
+  unknown obstacles, and safe-flight constraints.
+
+# Research Evidence Track
+
+This track remains evidence-gated. Interfaces or untrained model wrappers do
+not count as completed capabilities.
 
 ## v0.1 — LiDAR stability and cross-map evidence — Evidence complete
 
@@ -51,21 +108,6 @@ The runner uses 30 paired scenarios × four conditions, not the previous
   suppressing neutral or negative results.
 - Promote a model only when safety does not regress and at least one quality or
   latency metric improves.
-
-## Sandbox v1 — Reliable local operation
-
-- [x] Provide a dependency-free Demo profile and local browser App.
-- [x] Enforce single-job execution, bounded timeouts, safe process-group stop,
-  persistent history, and failure diagnostics.
-- [x] Add a controlled three-flight LiDAR capability challenge with an
-  integrity-bound receipt.
-- [x] Block large LiDAR gates when the challenge receipt is missing, stale,
-  changed, or belongs to another model.
-- [x] Recover or explicitly adopt a still-running owned job after App restart.
-- [x] Add output budgets, retention policy, and structured failure classes.
-- [x] Complete a GitHub Beta installation gate on a clean supported machine.
-- [x] Add an offline visual model workbench with audited YOLO import, bounded
-  recipes, checkpoint resume, ONNX equivalence, replay, and baseline comparison.
 
 ## v0.4 — Four-class equipment perception
 
