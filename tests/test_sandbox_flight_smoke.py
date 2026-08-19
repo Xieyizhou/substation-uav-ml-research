@@ -11,6 +11,7 @@ from src.sandbox.flight_smoke import (
     choose_scenario,
     run_flight_smoke,
 )
+from src.vision.collection.display import launcher_environment
 
 
 class FlightSmokeTests(unittest.TestCase):
@@ -39,6 +40,18 @@ class FlightSmokeTests(unittest.TestCase):
         plan["scenarios"][0]["dataset_role"] = "blind"
         with self.assertRaisesRegex(ValueError, "blind"):
             choose_scenario(plan, ".", "development-smoke")
+
+    def test_display_mode_only_changes_window_policy(self):
+        prepared = {"launcher_environment": {"HEADLESS": "1", "WORLD": "same"}}
+        self.assertEqual(
+            launcher_environment(prepared, "headless"),
+            {"HEADLESS": "1", "WORLD": "same"},
+        )
+        self.assertEqual(
+            launcher_environment(prepared, "visual_preview"),
+            {"WORLD": "same"},
+        )
+        self.assertEqual(prepared["launcher_environment"]["HEADLESS"], "1")
 
     def test_completion_requires_confirmed_landing_event(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -84,6 +97,7 @@ class FlightSmokeTests(unittest.TestCase):
         self.assertEqual(summary["run_type"], "sandbox_flight_smoke")
         self.assertEqual(summary["status"], "complete")
         self.assertTrue(summary["mission_completed"])
+        self.assertEqual(summary["display_mode"], "headless")
         self.assertEqual(start.call_count, 2)
 
 

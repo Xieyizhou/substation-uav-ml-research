@@ -104,6 +104,31 @@ class SandboxOperatorTests(unittest.TestCase):
             build_command(self.config, "flight-smoke", "blind-s")
         smoke = build_command(self.config, "flight-smoke", "development-s")
         self.assertNotIn("blind-s", smoke.argv)
+        self.assertEqual(smoke.argv[-2:], ("--display-mode", "headless"))
+        preview = build_command(
+            self.config, "flight-smoke", "development-s",
+            {"display_mode": "visual_preview"},
+        )
+        self.assertEqual(
+            preview.argv[-2:], ("--display-mode", "visual_preview")
+        )
+        collection = build_command(
+            self.config, "collection-single",
+            parameters={"display_mode": "visual_preview"},
+        )
+        self.assertEqual(
+            collection.argv[-2:], ("--display-mode", "visual_preview")
+        )
+        with self.assertRaisesRegex(ValueError, "display mode"):
+            build_command(
+                self.config, "flight-smoke", "development-s",
+                {"display_mode": "windowed-shell"},
+            )
+        with self.assertRaisesRegex(ValueError, "unsupported simulator parameter"):
+            build_command(
+                self.config, "collection-single",
+                parameters={"command": "open"},
+            )
         self.assertEqual(
             smoke.budget_paths, ("outputs/sandbox/flight_smoke",)
         )

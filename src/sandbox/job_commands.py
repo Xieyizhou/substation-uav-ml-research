@@ -24,7 +24,18 @@ def _scenario(config, scenario_id):
     return scenario_by_id(load_plan(config), scenario_id)
 
 
-def _collection_command(config, count):
+def _display_mode(parameters):
+    values = dict(parameters or {})
+    unknown = set(values) - {"display_mode"}
+    if unknown:
+        raise ValueError("unsupported simulator parameter: " + sorted(unknown)[0])
+    mode = values.get("display_mode", "headless")
+    if mode not in {"headless", "visual_preview"}:
+        raise ValueError(f"unsupported simulator display mode: {mode}")
+    return mode
+
+
+def _collection_command(config, count, display_mode):
     return (
         sys.executable,
         "main.py",
@@ -40,6 +51,8 @@ def _collection_command(config, count):
         "1",
         "--retry-delay",
         "0",
+        "--display-mode",
+        display_mode,
     )
 
 
@@ -99,7 +112,7 @@ def _doctor_command(config):
     )
 
 
-def _flight_command(config, scenario_id):
+def _flight_command(config, scenario_id, display_mode):
     row = _scenario(config, scenario_id)
     if is_blind(row):
         raise ValueError("flight smoke cannot use a blind scenario")
@@ -110,6 +123,7 @@ def _flight_command(config, scenario_id):
             "--plan", str(config.plan_path),
             "--output-root", str(config.collection_root),
             "--scenario-id", str(scenario_id),
+            "--display-mode", display_mode,
         ),
         600.0,
         str(scenario_id),
@@ -157,15 +171,16 @@ def _model_command(config, action):
     return None
 
 
-def _collection_job(config, action):
+def _collection_job(config, action, parameters):
     counts = {"collection-single": 1, "collection-gate": 5}
     if action not in counts:
         return None
     count = counts[action]
+    display_mode = _display_mode(parameters)
     rows = _next_rows(config, count)
     return SandboxCommand(
         action,
-        _collection_command(config, count),
+        _collection_command(config, count, display_mode),
         900.0 if count == 1 else 3600.0,
         sensitive=any(is_blind(row) for row in rows),
         workflow="visual_collection",
@@ -185,12 +200,14 @@ def build_command(config, action, scenario_id=None, parameters=None):
     if action == "doctor":
         return _doctor_command(config)
     if action == "flight-smoke":
-        return _flight_command(config, scenario_id)
+        return _flight_command(config, scenario_id, _display_mode(parameters))
     if action.startswith("lidar-"):
         return build_lidar_sandbox_command(config, action)
     if action == "experiment-run":
         return build_visual_command(config, parameters)
-    command = _model_command(config, action) or _collection_job(config, action)
+    command = _model_command(config, action) or _collection_job(
+        config, action, parameters
+    )
     if command is not None:
         return command
     raise ValueError(f"unsupported sandbox action: {action}")

@@ -11,6 +11,7 @@ import time
 
 from src.ml.artifacts import git_commit, write_json
 from src.vision.collection.plan import collection_status, load_collection_plan
+from src.vision.collection.display import launcher_environment
 from src.vision.collection.process import (
     CollectionProcessError,
     ensure_process_running,
@@ -85,6 +86,7 @@ def run_flight_smoke(
     startup_timeout_s=180.0,
     probe_timeout_s=5.0,
     flight_timeout_s=None,
+    display_mode="headless",
 ):
     plan = load_collection_plan(plan_path)
     row = choose_scenario(plan, output_root, scenario_id)
@@ -98,7 +100,7 @@ def run_flight_smoke(
     error_message = ""
     try:
         environment = os.environ.copy()
-        environment.update(prepared["launcher_environment"])
+        environment.update(launcher_environment(prepared, display_mode))
         launcher = start_process(
             "PX4/Gazebo launcher",
             prepared["launcher_command"],
@@ -146,6 +148,7 @@ def run_flight_smoke(
             "started_at": started_at,
             "ended_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "mission_completed": _mission_completed(events_path),
+            "display_mode": display_mode,
             "code_commit": git_commit(),
             "logs": {
                 "simulator": "simulator.log",

@@ -104,6 +104,15 @@ class VisualCollectionBatchTests(unittest.TestCase):
         self.assertEqual(args.recorder_timeout, 900.0)
         self.assertIsNone(args.flight_timeout)
         self.assertEqual(args.takeoff_ready_timeout, 45.0)
+        self.assertEqual(args.display_mode, "headless")
+
+    def test_cli_accepts_visual_preview_mode(self):
+        parser = visual.build_parser()
+        args = parser.parse_args([
+            "collection-run", "--plan", "plan.json",
+            "--display-mode", "visual_preview",
+        ])
+        self.assertEqual(args.display_mode, "visual_preview")
 
     def test_event_wait_rejects_failed_flight_before_recording(self):
         with tempfile.TemporaryDirectory() as directory:

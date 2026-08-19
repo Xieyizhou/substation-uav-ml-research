@@ -148,10 +148,14 @@
             <option data-full-profile id="lidar-closed-option" value="lidar-closed-loop-next">Run next LiDAR closed-loop flight</option>
           </select>
           <select id="operator-scenario"></select>
+          <select id="operator-display-mode" aria-label="Simulator display mode">
+            <option value="headless">Headless</option>
+            <option value="visual_preview">Visual Preview</option>
+          </select>
           <button id="operator-start">Start managed job</button>
           <button id="operator-stop" class="danger" disabled>Stop safely</button>
         </div>
-        <p class="operator-note">Flight, collection, and training actions use fixed inputs after environment and single-instance checks. Blind data and logs remain sealed.</p>
+        <p class="operator-note">Headless and Visual Preview use the same scenario and flight configuration. Visual Preview only adds the Gazebo window. Blind data and logs remain sealed.</p>
       </article>
       <div class="two-col operator-grid">
         <article><h3>Job history</h3><div id="job-history"></div></article>

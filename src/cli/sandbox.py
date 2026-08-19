@@ -10,6 +10,7 @@ from pathlib import Path
 from src.inspection.config import InspectionConfig
 from src.sandbox.profile_cli import handle_profile_command, register_profile_commands
 from src.sandbox.profiles import PROFILE_NAMES
+from src.vision.collection.display import DISPLAY_MODES
 from src.sandbox.storage_cli import handle_storage_command, register_storage_commands
 from src.sandbox.workbench_cli import (
     handle_workbench_command, register_workbench_commands,
@@ -57,6 +58,10 @@ def build_parser():
     smoke.add_argument("--startup-timeout", type=float, default=180.0)
     smoke.add_argument("--probe-timeout", type=float, default=5.0)
     smoke.add_argument("--flight-timeout", type=float)
+    smoke.add_argument(
+        "--display-mode", choices=DISPLAY_MODES, default="headless",
+        help="Run Gazebo without a window or show its visual preview",
+    )
     recipe = commands.add_parser(
         "recipe-create", help="Create an identity-bound non-blind visual recipe"
     )
@@ -164,6 +169,7 @@ def main(argv=None):
                 startup_timeout_s=args.startup_timeout,
                 probe_timeout_s=args.probe_timeout,
                 flight_timeout_s=args.flight_timeout,
+                display_mode=args.display_mode,
             )
         except (OSError, RuntimeError, ValueError) as error:
             print(f"Sandbox flight smoke failed: {error}")

@@ -28,6 +28,7 @@ from src.vision.collection.pilot_live import (
 )
 from src.vision.collection.audit import audit_collection_plan
 from src.vision.contracts.protocol import protocol_for_plan
+from src.vision.collection.display import DISPLAY_MODES
 
 
 DEFAULT_COLLECTION_ROOT = Path("data/research/visual_collection_v1")
@@ -160,6 +161,10 @@ def add_collection_parsers(commands):
         help="Explicit override; v2 otherwise uses its route-derived timeout",
     )
     batch.add_argument("--recorder-timeout", type=float, default=900.0)
+    batch.add_argument(
+        "--display-mode", choices=DISPLAY_MODES, default="headless",
+        help="Run Gazebo without a window or show its visual preview",
+    )
 
 
 def _add_scenario_arguments(parser):
@@ -310,5 +315,6 @@ def handle_collection_command(args):
             first_frame_timeout_s=args.first_frame_timeout,
             flight_timeout_s=args.flight_timeout,
             recorder_timeout_s=args.recorder_timeout,
+            display_mode=args.display_mode,
         )
     return None

@@ -18,6 +18,7 @@ from src.vision.collection.process import (
     wait_for_flight,
     wait_process,
 )
+from src.vision.collection.display import launcher_environment
 from src.vision.collection.receipt import (
     collection_validation_receipt_is_current,
     write_collection_validation_receipt,
@@ -58,9 +59,11 @@ def _wait_for_first_frame(recording_directory, recorder, timeout_s):
     )
 
 
-def _start_simulator(prepared, log_root, startup_timeout_s, probe_timeout_s):
+def _start_simulator(
+    prepared, log_root, startup_timeout_s, probe_timeout_s, display_mode,
+):
     environment = os.environ.copy()
-    environment.update(prepared["launcher_environment"])
+    environment.update(launcher_environment(prepared, display_mode))
     launcher = start_process(
         "PX4/Gazebo launcher",
         prepared["launcher_command"],
@@ -95,6 +98,7 @@ def run_collection_scenario(
     takeoff_ready_timeout_s=45.0, first_frame_timeout_s=30.0,
     flight_timeout_s=None,
     recorder_timeout_s=900.0,
+    display_mode="headless",
 ):
     prepared = prepare_collection_scenario(plan, scenario_id, output_root)
     row = scenario_by_id(plan, scenario_id)
@@ -103,7 +107,8 @@ def run_collection_scenario(
     launcher = recorder = flight = None
     try:
         launcher = _start_simulator(
-            prepared, log_root, simulator_startup_timeout_s, probe_timeout_s
+            prepared, log_root, simulator_startup_timeout_s, probe_timeout_s,
+            display_mode,
         )
         flight = start_process(
             "flight task",
@@ -131,6 +136,7 @@ def run_collection_scenario(
             "scenario_id": scenario_id,
             "recording_id": row["recording_id"],
             "state": "complete",
+            "display_mode": display_mode,
             "log_directory": str(log_root),
         }
     finally:
