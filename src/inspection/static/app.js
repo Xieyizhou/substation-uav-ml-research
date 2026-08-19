@@ -2,8 +2,9 @@ const $=s=>document.querySelector(s);let recordings=[],scenarios=[],page=1,opera
 const api=async path=>{const r=await fetch(path,{cache:'no-store'});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const post=async(path,value)=>{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','X-Sandbox-Token':operatorToken},body:JSON.stringify(value)});const v=await r.json();if(!r.ok)throw new Error(v.error||r.statusText);return v};
 const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
-function activateTab(name){document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));const tab=document.querySelector(`.tab[data-tab="${name}"]`);tab?.classList.add('active');$('#'+name)?.classList.add('active')}
+function activateTab(name,persist=true){const tab=document.querySelector(`.tab[data-tab="${name}"]`),panel=$('#'+name);if(!tab||!panel)return false;document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));tab.classList.add('active');panel.classList.add('active');if(persist)history.replaceState(null,'',`#${name}`);return true}
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>activateTab(b.dataset.tab));
+const initialTab=location.hash.slice(1);if(initialTab)activateTab(initialTab,false);
 
 async function refresh(){
   const [profile,version,setup,dash,runtime,doctor,recs,available,operator,research,experiments,workbench,lidar,acceptance,preflight]=await Promise.all([api('/api/profile'),api('/api/version'),api('/api/setup'),api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments'),api('/api/workbench'),api('/api/lidar'),api('/api/acceptance'),api('/api/preflight')]);

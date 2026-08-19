@@ -159,6 +159,12 @@ class SandboxReleaseTests(unittest.TestCase):
         self.assertIn('id="action-dialog"', markup)
         self.assertIn('aria-live="assertive"', markup)
 
+    def test_navigation_survives_data_refresh_and_document_reload(self):
+        script = (PROJECT_ROOT / "src/inspection/static/app.js").read_text()
+        self.assertIn("history.replaceState(null,'',`#${name}`)", script)
+        self.assertIn("const initialTab=location.hash.slice(1)", script)
+        self.assertIn("activateTab(initialTab,false)", script)
+
     @patch("src.sandbox.beta_install.git_commit", return_value=COMMIT)
     @patch("src.sandbox.beta_install._workflow_checks")
     @patch("src.sandbox.beta_install._run_check")

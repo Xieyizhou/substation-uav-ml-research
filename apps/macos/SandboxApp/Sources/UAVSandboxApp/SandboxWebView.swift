@@ -1,3 +1,4 @@
+import SandboxAppCore
 import SwiftUI
 import WebKit
 
@@ -20,7 +21,7 @@ struct SandboxWebView: NSViewRepresentable {
     }
 
     func updateNSView(_ view: WKWebView, context: Context) {
-        guard view.url != url else { return }
+        guard !LocalWebDocument.isSame(current: view.url, target: url) else { return }
         view.load(URLRequest(url: url))
     }
 

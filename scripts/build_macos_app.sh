@@ -56,6 +56,7 @@ build_with_command_line_tools() {
     -o "$build_root/libSandboxAppCore.a" \
     "$package_root/Sources/SandboxAppCore/ProjectConfiguration.swift" \
     "$package_root/Sources/SandboxAppCore/ProcessExecution.swift" \
+    "$package_root/Sources/SandboxAppCore/LocalWebDocument.swift" \
     "$package_root/Sources/SandboxAppCore/RuntimeModels.swift" \
     "$package_root/Sources/SandboxAppCore/RuntimeCandidateModels.swift" \
     "$package_root/Sources/SandboxAppCore/RuntimeProfileStore.swift" \

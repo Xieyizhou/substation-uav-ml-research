@@ -52,6 +52,7 @@ class MacOSAppContractTests(unittest.TestCase):
         ).read_text(encoding="utf-8"))
         self.assertIn('http://127.0.0.1:', model)
         self.assertIn('"127.0.0.1", "localhost", "::1"', web_view)
+        self.assertIn("LocalWebDocument.isSame", web_view)
 
     def test_native_workbench_import_and_quit_are_controlled(self):
         model = (APP_ROOT / "Sources/UAVSandboxApp/SandboxAppModel.swift").read_text()
