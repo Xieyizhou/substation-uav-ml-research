@@ -9,6 +9,7 @@ from src.maps.sandbox_contracts import (
 )
 from src.maps.sandbox_geometry import object_cells, objects_overlap
 from src.maps.sandbox_materialize import materialize_revision
+from src.maps.sandbox_flight import visual_route_for_sandbox
 from src.maps.sandbox_routes import build_sandbox_route
 from src.maps.sandbox_store import SandboxMapStore
 from src.maps.sandbox_validation import validate_sandbox_map
@@ -73,6 +74,9 @@ class SandboxMapTests(unittest.TestCase):
         self.assertEqual(inspection.mission_type, "equipment_inspection")
         self.assertEqual(len(inspection.waypoints), 5)
         self.assertTrue(inspection.return_grid_path)
+        visual = visual_route_for_sandbox(value, value.missions[1], inspection)
+        self.assertEqual(visual.target_class, "transformer")
+        self.assertTrue(all(item.transit_cells for item in visual.waypoints))
 
     def test_revision_is_immutable_and_world_matches_planner(self):
         with TemporaryDirectory() as temporary:

@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import sys
+import json
 
 from src.inspection.dashboard import is_blind, load_plan
+from src.maps.sandbox_contracts import SandboxMap
+from src.maps.sandbox_store import SandboxMapStore
 from src.sandbox.command_models import SandboxCommand
 from src.sandbox.workflow_commands import (
     build_lidar_sandbox_command,
@@ -132,6 +135,43 @@ def _flight_command(config, scenario_id, display_mode):
     )
 
 
+def _map_flight_command(config, parameters, *, record=False):
+    values = dict(parameters or {})
+    allowed = {"map_id", "revision_id", "mission_id", "display_mode"}
+    unknown = set(values) - allowed
+    if unknown:
+        raise ValueError("unsupported map flight parameter: " + sorted(unknown)[0])
+    required = ("map_id", "revision_id", "mission_id")
+    if any(not values.get(name) for name in required):
+        raise ValueError("map flight requires map_id, revision_id, and mission_id")
+    mode = values.get("display_mode", "headless")
+    if mode not in {"headless", "visual_preview"}:
+        raise ValueError(f"unsupported simulator display mode: {mode}")
+    store = SandboxMapStore(config.sandbox_maps_root)
+    root = store.revision_root(values["map_id"], values["revision_id"])
+    map_value = SandboxMap.from_record(json.loads((root / "map.json").read_text()))
+    if values["mission_id"] not in {item.mission_id for item in map_value.missions}:
+        raise ValueError("sandbox map mission was not found")
+    argv = (
+            sys.executable, "main.py", "sandbox", "--project-root",
+            str(config.project_root), "--profile", config.profile, "map-run",
+            "--map-id", str(values["map_id"]),
+            "--revision-id", str(values["revision_id"]),
+            "--mission-id", str(values["mission_id"]),
+            "--display-mode", mode,
+        )
+    if record:
+        argv = (*argv, "--record")
+    action = "map-record" if record else "map-flight-smoke"
+    return SandboxCommand(
+        action,
+        argv,
+        900.0,
+        workflow="sandbox_map_record" if record else "sandbox_map_flight",
+        budget_paths=("outputs/sandbox/map_runs",),
+    )
+
+
 def _model_command(config, action):
     if action == "training-view-v2":
         return SandboxCommand(
@@ -201,6 +241,8 @@ def build_command(config, action, scenario_id=None, parameters=None):
         return _doctor_command(config)
     if action == "flight-smoke":
         return _flight_command(config, scenario_id, _display_mode(parameters))
+    if action in {"map-flight-smoke", "map-record"}:
+        return _map_flight_command(config, parameters, record=action == "map-record")
     if action.startswith("lidar-"):
         return build_lidar_sandbox_command(config, action)
     if action == "experiment-run":

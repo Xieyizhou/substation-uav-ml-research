@@ -12,6 +12,9 @@ from src.flight.flight_state import (
     target_errors,
     update_latest,
 )
+from src.flight.live_telemetry import (
+    configured_snapshot_path, snapshot_record, write_snapshot,
+)
 from src.flight.perception_response import current_perception_detection
 from src.flight.replanning_controller import reset_replan_event_fields
 from src.logging.flight_logger import (
@@ -79,6 +82,8 @@ async def log_telemetry(
     perception_detector=None,
 ):
     LOG_DIR.mkdir(parents=True, exist_ok=True)
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    snapshot_path = configured_snapshot_path()
     start_time = datetime.now(timezone.utc)
     watcher_tasks = [
         asyncio.create_task(watch_connection_state(drone, latest), name="connection-state"),
@@ -145,6 +150,13 @@ async def log_telemetry(
                         perception_csv_values(perception_config, detection),
                         replan_csv_values(replan_state),
                     )
+                )
+                write_snapshot(
+                    snapshot_path,
+                    snapshot_record(
+                        now, start_time, phase_state, target, position, velocity,
+                        attitude, latest,
+                    ),
                 )
                 if replan_state.get("replan_triggered") or replan_state.get(
                     "replan_route_replaced"

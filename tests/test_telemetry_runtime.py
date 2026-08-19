@@ -1,6 +1,8 @@
 import csv
 import tempfile
 import unittest
+import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -63,7 +65,9 @@ class TelemetryRuntimeTests(unittest.IsolatedAsyncioTestCase):
 
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "telemetry.csv"
+            snapshot = Path(directory) / "live.json"
             with (
+                patch.dict(os.environ, {"UAV_LIVE_TELEMETRY_PATH": str(snapshot)}),
                 patch.object(telemetry_runtime, "LOG_DIR", Path(directory)),
                 patch.object(telemetry_runtime.asyncio, "sleep", new=stop_after_cycle),
                 patch.object(
@@ -94,6 +98,7 @@ class TelemetryRuntimeTests(unittest.IsolatedAsyncioTestCase):
                     {"enabled": False},
                     replan_state,
                 )
+            live = json.loads(snapshot.read_text(encoding="utf-8"))
             with path.open() as source:
                 rows = list(csv.reader(source))
 
@@ -101,6 +106,8 @@ class TelemetryRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertIn("elapsed_s", rows[0])
         self.assertFalse(replan_state["replan_triggered"])
         self.assertIn("velocity", detection.call_args.kwargs)
+        self.assertEqual(live["phase"], "flight")
+        self.assertEqual(live["snapshot_schema_version"], 1)
 
 
 if __name__ == "__main__":

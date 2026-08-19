@@ -1,6 +1,8 @@
 """Backward-compatible flight configuration exports."""
 
 from datetime import datetime, timezone
+import os
+from pathlib import Path
 
 from src.flight.flight_cli import build_argument_parser
 from src.flight.flight_defaults import (
@@ -87,5 +89,8 @@ def display_path(path):
 
 def make_log_path():
     """Return the timestamped CSV path for the next A* telemetry log."""
+    configured = os.environ.get("UAV_TELEMETRY_LOG_PATH", "").strip()
+    if configured:
+        return Path(configured)
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     return LOG_DIR / f"astar_{timestamp}.csv"

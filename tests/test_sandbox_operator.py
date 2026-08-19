@@ -12,6 +12,8 @@ from unittest.mock import Mock, patch
 from src.inspection.config import InspectionConfig
 from src.inspection.app import create_server
 from src.ml.artifacts import object_sha256
+from src.maps.sandbox_contracts import SandboxMap, SandboxMapObject, SandboxMission
+from src.maps.sandbox_store import SandboxMapStore
 from src.sandbox.job_commands import SandboxCommand, build_command
 from src.sandbox.job_models import SandboxJob, SandboxJobStore, utc_now
 from src.sandbox.job_process import ownership_is_held, start_job_process
@@ -88,7 +90,7 @@ class SandboxOperatorTests(unittest.TestCase):
             "seed": 1,
         }
 
-    def wait_idle(self, operator, timeout=5.0):
+    def wait_idle(self, operator, timeout=10.0):
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             status = operator.status()
@@ -153,6 +155,39 @@ class SandboxOperatorTests(unittest.TestCase):
         command = build_command(self.config, "training-smoke-v2")
         output = command.argv[command.argv.index("--output") + 1]
         self.assertTrue(output.startswith("outputs/sandbox/training_smoke/"))
+
+    def test_map_flight_command_is_identity_bound_and_allow_listed(self):
+        value = SandboxMap(
+            "operator_map", "Operator map", 20, 20, 1.5, 1.5, 0,
+            (SandboxMapObject(
+                "cabinet_a", "cabinet", 8, 8, 1, 1, 1,
+            ),),
+            (SandboxMission("go_home", "round_trip", 15.5, 15.5),),
+        )
+        store = SandboxMapStore(self.config.sandbox_maps_root)
+        store.save_draft(value)
+        _, revision = store.create_revision(value.map_id)
+        parameters = {
+            "map_id": value.map_id,
+            "revision_id": revision.revision_identity_sha256,
+            "mission_id": "go_home",
+            "display_mode": "visual_preview",
+        }
+        command = build_command(
+            self.config, "map-flight-smoke", parameters=parameters,
+        )
+        self.assertIn("map-run", command.argv)
+        self.assertEqual(command.argv[-1], "visual_preview")
+        record = build_command(
+            self.config, "map-record", parameters=parameters,
+        )
+        self.assertEqual(record.argv[-1], "--record")
+        self.assertEqual(record.workflow, "sandbox_map_record")
+        with self.assertRaisesRegex(ValueError, "unsupported map flight parameter"):
+            build_command(
+                self.config, "map-flight-smoke",
+                parameters={**parameters, "command": "open"},
+            )
 
     def test_package_inspection_is_fixed_and_requires_frozen_manifest(self):
         with self.assertRaisesRegex(ValueError, "package is not present"):

@@ -21,6 +21,7 @@ class SandboxRouteWaypoint:
     altitude_m: float
     yaw_deg: float
     hold_s: float = 0.0
+    transit_cells: tuple[tuple[int, int], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -116,7 +117,8 @@ def _basic_route(map_value, mission, blocked):
     waypoints = tuple(
         SandboxRouteWaypoint(
             f"waypoint_{index:03d}", "outbound", cell[0] + 0.5,
-            cell[1] + 0.5, mission.altitude_m, 0.0,
+            cell[1] + 0.5, mission.altitude_m, 0.0, 0.0,
+            (cell,),
         )
         for index, cell in enumerate(simplified[1:], start=1)
     )
@@ -138,8 +140,11 @@ def build_sandbox_route(map_value: SandboxMap, mission: SandboxMission):
             SandboxRouteWaypoint(
                 f"inspection_{index:02d}", phase, *point, mission.altitude_m,
                 _yaw(*point, target.east_m, target.north_m), hold,
+                tuple(simplify_grid_path(path)[1:]),
             )
-            for index, (point, phase, hold) in enumerate(zip(points, phases, holds), start=1)
+            for index, (point, phase, hold, path) in enumerate(
+                zip(points, phases, holds, paths), start=1
+            )
         )
         full_path = tuple(cell for index, path in enumerate(paths) for cell in path[(1 if index else 0):])
         start = point_cell(map_value.start_east_m, map_value.start_north_m)

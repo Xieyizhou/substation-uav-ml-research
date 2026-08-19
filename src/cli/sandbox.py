@@ -44,6 +44,22 @@ def build_parser():
         type=Path,
         default=Path("data/research/visual_collection_v2/collection_plan.json"),
     )
+    map_run = commands.add_parser(
+        "map-run", help="Run one validated custom-map revision",
+    )
+    map_run.add_argument("--map-id", required=True)
+    map_run.add_argument("--revision-id", required=True)
+    map_run.add_argument("--mission-id", required=True)
+    map_run.add_argument(
+        "--display-mode", choices=DISPLAY_MODES, default="headless",
+    )
+    map_run.add_argument("--startup-timeout", type=float, default=180.0)
+    map_run.add_argument("--flight-timeout", type=float)
+    map_run.add_argument("--record", action="store_true")
+    map_inspect = commands.add_parser(
+        "map-run-inspect", help="Inspect a completed custom-map run",
+    )
+    map_inspect.add_argument("--run-id", required=True)
     smoke.add_argument(
         "--output-root",
         type=Path,
@@ -175,6 +191,30 @@ def main(argv=None):
             print(f"Sandbox flight smoke failed: {error}")
             return 1
         _print({"status": "complete", "run_root": str(root)})
+        return 0
+    if args.command == "map-run":
+        run_sandbox_map = _command("src.sandbox.map_run", "run_sandbox_map")
+        try:
+            root = run_sandbox_map(
+                config.project_root, config.sandbox_maps_root,
+                config.sandbox_map_runs_root, args.map_id, args.revision_id,
+                args.mission_id, display_mode=args.display_mode,
+                startup_timeout_s=args.startup_timeout,
+                flight_timeout_s=args.flight_timeout,
+                record=args.record,
+            )
+        except (OSError, RuntimeError, ValueError) as error:
+            print(f"Sandbox map run failed: {error}")
+            return 1
+        _print({"status": "complete", "run_root": str(root)})
+        return 0
+    if args.command == "map-run-inspect":
+        inspect_map_run = _command("src.inspection.map_runs", "inspect_map_run")
+        try:
+            _print(inspect_map_run(config, args.run_id))
+        except (OSError, RuntimeError, ValueError) as error:
+            print(f"Sandbox map run inspection failed: {error}")
+            return 1
         return 0
     if args.command == "recipe-create":
         materialize_recipe = _command(

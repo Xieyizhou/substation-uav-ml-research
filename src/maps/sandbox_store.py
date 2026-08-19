@@ -93,6 +93,13 @@ class SandboxMapStore:
             raise ValueError("sandbox revision file is unavailable")
         return candidate
 
+    def revision_root(self, map_id, revision_id):
+        root = self._revision_root(map_id, revision_id)
+        identity = json.loads((root / "identity.json").read_text())
+        if identity.get("revision_identity_sha256") != revision_id:
+            raise ValueError("sandbox map revision identity mismatch")
+        return root
+
     def export_bundle(self, map_id, revision_id):
         root = self._revision_root(map_id, revision_id)
         identity = json.loads((root / "identity.json").read_text())

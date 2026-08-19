@@ -103,6 +103,18 @@ class InspectionConfig:
         suffix = "maps" if self.profile == "development" else f"{self.profile}/maps"
         return self.project_root / "outputs/sandbox" / suffix
 
+    @property
+    def sandbox_map_runs_root(self) -> Path:
+        suffix = "map_runs" if self.profile == "development" else f"{self.profile}/map_runs"
+        return self.project_root / "outputs/sandbox" / suffix
+
+    def sandbox_map_run(self, run_id: str) -> Path:
+        if not run_id or Path(run_id).name != run_id:
+            raise AccessDenied("invalid sandbox map run identifier")
+        return _inside(
+            self.sandbox_map_runs_root, self.sandbox_map_runs_root / run_id
+        )
+
     def workbench_inbox_file(self, name: str) -> Path:
         if not name or Path(name).name != name:
             raise AccessDenied("invalid workbench inbox filename")

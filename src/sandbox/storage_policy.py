@@ -15,6 +15,8 @@ ACTION_BUDGET_BYTES = {
     "sandbox-demo": 64 * MIB,
     "sandbox-acceptance": GIB,
     "flight-smoke": GIB,
+    "map-flight-smoke": GIB,
+    "map-record": 8 * GIB,
     "lidar-challenge-gate": 2 * GIB,
     "lidar-replay-gate": 4 * GIB,
     "lidar-closed-loop-next": 4 * GIB,

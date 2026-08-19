@@ -66,6 +66,10 @@ class InspectionHandler(BaseHTTPRequestHandler):
                 )
             if self.path == "/api/maps/import":
                 return self._json(self.service.map_import(body.get("bundle_base64")), 201)
+            if self.path == "/api/maps/register":
+                return self._json(self.service.map_recording_register(
+                    body.get("run_id"), body.get("dataset_id")
+                ), 201)
             self._json({"error": "unknown endpoint"}, 404)
         except OperatorBusy as error:
             self._json({"error": str(error)}, 409)
@@ -96,6 +100,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.workbench())
         if path == "/api/maps":
             return self._json(self.service.maps())
+        if path == "/api/map-runs":
+            return self._json(self.service.map_runs())
         if path == "/api/lidar":
             return self._json(self.service.lidar())
         if path == "/api/acceptance":
@@ -152,6 +158,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
             "index.html", "app.js", "style.css", "operator.css", "research.css",
             "experiments.css", "setup.css", "setup.js",
             "profile.css", "ui_state.js", "navigation.css", "navigation.js",
+            "map_studio.css", "map_canvas.js", "map_studio_actions.js",
+            "map_studio.js", "map_flight.js",
         }:
             return self._json({"error": "not found"}, 404)
         self._file(STATIC_ROOT / name)

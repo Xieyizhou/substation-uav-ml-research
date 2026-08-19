@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 from src.maps.sandbox_contracts import SandboxMap
+from src.maps.sandbox_flight import visual_route_for_sandbox
 from src.maps.sandbox_geometry import object_cells, point_cell
 from src.maps.sandbox_preview import preview_png, preview_record, preview_svg
 from src.maps.sandbox_routes import blocking_cells
@@ -42,12 +43,12 @@ class SandboxMapRevision:
         return {**asdict(self), "revision_identity_sha256": self.revision_identity_sha256}
 
 
-def obstacle_record(map_value: SandboxMap):
-    first = map_value.missions[0] if map_value.missions else None
-    raw, blocked = (set(), set()) if first is None else blocking_cells(map_value, first)
+def obstacle_record(map_value: SandboxMap, mission=None):
+    selected = mission or (map_value.missions[0] if map_value.missions else None)
+    raw, blocked = (set(), set()) if selected is None else blocking_cells(map_value, selected)
     goal = (
-        point_cell(first.goal_east_m, first.goal_north_m)
-        if first is not None and first.goal_east_m is not None
+        point_cell(selected.goal_east_m, selected.goal_north_m)
+        if selected is not None and selected.goal_east_m is not None
         else point_cell(map_value.start_east_m, map_value.start_north_m)
     )
     return {
@@ -58,7 +59,8 @@ def obstacle_record(map_value: SandboxMap):
         "start_cell": list(point_cell(map_value.start_east_m, map_value.start_north_m)),
         "goal_cell": list(goal),
         "gazebo_world_origin_m": [-map_value.start_east_m, -map_value.start_north_m, 0.0],
-        "horizontal_inflation_cells": 0 if first is None else first.horizontal_inflation_cells,
+        "horizontal_inflation_cells": 0 if selected is None else selected.horizontal_inflation_cells,
+        "altitude_m": 1.5 if selected is None else selected.altitude_m,
         "obstacles": [
             {
                 "name": item.object_id,
@@ -76,7 +78,8 @@ def obstacle_record(map_value: SandboxMap):
 
 
 def _artifacts(map_value, report, routes):
-    return {
+    route_by_id = {route.mission_id: route for route in routes}
+    artifacts = {
         "map.json": _json_bytes(map_value.to_record()),
         "world.sdf": world_bytes(map_value),
         "obstacles.json": _json_bytes(obstacle_record(map_value)),
@@ -89,6 +92,16 @@ def _artifacts(map_value, report, routes):
             for route in routes
         },
     }
+    for mission in map_value.missions:
+        route = route_by_id[mission.mission_id]
+        artifacts[f"routes/{mission.mission_id}.obstacles.json"] = _json_bytes(
+            obstacle_record(map_value, mission)
+        )
+        if mission.mission_type == "equipment_inspection":
+            artifacts[f"routes/{mission.mission_id}.visual.json"] = _json_bytes(
+                visual_route_for_sandbox(map_value, mission, route).to_record()
+            )
+    return artifacts
 
 
 def materialize_revision(map_value: SandboxMap, revisions_root):

@@ -124,6 +124,16 @@ class InspectionService:
 
         return map_bundle_file(self.config, map_id, revision_id)
 
+    def map_runs(self):
+        from src.inspection.map_runs import map_runs_summary
+
+        return map_runs_summary(self.config)
+
+    def map_recording_register(self, run_id, dataset_id=None):
+        from src.inspection.map_runs import register_map_run
+
+        return register_map_run(self.config, run_id, dataset_id)
+
     def lidar(self):
         from src.inspection.lidar import lidar_summary
 
