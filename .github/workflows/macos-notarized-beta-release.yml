@@ -66,7 +66,7 @@ jobs:
             --key "$key" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID"
 
       - name: Run Swift tests
-        run: swift test --package-path apps/macos/SandboxApp
+        run: ./scripts/test_macos_app.sh
 
       - name: Build, notarize, and staple Beta
         env:

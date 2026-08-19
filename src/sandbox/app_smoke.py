@@ -40,7 +40,7 @@ def _contract_checks(config):
             (static / name).is_file() for name in (
                 "index.html", "app.js", "style.css", "operator.css",
                 "research.css", "experiments.css", "profile.css",
-                "setup.css", "setup.js",
+                "setup.css", "setup.js", "ui_state.js",
             )
         ),
         "contract_version": version_valid,

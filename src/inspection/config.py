@@ -91,6 +91,36 @@ class InspectionConfig:
         return self.workbench_root / "runs"
 
     @property
+    def workbench_inbox_root(self) -> Path:
+        return self.workbench_root / "inbox"
+
+    @property
+    def workbench_inference_root(self) -> Path:
+        return self.workbench_root / "inference"
+
+    def workbench_inbox_file(self, name: str) -> Path:
+        if not name or Path(name).name != name:
+            raise AccessDenied("invalid workbench inbox filename")
+        candidate = _inside(self.workbench_inbox_root, self.workbench_inbox_root / name)
+        if candidate.suffix.lower() not in {".png", ".jpg", ".jpeg"}:
+            raise AccessDenied("workbench inference accepts PNG or JPEG")
+        return candidate
+
+    def workbench_inference(self, inference_id: str) -> Path:
+        if not inference_id or Path(inference_id).name != inference_id:
+            raise AccessDenied("invalid workbench inference identifier")
+        return _inside(
+            self.workbench_inference_root,
+            self.workbench_inference_root / inference_id,
+        )
+
+    def workbench_inference_image(self, inference_id: str, name: str) -> Path:
+        if name not in {"input.png", "primary.png", "comparison.png"}:
+            raise AccessDenied("invalid workbench inference image")
+        root = self.workbench_inference(inference_id)
+        return _inside(root, root / name)
+
+    @property
     def sandbox_bootstrap_root(self) -> Path:
         return self.project_root / "outputs/sandbox" / self.profile / "bootstrap"
 

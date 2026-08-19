@@ -156,6 +156,12 @@ YOLO Detect directory, then runs a bounded recipe through training, validation,
 static ONNX export, PT/ONNX equivalence, ordered replay, and an optional paired
 baseline comparison. PX4 and Gazebo are not required for this offline path.
 
+Completed receipt-verified runs can also process a local PNG/JPEG from the
+native App. Workbench applies the model's frozen validation threshold, draws
+class/confidence boxes, records latency and hashes, and can compare two
+verified candidates on the same image. The browser cannot provide a filesystem
+path, arbitrary ONNX file, or threshold.
+
 ```bash
 python main.py sandbox --profile development workbench-recipe-create \
   --experiment-id visual-smoke-01 --dataset-id visual_yolo_v2 --preset smoke

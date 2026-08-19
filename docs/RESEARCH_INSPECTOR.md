@@ -83,6 +83,16 @@ Closing the App window leaves a job running. Explicitly quitting while a job is
 active offers keep-running, safe-stop, and cancel choices; stopped training
 retains `last.pt` for an explicit resume.
 
+Completed Workbench receipts unlock local image inference. The native picker
+accepts PNG/JPEG, copies the selected file into the managed Workbench inbox,
+and submits only the staged filename plus one or two verified experiment IDs.
+Before inference, the service revalidates the completion receipt, best/ONNX
+hashes, validation result, equivalence gate, and replay identity. Each model
+uses its recorded input size and frozen validation threshold. Annotated images,
+detections, per-model latency, input/model hashes, and an inference identity are
+stored under `outputs/sandbox/workbench/inference/`; the receipt explicitly
+marks these results as development diagnostics rather than formal evidence.
+
 The same controlled actions are available from the CLI:
 
 ```bash

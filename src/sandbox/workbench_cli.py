@@ -35,6 +35,14 @@ def register_workbench_commands(commands):
         parser.add_argument("--input", type=Path, required=True)
     inspect = commands.add_parser("workbench-inspect", help="Inspect a workbench run")
     inspect.add_argument("--input", type=Path, required=True)
+    inference = commands.add_parser(
+        "workbench-image-infer", help="Run a verified ONNX model on one managed image"
+    )
+    inference.add_argument("--runs-root", type=Path, required=True)
+    inference.add_argument("--experiment-id", required=True)
+    inference.add_argument("--comparison-experiment-id")
+    inference.add_argument("--source", type=Path, required=True)
+    inference.add_argument("--output", type=Path, required=True)
 
 
 def _mapping(values):
@@ -87,4 +95,10 @@ def handle_workbench_command(args, config):
     if args.command == "workbench-inspect":
         from src.sandbox.workbench_lifecycle import inspect_workbench_run
         return inspect_workbench_run(args.input)
+    if args.command == "workbench-image-infer":
+        from src.sandbox.workbench_inference import run_image_inference
+        return run_image_inference(
+            args.runs_root, args.experiment_id, args.source, args.output,
+            args.comparison_experiment_id,
+        )
     raise ValueError("unsupported workbench command")

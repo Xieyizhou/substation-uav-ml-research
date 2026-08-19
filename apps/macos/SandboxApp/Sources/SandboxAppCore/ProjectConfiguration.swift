@@ -66,6 +66,8 @@ public struct SandboxProject: Equatable, Sendable {
         environment["UAV_SANDBOX_OPENCV_PREFIX"] = runtime.openCVPrefix
         environment["UAV_SANDBOX_QT_PREFIX"] = runtime.qtPrefix
         environment["UAV_SANDBOX_RUNTIME_PROFILE"] = RuntimeProfileStore().fileURL.path
+        environment["MPLCONFIGDIR"] = root
+            .appendingPathComponent("outputs/sandbox/cache/matplotlib").path
         return environment
     }
 

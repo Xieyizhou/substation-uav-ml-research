@@ -106,6 +106,12 @@ class InspectionHandler(BaseHTTPRequestHandler):
             return self._json(self.service.operator_log(parts[3], limit))
         if len(parts) == 4 and parts[1:3] == ["workbench", "run"]:
             return self._json(self.service.workbench_run(parts[3]))
+        if len(parts) == 4 and parts[1:3] == ["workbench", "inference"]:
+            return self._json(self.service.workbench_inference(parts[3]))
+        if len(parts) == 5 and parts[1:3] == ["workbench", "inference"]:
+            return self._file(
+                self.service.workbench_inference_image(parts[3], parts[4])
+            )
         if len(parts) == 4 and parts[1] == "logs":
             limit = int(query.get("limit", ["200"])[0])
             return self._json(self.service.logs(parts[2], parts[3], limit))
@@ -124,7 +130,7 @@ class InspectionHandler(BaseHTTPRequestHandler):
         if name not in {
             "index.html", "app.js", "style.css", "operator.css", "research.css",
             "experiments.css", "setup.css", "setup.js",
-            "profile.css",
+            "profile.css", "ui_state.js",
         }:
             return self._json({"error": "not found"}, 404)
         self._file(STATIC_ROOT / name)

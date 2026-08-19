@@ -36,6 +36,7 @@
         <div id="setup-progress" class="setup-progress"></div>
       </div>
       <div id="setup-items" class="setup-grid"></div>
+      <article class="setup-journey"><div class="section-head"><div><p class="kicker">FIRST SUCCESS</p><h2>Your Sandbox path</h2></div><p>Environment → flight → model → results</p></div><div id="setup-journey" class="journey-grid"></div><div id="setup-artifacts" class="artifact-locations"></div></article>
       <article class="setup-next"><div><h3>Next step</h3><p id="setup-next-step"></p></div><button id="setup-check">Check again</button></article>
     </section>
     <section id="overview" class="panel active">
@@ -109,6 +110,15 @@
       <article class="workbench-active"><div class="section-head"><div><h3>Active / latest run</h3><p id="workbench-active-copy">No workbench run yet.</p></div><button id="workbench-resume" hidden>Resume checkpoint</button></div><div id="workbench-progress"></div></article>
       <h3>Training results</h3>
       <div id="workbench-runs" class="experiment-history"></div>
+      <article class="inference-lab">
+        <div class="section-head"><div><p class="kicker">VERIFIED ONNX</p><h2>Local image inference</h2><p>Choose one managed model, optionally compare another, then select a PNG or JPEG in the native App.</p></div><button id="workbench-infer">Choose image…</button></div>
+        <div class="inference-controls">
+          <label>Primary model<select id="inference-primary"></select></label>
+          <label>Compare with<select id="inference-comparison"><option value="">No comparison</option></select></label>
+        </div>
+        <p class="operator-note">Only receipt-verified ONNX artifacts and their frozen validation thresholds are available. Results are development diagnostics, not formal evidence.</p>
+        <div id="workbench-inferences" class="inference-results"></div>
+      </article>
       <div class="section-head workflow-divider"><div><p class="kicker">OTHER CONTROLLED FLOWS</p><h2>Evaluation and safety workflows</h2></div><p>Identity-bound recipes · fixed inputs</p></div>
       <article class="experiment-launch">
         <h3>New managed workflow</h3>
@@ -188,6 +198,7 @@
   </dialog>
   <div id="action-status" class="action-status" role="alert" aria-live="assertive"></div>
   <footer><span id="version-label">Version unavailable</span> · Local actions use fixed commands, one-job locking, bounded timeouts, and process-group cleanup.</footer>
+  <script src="/ui_state.js"></script>
   <script src="/setup.js"></script>
   <script src="/app.js"></script>
 </body>

@@ -84,7 +84,8 @@ build_with_command_line_tools() {
     "$package_root/Sources/UAVSandboxApp/RuntimeCompatibilityView.swift" \
     "$package_root/Sources/UAVSandboxApp/RuntimeCandidateView.swift" \
     "$package_root/Sources/UAVSandboxApp/ContentView.swift" \
-    "$package_root/Sources/UAVSandboxApp/SandboxWebView.swift"
+    "$package_root/Sources/UAVSandboxApp/SandboxWebView.swift" \
+    "$package_root/Sources/UAVSandboxApp/WorkbenchImageInference.swift"
 }
 
 if xcodebuild -version >/dev/null 2>&1; then

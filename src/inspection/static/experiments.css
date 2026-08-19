@@ -40,6 +40,15 @@
 .workbench-active .progress-track { margin-top: 12px; }
 .workflow-divider { border-top: 1px solid var(--line); margin-top: 30px; padding-top: 28px; }
 .comparison-note { background: #e4f3ed; color: var(--green); font-size: 12px; margin: 12px 0 0; padding: 9px; }
+.inference-lab { margin-top: 22px; }
+.inference-controls { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); max-width: 900px; }
+.inference-controls label { color: var(--muted); display: grid; font-size: 11px; gap: 5px; letter-spacing: .04em; text-transform: uppercase; }
+.inference-results { display: grid; gap: 14px; margin-top: 16px; }
+.inference-result { border-top: 1px solid var(--line); padding-top: 16px; }
+.inference-images { display: grid; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.inference-images figure { margin: 0; min-width: 0; }
+.inference-images img { background: #0f1d19; border-radius: 8px; display: block; max-height: 430px; object-fit: contain; width: 100%; }
+.inference-images figcaption { color: var(--muted); font-size: 12px; margin-top: 6px; }
 
 .experiment-form {
   align-items: end;
@@ -156,4 +165,5 @@
   .experiment-facts { grid-template-columns: repeat(2, 1fr); }
   .acceptance-grid { grid-template-columns: 1fr; }
   .workbench-advanced { grid-template-columns: repeat(2, 1fr); }
+  .inference-controls, .inference-images { grid-template-columns: 1fr; }
 }

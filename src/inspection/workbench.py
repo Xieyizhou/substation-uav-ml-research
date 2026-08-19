@@ -2,10 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from src.sandbox.workbench_datasets import list_workbench_datasets
 from src.sandbox.workbench_lifecycle import inspect_workbench_run, list_workbench_runs
+from src.sandbox.workbench_inference import list_verified_models
+from src.ml.artifacts import object_sha256
 
 
 def _run_summary(value):
@@ -47,12 +50,50 @@ def workbench_summary(config):
     runs = [_run_summary(row) for row in list_workbench_runs(config.workbench_runs_root)]
     return {
         "enabled": True, "datasets": datasets, "runs": runs,
+        "verified_models": list_verified_models(config.workbench_runs_root),
+        "inferences": _inference_summaries(config.workbench_inference_root),
         "readiness": {
             "pretrained_weights": (config.project_root / "yolo11n.pt").is_file(),
             "dataset_available": bool(datasets),
             "output_writable": _writable(config.workbench_root),
         },
     }
+
+
+def _inference_summaries(root):
+    values = []
+    for path in sorted(Path(root).iterdir(), reverse=True) if Path(root).is_dir() else ():
+        candidate = path / "result.json"
+        if not candidate.is_file():
+            continue
+        try:
+            record = json.loads(candidate.read_text(encoding="utf-8"))
+            identity = record.pop("inference_identity_sha256", None)
+            if identity != object_sha256(record):
+                continue
+            record["inference_identity_sha256"] = identity
+            values.append({
+                "inference_id": record["inference_id"],
+                "created_at": record["created_at"],
+                "input_width": record["input_width"],
+                "input_height": record["input_height"],
+                "results": record["results"],
+            })
+        except (OSError, KeyError, TypeError, ValueError):
+            continue
+        if len(values) == 12:
+            break
+    return values
+
+
+def workbench_inference(config, inference_id):
+    path = config.workbench_inference(inference_id) / "result.json"
+    value = json.loads(path.read_text(encoding="utf-8"))
+    identity = value.pop("inference_identity_sha256", None)
+    if identity != object_sha256(value):
+        raise ValueError("workbench inference identity changed")
+    value["inference_identity_sha256"] = identity
+    return value
 
 
 def _writable(path):

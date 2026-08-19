@@ -20,9 +20,18 @@ struct ContentView: View {
                         Task { await status.refresh(baseURL: url) }
                     }
                 } else {
-                    SandboxWebView(url: url) { mapping in
-                        model.importYOLODataset(canonicalToSourceID: mapping)
-                    }
+                    SandboxWebView(
+                        url: url,
+                        onImportYOLO: { mapping in
+                            model.importYOLODataset(canonicalToSourceID: mapping)
+                        },
+                        onInferImage: { experiment, comparison in
+                            model.inferImage(
+                                experimentID: experiment,
+                                comparisonExperimentID: comparison
+                            )
+                        }
+                    )
                 }
             } else {
                 setup
@@ -121,6 +130,20 @@ struct ContentView: View {
                     .frame(maxWidth: 570)
             }
             VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 10) {
+                    firstRunStep(1, "Profile", ready: true)
+                    firstRunStep(
+                        2, "Project",
+                        ready: !model.profile.requiresProject || !model.projectRoot.isEmpty
+                    )
+                    firstRunStep(
+                        3, "Dependencies",
+                        ready: !model.profile.requiresProject || model.runtimeAssessment?.ready == true
+                    )
+                    firstRunStep(4, "Start", ready: model.canStart)
+                }
+                .accessibilityElement(children: .contain)
+                Divider()
                 if model.profile.requiresProject {
                     LabeledContent("Project") {
                         HStack {
@@ -171,6 +194,15 @@ struct ContentView: View {
             Spacer()
         }
         .padding(30)
+    }
+
+    private func firstRunStep(_ number: Int, _ title: String, ready: Bool) -> some View {
+        HStack(spacing: 7) {
+            Image(systemName: ready ? "checkmark.circle.fill" : "\(number).circle")
+                .foregroundStyle(ready ? .green : .secondary)
+            Text(title).font(.caption.weight(.medium))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var logSheet: some View {

@@ -3,6 +3,7 @@ import Combine
 import Darwin
 import Foundation
 import SandboxAppCore
+import UniformTypeIdentifiers
 
 @MainActor
 final class SandboxAppModel: ObservableObject {
@@ -148,6 +149,40 @@ final class SandboxAppModel: ObservableObject {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd-HHmmss"
         return String("import-\(collapsed)-\(formatter.string(from: Date()))".prefix(64))
+    }
+
+    func inferImage(experimentID: String, comparisonExperimentID: String?) {
+        guard profile == .development, webURL != nil else {
+            append("Image inference requires the running Development profile.")
+            return
+        }
+        guard WorkbenchImageInference.isExperimentID(experimentID),
+              comparisonExperimentID.map(WorkbenchImageInference.isExperimentID) ?? true else {
+            append("Image inference received an invalid experiment identifier.")
+            return
+        }
+        let panel = NSOpenPanel()
+        panel.title = "Choose a PNG or JPEG image"
+        panel.canChooseDirectories = false
+        panel.canChooseFiles = true
+        panel.allowsMultipleSelection = false
+        panel.allowedContentTypes = [.png, .jpeg]
+        guard panel.runModal() == .OK, let source = panel.url else { return }
+        Task {
+            do {
+                let stagedName = try WorkbenchImageInference.stage(
+                    source: source, projectRoot: URL(fileURLWithPath: projectRoot)
+                )
+                try await WorkbenchImageInference.start(
+                    webURL: webURL!, stagedName: stagedName,
+                    experimentID: experimentID,
+                    comparisonExperimentID: comparisonExperimentID
+                )
+                append("Started managed local image inference.")
+            } catch {
+                append("Image inference failed: \(error.localizedDescription)")
+            }
+        }
     }
 
     func start() {

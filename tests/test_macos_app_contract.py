@@ -76,6 +76,7 @@ class MacOSAppContractTests(unittest.TestCase):
         ).read_text(encoding="utf-8")
         self.assertIn('"/opt/homebrew/bin"', project)
         self.assertIn('"/usr/local/bin"', project)
+        self.assertIn('environment["MPLCONFIGDIR"]', project)
         self.assertEqual(model.count("project.runtimeEnvironment()"), 2)
         self.assertIn("child.environment = project.runtimeEnvironment()", model)
 
@@ -156,6 +157,31 @@ class MacOSAppContractTests(unittest.TestCase):
             workflow = (ROOT / ".github/workflows" / name).read_text(encoding="utf-8")
             version_input = workflow.split("version:", 1)[1].split("permissions:", 1)[0]
             self.assertNotIn("default:", version_input)
+
+    def test_macos_tests_use_one_full_xcode_toolchain(self):
+        script = (ROOT / "scripts/test_macos_app.sh").read_text(encoding="utf-8")
+        self.assertIn("CommandLineTools", script)
+        self.assertIn("DEVELOPER_DIR", script)
+        self.assertIn("xcrun --sdk macosx --show-sdk-path", script)
+        self.assertIn('exec "$swift_path" test', script)
+        for workflow in (ROOT / ".github/workflows").glob("*.yml"):
+            value = workflow.read_text(encoding="utf-8")
+            self.assertNotIn("swift test --package-path", value)
+
+    def test_native_image_picker_stages_only_png_or_jpeg(self):
+        model = (APP_ROOT / "Sources/UAVSandboxApp/SandboxAppModel.swift").read_text()
+        inference = (
+            APP_ROOT / "Sources/UAVSandboxApp/WorkbenchImageInference.swift"
+        ).read_text()
+        web_view = (APP_ROOT / "Sources/UAVSandboxApp/SandboxWebView.swift").read_text()
+        self.assertIn('host == "infer-image"', web_view)
+        self.assertIn('panel.allowedContentTypes = [.png, .jpeg]', model)
+        self.assertIn('outputs/sandbox/workbench/inbox', inference)
+        self.assertIn('"action": "workbench-image-infer"', inference)
+        self.assertNotIn('"source": source.path', inference)
+        self.assertIn("WorkbenchImageInference.swift", (
+            ROOT / "scripts/build_macos_app.sh"
+        ).read_text())
 
     def test_advanced_runtime_candidate_picker_covers_every_component(self):
         discovery = (

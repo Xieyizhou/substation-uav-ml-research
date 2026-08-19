@@ -1,9 +1,9 @@
 import Foundation
 import SandboxAppCore
-import Testing
+import XCTest
 
-@Suite struct RuntimeCandidateTests {
-@Test func discoveryListsAllPythonCandidatesAndMarksTheSelectedRuntime() throws {
+final class RuntimeCandidateTests: XCTestCase {
+func testDiscoveryListsAllPythonCandidatesAndMarksTheSelectedRuntime() throws {
     let fixture = try RuntimeFixture()
     let venv = try fixture.executable(".venv/bin/python")
     let old = try fixture.executable("path/python3")
@@ -18,12 +18,12 @@ import Testing
         projectRoot: fixture.root, profile: .development,
         selection: fixture.selection, assessment: assessment
     )
-    let candidates = try #require(groups.first { $0.id == "python" }?.candidates)
-    #expect(candidates.contains { $0.path == venv.path && $0.selected })
-    #expect(candidates.contains { $0.path == old.path && $0.status == .unsupported })
+    let candidates = try require(groups.first { $0.id == "python" }?.candidates)
+    expect(candidates.contains { $0.path == venv.path && $0.selected })
+    expect(candidates.contains { $0.path == old.path && $0.status == .unsupported })
 }
 
-@Test func manualFormulaPrefixCanBeSelectedAndPersisted() throws {
+func testManualFormulaPrefixCanBeSelectedAndPersisted() throws {
     let fixture = try RuntimeFixture()
     let python = try fixture.executable(".venv/bin/python")
     fixture.runner.pythonVersions[python.path] = "3.14.1"
@@ -37,11 +37,11 @@ import Testing
     let assessment = try manager.validateAndPersist(
         projectRoot: fixture.root, profile: .development, selection: selection
     )
-    #expect(assessment.selected?.openCVPrefix == manual.path)
-    #expect(fixture.store.load()?.openCVPrefix == manual.path)
+    expect(assessment.selected?.openCVPrefix == manual.path)
+    expect(fixture.store.load()?.openCVPrefix == manual.path)
 }
 
-@Test func unrelatedFormulaDirectoryCannotBorrowHomebrewVersion() throws {
+func testUnrelatedFormulaDirectoryCannotBorrowHomebrewVersion() throws {
     let fixture = try RuntimeFixture()
     let python = try fixture.executable(".venv/bin/python")
     fixture.runner.pythonVersions[python.path] = "3.14.1"
@@ -57,12 +57,12 @@ import Testing
             selection: selection, enforceSavedIdentity: false
         )
     let opencv = assessment.components.first { $0.id == "opencv" }
-    #expect(opencv?.path == unrelated.path)
-    #expect(opencv?.status == .untested)
-    #expect(assessment.selected == nil)
+    expect(opencv?.path == unrelated.path)
+    expect(opencv?.status == .untested)
+    expect(assessment.selected == nil)
 }
 
-@Test func missingManualFormulaPrefixBlocksInsteadOfFallingBack() throws {
+func testMissingManualFormulaPrefixBlocksInsteadOfFallingBack() throws {
     let fixture = try RuntimeFixture()
     let python = try fixture.executable(".venv/bin/python")
     fixture.runner.pythonVersions[python.path] = "3.14.1"
@@ -77,11 +77,11 @@ import Testing
             selection: selection, enforceSavedIdentity: false
         )
     let qt = assessment.components.first { $0.id == "qt" }
-    #expect(qt?.status == .missing)
-    #expect(!assessment.ready)
+    expect(qt?.status == .missing)
+    expect(!assessment.ready)
 }
 
-@Test func duplicateCandidatePathsAreCollapsedWithStablePriority() throws {
+func testDuplicateCandidatePathsAreCollapsedWithStablePriority() throws {
     let fixture = try RuntimeFixture()
     let python = try fixture.executable(".venv/bin/python")
     fixture.runner.pythonVersions[python.path] = "3.14.1"
@@ -94,8 +94,8 @@ import Testing
         projectRoot: fixture.root, profile: .development,
         selection: fixture.selection, assessment: assessment
     )
-    let gazebo = try #require(groups.first { $0.id == "gazebo" }?.candidates)
-    #expect(gazebo.filter { $0.path == fixture.gz.path }.count == 1)
-    #expect(gazebo.first { $0.path == fixture.gz.path }?.origin == .manual)
+    let gazebo = try require(groups.first { $0.id == "gazebo" }?.candidates)
+    expect(gazebo.filter { $0.path == fixture.gz.path }.count == 1)
+    expect(gazebo.first { $0.path == fixture.gz.path }?.origin == .manual)
 }
 }

@@ -26,6 +26,7 @@ ACTION_BUDGET_BYTES = {
     "workbench-dataset-import": 16 * GIB,
     "workbench-validate": 4 * GIB,
     "workbench-replay": 4 * GIB,
+    "workbench-image-infer": 256 * MIB,
     "collection-single": 8 * GIB,
     "collection-gate": 40 * GIB,
 }

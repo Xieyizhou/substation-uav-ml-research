@@ -1,6 +1,6 @@
 import Foundation
 import SandboxAppCore
-import Testing
+import XCTest
 
 final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     var pythonVersions: [String: String] = [:]
@@ -41,8 +41,8 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     }
 }
 
-@Suite struct RuntimeCompatibilityTests {
-@Test func repositoryVenvWinsOverPathPython() throws {
+final class RuntimeCompatibilityTests: XCTestCase {
+func testRepositoryVenvWinsOverPathPython() throws {
     let fixture = try RuntimeFixture()
     let fallback = try fixture.executable("bin/python3")
     let venv = try fixture.executable(".venv/bin/python")
@@ -51,10 +51,10 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     let result = try fixture.manager(path: fallback.deletingLastPathComponent())
         .validateAndPersist(projectRoot: fixture.root, profile: .development,
                             selection: fixture.selection)
-    #expect(result.selected?.pythonExecutable == venv.path)
+    expect(result.selected?.pythonExecutable == venv.path)
 }
 
-@Test func incompatibleVenvDoesNotHideCompatiblePython() throws {
+func testIncompatibleVenvDoesNotHideCompatiblePython() throws {
     let fixture = try RuntimeFixture()
     let fallback = try fixture.executable("bin/python3")
     let venv = try fixture.executable(".venv/bin/python")
@@ -63,10 +63,10 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     let result = try fixture.manager(path: fallback.deletingLastPathComponent())
         .validateAndPersist(projectRoot: fixture.root, profile: .development,
                             selection: fixture.selection)
-    #expect(result.selected?.pythonExecutable == fallback.path)
+    expect(result.selected?.pythonExecutable == fallback.path)
 }
 
-@Test func missingSavedPythonRequiresExplicitRevalidation() throws {
+func testMissingSavedPythonRequiresExplicitRevalidation() throws {
     let fixture = try RuntimeFixture()
     let fallback = try fixture.executable("bin/python3")
     fixture.runner.pythonVersions[fallback.path] = "3.13.4"
@@ -74,11 +74,11 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     let result = try fixture.manager(path: fallback.deletingLastPathComponent())
         .assess(projectRoot: fixture.root, profile: .development,
                 selection: fixture.selection)
-    #expect(result.overall == .changedSinceValidation)
-    #expect(!result.ready)
+    expect(result.overall == .changedSinceValidation)
+    expect(!result.ready)
 }
 
-@Test func savedPythonWinsOverRandomPathFallback() throws {
+func testSavedPythonWinsOverRandomPathFallback() throws {
     let fixture = try RuntimeFixture()
     let savedPython = try fixture.executable("saved/bin/python")
     let fallback = try fixture.executable("path/bin/python3")
@@ -88,10 +88,10 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     let result = try fixture.manager(path: fallback.deletingLastPathComponent())
         .assess(projectRoot: fixture.root, profile: .development,
                 selection: fixture.selection)
-    #expect(result.selected?.pythonExecutable == savedPython.path)
+    XCTAssertEqual(result.selected?.pythonExecutable, savedPython.path)
 }
 
-@Test func gazeboSkipsUnsupportedFirstPathCandidate() throws {
+func testGazeboSkipsUnsupportedFirstPathCandidate() throws {
     let fixture = try RuntimeFixture()
     let wrong = try fixture.executable("wrong/gz")
     let right = try fixture.executable("right/gz")
@@ -102,11 +102,11 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
         candidates: [wrong, right], manifest: manifest,
         root: fixture.root, profile: .development
     )
-    #expect(item.path == right.path)
-    #expect(item.status == .compatible)
+    expect(item.path == right.path)
+    expect(item.status == .compatible)
 }
 
-@Test func verifiedGazeboCandidateWinsOverPathFallback() throws {
+func testVerifiedGazeboCandidateWinsOverPathFallback() throws {
     let fixture = try RuntimeFixture()
     let selected = try fixture.executable("selected/gz")
     let fallback = try fixture.executable("fallback/gz")
@@ -117,10 +117,10 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
         candidates: [selected, fallback], manifest: manifest,
         root: fixture.root, profile: .development
     )
-    #expect(item.path == selected.path)
+    expect(item.path == selected.path)
 }
 
-@Test func invalidPX4DirectoryIsUnsupported() throws {
+func testInvalidPX4DirectoryIsUnsupported() throws {
     let fixture = try RuntimeFixture()
     let invalid = fixture.root.appendingPathComponent("invalid-px4")
     try FileManager.default.createDirectory(at: invalid, withIntermediateDirectories: true)
@@ -128,10 +128,10 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     let item = RuntimeInspector(runner: fixture.runner).px4(
         candidates: [invalid], manifest: manifest
     )
-    #expect(item.status == .unsupported)
+    expect(item.status == .unsupported)
 }
 
-@Test func px4HeadChangeIsDetected() throws {
+func testPX4HeadChangeIsDetected() throws {
     let fixture = try RuntimeFixture()
     let python = try fixture.executable(".venv/bin/python")
     fixture.runner.pythonVersions[python.path] = "3.14.1"
@@ -143,31 +143,31 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
     let changed = try manager.assess(
         projectRoot: fixture.root, profile: .development, selection: fixture.selection
     )
-    #expect(changed.overall == .changedSinceValidation)
+    expect(changed.overall == .changedSinceValidation)
 }
 
-@Test func profileStoreIgnoresCorruption() throws {
+func testProfileStoreIgnoresCorruption() throws {
     let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
     let store = RuntimeProfileStore(fileURL: root.appendingPathComponent("profile.json"))
     try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
     try Data("not-json".utf8).write(to: store.fileURL)
-    #expect(store.load() == nil)
+    expect(store.load() == nil)
 }
 
-@Test func profileStoreRoundTripsAndRejectsUnknownSchema() throws {
+func testProfileStoreRoundTripsAndRejectsUnknownSchema() throws {
     let fixture = try RuntimeFixture()
     let profile = fixture.saved(python: try fixture.executable(".venv/bin/python"))
     try fixture.store.save(profile)
-    #expect(fixture.store.load() == profile)
+    expect(fixture.store.load() == profile)
 
     let unsupported = try String(
         contentsOf: fixture.store.fileURL, encoding: .utf8
     ).replacingOccurrences(of: "\"schema_version\" : 1", with: "\"schema_version\" : 99")
     try Data(unsupported.utf8).write(to: fixture.store.fileURL)
-    #expect(fixture.store.load() == nil)
+    expect(fixture.store.load() == nil)
 }
 
-@Test func conflictCheckerOnlyReportsSimulatorProcesses() {
+func testConflictCheckerOnlyReportsSimulatorProcesses() {
     let runner = FakeRunner()
     runner.processList = """
       101 /usr/bin/zsh zsh -c echo px4
@@ -176,15 +176,15 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
       404 /opt/homebrew/bin/gz /opt/homebrew/bin/gz topic -l
     """
     let conflicts = RuntimeConflictChecker(runner: runner).conflicts()
-    #expect(conflicts.map(\.pid) == [202, 303])
+    expect(conflicts.map(\.pid) == [202, 303])
 }
 
-@Test func profilePoliciesKeepDemoIndependentAndFormalStrict() {
-    #expect(!RuntimeCompatibilityStatus.untested.blocks(.development))
-    #expect(RuntimeCompatibilityStatus.untested.blocks(.formal))
+func testProfilePoliciesKeepDemoIndependentAndFormalStrict() {
+    expect(!RuntimeCompatibilityStatus.untested.blocks(.development))
+    expect(RuntimeCompatibilityStatus.untested.blocks(.formal))
 }
 
-@Test func formalReportsUntestedPythonInsteadOfMissing() throws {
+func testFormalReportsUntestedPythonInsteadOfMissing() throws {
     let fixture = try RuntimeFixture()
     let python = try fixture.executable(".venv/bin/python")
     fixture.runner.pythonVersions[python.path] = "3.12.9"
@@ -192,18 +192,18 @@ final class FakeRunner: RuntimeCommandRunning, @unchecked Sendable {
         .assess(projectRoot: fixture.root, profile: .formal,
                 selection: fixture.selection, enforceSavedIdentity: false)
     let component = result.components.first { $0.id == "python" }
-    #expect(component?.status == .untested)
-    #expect(!result.ready)
+    expect(component?.status == .untested)
+    expect(!result.ready)
 }
 
-@Test func manifestRejectsUnknownSchema() throws {
+func testManifestRejectsUnknownSchema() throws {
     let fixture = try RuntimeFixture()
     let path = fixture.root.appendingPathComponent("config/sandbox/runtime_compatibility.json")
     let unsupported = try String(contentsOf: path, encoding: .utf8)
         .replacingOccurrences(of: "\"schema_version\":1", with: "\"schema_version\":99")
     try Data(unsupported.utf8).write(to: path)
-    #expect(throws: RuntimeManifestError.unsupportedSchema(99)) {
-        try RuntimeCompatibilityManifest.load(projectRoot: fixture.root)
+    expectThrows(RuntimeManifestError.unsupportedSchema(99)) {
+        _ = try RuntimeCompatibilityManifest.load(projectRoot: fixture.root)
     }
 }
 }
@@ -225,6 +225,12 @@ final class RuntimeFixture {
         gz = root.appendingPathComponent("gazebo/bin/gz")
         opencv = root.appendingPathComponent("opencv@4")
         qt = root.appendingPathComponent("qt@5")
+        try FileManager.default.createDirectory(
+            at: opencv, withIntermediateDirectories: true
+        )
+        try FileManager.default.createDirectory(
+            at: qt, withIntermediateDirectories: true
+        )
         try writeManifest()
         for path in ["Makefile", "CMakeLists.txt", "Tools/simulation/gz/.keep", ".git/HEAD"] {
             let file = px4.appendingPathComponent(path)

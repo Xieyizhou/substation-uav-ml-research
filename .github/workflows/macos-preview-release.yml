@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Run Swift tests
-        run: swift test --package-path apps/macos/SandboxApp
+        run: ./scripts/test_macos_app.sh
 
       - name: Build preview package
         run: ./scripts/package_macos_release.sh "${{ inputs.version }}"

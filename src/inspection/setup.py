@@ -41,11 +41,18 @@ class SetupReport:
     required_count: int
     items: tuple[SetupItem, ...]
     next_step: str
+    journey: tuple[dict, ...]
+    artifact_locations: dict
 
     def to_record(self):
         return {
-            **{key: value for key, value in self.__dict__.items() if key != "items"},
+            **{
+                key: value
+                for key, value in self.__dict__.items()
+                if key not in {"items", "journey"}
+            },
             "items": [item.to_record() for item in self.items],
+            "journey": list(self.journey),
         }
 
 
@@ -101,14 +108,52 @@ def inspect_setup(config: InspectionConfig, probe=None) -> SetupReport:
     required = tuple(item for item in items if item.required)
     ready_count = sum(item.status == "ready" for item in required)
     ready = ready_count == len(required)
+    journey = _journey(config, ready)
     next_step = (
         "Open Experiments and run the Demo classifier."
         if ready and config.profile == "demo" else
+        "Open Workbench to train or inspect a verified model."
+        if ready and journey[1]["status"] == "complete" else
         "Open Operator and run one flight smoke."
         if ready else
         "Resolve the required items below, then select Check again."
     )
-    return SetupReport(1, config.profile, ready, ready_count, len(required), items, next_step)
+    return SetupReport(
+        2, config.profile, ready, ready_count, len(required), items, next_step,
+        journey, {
+            "managed_jobs": config.sandbox_jobs_root.relative_to(
+                config.project_root
+            ).as_posix(),
+            "flight_smoke": "outputs/sandbox/flight_smoke",
+            "workbench": config.workbench_root.relative_to(config.project_root).as_posix(),
+        },
+    )
+
+
+def _journey(config, environment_ready):
+    from src.sandbox.job_models import SandboxJobStore
+
+    jobs = SandboxJobStore(config.sandbox_jobs_root).list(200)
+    flight_complete = any(
+        job.action == "flight-smoke" and job.state == "complete" for job in jobs
+    )
+    model_ready = False
+    if config.profile == "development":
+        from src.sandbox.workbench_inference import list_verified_models
+
+        model_ready = bool(list_verified_models(config.workbench_runs_root))
+    return (
+        {"step_id": "environment", "title": "Environment check",
+         "status": "complete" if environment_ready else "blocked", "tab": "setup"},
+        {"step_id": "flight", "title": "First managed flight",
+         "status": "complete" if flight_complete else "ready" if environment_ready else "blocked",
+         "tab": "operator"},
+        {"step_id": "workbench", "title": "Verified model loop",
+         "status": "complete" if model_ready else "ready" if environment_ready else "blocked",
+         "tab": "experiments"},
+        {"step_id": "results", "title": "Inspect results and artifacts",
+         "status": "ready" if flight_complete or model_ready else "blocked", "tab": "overview"},
+    )
 
 
 def _item(item_id, title, found, required, detail, action="", command="", docs_url=""):

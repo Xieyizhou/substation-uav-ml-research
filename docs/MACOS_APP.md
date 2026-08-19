@@ -98,15 +98,17 @@ Sandbox versions.
 Run from the repository root:
 
 ```bash
-swift test --package-path apps/macos/SandboxApp
+./scripts/test_macos_app.sh
 ./scripts/build_macos_app.sh release
 open "dist/UAV Research Sandbox.app"
 ```
 
 The build script uses SwiftPM when full Xcode is selected. With Command Line
-Tools only, it uses the installed macOS SDK directly. SwiftPM tests still
-require a matching compiler and SDK; installing a stable Xcode release is the
-recommended development setup. The script creates an ad-hoc-signed local
+Tools only, it uses the installed macOS SDK directly. App tests intentionally
+require a single full-Xcode toolchain so XCTest, the compiler, and SDK modules
+cannot come from incompatible installations. The test script prints the
+selected Xcode, Swift, and SDK versions and gives a direct `xcode-select`
+instruction when only Command Line Tools are active. The build creates an ad-hoc-signed local
 application, and the generated `dist/` directory is ignored by Git.
 
 The status page polls five read-only loopback endpoints every five seconds. It

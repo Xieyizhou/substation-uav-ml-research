@@ -18,29 +18,33 @@ does not count as research evidence.
   recipes, checkpoint resume, ONNX equivalence, replay, and comparison.
 - [x] Complete a full 640-pixel Workbench run through training, validation,
   ONNX export, replay, and receipt verification.
-- [ ] Rebuild the latest unsigned Beta and repeat clean-install plus one
+- [x] Rebuild the latest unsigned Beta and repeat clean-install plus one
   App-managed Development flight acceptance on the release commit.
-- [ ] Publish the GitHub Beta with a first-run guide and verified checksums.
+- [x] Publish the GitHub Beta with a first-run guide and verified checksums.
 
 ## Sandbox v1.1 — Public Beta stabilization
 
 - Validate Demo installation on the supported GitHub macOS matrix.
-- Validate one documented Development workflow from runtime discovery through
+- [x] Validate one documented Development workflow from runtime discovery through
   PX4/Gazebo flight, confirmed landing, cleanup, and receipt inspection.
-- Improve first-run guidance, artifact discovery, storage reporting, and
+- [x] Improve first-run guidance, artifact discovery, storage reporting, and
   actionable failure summaries from early-user feedback.
+- [x] Make macOS test jobs require one full Xcode toolchain and fail clearly
+  when only mismatched Command Line Tools/SDK modules are available.
+- [x] Add executable UI-state regression checks for tab persistence, polling,
+  onboarding navigation, and controlled inference actions.
 - Keep advanced workflows repository-backed; do not bundle PX4, Gazebo,
   datasets, model weights, or the ML Python environment in the App.
 
 ## Sandbox v1.2 — Visual inference workbench
 
-- Select a completed, receipt-verified Workbench candidate for local inference.
-- Accept a local PNG/JPEG through the native file picker, run its fixed ONNX
+- [x] Select a completed, receipt-verified Workbench candidate for local inference.
+- [x] Accept a local PNG/JPEG through the native file picker, run its fixed ONNX
   preprocessing and threshold, and render boxes, classes, confidence, and
   latency without exposing arbitrary commands or model paths.
-- Save identity-bound inference results and support side-by-side candidate
+- [x] Save identity-bound inference results and support side-by-side candidate
   comparison on the same image.
-- Extend the same boundary to recording replay and live Gazebo camera frames
+- [ ] Extend the same boundary to recording replay and live Gazebo camera frames
   after single-image inference is stable.
 
 ## Sandbox v1.3 — Detection-assisted scene and planning maps

@@ -16,6 +16,8 @@ from src.sandbox.workbench_lifecycle import (
     inspect_workbench_run, replay_workbench_run,
 )
 from src.sandbox.workbench_run_guard import exclusive_workbench_run
+from src.sandbox.workbench_inference import run_image_inference
+from src.sandbox.workbench_receipt import materialize_workbench_receipt
 from src.sandbox.workbench_runner import _prepare_view, run_workbench_experiment
 from src.sandbox.workbench_equivalence import calibration_images
 
@@ -222,6 +224,79 @@ class WorkbenchRunnerTests(unittest.TestCase):
             for path in selected
         }
         self.assertEqual(selected_classes, {0, 1, 2, 3})
+
+    def _verified_run(self):
+        best, _, onnx, validation, replay = self.completed_stages()
+        write_json(self.run_root / "validation.json", validation)
+        gate = {"passed": True}
+        write_json(self.run_root / "onnx_equivalence.json", gate)
+        write_json(self.run_root / "replay.json", replay)
+        materialize_workbench_receipt(
+            self.root, self.run_root, self.recipe, best, onnx, gate, replay,
+            {"status": "complete"},
+        )
+
+    def test_verified_local_image_inference_writes_identity_bound_result(self):
+        self._verified_run()
+        source = self.root / "source.png"
+        Image.new("RGB", (80, 60), "white").save(source)
+
+        def predict(_model, _image):
+            return ([{
+                "class_id": 0, "class_name": "transformer", "confidence": 0.9,
+                "xyxy_pixels": [5.0, 5.0, 40.0, 35.0],
+            }], 12.5)
+
+        output = self.root / "inference/inference-1"
+        result = run_image_inference(
+            self.runs, self.recipe.experiment_id, source, output, predictor=predict
+        )
+        self.assertFalse(result["formal_evidence"])
+        self.assertEqual(result["results"]["primary"]["detection_count"], 1)
+        self.assertEqual(result["results"]["primary"]["threshold"], 0.42)
+        self.assertTrue((output / "primary.png").is_file())
+        self.assertTrue((output / "result.json").is_file())
+
+    def test_operator_image_inference_accepts_only_managed_inbox_name(self):
+        self._verified_run()
+        config = InspectionConfig(
+            self.root, self.root / "plan.json", self.root / "collection",
+            self.root / "px4", profile="development",
+        )
+        config.workbench_inbox_root.mkdir(parents=True)
+        Image.new("RGB", (16, 16), "white").save(
+            config.workbench_inbox_root / "image.png"
+        )
+        command = build_command(config, "workbench-image-infer", parameters={
+            "staged_name": "image.png", "experiment_id": self.recipe.experiment_id,
+        })
+        self.assertEqual(command.workflow, "visual_workbench_image_inference")
+        self.assertFalse(command.requires_runtime_idle)
+        self.assertIn("workbench-image-infer", command.argv)
+        with self.assertRaisesRegex(ValueError, "inbox filename"):
+            build_command(config, "workbench-image-infer", parameters={
+                "staged_name": "../image.png",
+                "experiment_id": self.recipe.experiment_id,
+            })
+        with self.assertRaisesRegex(ValueError, "experiment identifier"):
+            build_command(config, "workbench-image-infer", parameters={
+                "staged_name": "image.png", "experiment_id": "../experiment",
+            })
+        with self.assertRaisesRegex(ValueError, "must differ"):
+            build_command(config, "workbench-image-infer", parameters={
+                "staged_name": "image.png",
+                "experiment_id": self.recipe.experiment_id,
+                "comparison_experiment_id": self.recipe.experiment_id,
+            })
+
+    def test_local_image_inference_rejects_unverified_model_and_bad_input(self):
+        source = self.root / "source.gif"
+        source.write_bytes(b"GIF89a")
+        with self.assertRaisesRegex(ValueError, "PNG or JPEG"):
+            run_image_inference(
+                self.runs, self.recipe.experiment_id, source,
+                self.root / "inference/bad",
+            )
 
 
 if __name__ == "__main__":

@@ -29,7 +29,8 @@ were completed on 2026-07-28. Six live-LiDAR round trips completed with
 confirmed landing, no physical collisions, and no inflated-buffer entries. A
 300-frame slice of the stability capture also passed deterministic replay.
 
-Sandbox v1 is now locally Beta-ready. Its clean-install gate builds a
+Sandbox v1 is now available as the integrity-verifiable unsigned 0.6.4 Beta.
+Its clean-install gate builds a
 Git-tracked source copy, creates a fresh virtual environment, runs bootstrap
 and the deterministic Demo, inspects both receipts, and verifies the loopback
 App shell plus its profile, storage, and operator APIs. The gate passed on
@@ -47,17 +48,28 @@ macro-F1, 80.51% small-object recall, and 1.90% no-target false-positive rate;
 its 6,941-frame ONNX replay completed without failed frames. These outputs
 remain development experiments rather than frozen deployment packages.
 
+Workbench now also exposes receipt-verified local image inference. The native
+App stages a selected PNG/JPEG in a managed inbox; the browser can select only
+verified experiment IDs, never a model path, source path, threshold, or shell
+command. A run rechecks the completion receipt and ONNX hashes, applies each
+model's frozen validation threshold, renders annotated images, and stores an
+identity-bound development result. A dual-model acceptance run completed on a
+1920×1080 validation image with both the 640 Full and 416 Quick candidates.
+
 ## Product Milestone Status
 
 - **Complete:** Sandbox v1 local Beta core, native App shell, Demo and
   Development profiles, runtime compatibility management, guarded jobs,
   recording and storage inspection, unsigned packaging, and the visual model
   workbench.
-- **Active:** rebuild the latest unsigned Beta, repeat clean-install validation,
-  complete one release-commit Development flight acceptance, and publish the
-  GitHub Beta with first-run guidance.
-- **Next:** local single-image inference using a selected verified Workbench
-  model, followed by recording and live-camera inference.
+- **Complete:** 0.6.4 unsigned Beta publication, clean-install validation,
+  App-managed Development flight acceptance, four-step first-run guidance,
+  verified single-image inference, and same-image candidate comparison.
+- **Active:** stabilize public-Beta feedback and run the full-Xcode Swift/UI
+  gates in CI; Command Line Tools-only machines now fail with a direct setup
+  instruction instead of using an incompatible SDK/module cache.
+- **Next:** apply the same verified inference boundary to recording replay and
+  live Gazebo camera frames.
 - **Later:** detection-assisted scene and planning-map generation. Flight-ready
   maps require calibrated multi-view pose plus depth or LiDAR; a single RGB
   image may only create a draft observation, never an automatically trusted
@@ -185,13 +197,12 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Next Product Priorities
 
-1. Build and verify the versioned unsigned Beta from the latest clean commit.
-2. Repeat the clean-install gate and one App-managed Development PX4/Gazebo
-   flight acceptance on that commit.
-3. Publish the GitHub Beta and collect first-run installation, runtime, and
-   workflow feedback.
-4. Add verified-model selection and local image inference to Workbench.
-5. Extend structured multi-frame detections toward reviewed scene layouts and,
+1. Collect first-run installation, runtime, and workflow feedback for 0.6.4.
+2. Extend verified inference to existing recording frames and live Gazebo
+   camera frames without changing model or threshold selection rules.
+3. Distinguish cold model-load latency from warm inference latency in App
+   diagnostics and replay reports.
+4. Extend structured multi-frame detections toward reviewed scene layouts and,
    only after geometry and safety validation, draft planning maps.
 
 ## Optional Research Priorities
@@ -205,9 +216,9 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Release State
 
-- Current product milestone: Sandbox v1 has passed its local Beta installation
-  gate; the latest release-commit install/Development flight acceptance and
-  public GitHub Beta publication are next.
+- Current product milestone: Sandbox v1 unsigned Beta 0.6.4 is published and
+  has passed clean installation plus Development flight acceptance. The local
+  image inference loop is implemented for receipt-verified Workbench models.
 - No research release tag is implied until the reviewed summary is committed
   and explicitly published.
 - The predecessor resume demo and its releases remain in

@@ -76,6 +76,14 @@ class InspectionService:
 
         return serialize(workbench_run(self.config, experiment_id))
 
+    def workbench_inference(self, inference_id):
+        from src.inspection.workbench import workbench_inference
+
+        return serialize(workbench_inference(self.config, inference_id))
+
+    def workbench_inference_image(self, inference_id, name):
+        return self.config.workbench_inference_image(inference_id, name)
+
     def lidar(self):
         from src.inspection.lidar import lidar_summary
 

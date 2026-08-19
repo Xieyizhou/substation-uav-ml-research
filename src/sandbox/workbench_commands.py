@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+import secrets
 import sys
+from datetime import datetime, timezone
 
 from src.sandbox.command_models import SandboxCommand
 from src.sandbox.workbench_recipe import materialize_workbench_recipe
@@ -61,6 +63,55 @@ def build_workbench_command(config, action, parameters):
                 "--dataset-id", str(values["dataset_id"]),
                 *mapping_args,
             ), 7_200.0, workflow="visual_workbench_dataset_import",
+            requires_runtime_idle=False,
+        )
+    if action == "workbench-image-infer":
+        from src.sandbox.workbench_inference import verified_model
+
+        values = parameters if isinstance(parameters, dict) else {}
+        allowed = {"staged_name", "experiment_id", "comparison_experiment_id"}
+        if set(values) - allowed or not values.get("staged_name") or not values.get("experiment_id"):
+            raise ValueError(
+                "image inference accepts staged_name, experiment_id, and optional comparison"
+            )
+        source = config.workbench_inbox_file(str(values["staged_name"]))
+        if not source.is_file():
+            raise ValueError("selected workbench inbox image does not exist")
+        primary = str(values["experiment_id"])
+        comparison = values.get("comparison_experiment_id") or None
+        from src.sandbox.workbench_recipe import IDENTIFIER
+
+        if not IDENTIFIER.fullmatch(primary):
+            raise ValueError("invalid workbench experiment identifier")
+        verified_model(config.workbench_runs_root / primary)
+        if comparison:
+            if not IDENTIFIER.fullmatch(str(comparison)):
+                raise ValueError("invalid comparison experiment identifier")
+            if str(comparison) == primary:
+                raise ValueError("comparison model must differ from primary model")
+            verified_model(config.workbench_runs_root / str(comparison))
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        inference_id = f"inference-{stamp}-{secrets.token_hex(4)}"
+        output = config.workbench_inference(inference_id)
+        argv = (
+            sys.executable, "main.py", "sandbox", "--project-root",
+            str(config.project_root), "--profile", "development",
+            "workbench-image-infer", "--runs-root", str(config.workbench_runs_root),
+            "--experiment-id", primary, "--source", str(source),
+            "--output", str(output),
+        )
+        if comparison:
+            argv += ("--comparison-experiment-id", str(comparison))
+        project_root = Path(config.project_root).resolve()
+        relative_result = (output / "result.json").resolve().relative_to(
+            project_root
+        ).as_posix()
+        return SandboxCommand(
+            action, argv, 300.0, workflow="visual_workbench_image_inference",
+            expected_outputs=(relative_result,),
+            budget_paths=(config.workbench_inference_root.resolve().relative_to(
+                project_root
+            ).as_posix(),),
             requires_runtime_idle=False,
         )
     values = _parameters(parameters)
