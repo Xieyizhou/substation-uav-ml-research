@@ -209,8 +209,10 @@
         state.map.display_name = `${state.map.display_name} copy`;
         state.source = 'draft'
       }
+      const record = clone(state.map);
+      delete record.map_identity_sha256;
       state.detail = await post('/api/maps/draft', {
-        map: state.map
+        map: record
       });
       state.map = clone(state.detail.map);
       state.catalog = await api('/api/maps');
