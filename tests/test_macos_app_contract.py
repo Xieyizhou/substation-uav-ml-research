@@ -22,7 +22,7 @@ class MacOSAppContractTests(unittest.TestCase):
         )
         self.assertEqual(value["CFBundlePackageType"], "APPL")
         self.assertEqual(value["CFBundleIconFile"], "AppIcon")
-        self.assertEqual(value["CFBundleShortVersionString"], "0.6.2")
+        self.assertEqual(value["CFBundleShortVersionString"], "0.6.3")
 
     def test_bundle_version_matches_shared_manifest(self):
         import json
