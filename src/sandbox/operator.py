@@ -17,10 +17,9 @@ from src.sandbox.job_process import (
 )
 from src.sandbox.job_runtime import monitor_process
 from src.sandbox.workflow import (
-    materialize_workflow_receipt,
-    materialize_workflow_recipe,
+    materialize_workflow_receipt, materialize_workflow_recipe,
 )
-from src.sandbox.storage_policy import OutputBudgetExceeded, require_output_budget
+from src.sandbox.storage_policy import OutputBudgetExceeded, capture_output_baseline, require_output_budget
 
 
 class OperatorBusy(RuntimeError):
@@ -178,6 +177,8 @@ class SandboxOperator:
             command = build_command(self.config, action, scenario_id, parameters)
             try:
                 budget = require_output_budget(self.config, command.action)
+                budget["output_baseline_bytes"] = capture_output_baseline(
+                    self.config, command.budget_paths)
             except OutputBudgetExceeded as error:
                 raise OperatorBusy(str(error)) from error
             conflicts = self._runtime_conflicts() if command.requires_runtime_idle else []

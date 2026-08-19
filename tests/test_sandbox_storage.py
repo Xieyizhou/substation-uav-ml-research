@@ -21,6 +21,8 @@ from src.sandbox.retention import (
 from src.sandbox.storage_policy import (
     GIB,
     OutputBudgetExceeded,
+    capture_output_baseline,
+    output_budget_violation,
     require_output_budget,
     storage_summary,
 )
@@ -87,6 +89,28 @@ class SandboxStorageTests(unittest.TestCase):
                 require_output_budget(self.config, "collection-gate")
             doctor = require_output_budget(self.config, "doctor")
         self.assertTrue(doctor["passed"])
+
+    def test_tracked_output_budget_ignores_unrelated_disk_decline(self):
+        output = self.root / "outputs/sandbox/flight_smoke"
+        output.mkdir(parents=True)
+        baseline = capture_output_baseline(
+            self.config, ("outputs/sandbox/flight_smoke",)
+        )
+        job = SandboxJob(
+            "flight", "flight-smoke", "running", utc_now(), 60.0,
+            output_budget_bytes=10, disk_free_bytes_at_start=1000,
+            disk_reserve_bytes=100, output_baseline_bytes=baseline,
+        )
+        usage = shutil.disk_usage(self.root)
+        changed = type(usage)(usage.total, usage.total - 500, 500)
+        with patch(
+            "src.sandbox.storage_policy.shutil.disk_usage", return_value=changed
+        ):
+            self.assertIsNone(output_budget_violation(self.config, job))
+            (output / "run.log").write_bytes(b"x" * 11)
+            self.assertIn(
+                "output allowance", output_budget_violation(self.config, job)
+            )
 
     def test_retention_plan_keeps_newest_and_requires_explicit_apply(self):
         root = self._old_experiments()

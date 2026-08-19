@@ -17,4 +17,5 @@ class SandboxCommand:
     workflow: str = "managed_operation"
     artifacts: tuple[WorkflowArtifact, ...] = ()
     expected_outputs: tuple[str, ...] = ()
+    budget_paths: tuple[str, ...] = ()
     requires_runtime_idle: bool = True

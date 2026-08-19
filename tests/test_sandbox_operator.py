@@ -104,6 +104,9 @@ class SandboxOperatorTests(unittest.TestCase):
             build_command(self.config, "flight-smoke", "blind-s")
         smoke = build_command(self.config, "flight-smoke", "development-s")
         self.assertNotIn("blind-s", smoke.argv)
+        self.assertEqual(
+            smoke.budget_paths, ("outputs/sandbox/flight_smoke",)
+        )
         view = build_command(self.config, "training-view-v2")
         self.assertIn("training-view-materialize", view.argv)
         with self.assertRaisesRegex(ValueError, "materialize the v2 training view"):
@@ -210,6 +213,7 @@ class SandboxOperatorTests(unittest.TestCase):
         for name in (
             "ownership_token", "recovered", "output_budget_bytes",
             "disk_free_bytes_at_start", "disk_reserve_bytes",
+            "output_baseline_bytes",
             "failure_code", "failure_retryable",
         ):
             record.pop(name)

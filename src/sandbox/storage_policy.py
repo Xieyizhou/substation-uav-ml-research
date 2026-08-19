@@ -72,13 +72,32 @@ def require_output_budget(config, action):
     return result
 
 
+def capture_output_baseline(config, paths):
+    baseline = {}
+    root = config.project_root.resolve()
+    for value in paths:
+        path = (root / value).resolve()
+        try:
+            relative = path.relative_to(root).as_posix()
+        except ValueError as error:
+            raise ValueError("budget path must stay inside the project") from error
+        baseline[relative] = directory_size(path)
+    return baseline
+
+
 def output_budget_violation(config, job):
     usage = shutil.disk_usage(config.project_root)
     if usage.free < job.disk_reserve_bytes:
         return "disk budget exceeded: configured free-space reserve was reached"
-    if job.disk_free_bytes_at_start is None:
+    if job.output_baseline_bytes:
+        consumed = sum(
+            max(0, directory_size(config.project_root / path) - baseline)
+            for path, baseline in job.output_baseline_bytes.items()
+        )
+    elif job.disk_free_bytes_at_start is not None:
+        consumed = max(0, job.disk_free_bytes_at_start - usage.free)
+    else:
         return None
-    consumed = max(0, job.disk_free_bytes_at_start - usage.free)
     if consumed > job.output_budget_bytes:
         return "disk budget exceeded: managed job consumed its output allowance"
     return None

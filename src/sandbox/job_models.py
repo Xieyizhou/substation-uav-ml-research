@@ -42,6 +42,7 @@ class SandboxJob:
     output_budget_bytes: int = 0
     disk_free_bytes_at_start: int | None = None
     disk_reserve_bytes: int = 0
+    output_baseline_bytes: dict[str, int] = field(default_factory=dict)
     exit_code: int | None = None
     error: str | None = None
     failure_code: str | None = None
@@ -134,4 +135,5 @@ def new_preparing_job(action, command, budget, ownership_token):
         output_budget_bytes=budget["budget_bytes"],
         disk_free_bytes_at_start=budget["free_bytes"],
         disk_reserve_bytes=budget["reserve_bytes"],
+        output_baseline_bytes=budget.get("output_baseline_bytes", {}),
     )

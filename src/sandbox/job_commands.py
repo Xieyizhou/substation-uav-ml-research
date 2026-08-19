@@ -114,6 +114,7 @@ def _flight_command(config, scenario_id):
         600.0,
         str(scenario_id),
         workflow="flight_smoke",
+        budget_paths=("outputs/sandbox/flight_smoke",),
     )
 
 
