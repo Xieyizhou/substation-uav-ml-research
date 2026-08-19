@@ -43,6 +43,18 @@ def obstacle_footprint_cells(obstacle, width, height) -> set[Cell]:
         }
     elif obstacle_type == "cell":
         cells = {(int(obstacle["x"]), int(obstacle["y"]))}
+    elif obstacle_type == "cells":
+        values = obstacle.get("cells")
+        if not isinstance(values, list):
+            raise ValueError("cells obstacle requires a cells list")
+        cells = {
+            (int(value[0]), int(value[1]))
+            for value in values
+            if isinstance(value, list) and len(value) == 2
+        }
+        if len(cells) != len(values):
+            name = obstacle.get("name", "<unnamed>")
+            raise ValueError(f"cells obstacle {name} contains invalid cells")
     else:
         name = obstacle.get("name", "<unnamed>")
         raise ValueError(f"Unsupported obstacle type for {name}: {obstacle_type}")
@@ -280,6 +292,9 @@ def validate_obstacle_config(config, allow_diagonal=False, flight_altitude_m=Non
                 warnings.append(
                     f"rect obstacle {name} extends outside the map and will be clipped"
                 )
+        elif obstacle_type == "cells":
+            if not isinstance(obstacle.get("cells"), list) or not obstacle["cells"]:
+                warnings.append(f"cells obstacle {name} must contain at least one cell")
         elif obstacle_type != "cell":
             warnings.append(f"obstacle {name} has unsupported type {obstacle_type}")
         for field in ["z_min_m", "z_max_m"]:
