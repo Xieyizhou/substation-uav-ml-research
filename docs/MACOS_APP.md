@@ -22,6 +22,9 @@ The native application provides:
 - an embedded `WKWebView` restricted to loopback navigation;
 - a native read-only status page for profile, environment, runtime, storage,
   and managed-job health;
+- a repository-backed Map Studio for validated 2D custom substations,
+  immutable simulator/planner revisions, controlled map flights, live
+  trajectory display, and audited development-dataset registration;
 - a stable application icon and versioned bundle metadata;
 - bounded service logs; and
 - graceful interrupt, terminate, and kill fallback for a service started by
@@ -135,9 +138,9 @@ Create a versioned DMG, ZIP, release manifest, and checksum list from the
 repository root:
 
 ```bash
-./scripts/package_macos_release.sh 0.6.5
+./scripts/package_macos_release.sh 0.7.0
 cd dist/releases
-shasum -a 256 -c UAV-Research-Sandbox-v0.6.5-macos-*-SHA256SUMS
+shasum -a 256 -c UAV-Research-Sandbox-v0.7.0-macos-*-SHA256SUMS
 ```
 
 The DMG presents the App beside an Applications shortcut and includes a short
@@ -174,9 +177,9 @@ worktree, records the exact source commit, creates a versioned ZIP and DMG, and
 binds their byte counts and SHA256 identities into a verified release manifest:
 
 ```bash
-./scripts/package_macos_beta.sh 0.6.5
+./scripts/package_macos_beta.sh 0.7.0
 cd dist/releases
-shasum -a 256 -c UAV-Research-Sandbox-v0.6.5-macos-*-SHA256SUMS
+shasum -a 256 -c UAV-Research-Sandbox-v0.7.0-macos-*-SHA256SUMS
 ```
 
 The manual **macOS unsigned Beta release** workflow repeats Swift tests and
@@ -202,7 +205,7 @@ building when either credential is absent:
 ```bash
 MACOS_CODESIGN_IDENTITY="Developer ID Application: Example (TEAMID)" \
 MACOS_NOTARY_PROFILE="uav-sandbox-notary" \
-  ./scripts/package_macos_notarized_beta.sh 0.6.5
+  ./scripts/package_macos_notarized_beta.sh 0.7.0
 ```
 
 Create the named notary profile with `xcrun notarytool store-credentials` first.

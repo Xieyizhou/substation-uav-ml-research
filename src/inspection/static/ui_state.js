@@ -1,11 +1,11 @@
 (function(root){
   const routes=new Set([
-    'fly/run','fly/recordings','model/datasets','model/train',
+    'maps/studio','fly/run','fly/recordings','model/datasets','model/train',
     'model/runs','model/inference','results/visual','results/lidar',
     'results/acceptance','activity/jobs','activity/logs',
     'activity/environment','activity/storage',
   ]);
-  const defaults={home:'model/datasets',fly:'fly/run',model:'model/datasets',results:'results/visual',activity:'activity/jobs'};
+  const defaults={home:'model/datasets',maps:'maps/studio',fly:'fly/run',model:'model/datasets',results:'results/visual',activity:'activity/jobs'};
   const legacy={
     setup:'model/datasets',overview:'model/datasets',experiments:'model/train',research:'results/visual',
     lidar:'results/lidar',preflight:'results/lidar',frames:'fly/recordings',

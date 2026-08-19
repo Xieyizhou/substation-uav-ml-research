@@ -60,10 +60,20 @@ process.stdout.write(JSON.stringify(value));
             'data-route="fly/run"', 'data-route="model/datasets"',
             'data-route="results/visual"', 'data-route="activity/jobs"',
             'id="dataset-class-summary"', 'id="dataset-samples"',
+            'data-route="maps/studio"', 'id="map-canvas"',
+            'id="map-flight-canvas"', 'id="map-record-start"',
+            'id="map-record-register"', 'id="map-recording-audit"',
         ):
             self.assertIn(identifier, html)
+        canvas_script = (STATIC / "map_canvas.js").read_text(encoding="utf-8")
+        action_script = (STATIC / "map_studio_actions.js").read_text(encoding="utf-8")
+        map_script = (STATIC / "map_flight.js").read_text(encoding="utf-8")
+        self.assertIn("root.MapCanvas", canvas_script)
+        self.assertIn("root.MapStudioActions", action_script)
+        self.assertIn("startSelected('map-record')", map_script)
+        self.assertIn("/api/maps/register", map_script)
         self.assertNotIn('id="operator-action"', html)
-        self.assertEqual(html.count('class="workflow-step'), 5)
+        self.assertEqual(html.count('class="workflow-step'), 6)
         self.assertIn('class="workflow-step active"', html)
         self.assertLess(
             html.index('id="setup-journey"'), html.index('id="setup-progress"')

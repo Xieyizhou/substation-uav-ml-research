@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="/profile.css">
   <link rel="stylesheet" href="/setup.css">
   <link rel="stylesheet" href="/navigation.css">
+  <link rel="stylesheet" href="/map_studio.css">
 </head>
 <body>
   <header class="app-toolbar">
@@ -29,11 +30,12 @@
     <section class="sidebar-section workflow-panel">
       <p class="sidebar-label">Workflow</p>
       <nav class="primary-nav" aria-label="Research workflow" role="tablist">
-        <button class="workflow-step" data-route="fly/run" role="tab" aria-controls="fly"><span class="step-number">1</span><span><b>Flight Console</b><small>Capture missions and data</small></span></button>
-        <button class="workflow-step active" data-route="model/datasets" role="tab" aria-controls="model"><span class="step-number">2</span><span><b>Dataset Manager</b><small>Prepare and manage datasets</small></span></button>
-        <button class="workflow-step" data-route="model/train" role="tab" aria-controls="model"><span class="step-number">3</span><span><b>Training Studio</b><small>Train models with YOLO</small></span></button>
-        <button class="workflow-step" data-route="model/inference" role="tab" aria-controls="model"><span class="step-number">4</span><span><b>Model Tester</b><small>Evaluate and compare models</small></span></button>
-        <button class="workflow-step" data-route="results/visual" role="tab" aria-controls="results"><span class="step-number">5</span><span><b>Report Viewer</b><small>Review results and artifacts</small></span></button>
+        <button class="workflow-step" data-route="maps/studio" role="tab" aria-controls="maps"><span class="step-number">1</span><span><b>Map Studio</b><small>Build a substation map</small></span></button>
+        <button class="workflow-step" data-route="fly/run" role="tab" aria-controls="fly"><span class="step-number">2</span><span><b>Flight Console</b><small>Capture missions and data</small></span></button>
+        <button class="workflow-step active" data-route="model/datasets" role="tab" aria-controls="model"><span class="step-number">3</span><span><b>Dataset Manager</b><small>Prepare and manage datasets</small></span></button>
+        <button class="workflow-step" data-route="model/train" role="tab" aria-controls="model"><span class="step-number">4</span><span><b>Training Studio</b><small>Train models with YOLO</small></span></button>
+        <button class="workflow-step" data-route="model/inference" role="tab" aria-controls="model"><span class="step-number">5</span><span><b>Model Tester</b><small>Evaluate and compare models</small></span></button>
+        <button class="workflow-step" data-route="results/visual" role="tab" aria-controls="results"><span class="step-number">6</span><span><b>Report Viewer</b><small>Review results and artifacts</small></span></button>
       </nav>
     </section>
     <section class="sidebar-section resource-panel">
@@ -66,11 +68,34 @@
       <article><h3>Dataset boundaries</h3><div id="roles" class="role-grid"></div></article>
     </section>
 
+    <section id="maps" class="panel" role="tabpanel">
+      <div class="map-studio-heading"><div><p class="kicker">SANDBOX DESIGN</p><h2>Map Studio</h2><p>Build a substation, verify safe routes, then send a frozen revision to Flight Console.</p></div><div class="heading-actions"><button id="map-new">New map</button><button id="map-save">Save draft</button><button id="map-revision" class="primary-button">Create revision</button></div></div>
+      <div class="map-studio-shell">
+        <aside class="map-library">
+          <section><div class="library-title"><p class="card-label">Maps</p><button id="map-delete" title="Delete selected draft">Delete</button></div><div id="map-list" class="map-list"></div></section>
+          <section><p class="card-label">Equipment library</p><p class="library-note">Click an asset to place it at the map center.</p><div id="map-assets" class="asset-library"></div></section>
+          <section class="map-history-controls"><button id="map-undo">Undo</button><button id="map-redo">Redo</button><label class="bundle-button">Import bundle<input id="map-import" type="file" accept=".zip,application/zip"></label></section>
+        </aside>
+        <section class="map-canvas-column">
+          <div class="map-toolbar"><label>Mission<select id="map-mission"></select></label><label>Overlay<select id="map-overlay"><option value="all">Route + safety</option><option value="route">Route only</option><option value="objects">Objects only</option></select></label><span id="map-coordinates">Map coordinates in metres</span></div>
+          <div class="map-canvas-wrap"><svg id="map-canvas" viewBox="0 0 600 600" role="img" aria-label="Editable top-down substation map"></svg></div>
+          <div class="map-legend"><span><i class="legend-planned"></i> Planned route</span><span><i class="legend-return"></i> Return route</span><span><i class="legend-safety"></i> Safety envelope</span><span><i class="legend-start"></i> Takeoff</span></div>
+        </section>
+        <aside class="map-inspector">
+          <div><p class="card-label">Map settings</p><label>Name<input id="map-name" maxlength="80"></label><div class="property-grid"><label>Width (m)<input id="map-width" type="number" min="16" max="60" step="1"></label><label>Height (m)<input id="map-height" type="number" min="16" max="60" step="1"></label></div><div class="property-grid"><label>Start east<input id="map-start-east" type="number" step="0.5"></label><label>Start north<input id="map-start-north" type="number" step="0.5"></label></div></div>
+          <div id="object-properties"><p class="card-label">Selected object</p><p class="empty-selection">Select an object on the canvas.</p><div class="selected-properties" hidden><label>Object ID<input id="object-id" disabled></label><label>Asset<input id="object-asset" disabled></label><div class="property-grid"><label>East<input id="object-east" type="number" step="0.5"></label><label>North<input id="object-north" type="number" step="0.5"></label></div><div class="property-grid"><label>Width<input id="object-width" type="number" step="0.5"></label><label>Depth<input id="object-depth" type="number" step="0.5"></label></div><div class="property-grid"><label>Height<input id="object-height" type="number" step="0.5"></label><label>Yaw<input id="object-yaw" type="number" step="15"></label></div><div class="inspector-actions"><button id="object-duplicate">Duplicate</button><button id="object-remove" class="danger">Remove</button></div></div></div>
+          <div><p class="card-label">Mission settings</p><label>Task type<select id="mission-type"><option value="point_to_point">Point to point</option><option value="round_trip">Round trip</option><option value="equipment_inspection">Equipment inspection</option></select></label><div id="mission-point-fields" class="property-grid"><label>Goal east<input id="mission-east" type="number" step="0.5"></label><label>Goal north<input id="mission-north" type="number" step="0.5"></label></div><label id="mission-target-field">Inspection target<select id="mission-target"></select></label><div class="property-grid"><label>Altitude<input id="mission-altitude" type="number" min="0.5" max="10" step="0.5"></label><label>Speed<input id="mission-speed" type="number" min="0.1" max="5" step="0.1"></label></div></div>
+        </aside>
+      </div>
+      <div class="map-bottom-bar"><div id="map-validation"><span class="badge warning">Not validated</span><span>Save the draft to run collision and reachability checks.</span></div><div id="map-route-summary">No route preview</div><div class="heading-actions"><a id="map-export" class="button-link" hidden>Export bundle</a><button id="map-send-flight" disabled>Next: Flight Console</button></div></div>
+    </section>
+
     <section id="fly" class="panel" role="tabpanel">
       <div class="task-page-toolbar"><div class="page-heading"><p class="kicker">SIMULATOR WORKFLOWS</p><h2>Fly &amp; Collect</h2><p>One managed flight task at a time</p></div><nav class="secondary-nav" aria-label="Fly and collect" role="tablist"><button data-route="fly/run" role="tab">Run</button><button data-route="fly/recordings" role="tab">Recordings</button></nav></div>
       <div class="subview" data-view="fly/run">
         <div class="workspace-heading"><div><p class="kicker">Flight operations</p><h2>Flight Console</h2><p>Launch a bounded simulator mission, collect data, and stop safely.</p></div></div>
         <article class="active-task-card"><div><p class="kicker">CURRENT FLIGHT</p><div id="operator-state" class="operator-state"></div></div><button id="operator-stop" class="danger" disabled>Stop safely</button></article>
+        <article class="map-flight-card"><div class="section-head"><div><p class="kicker">CUSTOM MAP RUN</p><h3>Planned route and actual trajectory</h3></div><span id="map-flight-health" class="badge warning">No map run</span></div><div class="map-flight-layout"><svg id="map-flight-canvas" viewBox="0 0 600 420" aria-label="Custom map flight trajectory"></svg><div><div id="map-flight-facts" class="flight-facts"><p>Select a validated map revision in Map Studio.</p></div><div id="map-recording-audit" class="map-recording-audit"><p>PNG recording is optional. A completed, audited recording can be registered as a development dataset.</p></div></div></div><div class="map-flight-actions"><label>Display mode<select id="map-flight-display"><option value="headless">Headless</option><option value="visual_preview">Visual Preview</option></select></label><button id="map-flight-start" disabled>Run selected map</button><button id="map-record-start" disabled>Fly and record PNG</button><button id="map-record-register" disabled>Register dataset</button><button id="map-flight-stop" class="danger" disabled>Stop safely</button></div></article>
         <article class="flight-controls"><div class="section-head"><div><h3>Simulator setup</h3><p>Headless and Visual Preview use the same scenario and flight configuration.</p></div></div><div class="flight-configuration"><label>Scenario<select id="operator-scenario"></select></label><label>Display mode<select id="operator-display-mode" aria-label="Simulator display mode"><option value="headless">Headless</option><option value="visual_preview">Visual Preview</option></select></label></div></article>
         <div class="task-action-grid">
           <article><p class="kicker">CHECK</p><h3>Flight smoke</h3><p>Launch one selected scenario and verify takeoff, route completion, landing, and cleanup.</p><button id="fly-smoke-start" data-full-profile>Run flight smoke</button></article>
@@ -123,6 +148,6 @@
   <dialog id="action-dialog" aria-labelledby="action-dialog-title" aria-describedby="action-dialog-detail"><form method="dialog" class="action-dialog-card"><span class="eyebrow">CONFIRM CONTROLLED ACTION</span><h2 id="action-dialog-title">Confirm action</h2><p id="action-dialog-detail"></p><dl id="action-dialog-facts"></dl><div class="action-dialog-controls"><button value="cancel">Cancel</button><button id="action-dialog-confirm" value="confirm">Confirm</button></div></form></dialog>
   <div id="action-status" class="action-status" role="alert" aria-live="assertive"></div>
   <footer><span id="version-label">Version unavailable</span> · Local actions use fixed commands, one-job locking, bounded timeouts, and process-group cleanup.</footer>
-  <script src="/ui_state.js"></script><script src="/navigation.js"></script><script src="/setup.js"></script><script src="/app.js"></script>
+  <script src="/ui_state.js"></script><script src="/navigation.js"></script><script src="/setup.js"></script><script src="/app.js"></script><script src="/map_canvas.js"></script><script src="/map_studio_actions.js"></script><script src="/map_studio.js"></script><script src="/map_flight.js"></script>
 </body>
 </html>

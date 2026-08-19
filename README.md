@@ -1,6 +1,6 @@
 # Substation UAV ML Research Platform
 
-> **Status: Sandbox v0.1 Candidate / Experimental Research Platform**
+> **Status: Sandbox Product 0.3 Candidate / Experimental Research Platform**
 >
 > This repository develops sensor-driven risk, traversability learning, and
 > semantic inspection planning in simulation. It is not production software,
@@ -37,6 +37,7 @@ interfaces, deterministic camera collection, and visual model evaluation.
 | ML research | Reproducible randomized worlds, automatic LiDAR truth labels, versioned datasets/model packages, deterministic 1D CNN training, and resumable paired studies |
 | Local replanning | Candidate-only evaluation and active replacement of remaining outbound waypoints |
 | Test environments | 5 coordinated Gazebo/A* maps, 5 safe destination presets per map, and map/target switching |
+| Custom map sandbox | Desktop 2D editor, deterministic immutable revisions, A* route previews, controlled flight, live trajectory, and optional dataset registration |
 | Evaluation | Structured telemetry, run manifests, plots, stage summaries, and cross-stage comparisons |
 | Reliability | Explicit failure codes, timeout-bounded runtime tasks, landing confirmation, PID-scoped cleanup, and parameter validation |
 | Developer experience | One modular `main.py` command center plus a local sandbox app for health checks, bounded jobs, recording review, and aggregate ML results |
@@ -156,6 +157,15 @@ YOLO Detect directory, then runs a bounded recipe through training, validation,
 static ONNX export, PT/ONNX equivalence, ordered replay, and an optional paired
 baseline comparison. PX4 and Gazebo are not required for this offline path.
 
+Development Profile now also includes **Map Studio**. A user can copy a
+tracked template or build a 16–60 m substation from the allow-listed equipment
+library, validate collision and reachability constraints, freeze an immutable
+revision, and send it to **Flight Console**. Headless and Visual Preview runs
+bind the same map and route identities. The console overlays the planned path,
+approximately 5 Hz MAVSDK trajectory, pose, yaw, phase, speed, altitude, and
+telemetry health. Optional PNG/truth recording must pass an audit before it can
+be registered as a development-only Workbench dataset.
+
 Completed receipt-verified runs can also process a local PNG/JPEG from the
 native App under **Model Lab → Test Image**. The model lab applies the frozen validation threshold, draws
 class/confidence boxes, records latency and hashes, and can compare two
@@ -185,7 +195,7 @@ Create a versioned preview DMG, ZIP, release manifest, and SHA256 checksum list
 with:
 
 ```bash
-./scripts/package_macos_release.sh 0.6.5
+./scripts/package_macos_release.sh 0.7.0
 ```
 
 Demo Profile runs entirely inside the App without a repository or Python.
@@ -201,7 +211,7 @@ for profiles, build requirements, preview, unsigned Beta, and future notarized
 Beta releases, plus the distribution boundary.
 
 Build the current integrity-verifiable unsigned Beta from a clean tracked
-worktree with `./scripts/package_macos_beta.sh 0.6.5`. Its manifest binds the
+worktree with `./scripts/package_macos_beta.sh 0.7.0`. Its manifest binds the
 source commit and artifact SHA256 identities while explicitly declaring that it
 is not Apple-notarized. The repository also retains a separate Developer ID and
 notarization workflow for future signed releases.

@@ -1,4 +1,4 @@
-# Sandbox v0.1 Quick Start
+# Sandbox Product 0.3 Quick Start
 
 The local App has three explicit profiles. This keeps the first-run experience
 small while preserving the stricter research boundaries used by the full
@@ -159,6 +159,31 @@ The development profile discovers the local v2 collection plan when present
 and enables managed flight, collection, replay, training-view, and validation
 actions. The App still enforces one active job, bounded timeouts, safe process
 cleanup, non-blind browsing, and fixed command construction.
+
+## Build and Fly a Custom Map
+
+Custom maps are available in Development Profile and remain local generated
+artifacts. They never modify the five tracked templates.
+
+1. Open **Map Studio** and create a map or copy a template.
+2. Place only assets from the equipment library. Set the takeoff point and a
+   point-to-point, round-trip, or equipment-inspection mission.
+3. Save the draft. Resolve every collision, boundary, label, and reachability
+   error shown by the route preview.
+4. Select **Create revision**. The revision freezes the map, Gazebo world,
+   planner obstacles, route, preview, validation result, and identities.
+5. Continue to **Flight Console**, choose **Headless** or **Visual Preview**,
+   and run the selected map. Both modes use the same revision and route.
+6. Monitor the planned route, actual trajectory, yaw, flight phase, speed,
+   altitude, and telemetry freshness. Use **Stop safely** for an active job.
+7. Optionally select **Fly and record PNG**. A completed recording with a
+   confirmed landing and synchronized truth can be registered in **Dataset
+   Manager** as `source_type: sandbox_custom_map`, `dataset_role: development`.
+
+Drafts cannot fly. Editing after revision creates a new draft state, and a
+partial or failed recording cannot be registered as training data. Map
+bundles contain only validated allow-listed map records and generated files;
+the browser cannot submit arbitrary SDF, commands, or model paths.
 
 For a macOS preview release, follow the offline and clean-install gates with
 one App-managed Development flight smoke on a simulator host. The

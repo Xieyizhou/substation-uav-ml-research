@@ -49,7 +49,24 @@ does not count as research evidence.
 - [ ] Extend the same boundary to recording replay and live Gazebo camera frames
   after single-image inference is stable.
 
-## Sandbox v1.3 — Detection-assisted scene and planning maps
+## Sandbox v1.3 — Custom map studio and trajectory console
+
+- [x] Define one deterministic map contract for the editor, Gazebo world,
+  planner obstacles, missions, route preview, and identity.
+- [x] Add a macOS desktop 2D editor with allow-listed assets, draft autosave,
+  undo/redo, collision envelopes, route overlays, and immutable revisions.
+- [x] Generate point-to-point, round-trip, and equipment-inspection routes with
+  collision, bounds, label, and A* reachability validation.
+- [x] Run validated revisions through guarded Headless or Visual Preview PX4 /
+  Gazebo jobs and persist run-local telemetry, events, summaries, and receipts.
+- [x] Display planned and actual trajectories, yaw, phase, speed, altitude, and
+  stale-telemetry warnings in Flight Console.
+- [x] Record PNG/truth data on demand and register only complete, audited runs
+  as immutable development datasets.
+- [ ] Stabilize the 0.7.0 Beta through clean-install and independent-user
+  feedback before expanding the asset or mission surface.
+
+## Sandbox v1.4 — Detection-assisted scene and planning maps
 
 - Convert multi-frame detections into observations with camera identity,
   timestamp, pose, scale, and uncertainty; a single RGB image is not treated

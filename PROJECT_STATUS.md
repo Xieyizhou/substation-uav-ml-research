@@ -29,9 +29,11 @@ were completed on 2026-07-28. Six live-LiDAR round trips completed with
 confirmed landing, no physical collisions, and no inflated-buffer entries. A
 300-frame slice of the stability capture also passed deterministic replay.
 
-Sandbox v1 is now available as the integrity-verifiable unsigned 0.6.4 Beta.
-The 0.6.5 candidate reorganizes the App around Home, Fly & Collect, Model Lab,
-Results, and Activity without changing operator or artifact contracts.
+Sandbox v1 is available as the integrity-verifiable unsigned 0.6.4 Beta.
+The 0.7.0 candidate reorganizes the App as a desktop research toolbox and adds
+Map Studio, immutable custom-map revisions, controlled map flight, live
+trajectory inspection, and audited development-dataset registration without
+changing formal research identities.
 Its clean-install gate builds a
 Git-tracked source copy, creates a fresh virtual environment, runs bootstrap
 and the deterministic Demo, inspects both receipts, and verifies the loopback
@@ -70,11 +72,16 @@ identity-bound development result. A dual-model acceptance run completed on a
 - **Active:** stabilize public-Beta feedback and run the full-Xcode Swift/UI
   gates in CI; Command Line Tools-only machines now fail with a direct setup
   instruction instead of using an incompatible SDK/module cache.
-- **Complete in 0.6.5 candidate:** task-oriented navigation, bounded run and
+- **Complete in 0.7.0 candidate:** workflow navigation, bounded run and
   inference history, contextual flight controls, canonical routes, and a
-  single web Home page in the native shell.
-- **Next:** apply the same verified inference boundary to recording replay and
-  live Gazebo camera frames.
+  single web workspace in the native shell.
+- **Complete in 0.7.0 candidate:** deterministic custom substation drafts and
+  revisions, 2D route preview, Headless/Visual Preview execution, 5 Hz
+  trajectory display, optional PNG/truth recording, and development dataset
+  registration after audit.
+- **Next:** stabilize the Map Studio Beta through clean-install and external
+  user feedback, then add low-rate camera preview without weakening the
+  current trajectory and recording contracts.
 - **Later:** detection-assisted scene and planning-map generation. Flight-ready
   maps require calibrated multi-view pose plus depth or LiDAR; a single RGB
   image may only create a draft observation, never an automatically trusted
@@ -202,7 +209,7 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Next Product Priorities
 
-1. Collect first-run installation, runtime, and workflow feedback for 0.6.4.
+1. Collect first-run installation, runtime, and Map Studio feedback for 0.7.0.
 2. Extend verified inference to existing recording frames and live Gazebo
    camera frames without changing model or threshold selection rules.
 3. Distinguish cold model-load latency from warm inference latency in App
