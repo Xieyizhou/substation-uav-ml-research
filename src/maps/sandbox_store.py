@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -100,6 +101,35 @@ class SandboxMapStore:
             raise ValueError("sandbox map revision identity mismatch")
         return root
 
+    def accepted_route_artifacts(self, map_id, revision_id, mission_id):
+        if not re.fullmatch(r"[a-z][a-z0-9_-]{1,63}", str(mission_id)):
+            raise ValueError("invalid sandbox mission id")
+        root = self.revision_root(map_id, revision_id)
+        identity = json.loads((root / "identity.json").read_text())
+        relative_paths = (
+            "map.json", "validation.json", f"routes/{mission_id}.json",
+            f"routes/{mission_id}.quality.json",
+        )
+        records = {}
+        expected = identity.get("artifact_sha256", {})
+        for relative in relative_paths:
+            path = self.revision_file(map_id, revision_id, relative)
+            payload = path.read_bytes()
+            if expected.get(relative) != hashlib.sha256(payload).hexdigest():
+                raise ValueError(f"sandbox revision artifact hash mismatch: {relative}")
+            records[relative] = json.loads(payload)
+        validation = records["validation.json"]
+        route = records[f"routes/{mission_id}.json"]
+        quality = records[f"routes/{mission_id}.quality.json"]
+        if validation.get("valid") is not True or quality.get("accepted") is not True:
+            raise ValueError("sandbox route has not passed the route quality gate")
+        if quality.get("route_identity_sha256") != route.get("route_identity_sha256"):
+            raise ValueError("sandbox route quality identity binding mismatch")
+        quality_identity = quality.get("route_quality_identity_sha256")
+        if quality_identity not in validation.get("route_quality_identities", []):
+            raise ValueError("sandbox route quality receipt is not in validation")
+        return root, records["map.json"], route, quality
+
     def export_bundle(self, map_id, revision_id):
         root = self._revision_root(map_id, revision_id)
         identity = json.loads((root / "identity.json").read_text())
@@ -127,7 +157,6 @@ class SandboxMapStore:
             if root.exists():
                 return map_value, identity
             expected = identity.get("artifact_sha256", {})
-            import hashlib
             for relative, digest in expected.items():
                 if relative not in names or hashlib.sha256(archive.read(relative)).hexdigest() != digest:
                     raise ValueError(f"sandbox map bundle hash mismatch: {relative}")

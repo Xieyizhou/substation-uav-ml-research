@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 
 from src.maps.sandbox_contracts import SandboxMap
 from src.maps.sandbox_geometry import object_inside_map, objects_overlap, point_cell
+from src.maps.route_quality import evaluate_route_quality
 from src.maps.sandbox_routes import blocking_cells, build_sandbox_route
 from src.ml.artifacts import object_sha256
 
@@ -27,7 +28,8 @@ class MapValidationReport:
     checks_total: int
     issues: tuple[MapValidationIssue, ...]
     route_identities: tuple[str, ...]
-    sandbox_map_validation_schema_version: int = 1
+    route_quality_identities: tuple[str, ...]
+    sandbox_map_validation_schema_version: int = 2
 
     @property
     def validation_identity_sha256(self):
@@ -48,7 +50,7 @@ def validate_sandbox_map(map_value: SandboxMap):
         for second in map_value.objects[index + 1:]:
             if objects_overlap(first, second):
                 issues.append(MapValidationIssue("object_overlap", f"Objects {first.object_id} and {second.object_id} overlap.", object_id=first.object_id))
-    routes = []
+    routes, quality_reports = [], []
     for mission in map_value.missions:
         try:
             _, blocked = blocking_cells(map_value, mission)
@@ -56,8 +58,12 @@ def validate_sandbox_map(map_value: SandboxMap):
                 raise ValueError("start position is blocked")
             route = build_sandbox_route(map_value, mission)
             routes.append(route)
-            if route.estimated_duration_s > 600.0:
-                issues.append(MapValidationIssue("route_duration_warning", "Estimated route duration exceeds 600 seconds.", "warning", mission_id=mission.mission_id))
+            quality = evaluate_route_quality(map_value, mission, route)
+            quality_reports.append(quality)
+            issues.extend(
+                MapValidationIssue(item.code, item.message, mission_id=mission.mission_id)
+                for item in quality.issues
+            )
         except (ValueError, KeyError) as error:
             issues.append(MapValidationIssue("route_unreachable", str(error), mission_id=mission.mission_id))
     errors = [issue for issue in issues if issue.severity == "error"]
@@ -65,4 +71,5 @@ def validate_sandbox_map(map_value: SandboxMap):
     return MapValidationReport(
         map_value.map_identity_sha256, not errors, checks_passed, checks_total,
         tuple(issues), tuple(route.route_identity_sha256 for route in routes),
+        tuple(item.route_quality_identity_sha256 for item in quality_reports),
     ), tuple(routes)

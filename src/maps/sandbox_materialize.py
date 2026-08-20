@@ -12,6 +12,7 @@ from src.maps.sandbox_contracts import SandboxMap
 from src.maps.sandbox_flight import visual_route_for_sandbox
 from src.maps.sandbox_geometry import object_cells, point_cell
 from src.maps.sandbox_preview import preview_png, preview_record, preview_svg
+from src.maps.route_quality import evaluate_route_quality
 from src.maps.sandbox_routes import blocking_cells
 from src.maps.sandbox_validation import validate_sandbox_map
 from src.maps.sandbox_world import world_bytes
@@ -33,7 +34,8 @@ class SandboxMapRevision:
     validation_identity_sha256: str
     artifact_sha256: dict[str, str]
     route_identity_sha256: tuple[str, ...]
-    sandbox_map_revision_schema_version: int = 1
+    route_quality_identity_sha256: tuple[str, ...]
+    sandbox_map_revision_schema_version: int = 2
 
     @property
     def revision_identity_sha256(self):
@@ -79,6 +81,13 @@ def obstacle_record(map_value: SandboxMap, mission=None):
 
 def _artifacts(map_value, report, routes):
     route_by_id = {route.mission_id: route for route in routes}
+    mission_by_id = {mission.mission_id: mission for mission in map_value.missions}
+    quality = {
+        route.mission_id: evaluate_route_quality(
+            map_value, mission_by_id[route.mission_id], route
+        )
+        for route in routes
+    }
     artifacts = {
         "map.json": _json_bytes(map_value.to_record()),
         "world.sdf": world_bytes(map_value),
@@ -90,6 +99,10 @@ def _artifacts(map_value, report, routes):
         **{
             f"routes/{route.mission_id}.json": _json_bytes(route.to_record())
             for route in routes
+        },
+        **{
+            f"routes/{mission_id}.quality.json": _json_bytes(item.to_record())
+            for mission_id, item in quality.items()
         },
     }
     for mission in map_value.missions:
@@ -115,6 +128,7 @@ def materialize_revision(map_value: SandboxMap, revisions_root):
         map_value.map_id, map_value.map_identity_sha256,
         report.validation_identity_sha256, hashes,
         tuple(route.route_identity_sha256 for route in routes),
+        report.route_quality_identities,
     )
     root = Path(revisions_root) / map_value.map_id / revision.revision_identity_sha256
     if root.exists():

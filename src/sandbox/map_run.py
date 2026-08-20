@@ -119,12 +119,11 @@ def run_sandbox_map(
 ):
     project_root, runs_root = Path(project_root), Path(runs_root)
     store = SandboxMapStore(maps_root)
-    revision_root = store.revision_root(map_id, revision_id)
-    map_value = SandboxMap.from_record(json.loads((revision_root / "map.json").read_text()))
-    mission = _mission(map_value, mission_id)
-    route_record = json.loads(
-        (revision_root / "routes" / f"{mission_id}.json").read_text()
+    revision_root, map_record, route_record, _ = store.accepted_route_artifacts(
+        map_id, revision_id, mission_id
     )
+    map_value = SandboxMap.from_record(map_record)
+    mission = _mission(map_value, mission_id)
     root = _run_root(runs_root, map_id, mission_id)
     recording_id = f"sandbox-{root.name}"
     events_path = (
