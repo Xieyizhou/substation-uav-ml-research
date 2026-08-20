@@ -261,11 +261,16 @@
   function selectForFlight() {
     if (!state.revision) return;
     const mission = selectedMission();
+    const route = state.detail?.preview?.routes?.find(item =>
+      item.mission_id === mission.mission_id
+    );
     root.sessionStorage.setItem('sandboxMapFlight', JSON.stringify({
       map_id: state.map.map_id,
       revision_id: state.revision.revision_identity_sha256,
       mission_id: mission.mission_id,
-      map_name: state.map.display_name
+      map_name: state.map.display_name,
+      map: clone(state.map),
+      route: route ? clone(route) : null
     }));
     if (root.MapFlight) root.MapFlight.renderSelection()
   }
@@ -290,7 +295,9 @@
     try {
       state.catalog = await api('/api/maps');
       assets();
-      const selected = state.map?.map_id || state.catalog.drafts[0]?.map_id || state.catalog.templates[0]?.map_id;
+      const latestRevisionMap = state.catalog.revisions[0]?.map_id;
+      const selected = state.map?.map_id || latestRevisionMap ||
+        state.catalog.drafts[0]?.map_id || state.catalog.templates[0]?.map_id;
       if (selected) await loadMap(selected);
       if (root.MapFlight) await root.MapFlight.refresh()
     } catch (error) {

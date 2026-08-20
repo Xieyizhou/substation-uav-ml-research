@@ -1,20 +1,43 @@
 (function(root) {
   const q = id => document.getElementById(id);
   const {colors, node} = root.MapCanvas;
-
   function selection() {
-    return JSON.parse(root.sessionStorage.getItem('sandboxMapFlight') || 'null');
+    try {
+      return JSON.parse(root.sessionStorage.getItem('sandboxMapFlight') || 'null');
+    } catch (_) {
+      return null;
+    }
   }
 
-  function renderSelection() {
-    const value = selection();
+  function renderSelectionControls(value) {
     q('map-flight-start').disabled = !value;
     q('map-record-start').disabled = !value;
+  }
+
+  function renderSelectedPreview(value) {
+    if (!value) return;
+    flightSvg({map: value.map, route: value.route, trajectory: [], live: null});
+    q('map-flight-health').className = 'badge pass';
+    q('map-flight-health').textContent = 'Ready';
     q('map-flight-facts').innerHTML = value ?
       `<span>Map<b>${esc(value.map_name)}</b></span>` +
       `<span>Mission<b>${esc(value.mission_id)}</b></span>` +
       `<p>Revision ${esc(value.revision_id.slice(0,16))}…</p>` :
       '<p>Select a validated map revision in Map Studio.</p>';
+    renderRecordingAudit({});
+  }
+
+  function renderSelection() {
+    const value = selection();
+    renderSelectionControls(value);
+    if (value) renderSelectedPreview(value);
+  }
+
+  function runMatchesSelection(latest, selected) {
+    if (!latest || !selected) return false;
+    return latest.map_id === selected.map_id &&
+      latest.revision_id === selected.revision_id &&
+      latest.mission_id === selected.mission_id;
   }
 
   function flightSvg(value) {
@@ -25,9 +48,13 @@
       svg.innerHTML = '';
       return;
     }
-    const scaleX = 600 / map.width_m;
-    const scaleY = 420 / map.height_m;
-    const point = (east, north) => [east * scaleX, 420 - north * scaleY];
+    const padding = 22;
+    const scaleX = (600 - padding * 2) / map.width_m;
+    const scaleY = (420 - padding * 2) / map.height_m;
+    const point = (east, north) => [
+      padding + east * scaleX,
+      420 - padding - north * scaleY,
+    ];
     const gridPath = rows => rows.map((cell, index) => {
       const location = point(cell[0] + 0.5, cell[1] + 0.5);
       return `${index ? 'L' : 'M'} ${location[0]} ${location[1]}`;
@@ -134,19 +161,31 @@
   }
 
   async function refresh() {
-    renderSelection();
+    const selected = selection();
+    renderSelectionControls(selected);
     try {
       const value = await api('/api/map-runs');
-      const hasSelection = Boolean(selection());
+      const hasSelection = Boolean(selected);
       q('map-record-start').disabled = value.active || !hasSelection;
       if (!value.latest) {
-        q('map-flight-health').className = 'badge warning';
-        q('map-flight-health').textContent = 'No map run';
+        if (selected) renderSelectedPreview(selected);
+        else {
+          q('map-flight-health').className = 'badge warning';
+          q('map-flight-health').textContent = 'No map run';
+        }
         return;
       }
-      flightSvg(value);
-      renderFlightFacts(value);
-      renderRecordingAudit(value);
+      if (value.active || runMatchesSelection(value.latest, selected)) {
+        flightSvg(value);
+        renderFlightFacts(value);
+        renderRecordingAudit(value);
+      } else if (selected) {
+        renderSelectedPreview(selected);
+      } else {
+        flightSvg(value);
+        renderFlightFacts(value);
+        renderRecordingAudit(value);
+      }
       q('map-flight-stop').disabled = !value.active;
       q('map-flight-start').disabled = value.active || !hasSelection;
     } catch (error) {
@@ -192,7 +231,7 @@
 
   q('map-flight-start').onclick = () => startSelected('map-flight-smoke');
   q('map-record-start').onclick = () => startSelected('map-record');
-  q('map-flight-stop').onclick = () => stopManaged(q('operator-stop').dataset.job);
+  q('map-flight-stop').onclick = () => stopManaged(globalThis.activeManagedJobId || '');
   q('map-record-register').onclick = registerRecording;
   root.MapFlight = {refresh, renderSelection};
   refresh();

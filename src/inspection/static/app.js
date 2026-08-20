@@ -4,7 +4,7 @@ const post=async(path,value)=>{const r=await fetch(path,{method:'POST',headers:{
 const esc=v=>String(v??'—').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 async function refresh(){
   const [profile,version,setup,dash,runtime,doctor,storage,recs,available,operator,research,experiments,workbench,lidar,acceptance,preflight]=await Promise.all([api('/api/profile'),api('/api/version'),api('/api/setup'),api('/api/dashboard'),api('/api/runtime'),api('/api/doctor'),api('/api/storage'),api('/api/recordings'),api('/api/scenarios'),api('/api/operator'),api('/api/research'),api('/api/experiments'),api('/api/workbench'),api('/api/lidar'),api('/api/acceptance'),api('/api/preflight')]);
-  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderProfile(profile);renderVersion(version);renderSetup(setup);renderDashboard(dash,runtime);renderStorage(storage);renderResearch(research);renderExperiments(experiments);renderWorkbench(workbench);renderLidar(lidar);renderAcceptance(acceptance);renderPreflight(preflight);renderDoctor(doctor);renderSelectors();renderOperator(operator);renderDatasetSamples();
+  recordings=recs;scenarios=available;operatorToken=operator.operator_token;renderProfile(profile);renderVersion(version);renderSetup(setup);renderDashboard(dash,runtime);renderStorage(storage);renderResearch(research);renderExperiments(experiments);renderWorkbench(workbench);renderLidar(lidar);renderAcceptance(acceptance);renderPreflight(preflight);renderDoctor(doctor);renderSelectors();SandboxScenarioSelector.sync($('#operator-scenario'),scenarios);renderOperator(operator);renderDatasetSamples();
   $('#updated').textContent=`Observed ${new Date().toLocaleTimeString()}`;
 }
 const pct=v=>v==null?'—':`${(Number(v)*100).toFixed(2)}%`;
@@ -147,13 +147,13 @@ function renderSelectors(){
 function renderOperator(value){
   const active=value.active_job;
   const state=active?`<span class="badge warning">${esc(active.state)}</span><strong>${esc(active.action)}</strong><span>${esc(active.job_id)}</span>`:'<span class="badge pass">idle</span><strong>Ready for one managed job</strong>';
-  $('#operator-state').innerHTML=state;$('#activity-operator-state').innerHTML=state;$('#home-operator-state').innerHTML=state;
-  $('#operator-stop').disabled=!active;$('#operator-stop').dataset.job=active?.job_id||'';$('#activity-stop').disabled=!active;$('#activity-stop').dataset.job=active?.job_id||'';
+  globalThis.activeManagedJobId=active?.job_id||'';
+  $('#activity-operator-state').innerHTML=state;$('#home-operator-state').innerHTML=state;
+  $('#activity-stop').disabled=!active;$('#activity-stop').dataset.job=active?.job_id||'';
   const history=showAllJobs?value.history:value.history.slice(0,8);
   $('#job-history').innerHTML=history.length?history.map(job=>`<button class="job-row" data-job="${esc(job.job_id)}" ${job.sensitive?'data-sensitive="true"':''}><span><b>${esc(job.action)}</b><small>${esc(job.created_at)}</small>${job.state==='failed'?`<small>${esc(SandboxUIState.failureGuidance(job.failure_code))}</small>`:''}</span><span class="badge ${job.state==='complete'?'pass':job.state==='failed'?'failure':'warning'}">${esc(job.state)}</span></button>`).join(''):'<p>No managed jobs have run.</p>';
   $('#job-history-show-all').hidden=value.history.length<=8;$('#job-history-show-all').textContent=showAllJobs?'Show recent':'Show all';
   document.querySelectorAll('.job-row').forEach(row=>row.onclick=()=>loadJobLog(row.dataset.job,row.dataset.sensitive==='true'));
-  $('#operator-scenario').innerHTML=scenarios.map(row=>`<option value="${esc(row.scenario_id)}">${esc(row.scenario_id)} · ${esc(row.dataset_role)}</option>`).join('');
   $('#fly-smoke-start').disabled=Boolean(active)||!profileState?.flight_enabled||!scenarios.length;$('#fly-collection-start').disabled=Boolean(active)||!profileState?.flight_enabled;$('#fly-gate-start').disabled=Boolean(active)||!profileState?.flight_enabled;
   $('#experiment-start').disabled=Boolean(active);
   $('#workbench-start').disabled=Boolean(active)||!workbenchState?.enabled||!workbenchState?.datasets?.length;
@@ -162,7 +162,7 @@ function renderOperator(value){
   $('#lidar-replay-start').disabled=Boolean(active)||!profileState?.flight_enabled;$('#lidar-closed-start').disabled=Boolean(active)||!lidarState?.closed_loop?.pending||!preflightState?.ready_for_large_lidar||!profileState?.flight_enabled;$('#lidar-stop').disabled=!active;$('#lidar-stop').dataset.job=active?.job_id||'';
   $('#challenge-start').disabled=Boolean(active)||!profileState?.flight_enabled;$('#challenge-stop').disabled=!active;$('#challenge-stop').dataset.job=active?.job_id||'';
 }
-async function refreshOperator(){try{const [value,experiments,workbench,lidar,acceptance,preflight]=await Promise.all([api('/api/operator'),api('/api/experiments'),api('/api/workbench'),api('/api/lidar'),api('/api/acceptance'),api('/api/preflight')]);operatorToken=value.operator_token;renderExperiments(experiments);renderWorkbench(workbench);renderLidar(lidar);renderAcceptance(acceptance);renderPreflight(preflight);renderOperator(value)}catch(e){$('#operator-state').textContent=e.message}}
+async function refreshOperator(){try{const [value,experiments,workbench,lidar,acceptance,preflight]=await Promise.all([api('/api/operator'),api('/api/experiments'),api('/api/workbench'),api('/api/lidar'),api('/api/acceptance'),api('/api/preflight')]);operatorToken=value.operator_token;renderExperiments(experiments);renderWorkbench(workbench);renderLidar(lidar);renderAcceptance(acceptance);renderPreflight(preflight);renderOperator(value)}catch(e){$('#activity-operator-state').textContent=e.message;$('#home-operator-state').textContent=e.message}}
 async function loadJobLog(job,sensitive){if(sensitive){$('#job-log').textContent='Blind collection job logs are sealed.';return}try{$('#job-log').innerHTML=(await api(`/api/operator/log/${encodeURIComponent(job)}?limit=300`)).join('\n')||'Log is empty.'}catch(e){$('#job-log').textContent=e.message}}
 let pendingConfirmation=null,confirmationTrigger=null;
 function actionError(message){const status=$('#action-status');status.textContent=message;status.classList.add('visible');clearTimeout(actionError.timer);actionError.timer=setTimeout(()=>status.classList.remove('visible'),8000)}
@@ -181,7 +181,6 @@ $('#action-dialog').addEventListener('close',()=>{const resolve=pendingConfirmat
 $('#action-dialog').addEventListener('keydown',event=>{if(event.key==='Escape'){event.preventDefault();$('#action-dialog').close('cancel')}});
 async function startManaged(action,scenario=null,parameters=null){const facts={Action:action,Scenario:scenario||'fixed by workflow'};if(parameters?.display_mode)facts['Display mode']=parameters.display_mode==='visual_preview'?'Visual Preview':'Headless';const accepted=await requestConfirmation({title:`Start ${action}?`,detail:'Only one managed Sandbox job may run. Environment, output budget, and runtime conflicts will be checked before launch.',facts,confirmLabel:'Start job'});if(!accepted)return;try{await post('/api/operator/start',{action,scenario_id:scenario,parameters});await refreshOperator()}catch(e){actionError(e.message)}}
 async function stopManaged(job){if(!job)return;const accepted=await requestConfirmation({title:'Stop active job?',detail:'The Sandbox will request graceful shutdown, then clean up its managed process groups.',facts:{Job:job},confirmLabel:'Stop safely',danger:true});if(!accepted)return;try{await post('/api/operator/stop',{job_id:job});await refreshOperator()}catch(e){actionError(e.message)}}
-$('#operator-stop').onclick=()=>stopManaged($('#operator-stop').dataset.job);
 $('#activity-stop').onclick=()=>stopManaged($('#activity-stop').dataset.job);
 $('#fly-smoke-start').onclick=()=>startManaged('flight-smoke',$('#operator-scenario').value,{display_mode:$('#operator-display-mode').value});
 $('#fly-collection-start').onclick=()=>startManaged('collection-single',null,{display_mode:$('#operator-display-mode').value});

@@ -1,9 +1,5 @@
 body { min-width: 1024px; }
 .app-toolbar { align-items: center; background: #fff; border-bottom: 1px solid var(--line); display: flex; height: 60px; padding: 0 22px; position: sticky; top: 0; z-index: 30; }
-.window-controls { display: flex; gap: 9px; margin-right: 18px; }
-.window-controls i { background: #ff5f57; border-radius: 50%; height: 12px; width: 12px; }
-.window-controls i:nth-child(2) { background: #febc2e; }
-.window-controls i:nth-child(3) { background: #28c840; }
 .app-brand { align-items: center; display: flex; gap: 16px; min-width: 0; }
 .app-brand strong { font: 600 16px Georgia, serif; white-space: nowrap; }
 .app-brand span { border-left: 1px solid var(--line); color: #34423e; padding-left: 16px; white-space: nowrap; }
@@ -38,7 +34,7 @@ body { min-width: 1024px; }
 .system-panel b, .system-panel small { display: block; }
 .system-panel b { color: var(--ink); font-size: 11px; letter-spacing: .07em; text-transform: uppercase; }
 .system-panel small { color: var(--muted); font-size: 11px; margin-top: 5px; }
-.app-frame > main { min-width: 0; padding: 40px clamp(34px, 4.2vw, 64px) 90px; }
+.app-frame > main { min-width: 0; padding: 40px clamp(34px, 4.2vw, 64px) 128px; }
 .task-page-toolbar { display: none; }
 .panel#fly .task-page-toolbar, .panel#results .task-page-toolbar, .panel#activity .task-page-toolbar { align-items: center; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; margin-bottom: 28px; padding-bottom: 16px; }
 .page-heading h2 { font-size: 28px; }
@@ -104,7 +100,7 @@ body > footer { background: rgba(255,255,255,.97); border-top: 1px solid var(--l
 @media (max-width: 1180px) {
   .app-frame { grid-template-columns: 260px minmax(0, 1fr); }
   .workspace-sidebar { padding-inline: 14px; }
-  .app-frame > main { padding: 32px 28px 80px; }
+  .app-frame > main { padding: 32px 28px 118px; }
   .dataset-summary-grid { grid-template-columns: minmax(260px, 1.2fr) repeat(3, minmax(120px, .7fr)); }
   .dataset-identity { grid-template-columns: 108px 1fr; }
   .dataset-cover { height: 88px; width: 108px; }

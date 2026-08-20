@@ -159,7 +159,7 @@ class InspectionHandler(BaseHTTPRequestHandler):
             "experiments.css", "setup.css", "setup.js",
             "profile.css", "ui_state.js", "navigation.css", "navigation.js",
             "map_studio.css", "map_canvas.js", "map_studio_actions.js",
-            "map_studio.js", "map_flight.js",
+            "map_studio.js", "map_flight.js", "scenario_selector.js",
         }:
             return self._json({"error": "not found"}, 404)
         self._file(STATIC_ROOT / name)
