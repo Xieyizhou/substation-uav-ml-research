@@ -94,7 +94,7 @@ Evidence: [v0.1 LiDAR validation](docs/results/v0.1_lidar_validation_20260728.md
 This milestone is simulation evidence, not a real-airframe or statistical ML
 claim.
 
-## v0.2 — ML experiment sandbox — Visual workflow complete, LiDAR evidence pending
+## v0.2 — ML experiment sandbox — Visual evidence complete
 
 - [x] Materialize deterministic Gazebo worlds with equipment variation,
   unknown obstacles, and sensor-fault manifests.
@@ -119,13 +119,20 @@ claim.
   comparison, and complete the nine-condition static ONNX replay.
 - [x] Provide identity-bound non-blind experiment recipes and bounded App
   execution for repeatable visual diagnostics.
-- [ ] Complete the LiDAR replay, 5-scenario, and 120-run formal evidence gates.
+- [x] Audit the local 120-run LiDAR output. Preserve it as historical static
+  diagnostics because its results span multiple study identities/commits and
+  contain no truth-danger samples.
 
 The runner uses 30 paired scenarios × four conditions, not the previous
 1,800-run Cartesian expansion.
 
+Evidence: [visual and flight baseline audit](docs/results/verified_visual_and_flight_baselines_20260820.md).
+
 ## v0.3 — First LiDAR ML evidence
 
+- Add route-quality acceptance gates and a regression-map suite.
+- Execute deterministic blocker scenarios with a verified spawn-to-landing
+  event chain before measuring safe speed.
 - Publish the first candidate model card and fixed replay results.
 - Compare oracle, geometric LiDAR, ML LiDAR, and safety fusion without
   suppressing neutral or negative results.

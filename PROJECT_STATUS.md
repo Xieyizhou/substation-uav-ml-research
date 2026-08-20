@@ -21,8 +21,9 @@ claim of real perception.
 
 The completed research milestone is `v0.1`: ten-minute 2D LiDAR stability
 evidence plus repeatable complex/extreme closed-loop runs across multiple
-targets. Research milestone `v0.2` has completed the visual workflow while its
-LiDAR formal evidence remains optional product-independent work.
+targets. Research milestone `v0.2` has completed and audited the visual
+workflow. Its existing 120-run LiDAR output is historical static diagnostics
+rather than formal evidence, so dynamic-replanning evidence remains open.
 
 The LiDAR stability gate and the complex/extreme multi-target closed-loop gates
 were completed on 2026-07-28. Six live-LiDAR round trips completed with
@@ -59,6 +60,13 @@ command. A run rechecks the completion receipt and ONNX hashes, applies each
 model's frozen validation threshold, renders annotated images, and stores an
 identity-bound development result. A dual-model acceptance run completed on a
 1920×1080 validation image with both the 640 Full and 416 Quick candidates.
+
+The frozen visual YOLO11n v2 package is the current verified simulation
+baseline. On 68,511 paired blind frames it reached 82.07% mAP50-95, 93.25%
+macro-F1, 94.14% precision, 92.38% recall, 81.96% small-object recall, and a
+2.34% no-target false-positive rate. Its 320/416/640 ONNX equivalence receipts
+and all nine static replay conditions close against package identity
+`e2df0d854b2f...`.
 
 ## Product Milestone Status
 
@@ -200,7 +208,11 @@ mixing sensor-driven results into the map-oracle comparison.
   deterministic SDF mutation, sensor faults, true direction labels,
   validation-selected training, model packages, 15-run closed-loop and 120-run
   formal matrices, idempotent resume, and paired bootstrap intervals.
-- Trained weights and closed-loop statistical ML results are not yet evidence.
+- The visual v2 paired-blind result is verified simulation evidence. The local
+  120-run LiDAR tree contains 120 results and a matching arithmetic report, but
+  spans 11 study identities/commits and contains zero truth-danger samples.
+  It is retained as historical static diagnostics and cannot support a formal
+  dynamic-replanning or learned-LiDAR claim.
 - The project has no real-airframe validation or dynamic-obstacle benchmark.
 - Flight execution and configuration, per-run analysis and report writing,
   stage summaries, plotting, and cross-stage comparison now use bounded
@@ -219,11 +231,12 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Optional Research Priorities
 
-1. Complete LiDAR replay, five-scenario, and 120-run formal evidence when new
-   research conclusions are required; these runs do not block Sandbox Beta.
-2. Iterate map complexity, flight speed, and safety trade-offs using controlled
-   exploratory recipes before defining a new evidence gate.
-3. Keep real-airframe, dynamic-obstacle, and 3D/2.5D claims explicitly outside
+1. Add route-quality acceptance gates before allowing custom revisions to fly.
+2. Build a receipt-bound deterministic blocker benchmark; do not repeat the
+   existing low-dynamic 120-run matrix.
+3. Measure map complexity, flight speed, and safety trade-offs only after the
+   blocker event chain is verified.
+4. Keep real-airframe, dynamic-obstacle, and 3D/2.5D claims explicitly outside
    the validated scope until their own tests exist.
 
 ## Release State

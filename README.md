@@ -107,6 +107,22 @@ metrics are recorded in the
 [v0.1 LiDAR validation report](docs/results/v0.1_lidar_validation_20260728.md)
 and its [machine-readable summary](data/sample_outputs/v0.1_lidar_validation_20260728.json).
 
+### Visual v2 and planning baseline audit
+
+The frozen YOLO11n v2 package completed a 68,511-frame paired blind evaluation
+at 82.07% mAP50-95, 93.25% macro-F1, 81.96% small-object recall, and 2.34%
+no-target false-positive rate. Its training-view identity, package identity,
+three ONNX equivalence receipts, and nine-condition static replay manifest are
+consistent.
+
+The local 120-run LiDAR tree is retained only as a historical static
+diagnostic. Although it contains all 30 scenarios × four conditions and its
+comparison report matches the result arithmetic, the files span 11 study
+identities/commits and contain zero truth-danger samples. It therefore does
+not validate deterministic dynamic-obstacle detection or replanning. See the
+[baseline audit](docs/results/verified_visual_and_flight_baselines_20260820.md)
+for exact identities, metrics, and evidence boundaries.
+
 ## System Architecture
 
 ```text
@@ -357,10 +373,10 @@ not implied by a passing offline CI run.
   learned-perception result.
 - Live/replayed 2D LiDAR, deterministic fault injection, automatic truth
   labels, ONNX packaging, and the 120-run paired study registry are
-  implemented. No trained model or statistically complete 30-seed benchmark
-  is committed.
-- YOLO collection, training, evaluation, and replay are research components;
-  they still require frozen data, trained weights, and staged integration runs.
+  implemented. The existing 120-run output is mixed-identity historical
+  diagnostics, not verified formal evidence.
+- The frozen YOLO v2 simulation baseline has completed its paired blind and
+  static replay gates. Real-camera and real-airframe validation remain open.
 - Reproducible unknown static obstacles, equipment pose/scale variation, scan
   noise/dropout, stream outage, and attitude-label jitter are implemented.
   Their formal closed-loop comparison is still pending.
