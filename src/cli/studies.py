@@ -16,7 +16,11 @@ from src.study.comparison import (
 )
 from src.study.registry import ResearchRegistry
 from src.study.runner import ingest_results, schedule_tier
-from src.study.closed_loop_worker import execute_closed_loop, execute_formal
+from src.study.closed_loop_worker import (
+    execute_closed_loop,
+    execute_dynamic_replanning,
+    execute_formal,
+)
 from src.study.challenge_worker import execute_challenge
 from src.study.challenge_receipt import (
     inspect_challenge_receipt,
@@ -24,6 +28,7 @@ from src.study.challenge_receipt import (
 )
 from src.study.formal_spec import DEFAULT_FORMAL_SPEC
 from src.study.capability_gate import capability_coverage_report
+from src.study.dynamic_replanning import dynamic_benchmark_acceptance
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -41,7 +46,8 @@ def build_parser():
     run = commands.add_parser("run", help="Schedule and ingest one evaluation tier")
     run.add_argument("study_id")
     run.add_argument(
-        "--tier", choices=["replay", "challenge", "closed-loop", "formal"],
+        "--tier",
+        choices=["replay", "challenge", "closed-loop", "dynamic-replanning", "formal"],
         required=True,
     )
     run.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
@@ -54,6 +60,22 @@ def build_parser():
     execute.add_argument(
         "--scenario-id", help="run only one qualification scenario"
     )
+    dynamic = commands.add_parser(
+        "execute-dynamic-replanning",
+        help="Run the deterministic 12-scenario runtime-blocker benchmark",
+    )
+    dynamic.add_argument("study_id")
+    dynamic.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
+    dynamic.add_argument("--max-runs", type=int)
+    dynamic.add_argument("--scenario-id")
+    dynamic.add_argument("--startup-timeout", type=float, default=180.0)
+    dynamic.add_argument("--probe-timeout", type=float, default=5.0)
+    dynamic.add_argument("--flight-timeout", type=float)
+    dynamic_report = commands.add_parser(
+        "dynamic-replanning-report",
+        help="Evaluate completed dynamic-replanning runs against frozen gates",
+    )
+    dynamic_report.add_argument("study_id")
     execute.add_argument("--startup-timeout", type=float, default=180.0)
     execute.add_argument("--probe-timeout", type=float, default=5.0)
     execute.add_argument(
@@ -103,7 +125,8 @@ def build_parser():
     resume = commands.add_parser("resume", help="Retry incomplete study runs")
     resume.add_argument("study_id")
     resume.add_argument(
-        "--tier", choices=["replay", "challenge", "closed-loop", "formal"]
+        "--tier",
+        choices=["replay", "challenge", "closed-loop", "dynamic-replanning", "formal"],
     )
     resume.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
     status = commands.add_parser("status", help="Show study progress")
@@ -111,7 +134,8 @@ def build_parser():
     compare = commands.add_parser("compare", help="Build paired metric comparisons")
     compare.add_argument("study_id")
     compare.add_argument(
-        "--tier", choices=["replay", "challenge", "closed-loop", "formal"],
+        "--tier",
+        choices=["replay", "challenge", "closed-loop", "dynamic-replanning", "formal"],
         default="formal",
     )
     compare.add_argument("--output", type=Path)
@@ -196,6 +220,21 @@ def main(argv=None):
                 flight_timeout_s=args.flight_timeout,
                 scenario_id=args.scenario_id,
             )
+        elif args.command == "execute-dynamic-replanning":
+            result = execute_dynamic_replanning(
+                args.registry,
+                args.study_id,
+                args.results_dir,
+                max_runs=args.max_runs,
+                startup_timeout_s=args.startup_timeout,
+                probe_timeout_s=args.probe_timeout,
+                flight_timeout_s=args.flight_timeout,
+                scenario_id=args.scenario_id,
+            )
+        elif args.command == "dynamic-replanning-report":
+            result = dynamic_benchmark_acceptance(
+                registry.run_metrics(args.study_id, "dynamic-replanning")
+            )
         elif args.command == "execute-challenge":
             result = execute_challenge(
                 args.registry, args.study_id, args.results_dir,
@@ -244,7 +283,9 @@ def main(argv=None):
             result = study_gate_report(
                 {
                     tier: registry.run_metrics(args.study_id, tier)
-                    for tier in ("replay", "closed-loop", "formal")
+                    for tier in (
+                        "replay", "closed-loop", "dynamic-replanning", "formal"
+                    )
                 }
             )
             if result["passed"]:
@@ -252,7 +293,9 @@ def main(argv=None):
         else:
             return 2
         print(json.dumps(result, indent=2, sort_keys=True))
-        gated = args.command in {"promote", "capabilities"}
+        gated = args.command in {
+            "promote", "capabilities", "dynamic-replanning-report"
+        }
         return 0 if not gated or result["passed"] else 1
     except (FileNotFoundError, RuntimeError, ValueError) as error:
         print(f"Study command failed: {error}")

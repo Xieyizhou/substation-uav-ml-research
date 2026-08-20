@@ -30,7 +30,9 @@ from src.vision.collection.process import (
     stop_process,
 )
 ROOT = Path(__file__).resolve().parents[2]
-FLIGHT_TIERS = frozenset({"challenge", "closed-loop", "formal"})
+FLIGHT_TIERS = frozenset({
+    "challenge", "closed-loop", "dynamic-replanning", "formal"
+})
 STARTUP_RUN_ATTEMPTS = 2
 
 
@@ -131,6 +133,10 @@ def _run_one(
             sys.executable, *row["flight_command"][1:],
             "--sensor-topic", lidar_topic,
         ]
+        event_path = None
+        if row.get("dynamic_replan_scenario"):
+            event_path = run_root / "mission_events.jsonl"
+            command.extend(["--visual-mission-events", str(event_path)])
         flight = start_process("flight task", command, run_root / "flight.log")
         process_error = None
         try:
@@ -146,9 +152,11 @@ def _run_one(
         if process_error is not None and outcome_class != "mission_failure":
             raise process_error
         metrics = mission_metrics(
-            log_path, row["oracle_planner_config"], mission_status
+            log_path, row["oracle_planner_config"], mission_status, event_path
         )
-        return log_path, metrics, mission_status
+        if event_path is None:
+            return log_path, metrics, mission_status
+        return log_path, metrics, mission_status, event_path
     finally:
         stop_process(flight)
         stop_process(launcher)
@@ -238,15 +246,18 @@ def _execute_row(
             timeout_s = closed_loop_timeout_s(
                 row["oracle_planner_config"], flight_timeout_s
             )
-            log_path, metrics, mission_status = _run_one(
+            outcome = _run_one(
                 row, run_root, startup_timeout_s=startup_timeout_s,
                 probe_timeout_s=probe_timeout_s, flight_timeout_s=timeout_s,
                 allow_progress_extension=flight_timeout_s is None,
             )
+            log_path, metrics, mission_status = outcome[:3]
+            event_path = outcome[3] if len(outcome) == 4 else None
             write_json(
                 row["result_path"],
                 result_payload(
-                    row, log_path, metrics, mission_status, formal_receipt
+                    row, log_path, metrics, mission_status, formal_receipt,
+                    event_path,
                 ),
             )
             ingest_results(registry, row["study_id"], tier, results_dir)
@@ -315,6 +326,12 @@ def execute_flight_tier(
 def execute_closed_loop(registry_path, study_id, results_dir, **options):
     return execute_flight_tier(
         registry_path, study_id, results_dir, tier="closed-loop", **options
+    )
+
+
+def execute_dynamic_replanning(registry_path, study_id, results_dir, **options):
+    return execute_flight_tier(
+        registry_path, study_id, results_dir, tier="dynamic-replanning", **options
     )
 
 

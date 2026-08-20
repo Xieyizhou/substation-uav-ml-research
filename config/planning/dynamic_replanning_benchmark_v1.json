@@ -1,0 +1,33 @@
+{
+  "acceptance": {
+    "collision_count_max": 0,
+    "false_replan_rate_max": 0.02,
+    "landing_success_rate_min": 1.0,
+    "mission_completion_rate_min": 0.9,
+    "route_switch_correctness_min": 0.95,
+    "safety_failure_count_max": 0,
+    "successful_replan_rate_min": 0.95
+  },
+  "blocker": {
+    "height_m": 2.2,
+    "inflation_cells": 1,
+    "size_m": 0.8,
+    "trigger_lead_cells": 4,
+    "trigger_radius_m": 1.25
+  },
+  "dynamic_replanning_benchmark_schema_version": 1,
+  "injection_phases": [
+    {"id": "early", "path_fraction": 0.25, "route_direction": "outbound"},
+    {"id": "mid_route", "path_fraction": 0.5, "route_direction": "outbound"},
+    {"id": "near_target", "path_fraction": 0.78, "route_direction": "outbound"},
+    {"id": "return_leg", "path_fraction": 0.5, "route_direction": "return"}
+  ],
+  "maps": ["simple", "medium", "complex"],
+  "runtime": {
+    "detection_fov_deg": 360.0,
+    "detection_range_m": 4.0,
+    "replan_risk_level": "warning",
+    "warning_distance_m": 2.5
+  },
+  "seed": 1701
+}

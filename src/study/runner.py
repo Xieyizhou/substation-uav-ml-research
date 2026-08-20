@@ -13,6 +13,7 @@ from src.ml.domain_randomization import (
 from src.maps.map_catalog import map_by_id, spawn_pose_text
 from src.study.matrix import tier_matrix
 from src.study.capability_scenario import materialize_reachable_scenario
+from src.study.dynamic_replanning import materialize_dynamic_scenario
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,7 +38,8 @@ def schedule_tier(registry, study_id, tier):
 
 
 def _flight_arguments(
-    condition, model_path, scenario_manifest, oracle_planner_config=None
+    condition, model_path, scenario_manifest, oracle_planner_config=None,
+    dynamic_scenario=None,
 ):
     common = [
         "--scenario-manifest",
@@ -57,7 +59,7 @@ def _flight_arguments(
             *common,
         ]
     if condition == "geometric_lidar":
-        return [
+        arguments = [
             "--enable-perception",
             "--perception-source",
             "gazebo_lidar_2d",
@@ -65,6 +67,14 @@ def _flight_arguments(
             "geometric",
             *common,
         ]
+        if dynamic_scenario is not None:
+            arguments.extend([
+                "--dynamic-replan-scenario", str(dynamic_scenario),
+                "--return-home", "--replan-risk-level", "warning",
+                "--max-replans", "1", "--detection-fov", "360",
+                "--detection-range", "4", "--warning-distance", "2.5",
+            ])
+        return arguments
     fusion = "ml_only" if condition == "ml_lidar" else "safety_max"
     return [
         "--enable-perception",
@@ -98,6 +108,7 @@ def write_run_queue(registry, study_id, tier, output_dir):
         scenario_manifest = scenarios_dir / f"{run['scenario_id']}.json"
         world_path = worlds_dir / f"{run['scenario_id']}.sdf"
         oracle_planner = worlds_dir / f"{run['scenario_id']}.planner.json"
+        dynamic_scenario = scenarios_dir / f"{run['scenario_id']}.dynamic.json"
         entry = map_by_id(run["map_id"])
         if not scenario_manifest.is_file() or (
             tier != "replay"
@@ -118,6 +129,13 @@ def write_run_queue(registry, study_id, tier, output_dir):
                     oracle_planner,
                     scenario_profile,
                 )
+        if tier == "dynamic-replanning" and not dynamic_scenario.is_file():
+            materialize_dynamic_scenario(
+                run["map_id"],
+                definition["injection_phase"],
+                dynamic_scenario,
+                planner_path=oracle_planner,
+            )
         rows.append(
             {
                 "run_id": run["run_id"],
@@ -129,6 +147,12 @@ def write_run_queue(registry, study_id, tier, output_dir):
                 "scenario_profile": scenario_profile,
                 "required_capabilities": list(
                     definition.get("required_capabilities", ())
+                ),
+                "injection_phase": definition.get("injection_phase"),
+                "dynamic_replan_scenario": (
+                    str(dynamic_scenario)
+                    if tier == "dynamic-replanning"
+                    else None
                 ),
                 "status": run["status"],
                 "scenario_manifest": str(scenario_manifest),
@@ -176,6 +200,7 @@ def write_run_queue(registry, study_id, tier, output_dir):
                         model_path,
                         scenario_manifest,
                         oracle_planner,
+                        dynamic_scenario if tier == "dynamic-replanning" else None,
                     ),
                 ],
                 "result_path": str(

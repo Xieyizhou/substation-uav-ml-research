@@ -98,7 +98,14 @@ def should_attempt_local_replan(replan_config, replan_state, risk_level, now_s):
 
 
 def route_allows_local_replan(replan_config, route_direction):
-    return replan_config.get("mode") != "active" or route_direction == "outbound"
+    return (
+        replan_config.get("mode") != "active"
+        or route_direction == "outbound"
+        or (
+            route_direction == "return"
+            and replan_config.get("allow_return_replan", False)
+        )
+    )
 
 
 def update_replanned_route_escape(replan_config, replan_state, risk_level):
@@ -112,13 +119,15 @@ def update_replanned_route_escape(replan_config, replan_state, risk_level):
     return following
 
 
-def attempt_local_replan(replan_config, replan_state, position, detection, now_s):
+def attempt_local_replan(
+    replan_config, replan_state, position, detection, now_s, goal_cell=None
+):
     replan_state["last_attempt_time"] = now_s
     replan_state["replan_count"] = replan_state.get("replan_count", 0) + 1
     reset_replan_event_fields(replan_state)
     replan_state["replan_triggered"] = True
     start_cell = local_position_to_grid_cell(position, replan_config["resolution_m"])
-    goal_cell = replan_config["goal_cell"]
+    goal_cell = goal_cell or replan_config["goal_cell"]
     if start_cell is not None:
         replan_state["replan_start_grid_x"] = start_cell[0]
         replan_state["replan_start_grid_y"] = start_cell[1]
@@ -192,7 +201,9 @@ def first_useful_replan_waypoint_index(position, waypoints):
     return max(len(waypoints) - 1, 0)
 
 
-def build_active_replan_route(replanned_path, replan_config, replan_state, position):
+def build_active_replan_route(
+    replanned_path, replan_config, replan_state, position, route_direction="outbound"
+):
     replanned_waypoints = replanned_path_to_waypoints(replanned_path, replan_config)
     if not replanned_waypoints:
         return None
@@ -203,7 +214,7 @@ def build_active_replan_route(replanned_path, replan_config, replan_state, posit
     replan_state["active_replan_count"] = replan_state.get("active_replan_count", 0) + 1
     replan_state["active_replan_path_length"] = len(replanned_path)
     print(
-        "Active local replan replaced outbound route: "
+        f"Active local replan replaced {route_direction} route: "
         f"replacement_waypoints={len(replacement_waypoints)}, "
         f"grid_path_length={len(replanned_path)}, skipped_waypoints={first_index}"
     )

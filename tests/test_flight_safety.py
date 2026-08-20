@@ -1,7 +1,11 @@
 import unittest
 from types import SimpleNamespace
 
-from src.flight.flight_config import validate_planner_safety, validate_runtime_args
+from src.flight.flight_config import (
+    build_replan_config,
+    validate_planner_safety,
+    validate_runtime_args,
+)
 
 
 def valid_args(**overrides):
@@ -58,6 +62,55 @@ class RuntimeArgumentValidationTests(unittest.TestCase):
     def test_rejects_minimum_risk_speed_above_maximum(self):
         with self.assertRaisesRegex(ValueError, "min-risk-speed"):
             validate_runtime_args(valid_args(min_risk_speed=0.9, max_speed=0.8))
+
+    def test_dynamic_benchmark_requires_all_runtime_safety_controls(self):
+        dynamic = {
+            "dynamic_replan_scenario": "scenario.json",
+            "enable_local_replan": True,
+            "replan_mode": "active",
+            "perception_source": "gazebo_lidar_2d",
+            "return_home": True,
+        }
+        validate_runtime_args(valid_args(**dynamic))
+        for field, value, message in (
+            ("enable_local_replan", False, "active local replanning"),
+            ("replan_mode", "log_only", "active local replanning"),
+            ("perception_source", "map_baseline", "Gazebo LiDAR"),
+            ("return_home", False, "return-home"),
+        ):
+            with self.subTest(field=field):
+                with self.assertRaisesRegex(ValueError, message):
+                    invalid = {**dynamic, field: value}
+                    validate_runtime_args(valid_args(**invalid))
+
+
+class ReplanConfigurationTests(unittest.TestCase):
+    def test_non_dynamic_configuration_cannot_replan_the_return_route(self):
+        args = SimpleNamespace(
+            replan_cooldown=1.0,
+            dynamic_obstacle_inflation=1,
+            max_replans=2,
+            enable_local_replan=True,
+            enable_perception=True,
+            replan_mode="active",
+            replan_risk_level="danger",
+            allow_diagonal=True,
+            dynamic_replan_scenario=None,
+        )
+        planner = {
+            "width": 8,
+            "height": 8,
+            "resolution_m": 1.0,
+            "altitude_m": 1.5,
+            "goal": (6, 6),
+            "start": (1, 1),
+            "inflated_blocking_cells": {(3, 3)},
+            "obstacle_map": object(),
+        }
+        config = build_replan_config(args, planner)
+        self.assertFalse(config["allow_return_replan"])
+        self.assertEqual(config["start_cell"], (1, 1))
+        self.assertEqual(config["goal_cell"], (6, 6))
 
 
 class PlannerSafetyValidationTests(unittest.TestCase):

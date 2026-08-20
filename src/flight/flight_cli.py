@@ -253,6 +253,11 @@ def build_argument_parser():
         help="Maximum local replan attempts per flight. Default: 5",
     )
     parser.add_argument(
+        "--dynamic-replan-scenario",
+        type=Path,
+        help="Verified runtime-blocker scenario used by the dynamic replan benchmark.",
+    )
+    parser.add_argument(
         "--connection-timeout",
         type=float,
         default=CONNECTION_TIMEOUT_S,

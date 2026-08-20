@@ -5,6 +5,10 @@ from math import sqrt
 
 from mavsdk.offboard import VelocityNedYaw
 
+from src.flight.active_replan_runtime import (
+    active_replan_replacement,
+    publish_dynamic_replan_event,
+)
 from src.flight.flight_config import (
     LANDING_TIMEOUT_S,
     MAX_HORIZONTAL_SPEED_M_S,
@@ -36,12 +40,8 @@ from src.flight.perception_response import (
     current_perception_detection,
 )
 from src.flight.replanning_controller import (
-    attempt_local_replan,
-    build_active_replan_route,
     configure_acceptance,
-    route_allows_local_replan,
     update_replanned_route_escape,
-    should_attempt_local_replan,
 )
 from src.flight.route_planning import reversed_waypoints
 from src.flight.safety_supervisor import SafetySupervisor
@@ -266,22 +266,12 @@ async def fly_to_waypoint(
             await asyncio.sleep(0.2)
             continue
         now_s = asyncio.get_running_loop().time()
-        if route_allows_local_replan(
-            replan_config, route_direction
-        ) and should_attempt_local_replan(
-            replan_config, replan_state, risk_level, now_s
-        ):
-            replanned_path = attempt_local_replan(
-                replan_config, replan_state, position, detection, now_s
-            )
-            if route_direction == "outbound" and replan_config.get("mode") == "active" and replanned_path:
-                replacement_waypoints = build_active_replan_route(
-                    replanned_path, replan_config, replan_state, position
-                )
-                if replacement_waypoints:
-                    last_command = VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
-                    await drone.offboard.set_velocity_ned(last_command)
-                    return replacement_waypoints
+        replacement_waypoints = await active_replan_replacement(
+            drone, phase_state, replan_config, replan_state, position,
+            detection, risk_level, route_direction, now_s,
+        )
+        if replacement_waypoints:
+            return replacement_waypoints
         if (
             safety_decision
             and safety_decision.action == "replan_or_hover"
@@ -371,11 +361,17 @@ async def fly_waypoint_route(
             replan_config,
             replan_state,
         )
-        if route_direction == "outbound" and replan_config.get("mode") == "active" and replacement_waypoints:
+        if replan_config.get("mode") == "active" and replacement_waypoints:
             active_waypoints = list(replacement_waypoints)
             waypoint_index = 0
+            publish_dynamic_replan_event(
+                phase_state,
+                replan_config,
+                "dynamic_replan_resumed",
+                waypoint_count=len(active_waypoints),
+            )
             print(
-                "Continuing outbound flight on active replanned route "
+                f"Continuing {route_direction} flight on active replanned route "
                 f"with {len(active_waypoints)} waypoint(s)."
             )
             continue

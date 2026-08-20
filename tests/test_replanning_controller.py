@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, patch
 from src.flight import waypoint_executor
 from src.flight.replanning_controller import (
     attempt_local_replan,
+    build_active_replan_route,
     empty_replan_state,
     route_allows_local_replan,
     should_attempt_local_replan,
@@ -74,6 +75,23 @@ class ReplanningControllerTests(unittest.TestCase):
         self.assertIn((3, 3), obstacles)
         self.assertNotIn((2, 2), obstacles)
         self.assertIn((5, 5), obstacles)
+
+    def test_active_route_replacement_records_provenance_and_skips_current_cell(self):
+        state = empty_replan_state()
+        config = {
+            "resolution_m": 1.0,
+            "altitude_m": 1.5,
+        }
+        path = [(1, 1), (2, 1), (3, 1), (4, 1)]
+        position = SimpleNamespace(east_m=1.5, north_m=1.5, down_m=-1.5)
+        replacement = build_active_replan_route(
+            path, config, state, position, route_direction="return"
+        )
+        self.assertTrue(replacement)
+        self.assertTrue(state["replan_route_replaced"])
+        self.assertTrue(state["following_replanned_route"])
+        self.assertEqual(state["active_replan_count"], 1)
+        self.assertEqual(state["active_replan_path_length"], len(path))
 
 
 class ReplannedRouteHistoryTests(unittest.IsolatedAsyncioTestCase):

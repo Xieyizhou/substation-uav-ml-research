@@ -11,6 +11,7 @@ from src.logging.log_io import prepare_dataframe
 from src.ml.artifacts import file_sha256, git_commit
 from src.planner.obstacle_config import build_obstacle_map
 from src.study.quality_metrics import lidar_quality_metrics
+from src.study.dynamic_replanning import event_chain_report
 from src.vision.collection.process import CollectionProcessError
 
 
@@ -46,7 +47,17 @@ def mission_outcome_class(mission_status):
     )
 
 
-def mission_metrics(log_path, planner_path, mission_status):
+def _read_events(path):
+    if path is None or not Path(path).is_file():
+        return []
+    return [
+        json.loads(line)
+        for line in Path(path).read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
+def mission_metrics(log_path, planner_path, mission_status, event_path=None):
     frame = prepare_dataframe(log_path)
     perception = perception_summary(frame)
     replanning = replan_summary(frame) or {}
@@ -55,7 +66,24 @@ def mission_metrics(log_path, planner_path, mission_status):
         frame, build_obstacle_map(planner), float(planner.get("resolution_m", 1.0))
     )
     health = perception.get("sensor_healthy_ratio")
-    return {
+    events = _read_events(event_path)
+    chain = event_chain_report(events) if events else None
+    event_names = [event.get("event_type") for event in events]
+    spawned_at = (
+        event_names.index("dynamic_blocker_spawned")
+        if "dynamic_blocker_spawned" in event_names
+        else None
+    )
+    decisions = [
+        index
+        for index, name in enumerate(event_names)
+        if name == "dynamic_replan_decided"
+    ]
+    false_replan = bool(
+        decisions
+        and (spawned_at is None or any(index < spawned_at for index in decisions))
+    ) or len(decisions) > 1
+    metrics = {
         "mission_success": int(mission_status["status"] == "completed"),
         "landing_success": 1,
         "collision_count": int(collision["raw_physical_collision_detected"]),
@@ -69,9 +97,22 @@ def mission_metrics(log_path, planner_path, mission_status):
         "active_replan_count": replanning.get("active_route_replacement_count"),
         **lidar_quality_metrics(frame),
     }
+    if chain is not None:
+        successful = bool(
+            chain["complete"] and (replanning.get("active_route_replacement_count") or 0) >= 1
+        )
+        metrics.update({
+            "successful_replan": int(successful),
+            "route_switch_correct": int(successful),
+            "false_replan": int(false_replan),
+            "event_chain_complete": int(chain["complete"]),
+        })
+    return metrics
 
 
-def result_payload(row, log_path, metrics, mission_status, formal_receipt):
+def result_payload(
+    row, log_path, metrics, mission_status, formal_receipt, event_path=None
+):
     result = {
         "schema_version": 1,
         "run_id": row["run_id"],
@@ -91,6 +132,12 @@ def result_payload(row, log_path, metrics, mission_status, formal_receipt):
             "sha256": file_sha256(log_path),
         }],
     }
+    if event_path is not None and Path(event_path).is_file():
+        result["artifacts"].append({
+            "kind": "mission_events",
+            "path": str(event_path),
+            "sha256": file_sha256(event_path),
+        })
     if formal_receipt is not None:
         result["formal_study_identity_sha256"] = formal_receipt[
             "formal_study_identity_sha256"

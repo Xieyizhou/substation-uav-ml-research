@@ -1,5 +1,7 @@
 """Runtime validation plus perception and replanning configuration."""
 
+from src.flight.dynamic_blocker import load_dynamic_scenario
+
 def validate_runtime_args(args):
     """Reject unsafe or internally inconsistent runtime settings."""
     positive_fields = {
@@ -45,6 +47,14 @@ def validate_runtime_args(args):
         raise ValueError("--sensor-replay is required with --perception-source replay")
     if perception_source != "map_baseline" and not args.enable_perception:
         raise ValueError("a real sensor source requires --enable-perception")
+    dynamic_scenario = getattr(args, "dynamic_replan_scenario", None)
+    if dynamic_scenario is not None:
+        if not args.enable_local_replan or args.replan_mode != "active":
+            raise ValueError("dynamic benchmark requires active local replanning")
+        if perception_source != "gazebo_lidar_2d":
+            raise ValueError("dynamic benchmark requires Gazebo LiDAR perception")
+        if not args.return_home:
+            raise ValueError("dynamic benchmark requires --return-home")
 
 def build_perception_config(args):
     """Return perception settings consumed by the detector, logger, and flight loop."""
@@ -113,6 +123,8 @@ def build_replan_config(args, planner_config):
     if enabled and planner_config.get("obstacle_map") is None:
         raise ValueError("--enable-local-replan requires --obstacle-config")
 
+    dynamic_path = getattr(args, "dynamic_replan_scenario", None)
+    dynamic_scenario = load_dynamic_scenario(dynamic_path) if dynamic_path else None
     return {
         "enabled": enabled,
         "mode": args.replan_mode,
@@ -125,8 +137,11 @@ def build_replan_config(args, planner_config):
         "resolution_m": planner_config["resolution_m"],
         "altitude_m": planner_config["altitude_m"],
         "goal_cell": planner_config["goal"],
+        "start_cell": planner_config["start"],
         "static_obstacles": set(planner_config["inflated_blocking_cells"]),
         "allow_diagonal": args.allow_diagonal,
+        "allow_return_replan": dynamic_scenario is not None,
+        "dynamic_scenario": dynamic_scenario,
     }
 
 

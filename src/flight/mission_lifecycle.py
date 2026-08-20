@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 
 from src.flight.async_runtime import cancel_tasks
+from src.flight.dynamic_blocker import coordinate_dynamic_blocker
 from src.flight.mavsdk_connection import connect_mavsdk
 from src.flight.mission_events import MissionEventWriter
 from src.flight.perception_response import DangerObstacleDetected
@@ -53,6 +54,7 @@ async def execute_flight(
     stop_logging = asyncio.Event()
     telemetry_task = None
     mission_task = None
+    blocker_task = None
     pending_error = None
     landing_confirmed = None
     status_path = services["write_run_status"](log_path, "starting", "connecting")
@@ -116,19 +118,38 @@ async def execute_flight(
             ),
             name="flight-mission",
         )
-        done, _ = await asyncio.wait(
-            {mission_task, telemetry_task}, return_when=asyncio.FIRST_COMPLETED
-        )
-        if telemetry_task in done:
-            if not mission_task.done():
-                mission_task.cancel()
-                with contextlib.suppress(asyncio.CancelledError):
-                    await mission_task
-            logger_error = telemetry_task.exception()
-            if logger_error is not None:
-                raise RuntimeError("Telemetry logger failed during flight") from logger_error
-            raise RuntimeError("Telemetry logger stopped unexpectedly during flight")
+        dynamic_scenario = replan_config.get("dynamic_scenario")
+        if dynamic_scenario is not None:
+            coordinator = services.get(
+                "dynamic_blocker_coordinator", coordinate_dynamic_blocker
+            )
+            blocker_task = asyncio.create_task(
+                coordinator(latest, phase_state, dynamic_scenario),
+                name="dynamic-blocker-coordinator",
+            )
+        while not mission_task.done():
+            watched = {mission_task, telemetry_task}
+            if blocker_task is not None and not blocker_task.done():
+                watched.add(blocker_task)
+            done, _ = await asyncio.wait(
+                watched, return_when=asyncio.FIRST_COMPLETED
+            )
+            if telemetry_task in done:
+                logger_error = telemetry_task.exception()
+                if logger_error is not None:
+                    raise RuntimeError(
+                        "Telemetry logger failed during flight"
+                    ) from logger_error
+                raise RuntimeError("Telemetry logger stopped unexpectedly during flight")
+            if blocker_task is not None and blocker_task in done:
+                blocker_error = blocker_task.exception()
+                if blocker_error is not None:
+                    raise RuntimeError(
+                        "Dynamic blocker coordinator failed during flight"
+                    ) from blocker_error
         await mission_task
+        if blocker_task is not None:
+            await blocker_task
         landing_confirmed = phase_state["phase"] == "landed"
         if not landing_confirmed:
             raise RuntimeError("Mission ended without confirmed landing")
@@ -173,6 +194,10 @@ async def execute_flight(
                 message=str(error),
             )
     finally:
+        if mission_task is not None and not mission_task.done():
+            await cancel_tasks([mission_task], settings.logger_shutdown_timeout_s)
+        if blocker_task is not None and not blocker_task.done():
+            await cancel_tasks([blocker_task], settings.logger_shutdown_timeout_s)
         if telemetry_task is not None:
             print("Stopping telemetry logging...")
             stop_logging.set()
