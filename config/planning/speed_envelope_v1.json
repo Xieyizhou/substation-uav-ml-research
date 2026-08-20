@@ -1,0 +1,21 @@
+{
+  "acceptance": {
+    "collision_count_max": 0,
+    "detection_to_resume_p95_ms_max": 2000.0,
+    "event_chain_completion_rate_min": 1.0,
+    "landing_success_rate_min": 1.0,
+    "mission_completion_rate_min": 0.9,
+    "route_switch_correctness_min": 0.95,
+    "safety_failure_count_max": 0
+  },
+  "repeats": 3,
+  "representative_scenarios": [
+    {"id": "simple-early", "injection_phase": "early", "map_id": "simple"},
+    {"id": "medium-mid-route", "injection_phase": "mid_route", "map_id": "medium"},
+    {"id": "complex-near-target", "injection_phase": "near_target", "map_id": "complex"},
+    {"id": "complex-return-leg", "injection_phase": "return_leg", "map_id": "complex"}
+  ],
+  "seed": 1801,
+  "speed_envelope_schema_version": 1,
+  "speeds_m_s": [0.5, 0.75, 1.0, 1.25, 1.5]
+}

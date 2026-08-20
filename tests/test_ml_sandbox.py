@@ -81,6 +81,7 @@ class ScenarioAndTruthTests(unittest.TestCase):
         self.assertEqual(len({row["scenario_id"] for row in scenarios}), 30)
         self.assertEqual(len(tier_matrix("formal")), 120)
         self.assertEqual(len(tier_matrix("closed-loop")), 15)
+        self.assertEqual(len(tier_matrix("speed-envelope")), 60)
 
     def test_challenge_gate_is_three_runs_on_one_grounded_blocker(self):
         specification = load_challenge_spec()

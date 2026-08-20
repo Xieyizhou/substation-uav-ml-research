@@ -39,7 +39,7 @@ def schedule_tier(registry, study_id, tier):
 
 def _flight_arguments(
     condition, model_path, scenario_manifest, oracle_planner_config=None,
-    dynamic_scenario=None,
+    dynamic_scenario=None, max_speed_m_s=None,
 ):
     common = [
         "--scenario-manifest",
@@ -74,6 +74,11 @@ def _flight_arguments(
                 "--max-replans", "1", "--detection-fov", "360",
                 "--detection-range", "4", "--warning-distance", "2.5",
             ])
+        if max_speed_m_s is not None:
+            arguments.extend([
+                "--max-speed", str(float(max_speed_m_s)),
+                "--return-speed-scale", "1.0",
+            ])
         return arguments
     fusion = "ml_only" if condition == "ml_lidar" else "safety_max"
     return [
@@ -101,6 +106,7 @@ def write_run_queue(registry, study_id, tier, output_dir):
         (row["scenario_id"], row["condition"]): row
         for row in tier_matrix(tier, include_champion=bool(study.get("champion_model")))
     }
+    dynamic_tiers = {"dynamic-replanning", "speed-envelope"}
     rows = []
     for run in schedule_tier(registry, study_id, tier):
         definition = definitions[(run["scenario_id"], run["condition"])]
@@ -129,7 +135,7 @@ def write_run_queue(registry, study_id, tier, output_dir):
                     oracle_planner,
                     scenario_profile,
                 )
-        if tier == "dynamic-replanning" and not dynamic_scenario.is_file():
+        if tier in dynamic_tiers and not dynamic_scenario.is_file():
             materialize_dynamic_scenario(
                 run["map_id"],
                 definition["injection_phase"],
@@ -149,9 +155,14 @@ def write_run_queue(registry, study_id, tier, output_dir):
                     definition.get("required_capabilities", ())
                 ),
                 "injection_phase": definition.get("injection_phase"),
+                "representative_scenario": definition.get(
+                    "representative_scenario"
+                ),
+                "speed_m_s": definition.get("speed_m_s"),
+                "repeat": definition.get("repeat"),
                 "dynamic_replan_scenario": (
                     str(dynamic_scenario)
-                    if tier == "dynamic-replanning"
+                    if tier in dynamic_tiers
                     else None
                 ),
                 "status": run["status"],
@@ -200,7 +211,8 @@ def write_run_queue(registry, study_id, tier, output_dir):
                         model_path,
                         scenario_manifest,
                         oracle_planner,
-                        dynamic_scenario if tier == "dynamic-replanning" else None,
+                        dynamic_scenario if tier in dynamic_tiers else None,
+                        definition.get("speed_m_s"),
                     ),
                 ],
                 "result_path": str(

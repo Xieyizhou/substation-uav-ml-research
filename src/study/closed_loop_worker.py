@@ -31,7 +31,8 @@ from src.vision.collection.process import (
 )
 ROOT = Path(__file__).resolve().parents[2]
 FLIGHT_TIERS = frozenset({
-    "challenge", "closed-loop", "dynamic-replanning", "formal"
+    "challenge", "closed-loop", "dynamic-replanning", "formal",
+    "speed-envelope",
 })
 STARTUP_RUN_ATTEMPTS = 2
 
@@ -253,6 +254,8 @@ def _execute_row(
             )
             log_path, metrics, mission_status = outcome[:3]
             event_path = outcome[3] if len(outcome) == 4 else None
+            if row.get("speed_m_s") is not None:
+                metrics["configured_speed_m_s"] = float(row["speed_m_s"])
             write_json(
                 row["result_path"],
                 result_payload(
@@ -332,6 +335,12 @@ def execute_closed_loop(registry_path, study_id, results_dir, **options):
 def execute_dynamic_replanning(registry_path, study_id, results_dir, **options):
     return execute_flight_tier(
         registry_path, study_id, results_dir, tier="dynamic-replanning", **options
+    )
+
+
+def execute_speed_envelope(registry_path, study_id, results_dir, **options):
+    return execute_flight_tier(
+        registry_path, study_id, results_dir, tier="speed-envelope", **options
     )
 
 

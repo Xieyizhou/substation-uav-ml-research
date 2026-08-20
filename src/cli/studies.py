@@ -20,6 +20,7 @@ from src.study.closed_loop_worker import (
     execute_closed_loop,
     execute_dynamic_replanning,
     execute_formal,
+    execute_speed_envelope,
 )
 from src.study.challenge_worker import execute_challenge
 from src.study.challenge_receipt import (
@@ -29,6 +30,7 @@ from src.study.challenge_receipt import (
 from src.study.formal_spec import DEFAULT_FORMAL_SPEC
 from src.study.capability_gate import capability_coverage_report
 from src.study.dynamic_replanning import dynamic_benchmark_acceptance
+from src.study.speed_envelope import speed_envelope_report
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -47,7 +49,10 @@ def build_parser():
     run.add_argument("study_id")
     run.add_argument(
         "--tier",
-        choices=["replay", "challenge", "closed-loop", "dynamic-replanning", "formal"],
+        choices=[
+            "replay", "challenge", "closed-loop", "dynamic-replanning",
+            "speed-envelope", "formal",
+        ],
         required=True,
     )
     run.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
@@ -76,6 +81,22 @@ def build_parser():
         help="Evaluate completed dynamic-replanning runs against frozen gates",
     )
     dynamic_report.add_argument("study_id")
+    speed = commands.add_parser(
+        "execute-speed-envelope",
+        help="Run the frozen 60-flight safe-speed benchmark",
+    )
+    speed.add_argument("study_id")
+    speed.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
+    speed.add_argument("--max-runs", type=int)
+    speed.add_argument("--scenario-id")
+    speed.add_argument("--startup-timeout", type=float, default=180.0)
+    speed.add_argument("--probe-timeout", type=float, default=5.0)
+    speed.add_argument("--flight-timeout", type=float)
+    speed_report = commands.add_parser(
+        "speed-envelope-report",
+        help="Select the highest speed passing the frozen safety gates",
+    )
+    speed_report.add_argument("study_id")
     execute.add_argument("--startup-timeout", type=float, default=180.0)
     execute.add_argument("--probe-timeout", type=float, default=5.0)
     execute.add_argument(
@@ -126,7 +147,10 @@ def build_parser():
     resume.add_argument("study_id")
     resume.add_argument(
         "--tier",
-        choices=["replay", "challenge", "closed-loop", "dynamic-replanning", "formal"],
+        choices=[
+            "replay", "challenge", "closed-loop", "dynamic-replanning",
+            "speed-envelope", "formal",
+        ],
     )
     resume.add_argument("--results-dir", type=Path, default=DEFAULT_RESULTS)
     status = commands.add_parser("status", help="Show study progress")
@@ -135,7 +159,10 @@ def build_parser():
     compare.add_argument("study_id")
     compare.add_argument(
         "--tier",
-        choices=["replay", "challenge", "closed-loop", "dynamic-replanning", "formal"],
+        choices=[
+            "replay", "challenge", "closed-loop", "dynamic-replanning",
+            "speed-envelope", "formal",
+        ],
         default="formal",
     )
     compare.add_argument("--output", type=Path)
@@ -205,7 +232,10 @@ def main(argv=None):
             registry.reset_incomplete(args.study_id, args.tier)
             tiers = (
                 (args.tier,) if args.tier
-                else ("replay", "closed-loop", "formal")
+                else (
+                    "replay", "closed-loop", "dynamic-replanning",
+                    "speed-envelope", "formal",
+                )
             )
             result = {
                 tier: ingest_results(registry, args.study_id, tier, args.results_dir)
@@ -234,6 +264,21 @@ def main(argv=None):
         elif args.command == "dynamic-replanning-report":
             result = dynamic_benchmark_acceptance(
                 registry.run_metrics(args.study_id, "dynamic-replanning")
+            )
+        elif args.command == "execute-speed-envelope":
+            result = execute_speed_envelope(
+                args.registry,
+                args.study_id,
+                args.results_dir,
+                max_runs=args.max_runs,
+                startup_timeout_s=args.startup_timeout,
+                probe_timeout_s=args.probe_timeout,
+                flight_timeout_s=args.flight_timeout,
+                scenario_id=args.scenario_id,
+            )
+        elif args.command == "speed-envelope-report":
+            result = speed_envelope_report(
+                registry.run_metrics(args.study_id, "speed-envelope")
             )
         elif args.command == "execute-challenge":
             result = execute_challenge(
@@ -294,7 +339,8 @@ def main(argv=None):
             return 2
         print(json.dumps(result, indent=2, sort_keys=True))
         gated = args.command in {
-            "promote", "capabilities", "dynamic-replanning-report"
+            "promote", "capabilities", "dynamic-replanning-report",
+            "speed-envelope-report",
         }
         return 0 if not gated or result["passed"] else 1
     except (FileNotFoundError, RuntimeError, ValueError) as error:

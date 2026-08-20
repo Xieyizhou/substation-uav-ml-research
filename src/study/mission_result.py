@@ -57,6 +57,26 @@ def _read_events(path):
     ]
 
 
+def _event_latency_ms(events, start_type, end_type):
+    start = next(
+        (event for event in events if event.get("event_type") == start_type), None
+    )
+    if start is None or start.get("host_monotonic_ns") is None:
+        return None
+    end = next(
+        (
+            event for event in events
+            if event.get("event_type") == end_type
+            and event.get("host_monotonic_ns") is not None
+            and event["host_monotonic_ns"] >= start["host_monotonic_ns"]
+        ),
+        None,
+    )
+    if end is None:
+        return None
+    return (end["host_monotonic_ns"] - start["host_monotonic_ns"]) / 1_000_000.0
+
+
 def mission_metrics(log_path, planner_path, mission_status, event_path=None):
     frame = prepare_dataframe(log_path)
     perception = perception_summary(frame)
@@ -106,6 +126,12 @@ def mission_metrics(log_path, planner_path, mission_status, event_path=None):
             "route_switch_correct": int(successful),
             "false_replan": int(false_replan),
             "event_chain_complete": int(chain["complete"]),
+            "detection_to_decision_ms": _event_latency_ms(
+                events, "dynamic_blocker_detected", "dynamic_replan_decided"
+            ),
+            "detection_to_resume_ms": _event_latency_ms(
+                events, "dynamic_blocker_detected", "dynamic_replan_resumed"
+            ),
         })
     return metrics
 

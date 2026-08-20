@@ -5,6 +5,7 @@ from __future__ import annotations
 from src.ml.scenarios import closed_loop_scenarios, formal_scenarios
 from src.study.challenge_spec import challenge_matrix
 from src.study.dynamic_replanning import dynamic_replanning_matrix
+from src.study.speed_envelope import speed_envelope_matrix
 
 
 FORMAL_CONDITIONS = (
@@ -21,6 +22,8 @@ CLOSED_LOOP_CONDITIONS = (
 
 
 def tier_matrix(tier, *, include_champion=True):
+    if tier == "speed-envelope":
+        return speed_envelope_matrix()
     if tier == "dynamic-replanning":
         return dynamic_replanning_matrix()
     if tier == "replay":
