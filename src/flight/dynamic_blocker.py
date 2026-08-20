@@ -5,7 +5,10 @@ from __future__ import annotations
 import asyncio
 import json
 from math import hypot
+import os
 from pathlib import Path
+import shutil
+import subprocess
 
 from src.flight.flight_state import local_position, publish_mission_event
 from src.ml.artifacts import object_sha256
@@ -39,6 +42,10 @@ def blocker_sdf(blocker):
     )
 
 
+GAZEBO_SERVICE_TIMEOUT_MS = 20_000
+GAZEBO_SPAWN_ATTEMPTS = 3
+
+
 def gazebo_spawn_command(scenario, gz_command="gz"):
     service = f"/world/{scenario['world_name']}/create"
     request = f"sdf: {json.dumps(blocker_sdf(scenario['blocker']))}"
@@ -52,23 +59,79 @@ def gazebo_spawn_command(scenario, gz_command="gz"):
         "--reptype",
         "gz.msgs.Boolean",
         "--timeout",
-        "5000",
+        str(GAZEBO_SERVICE_TIMEOUT_MS),
         "--req",
         request,
     ]
 
 
-async def spawn_gazebo_blocker(scenario, gz_command="gz"):
-    process = await asyncio.create_subprocess_exec(
-        *gazebo_spawn_command(scenario, gz_command),
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
+def _run_command(command, timeout_s):
+    """Run Gazebo with macOS posix_spawn after MAVSDK starts gRPC threads."""
+    executable = shutil.which(command[0])
+    if executable is None:
+        raise FileNotFoundError(f"Gazebo command not found: {command[0]}")
+    resolved = [executable, *command[1:]]
+    environment = os.environ.copy()
+    environment.setdefault("GZ_IP", "127.0.0.1")
+    return subprocess.run(
+        resolved,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+        timeout=timeout_s,
+        # CPython's macOS fast path requires an absolute executable and
+        # close_fds=False. This avoids fork() after MAVSDK has started gRPC
+        # worker threads, which otherwise corrupts Gazebo transport polling.
+        close_fds=False,
+        env=environment,
+        check=False,
     )
-    stdout, stderr = await process.communicate()
-    text = (stdout + stderr).decode("utf-8", errors="replace")
-    if process.returncode != 0 or "data: true" not in text.lower():
-        raise RuntimeError(f"Gazebo rejected dynamic blocker: {text.strip()}")
-    return text
+
+
+async def _gazebo_model_exists(model_id, gz_command):
+    try:
+        result = await asyncio.to_thread(
+            _run_command, [gz_command, "model", "--list"], 15.0
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return False
+    names = {line.strip() for line in result.stdout.splitlines() if line.strip()}
+    return result.returncode == 0 and model_id in names
+
+
+def _timeout_output(error):
+    parts = []
+    for value in (error.stdout, error.stderr):
+        if isinstance(value, bytes):
+            value = value.decode("utf-8", errors="replace")
+        if value:
+            parts.append(str(value))
+    return "".join(parts)
+
+
+async def spawn_gazebo_blocker(scenario, gz_command="gz"):
+    command = gazebo_spawn_command(scenario, gz_command)
+    model_id = scenario["blocker"]["id"]
+    failures = []
+    for attempt in range(1, GAZEBO_SPAWN_ATTEMPTS + 1):
+        try:
+            result = await asyncio.to_thread(
+                _run_command,
+                command,
+                GAZEBO_SERVICE_TIMEOUT_MS / 1000.0 + 5.0,
+            )
+            text = result.stdout
+        except subprocess.TimeoutExpired as error:
+            text = _timeout_output(error)
+            result = None
+        if result is not None and result.returncode == 0 and "data: true" in text.lower():
+            return text
+        if await _gazebo_model_exists(model_id, gz_command):
+            return text
+        failures.append(f"attempt {attempt}: {text.strip() or 'no response'}")
+        if attempt < GAZEBO_SPAWN_ATTEMPTS:
+            await asyncio.sleep(0.5)
+    raise RuntimeError("Gazebo rejected dynamic blocker: " + " | ".join(failures))
 
 
 def trigger_reached(latest, phase_state, scenario):

@@ -406,9 +406,9 @@ async def fly_astar_waypoints(
     replan_state,
     return_home=False,
 ):
-    target_takeoff_altitude_m = abs(float(waypoints[0]["down_m"]))
+    route_altitude_m = abs(float(waypoints[0]["down_m"]))
+    target_takeoff_altitude_m = max(2.5, route_altitude_m)
     print(f"Setting PX4 takeoff altitude to {target_takeoff_altitude_m:.2f} m...")
-    await drone.action.set_takeoff_altitude(target_takeoff_altitude_m)
     await drone.action.set_takeoff_altitude(target_takeoff_altitude_m)
     set_phase(phase_state, "takeoff")
     print("Arming...")

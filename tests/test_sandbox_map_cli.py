@@ -24,7 +24,7 @@ class SandboxMapCLITests(unittest.TestCase):
                 "--mission-id", "round_trip", "--display-mode", "shell",
             ])
 
-    @patch("src.cli.sandbox._command")
+    @patch("src.sandbox.map_cli._command")
     def test_map_run_and_inspection_dispatch_to_fixed_services(self, command):
         runner = Mock(return_value=Path("outputs/sandbox/map_runs/run-1"))
         inspector = Mock(return_value={"latest": {"state": "complete"}})

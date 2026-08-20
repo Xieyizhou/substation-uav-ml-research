@@ -163,7 +163,11 @@ class MacOSAppContractTests(unittest.TestCase):
         self.assertIn("CommandLineTools", script)
         self.assertIn("DEVELOPER_DIR", script)
         self.assertIn("xcrun --sdk macosx --show-sdk-path", script)
-        self.assertIn('exec "$swift_path" test', script)
+        self.assertIn('"$swift_path" test', script)
+        self.assertIn("CLANG_MODULE_CACHE_PATH", script)
+        self.assertIn("SWIFT_MODULECACHE_PATH", script)
+        self.assertIn('--scratch-path "$test_cache/build"', script)
+        self.assertIn("trap 'rm -rf \"$test_cache\"' EXIT", script)
         for workflow in (ROOT / ".github/workflows").glob("*.yml"):
             value = workflow.read_text(encoding="utf-8")
             self.assertNotIn("swift test --package-path", value)

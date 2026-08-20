@@ -69,6 +69,7 @@ def _flight_arguments(
         ]
         if dynamic_scenario is not None:
             arguments.extend([
+                "--obstacle-config", str(oracle_planner_config),
                 "--dynamic-replan-scenario", str(dynamic_scenario),
                 "--return-home", "--replan-risk-level", "warning",
                 "--max-replans", "1", "--detection-fov", "360",

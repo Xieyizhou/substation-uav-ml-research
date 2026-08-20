@@ -113,6 +113,13 @@ class SpeedEnvelopeTests(unittest.TestCase):
         report = speed_envelope_report(_passing_rows()[:-1])
         self.assertFalse(report["passed"])
         self.assertIsNone(report["recommended_max_speed_m_s"])
+        self.assertEqual(report["observed_run_count"], 59)
+
+    def test_pending_registry_rows_do_not_count_as_observed_results(self):
+        rows = _passing_rows()[:2]
+        rows.extend({"scenario_id": f"pending-{index}"} for index in range(58))
+        report = speed_envelope_report(rows)
+        self.assertEqual(report["observed_run_count"], 2)
 
     def test_missing_latency_evidence_fails_the_affected_speed(self):
         rows = _passing_rows()

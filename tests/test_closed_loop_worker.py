@@ -222,6 +222,16 @@ class ClosedLoopWorkerTests(unittest.TestCase):
             CollectionProcessError("expected one new flight log, found 0"),
             attempt,
         ))
+
+    def test_lidar_probe_timeout_before_flight_is_retryable(self):
+        attempt = self.root / "lidar-attempt"
+        attempt.mkdir()
+        error = CollectionProcessError(
+            "Gazebo LiDAR was not ready before startup timeout"
+        )
+        self.assertTrue(_is_retryable_startup_failure(error, attempt))
+        (attempt / "flight.log").write_text("flight started\n", encoding="utf-8")
+        self.assertFalse(_is_retryable_startup_failure(error, attempt))
         self.assertFalse(_is_retryable_startup_failure(
             CollectionProcessError("flight task exceeded timeout"), attempt
         ))

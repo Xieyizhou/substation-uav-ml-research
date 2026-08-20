@@ -22,8 +22,10 @@ claim of real perception.
 The completed research milestone is `v0.1`: ten-minute 2D LiDAR stability
 evidence plus repeatable complex/extreme closed-loop runs across multiple
 targets. Research milestone `v0.2` has completed and audited the visual
-workflow. Its existing 120-run LiDAR output is historical static diagnostics
-rather than formal evidence, so dynamic-replanning evidence remains open.
+workflow. Its existing 120-run LiDAR output remains historical static
+diagnostics rather than formal evidence. The separate deterministic
+dynamic-blocker benchmark now provides identity-bound replanning evidence
+without reusing that old matrix.
 
 The LiDAR stability gate and the complex/extreme multi-target closed-loop gates
 were completed on 2026-07-28. Six live-LiDAR round trips completed with
@@ -213,7 +215,30 @@ mixing sensor-driven results into the map-oracle comparison.
   spans 11 study identities/commits and contains zero truth-danger samples.
   It is retained as historical static diagnostics and cannot support a formal
   dynamic-replanning or learned-LiDAR claim.
-- The project has no real-airframe validation or dynamic-obstacle benchmark.
+- The deterministic dynamic-obstacle benchmark completed 12 / 12 runs across
+  three map structures and four injection phases. Every run recorded the full
+  blocker-spawn-to-landing event chain, with 100% successful replanning,
+  route-switch correctness, mission completion, and landing; collisions,
+  safety failures, and false replans were all zero.
+- The follow-up speed envelope completed all 60 registered runs. The highest
+  contiguous passing speed is 0.50 m/s. The isolated 1.00 m/s tier passed, but
+  0.75, 1.25, and 1.50 m/s failed route-switch, event-chain, completion, or
+  collision criteria, so they are not recommended.
+- Temporal visual evaluation now separates recall on inference frames from
+  full-timeline coverage. On the 68,511-frame blind order, 320-pixel
+  every-frame inference reached 91.99% inference-frame recall and 88.83%
+  timeline coverage; every-second and every-third scheduling reduced timeline
+  coverage to 81.80% and 75.91% respectively.
+- A 752-image licensed real-domain stress view represented switchgear and
+  capacitor-bank only. At the frozen threshold, both 320- and 640-pixel models
+  had zero matched true positives and high no-target false-positive rates;
+  transformer and reactor remain unsupported. Synthetic blind metrics must
+  not be presented as real-domain evidence.
+- Semantic equipment estimates can now generate inspection missions only after
+  matching a compatible mapped target and passing the same Route Quality gate.
+  A deterministic 2.5D height-layer planner also emits identity-bound planning
+  artifacts with explicit vertical-clearance rules. Neither result is
+  real-airframe evidence, and the 2.5D route has not yet been flown.
 - Flight execution and configuration, per-run analysis and report writing,
   stage summaries, plotting, and cross-stage comparison now use bounded
   modules with compatibility entries. No Python implementation file exceeds
@@ -231,13 +256,15 @@ mixing sensor-driven results into the map-oracle comparison.
 
 ## Optional Research Priorities
 
-1. Add route-quality acceptance gates before allowing custom revisions to fly.
-2. Build a receipt-bound deterministic blocker benchmark; do not repeat the
-   existing low-dynamic 120-run matrix.
-3. Measure map complexity, flight speed, and safety trade-offs only after the
-   blocker event chain is verified.
-4. Keep real-airframe, dynamic-obstacle, and 3D/2.5D claims explicitly outside
-   the validated scope until their own tests exist.
+1. Extend the two-class real-image stress view with licensed transformer and
+   reactor coverage instead of inferring unsupported metrics.
+2. Build a new real-domain candidate with reviewed class semantics and
+   representative development data; do not tune the frozen v2 package on the
+   stress results.
+3. Validate semantic inspection and height-layer routes in PX4/Gazebo before
+   promoting either planning artifact to a flight capability.
+4. Keep real-airframe claims explicitly outside the validated scope until
+   hardware tests exist.
 
 ## Release State
 

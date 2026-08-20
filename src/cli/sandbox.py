@@ -10,6 +10,7 @@ from pathlib import Path
 from src.inspection.config import InspectionConfig
 from src.sandbox.profile_cli import handle_profile_command, register_profile_commands
 from src.sandbox.profiles import PROFILE_NAMES
+from src.sandbox.map_cli import handle_map_command, register_map_commands
 from src.vision.collection.display import DISPLAY_MODES
 from src.sandbox.storage_cli import handle_storage_command, register_storage_commands
 from src.sandbox.workbench_cli import (
@@ -32,6 +33,7 @@ def build_parser():
     register_profile_commands(commands)
     register_storage_commands(commands)
     register_workbench_commands(commands)
+    register_map_commands(commands)
     serve = commands.add_parser("serve", help="Run the controlled local sandbox app")
     serve.add_argument("--host", default="127.0.0.1")
     serve.add_argument("--port", type=int, default=8765)
@@ -44,22 +46,6 @@ def build_parser():
         type=Path,
         default=Path("data/research/visual_collection_v2/collection_plan.json"),
     )
-    map_run = commands.add_parser(
-        "map-run", help="Run one validated custom-map revision",
-    )
-    map_run.add_argument("--map-id", required=True)
-    map_run.add_argument("--revision-id", required=True)
-    map_run.add_argument("--mission-id", required=True)
-    map_run.add_argument(
-        "--display-mode", choices=DISPLAY_MODES, default="headless",
-    )
-    map_run.add_argument("--startup-timeout", type=float, default=180.0)
-    map_run.add_argument("--flight-timeout", type=float)
-    map_run.add_argument("--record", action="store_true")
-    map_inspect = commands.add_parser(
-        "map-run-inspect", help="Inspect a completed custom-map run",
-    )
-    map_inspect.add_argument("--run-id", required=True)
     smoke.add_argument(
         "--output-root",
         type=Path,
@@ -152,6 +138,11 @@ def main(argv=None):
     if workbench is not None:
         _print(workbench)
         return 0
+    map_command = handle_map_command(args, config)
+    if map_command is not None:
+        value, return_code = map_command
+        _print(value)
+        return return_code
     if args.command == "doctor":
         InspectionService = _command("src.inspection.service", "InspectionService")
         service = InspectionService(config)
@@ -191,30 +182,6 @@ def main(argv=None):
             print(f"Sandbox flight smoke failed: {error}")
             return 1
         _print({"status": "complete", "run_root": str(root)})
-        return 0
-    if args.command == "map-run":
-        run_sandbox_map = _command("src.sandbox.map_run", "run_sandbox_map")
-        try:
-            root = run_sandbox_map(
-                config.project_root, config.sandbox_maps_root,
-                config.sandbox_map_runs_root, args.map_id, args.revision_id,
-                args.mission_id, display_mode=args.display_mode,
-                startup_timeout_s=args.startup_timeout,
-                flight_timeout_s=args.flight_timeout,
-                record=args.record,
-            )
-        except (OSError, RuntimeError, ValueError) as error:
-            print(f"Sandbox map run failed: {error}")
-            return 1
-        _print({"status": "complete", "run_root": str(root)})
-        return 0
-    if args.command == "map-run-inspect":
-        inspect_map_run = _command("src.inspection.map_runs", "inspect_map_run")
-        try:
-            _print(inspect_map_run(config, args.run_id))
-        except (OSError, RuntimeError, ValueError) as error:
-            print(f"Sandbox map run inspection failed: {error}")
-            return 1
         return 0
     if args.command == "recipe-create":
         materialize_recipe = _command(

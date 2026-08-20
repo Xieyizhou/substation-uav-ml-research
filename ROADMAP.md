@@ -130,9 +130,11 @@ Evidence: [visual and flight baseline audit](docs/results/verified_visual_and_fl
 
 ## v0.3 — First LiDAR ML evidence
 
-- Add route-quality acceptance gates and a regression-map suite.
-- Execute deterministic blocker scenarios with a verified spawn-to-landing
+- [x] Add route-quality acceptance gates and a regression-map suite.
+- [x] Execute deterministic blocker scenarios with a verified spawn-to-landing
   event chain before measuring safe speed.
+- [x] Complete the fixed 60-run speed envelope and publish the conservative
+  0.50 m/s recommended maximum speed.
 - Publish the first candidate model card and fixed replay results.
 - Compare oracle, geometric LiDAR, ML LiDAR, and safety fusion without
   suppressing neutral or negative results.
@@ -143,12 +145,21 @@ Evidence: [visual and flight baseline audit](docs/results/verified_visual_and_fl
 
 - Generate labeled transformer, switchgear, capacitor-bank, and reactor data.
 - Train and evaluate a locked 640-input lightweight YOLO model.
-- Add LiDAR-supported semantic position estimates and inspection viewpoints.
+- [x] Add gated depth-supported semantic position estimates and inspection
+  viewpoints as deterministic planning artifacts.
+- [x] Add temporal confirmation, smoothing, hold, and expiration while keeping
+  inference-frame recall separate from full-timeline coverage.
+- [ ] Extend licensed real-image stress coverage from switchgear and
+  capacitor-bank to all four target classes.
+- [ ] Build a new real-domain candidate; the frozen v2 model produced zero
+  matched true positives on the current two-class 752-image stress view.
 
 ## v0.5 — 3D/2.5D planning and DJI preparation
 
 - Add a Gazebo 3D point-cloud source and BEV traversability benchmark.
-- Validate height-layer planning around suspended substation structures.
+- [x] Implement deterministic height-layer A* with explicit obstacle height,
+  vehicle envelope, vertical clearance, and identity-bound artifacts.
+- [ ] Validate height-layer routes around suspended structures in PX4/Gazebo.
 - Implement the DJI PSDK C++ bridge, then progress through SIL and HIL gates.
 
 Raw datasets, model weights, complete logs, and generated run trees remain

@@ -125,7 +125,8 @@ def speed_envelope_report(rows, spec_path=DEFAULT_SPEC):
             break
         contiguous_passing.append(report["speed_m_s"])
     expected_total = expected * len(spec["speeds_m_s"])
-    complete = len(rows) == expected_total and all(
+    observed_total = sum(report["run_count"] for report in reports)
+    complete = observed_total == expected_total and all(
         report["run_count"] == expected for report in reports
     )
     return {
@@ -134,6 +135,6 @@ def speed_envelope_report(rows, spec_path=DEFAULT_SPEC):
             max(contiguous_passing) if complete and contiguous_passing else None
         ),
         "expected_run_count": expected_total,
-        "observed_run_count": len(rows),
+        "observed_run_count": observed_total,
         "speed_reports": reports,
     }

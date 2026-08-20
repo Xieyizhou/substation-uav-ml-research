@@ -166,8 +166,9 @@ def dynamic_benchmark_acceptance(rows, spec_path=DEFAULT_SPEC):
     count = len(rows)
     if count != 12:
         return {"passed": False, "reasons": [f"expected 12 runs, found {count}"]}
-    rate = lambda name: sum(float(row.get(name, 0)) for row in rows) / count
-    totals = lambda name: sum(float(row.get(name, 0)) for row in rows)
+    metrics = [row.get("metrics", row) for row in rows]
+    rate = lambda name: sum(float(row.get(name, 0)) for row in metrics) / count
+    totals = lambda name: sum(float(row.get(name, 0)) for row in metrics)
     checks = {
         "successful_replan_rate": rate("successful_replan"),
         "route_switch_correctness": rate("route_switch_correct"),

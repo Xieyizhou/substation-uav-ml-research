@@ -121,8 +121,9 @@ class ContinuousStabilityTests(unittest.IsolatedAsyncioTestCase):
                 drone, _latest(down=-1.0), {}, {}, [waypoint], {}, None, {}, {},
             )
         hover.assert_awaited_once_with(
-            unittest.mock.ANY, 1.5, waypoint_executor.TELEMETRY_TIMEOUT_S
+            unittest.mock.ANY, 2.5, waypoint_executor.TELEMETRY_TIMEOUT_S
         )
+        action.set_takeoff_altitude.assert_awaited_once_with(2.5)
         offboard.start.assert_awaited_once()
 
 

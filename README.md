@@ -123,6 +123,20 @@ not validate deterministic dynamic-obstacle detection or replanning. See the
 [baseline audit](docs/results/verified_visual_and_flight_baselines_20260820.md)
 for exact identities, metrics, and evidence boundaries.
 
+The replacement dynamic benchmark uses 12 deterministic Gazebo blockers
+across three map structures and early, mid-route, near-target, and return-leg
+injection phases. All 12 runs recorded the required spawn, detection,
+decision, hover, replanning, route-acceptance, resumption, completion, and
+landing events. Replanning, route-switch correctness, mission completion, and
+landing were 100%, with no collisions, safety failures, or false replans. The
+associated temporal-perception, semantic-inspection, and height-layer planning
+results are summarized in the
+[planning reliability report](docs/results/planning_reliability_20260820.md).
+The subsequent 60-run speed envelope recommends 0.50 m/s as the highest
+contiguous validated speed. A 752-image licensed real-domain stress view found
+zero matched true positives for its two represented target classes, so the
+strong synthetic result must not be described as real-image generalization.
+
 ## System Architecture
 
 ```text
@@ -380,8 +394,11 @@ not implied by a passing offline CI run.
 - Reproducible unknown static obstacles, equipment pose/scale variation, scan
   noise/dropout, stream outage, and attitude-label jitter are implemented.
   Their formal closed-loop comparison is still pending.
-- Active route replacement has passed repeated target-switching validation on
-  the simple map, but still needs cross-map and dynamic-obstacle validation.
+- Active route replacement has passed the deterministic cross-map blocker
+  benchmark. The fixed 60-run envelope recommends 0.50 m/s; higher tiers had
+  non-monotonic route-switch, event-chain, or collision failures.
+- Real-airframe validation remains open, and the current detector did not
+  transfer to the two-class licensed real-image stress view.
 - The committed results are selected demonstration runs, not a statistical
   performance claim.
 

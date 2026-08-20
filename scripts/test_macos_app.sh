@@ -20,9 +20,16 @@ export DEVELOPER_DIR="$developer_dir"
 swift_path="$(xcrun --find swift)"
 sdk_path="$(xcrun --sdk macosx --show-sdk-path)"
 sdk_version="$(xcrun --sdk macosx --show-sdk-version)"
+test_cache="$(mktemp -d "${TMPDIR:-/tmp}/uav-sandbox-swift.XXXXXX")"
+trap 'rm -rf "$test_cache"' EXIT
+mkdir -p "$test_cache/clang" "$test_cache/swift"
+export CLANG_MODULE_CACHE_PATH="$test_cache/clang"
+export SWIFT_MODULECACHE_PATH="$test_cache/swift"
 
 echo "Xcode: $(xcodebuild -version | tr '\n' ' ')"
 echo "Swift: $($swift_path --version | head -1)"
 echo "macOS SDK: $sdk_version ($sdk_path)"
 
-exec "$swift_path" test --package-path "$package_root"
+"$swift_path" test \
+    --package-path "$package_root" \
+    --scratch-path "$test_cache/build"

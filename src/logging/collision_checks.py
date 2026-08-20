@@ -4,9 +4,27 @@ import math
 
 
 def obstacle_collision_report(df, obstacle_map, resolution_m):
-    raw_cells = obstacle_map.get("raw_obstacle_cells", set()) if obstacle_map else set()
+    # A horizontal footprint is only a collision obstacle when it intersects the
+    # configured flight-height envelope.  Low assets remain useful provenance,
+    # but treating them as collisions makes the result contradict the planner's
+    # altitude-aware blocking map.
+    raw_cells = (
+        obstacle_map.get(
+            "raw_blocking_cells",
+            obstacle_map.get("raw_obstacle_cells", set()),
+        )
+        if obstacle_map
+        else set()
+    )
     inflated_cells = obstacle_map.get("inflated_blocking_cells", set()) if obstacle_map else set()
-    raw_names_by_cell = obstacle_map.get("raw_obstacle_cell_to_name", {}) if obstacle_map else {}
+    raw_names_by_cell = (
+        obstacle_map.get(
+            "raw_blocking_cell_to_name",
+            obstacle_map.get("raw_obstacle_cell_to_name", {}),
+        )
+        if obstacle_map
+        else {}
+    )
     inflated_names_by_cell = obstacle_map.get("inflated_obstacle_cell_to_name", {}) if obstacle_map else {}
     report = {
         "raw_physical_collision_detected": False,

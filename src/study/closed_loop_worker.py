@@ -97,6 +97,8 @@ def _is_retryable_startup_failure(error, attempt_root):
     """Retry only failures that occurred before a telemetry log was created."""
     if not isinstance(error, CollectionProcessError):
         return False
+    if str(error) == "Gazebo LiDAR was not ready before startup timeout":
+        return not (Path(attempt_root) / "flight.log").exists()
     try:
         flight_output = (Path(attempt_root) / "flight.log").read_text(
             encoding="utf-8"
