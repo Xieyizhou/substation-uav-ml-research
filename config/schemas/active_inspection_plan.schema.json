@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["schema_version", "runtime_mode", "identities", "tracks", "decisions", "events", "artifact_identity"],
+  "properties": {
+    "schema_version": {"const": 1}, "runtime_mode": {"const": "active_semantic_inspection"},
+    "identities": {"type": "object", "required": ["runtime_map", "model", "policy", "observation_stream"], "additionalProperties": {"type": "string", "pattern": "^[a-f0-9]{64}$"}},
+    "tracks": {"type": "array"}, "decisions": {"type": "array"}, "events": {"type": "array"},
+    "exploration_coverage": {"type": "number", "minimum": 0, "maximum": 1}, "terminated": {"type": "boolean"},
+    "artifact_identity": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }, "additionalProperties": false
+}

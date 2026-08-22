@@ -1,0 +1,7 @@
+{
+  "schema_version": 1, "protocol_id": "visual-hard-examples-v2.1", "maps": ["simple", "medium"],
+  "target_frames_per_map": 900, "no_target_frames": 600, "replay_frames_per_class": 1000, "split_group": "recording_seed",
+  "development_seeds": [4101, 4102, 4103, 4104, 4105, 4106, 4107, 4108],
+  "validation_seeds": [4201, 4202, 4203, 4204], "forbidden_partitions": ["full_validation", "blind", "heldout_test"],
+  "classes": ["transformer", "switchgear", "capacitor_bank", "reactor"]
+}

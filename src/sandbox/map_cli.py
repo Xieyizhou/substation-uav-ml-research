@@ -46,6 +46,17 @@ def register_map_commands(commands):
     height.add_argument(
         "--layers", type=float, nargs="+", default=[1.5, 3.0, 5.0],
     )
+    active = commands.add_parser(
+        "active-inspection-plan",
+        help="Build a truth-blind active semantic inspection plan",
+    )
+    active.add_argument("--map", type=Path, required=True)
+    active.add_argument("--observations", type=Path, required=True)
+    active.add_argument(
+        "--policy", type=Path,
+        default=Path("config/perception/active_inspection_policy.json"),
+    )
+    active.add_argument("--output", type=Path, required=True)
 
 
 def _run_map(args, config):
@@ -80,6 +91,15 @@ def handle_map_command(args, config):
             return materialize(
                 args.map, args.mission_id, args.output,
                 layer_altitudes_m=args.layers,
+            ), 0
+        if args.command == "active-inspection-plan":
+            materialize = _command(
+                "src.planner.active_inspection_artifacts",
+                "materialize_active_inspection",
+            )
+            return materialize(
+                args.map, args.observations, args.output,
+                policy_path=args.policy,
             ), 0
     except (OSError, KeyError, RuntimeError, TypeError, ValueError) as error:
         return {"error": str(error)}, 1

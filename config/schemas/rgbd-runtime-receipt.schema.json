@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "rgbd-runtime-receipt.schema.json",
+  "type": "object",
+  "required": ["schema_version", "evidence_level", "acceptance", "identity"],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "evidence_level": {"enum": ["gazebo_live_rgbd", "blocked"]},
+    "world": {"type": "string", "minLength": 1},
+    "pairing": {
+      "type": "object",
+      "required": ["rgb_frame_count", "depth_frame_count", "pair_count", "rgb_pairing_success_rate", "depth_pairing_success_rate", "skew_ms"]
+    },
+    "acceptance": {
+      "type": "object",
+      "required": ["status", "blocked_reasons"],
+      "properties": {
+        "status": {"enum": ["ready", "blocked"]},
+        "blocked_reasons": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "identity": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  }
+}

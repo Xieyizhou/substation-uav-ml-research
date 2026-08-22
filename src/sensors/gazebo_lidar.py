@@ -74,6 +74,7 @@ def parse_laser_scan_message(
 def _transport_environment():
     environment = os.environ.copy()
     environment.setdefault("GZ_IP", "127.0.0.1")
+    environment.setdefault("GZ_PARTITION", "substation_uav")
     return environment
 
 

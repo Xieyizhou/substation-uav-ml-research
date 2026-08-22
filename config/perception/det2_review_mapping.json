@@ -1,0 +1,7 @@
+{
+  "Capacitor bank-": "capacitor_bank",
+  "Electric reactor-": "reactor",
+  "Main transformer-": "transformer",
+  "Switch cabinet-": "switchgear",
+  "main_power_transformer": "transformer"
+}

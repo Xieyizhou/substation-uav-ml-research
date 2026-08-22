@@ -6,7 +6,6 @@ import importlib.metadata
 import json
 from pathlib import Path
 import shutil
-
 from src.ml.artifacts import file_sha256, object_sha256, write_json
 from src.vision.contracts.identity import (
     ModelIdentity,
@@ -15,18 +14,13 @@ from src.vision.contracts.identity import (
 )
 from src.vision.contracts.training_identity import TrainingViewIdentity
 from src.vision.evaluation.onnx_gate import validate_onnx_equivalence
-
-
+from src.vision.evaluation.yolo_package_v3 import bind_v3_gate, validate_v3_gate
 EXPORT_SIZES = (320, 416, 640)
-
-
 def _version(name):
     try:
         return importlib.metadata.version(name)
     except importlib.metadata.PackageNotFoundError:
         return "missing"
-
-
 def preprocessing_identity(size):
     return PreprocessingIdentity(
         target_input_width=size,
@@ -47,8 +41,6 @@ def preprocessing_identity(size):
         implementation="ultralytics-letterbox",
         implementation_version=_version("ultralytics"),
     )
-
-
 def export_yolo_package(
     weights,
     training_view_identity_path,
@@ -58,6 +50,7 @@ def export_yolo_package(
     *,
     equivalence_dataset,
     equivalence_device="cpu",
+    v3_gate_path=None,
 ):
     try:
         from ultralytics import YOLO
@@ -168,6 +161,7 @@ def export_yolo_package(
     shutil.copy2(training_view_identity_path, output_root / "training_view_identity.json")
     shutil.copy2(training_provenance_path, output_root / "training_provenance.json")
     shutil.copy2(validation_results_path, output_root / "full_validation_results.json")
+    v3_gate = bind_v3_gate(v3_gate_path, weights, training_view, output_root)
     history_source = Path(training_provenance_path).parent / "results.csv"
     if history_source.is_file():
         shutil.copy2(history_source, output_root / "training_history.csv")
@@ -224,6 +218,8 @@ def export_yolo_package(
             for size, record in model_records.items()
         },
     }
+    if v3_gate is not None:
+        manifest["real_domain_v3_gate"] = v3_gate
     manifest["package_identity_sha256"] = object_sha256(manifest)
     write_json(
         status_path,
@@ -249,6 +245,7 @@ def validate_yolo_package(root):
     for path, expected in manifest.get("supporting_artifacts", {}).items():
         if file_sha256(root / path) != expected:
             raise ValueError(f"supporting artifact hash mismatch: {path}")
+    validate_v3_gate(root, manifest.get("real_domain_v3_gate"))
     validation = json.loads((root / "full_validation_results.json").read_text())
     threshold = manifest.get("frozen_confidence_threshold")
     selected = validation.get("confidence_evaluation", {}).get("selected", {})

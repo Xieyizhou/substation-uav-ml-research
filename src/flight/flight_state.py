@@ -21,6 +21,8 @@ def set_phase(phase_state, phase, route_direction="none"):
 
 
 def publish_mission_event(phase_state, event_type, **details):
+    if not hasattr(phase_state, "get"):
+        return
     publisher = phase_state.get("_event_publisher")
     if publisher is None:
         return None

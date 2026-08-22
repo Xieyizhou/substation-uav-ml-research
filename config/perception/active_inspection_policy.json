@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "policy_id": "sandbox-active-inspection-v1",
+  "runtime_mode": "active_semantic_inspection",
+  "model_artifact_identity": "e2df15a29c9ee926232cf95ab8f73a0c78db324f908937eadef0289f897cfe52",
+  "allowed_classes": ["capacitor_bank", "reactor", "switchgear", "transformer"],
+  "weights": {"new_class": 4.0, "uninspected": 3.0, "confidence_gap": 2.0, "visibility_improvement": 1.5, "path_length": -0.08, "energy": -0.12, "risk": -1.0, "repeat_observation": -0.5},
+  "thresholds": {"stable_confidence": 0.6, "merge_distance_m": 2.0, "conflict_distance_m": 1.5, "track_timeout_s": 15.0, "preferred_standoff_m": 5.0, "inspection_confidence": 0.85},
+  "limits": {"exploration_stride_cells": 4, "exploration_completion": 0.9, "mission_budget_s": 600.0, "observation_hold_s": 2.0, "low_clearance_cells": 2}
+}

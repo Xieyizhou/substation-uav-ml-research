@@ -153,6 +153,9 @@ Evidence: [visual and flight baseline audit](docs/results/verified_visual_and_fl
   capacitor-bank to all four target classes.
 - [ ] Build a new real-domain candidate; the frozen v2 model produced zero
   matched true positives on the current two-class 752-image stress view.
+- [x] Add a provenance-gated public-source registry and feasibility report.
+- [ ] Resolve quarantined source provenance and independent validation/blind
+  coverage before materializing the v3 training dataset.
 
 ## v0.5 — 3D/2.5D planning and DJI preparation
 

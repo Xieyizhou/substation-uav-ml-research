@@ -136,6 +136,9 @@ The subsequent 60-run speed envelope recommends 0.50 m/s as the highest
 contiguous validated speed. A 752-image licensed real-domain stress view found
 zero matched true positives for its two represented target classes, so the
 strong synthetic result must not be described as real-image generalization.
+The [real-domain v3 intake policy](docs/REAL_DOMAIN_V3_SOURCES.md) now gates
+public sources by upstream provenance, canonical equipment semantics, source
+grouping, and split eligibility before any image can enter training.
 
 ## System Architecture
 

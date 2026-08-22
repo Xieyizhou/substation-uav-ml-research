@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "matrix_id": "active-inspection-multimap-v1",
+  "model": "models/equipment/visual-yolo11n-baseline-v2-package/weights/best.pt",
+  "policy": "config/perception/active_inspection_complex_formal_v1.json",
+  "output_root": "outputs/sandbox/active_rgbd_formal",
+  "runtime_root": "outputs/sandbox/active_rgbd_runtime",
+  "maps": [
+    {
+      "map_id": "simple",
+      "obstacle_config": "config/substation_obstacles.json",
+      "expected_classes": ["transformer", "switchgear"],
+      "runs": {
+        "fixed_serpentine": ["simple-fixed-run-1-v1", "simple-fixed-run-2-v1-retry1", "simple-fixed-run-3-v1-retry2"],
+        "nearest_target_first": ["simple-nearest-run-1-v1", "simple-nearest-run-2-v1-retry1", "simple-nearest-run-3-v1"],
+        "active_utility": ["simple-active-run-1-v1", "simple-active-run-2-v1", "simple-active-run-3-v1"]
+      }
+    },
+    {
+      "map_id": "medium",
+      "obstacle_config": "config/maps/substation_medium.json",
+      "expected_classes": ["transformer", "switchgear", "capacitor_bank"],
+      "runs": {
+        "fixed_serpentine": ["medium-fixed-run-1-v1", "medium-fixed-run-2-v1", "medium-fixed-run-3-v1"],
+        "nearest_target_first": ["medium-nearest-run-1-v1", "medium-nearest-run-2-v1", "medium-nearest-run-3-v1"],
+        "active_utility": ["medium-active-run-1-v1", "medium-active-run-2-v1", "medium-active-run-3-v1"]
+      }
+    },
+    {
+      "map_id": "complex",
+      "obstacle_config": "config/maps/substation_complex.json",
+      "expected_classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
+      "legacy_acceptance_report": "outputs/sandbox/active_rgbd_formal/complex-active-matrix-report.json",
+      "legacy_acceptance_identity": "60c1e774b24d90f0665cccc677fd0570f096b1986fdf66d5791cb4dc19485195",
+      "runs": {
+        "fixed_serpentine": ["fixed-serpentine-run-1-v5", "fixed-serpentine-run-2-v5", "fixed-serpentine-run-3-v5"],
+        "nearest_target_first": ["nearest-target-run-1-v4", "nearest-target-run-2-v4", "nearest-target-run-3-v4"],
+        "active_utility": ["active-utility-ambiguity-v4-qualification", "active-utility-run-2-v4", "active-utility-run-3-v4"]
+      }
+    }
+  ],
+  "thresholds": {
+    "pairing_rate_min": 0.95,
+    "skew_p95_ms_max": 33.334,
+    "class_recall_min": 0.95,
+    "class_accuracy_min": 0.90,
+    "localization_median_m_max": 1.0,
+    "localization_p95_m_max": 2.0,
+    "exploration_coverage_min": 0.90,
+    "active_efficiency_improvement_min": 0.15,
+    "active_recall_delta_max": 0.02
+  }
+}

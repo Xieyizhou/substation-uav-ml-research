@@ -189,6 +189,41 @@ class CameraFrame:
 
 
 @dataclass(frozen=True)
+class DepthFrame:
+    """Metadata for a tightly packed little-endian float32 depth payload."""
+
+    frame_id: str
+    source_id: str
+    sequence_number: int
+    capture_timestamp: float
+    capture_clock_domain: str
+    receive_monotonic_timestamp: float
+    width: int
+    height: int
+    payload_relative_path: str
+    payload_sha256: str
+    valid_depth_count: int
+
+    def __post_init__(self):
+        if not self.frame_id or not self.source_id:
+            raise ValueError("depth frame identifiers must not be empty")
+        if self.sequence_number < 0 or self.width <= 0 or self.height <= 0:
+            raise ValueError("invalid depth frame sequence or dimensions")
+        _finite_number(self.capture_timestamp, "capture_timestamp")
+        _finite_number(self.receive_monotonic_timestamp, "receive_monotonic_timestamp")
+        path = PurePosixPath(str(self.payload_relative_path))
+        if path.is_absolute() or ".." in path.parts or not path.name:
+            raise ValueError("depth payload path must be portable and relative")
+        if not _SHA256_PATTERN.fullmatch(str(self.payload_sha256)):
+            raise ValueError("depth payload_sha256 must be a SHA256 digest")
+        if not 0 <= self.valid_depth_count <= self.width * self.height:
+            raise ValueError("invalid valid_depth_count")
+
+    def to_record(self):
+        return {"record_type": "depth_frame", **asdict(self)}
+
+
+@dataclass(frozen=True)
 class LocalCostmap:
     timestamp_s: float
     frame_id: str

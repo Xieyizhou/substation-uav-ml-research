@@ -168,6 +168,7 @@ async def run_flight(
     return_home=False,
     visual_mission_events=None,
     mission_runner=None,
+    visual_runtime=None,
 ):
     settings = current_runtime_settings()
     configure_runtime(settings)
@@ -197,6 +198,7 @@ async def run_flight(
         perception_detector,
         return_home,
         visual_mission_events,
+        visual_runtime,
     )
 
 
@@ -224,6 +226,10 @@ def main(argv=None):
     perception_config = build_perception_config(args)
     perception_detector = build_perception_detector(args, planner_config)
     replan_config = build_replan_config(args, planner_config)
+    visual_runtime = None
+    if args.runtime_mode == "active_semantic_inspection" and args.active_inspection_plan is None:
+        from src.flight.active_rgbd_runtime import build_active_rgbd_runtime
+        visual_runtime = build_active_rgbd_runtime(args, planner_config)
     grid_path, simplified_path, waypoints = plan_path(planner_config, args.allow_diagonal)
     return_grid_path = list(reversed(grid_path)) if args.return_home else []
     route_warnings = validate_planned_routes(grid_path, return_grid_path, planner_config)
@@ -307,6 +313,7 @@ def main(argv=None):
             return_home=args.return_home,
             visual_mission_events=args.visual_mission_events,
             mission_runner=mission_runner,
+            visual_runtime=visual_runtime,
         ),
         LOGGER_SHUTDOWN_TIMEOUT_S,
     )

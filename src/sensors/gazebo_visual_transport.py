@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import asyncio
 import os
+import time
 from pathlib import Path
 import re
 from xml.etree import ElementTree
 
 
 RGB_CONFIGURED_TOPIC = "research_camera/image"
+DEPTH_CONFIGURED_TOPIC = "research_camera/depth"
 TRUTH_CONFIGURED_TOPIC = "research_camera/boxes"
 RGB_MESSAGE_TYPE = "gz.msgs.Image"
+DEPTH_MESSAGE_TYPE = "gz.msgs.Image"
 TRUTH_MESSAGE_TYPE = "gz.msgs.AnnotatedAxisAligned2DBox_V"
 GAZEBO_SIM_CLOCK = "gazebo_sim_time"
 # A 1920x1080 BGRA frame expands to about 11 MiB when Gazebo emits its
@@ -26,6 +29,7 @@ RESEARCH_MODEL = (
 def transport_environment():
     environment = os.environ.copy()
     environment.setdefault("GZ_IP", "127.0.0.1")
+    environment.setdefault("GZ_PARTITION", "substation_uav")
     return environment
 
 
@@ -77,19 +81,39 @@ def _topic_candidates(topics, configured_topic):
 
 
 async def discover_configured_topic(configured_topic, *, timeout_s=5.0):
+    result = await discover_configured_topics(
+        {"source": configured_topic}, timeout_s=timeout_s
+    )
+    return result["resolved_topics"]["source"]
+
+
+async def discover_configured_topics(configured_topics, *, timeout_s=5.0):
+    started = time.monotonic()
     output = await _run_gz("topic", "-l", timeout_s=timeout_s)
-    topics = [line.strip() for line in output.splitlines() if line.strip()]
-    candidates = _topic_candidates(topics, configured_topic)
-    if not candidates:
-        raise RuntimeError(
-            f"configured Gazebo topic {configured_topic!r} was not discovered"
-        )
-    if len(candidates) > 1:
-        raise RuntimeError(
-            f"configured Gazebo topic {configured_topic!r} is ambiguous: "
-            + ", ".join(candidates)
-        )
-    return candidates[0]
+    topics = sorted({line.strip() for line in output.splitlines() if line.strip()})
+    resolved = {}
+    for source_id, configured_topic in configured_topics.items():
+        candidates = _topic_candidates(topics, configured_topic)
+        if not candidates:
+            raise RuntimeError(
+                f"configured Gazebo topic {configured_topic!r} was not discovered"
+            )
+        if len(candidates) > 1:
+            raise RuntimeError(
+                f"configured Gazebo topic {configured_topic!r} is ambiguous: "
+                + ", ".join(candidates)
+            )
+        resolved[source_id] = candidates[0]
+    environment = transport_environment()
+    return {
+        "topics": topics,
+        "resolved_topics": resolved,
+        "discovery_elapsed_ms": round((time.monotonic() - started) * 1000.0, 3),
+        "environment": {
+            "GZ_IP": environment["GZ_IP"],
+            "GZ_PARTITION": environment["GZ_PARTITION"],
+        },
+    }
 
 
 async def inspect_topic(topic, expected_type, *, timeout_s=5.0):
@@ -109,19 +133,30 @@ async def inspect_topic(topic, expected_type, *, timeout_s=5.0):
 
 
 async def inspect_visual_sources(*, timeout_s=5.0):
-    rgb_topic, truth_topic = await asyncio.gather(
-        discover_configured_topic(RGB_CONFIGURED_TOPIC, timeout_s=timeout_s),
-        discover_configured_topic(TRUTH_CONFIGURED_TOPIC, timeout_s=timeout_s),
+    snapshot = await discover_configured_topics(
+        {
+            "rgb": RGB_CONFIGURED_TOPIC,
+            "depth": DEPTH_CONFIGURED_TOPIC,
+            "truth": TRUTH_CONFIGURED_TOPIC,
+        },
+        timeout_s=timeout_s,
     )
-    rgb, truth = await asyncio.gather(
+    resolved = snapshot["resolved_topics"]
+    rgb_topic = resolved["rgb"]
+    depth_topic = resolved["depth"]
+    truth_topic = resolved["truth"]
+    rgb, depth, truth = await asyncio.gather(
         inspect_topic(rgb_topic, RGB_MESSAGE_TYPE, timeout_s=timeout_s),
+        inspect_topic(depth_topic, DEPTH_MESSAGE_TYPE, timeout_s=timeout_s),
         inspect_topic(truth_topic, TRUTH_MESSAGE_TYPE, timeout_s=timeout_s),
     )
     return {
         "transport": "gz topic JSON subprocess",
         "clock_domain": GAZEBO_SIM_CLOCK,
         "rgb": rgb,
+        "depth": depth,
         "truth": truth,
+        "topic_snapshot": snapshot,
     }
 
 
@@ -164,10 +199,10 @@ def load_research_visual_configuration(path=RESEARCH_MODEL):
     sensors = {
         sensor.get("name"): sensor
         for sensor in root.findall(".//sensor")
-        if sensor.get("name") in {"research_rgb", "research_boxes"}
+        if sensor.get("name") in {"research_rgb", "research_depth", "research_boxes"}
     }
-    if set(sensors) != {"research_rgb", "research_boxes"}:
-        raise ValueError("x500_research must configure RGB and bounding-box sensors")
+    if set(sensors) != {"research_rgb", "research_depth", "research_boxes"}:
+        raise ValueError("x500_research must configure RGB, depth, and bounding-box sensors")
 
     def values(sensor):
         topic = sensor.findtext("topic")
@@ -194,5 +229,6 @@ def load_research_visual_configuration(path=RESEARCH_MODEL):
 
     return {
         "rgb": values(sensors["research_rgb"]),
+        "depth": values(sensors["research_depth"]),
         "truth": values(sensors["research_boxes"]),
     }

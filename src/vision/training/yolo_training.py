@@ -50,20 +50,27 @@ CONFIG_FIELDS = {
 
 def load_training_config(path):
     record = json.loads(Path(path).read_text(encoding="utf-8"))
-    if record.get("training_config_schema_version") != 1:
+    schema = record.get("training_config_schema_version")
+    if schema not in {1, 2}:
         raise ValueError("unsupported visual training config schema")
     missing = CONFIG_FIELDS - set(record)
     if missing:
         raise ValueError(f"training config missing fields: {sorted(missing)}")
-    if record.get("pretrained_weights") != "yolo11n.pt":
+    weights_key = "pretrained_weights" if schema == 1 else "fine_tune_weights"
+    hash_key = f"{weights_key}_sha256"
+    if schema == 1 and record.get(weights_key) != "yolo11n.pt":
         raise ValueError("baseline must use yolo11n.pt")
-    expected = record.get("pretrained_weights_sha256")
+    if schema == 2 and not str(record.get(weights_key, "")).endswith(".pt"):
+        raise ValueError("fine-tune config must reference PT weights")
+    expected = record.get(hash_key)
     if not isinstance(expected, str) or len(expected) != 64:
-        raise ValueError("baseline must pin the pretrained weights SHA256")
+        raise ValueError("training config must pin the initial weights SHA256")
     if record.get("oom_fallback_batch") != 4 or record["batch"] != 8:
         raise ValueError("baseline batch policy must be 8 with OOM fallback 4")
     if record["imgsz"] != 640:
         raise ValueError("baseline training input must be 640")
+    record["initial_weights_key"] = weights_key
+    record["initial_weights_sha256_key"] = hash_key
     return record
 
 
@@ -132,12 +139,14 @@ def train_yolo(
             (dataset_root / "identity/training_view_identity.json").read_text()
         )
     )
-    pretrained_path = Path(config["pretrained_weights"])
+    weights_key = config.pop("initial_weights_key")
+    hash_key = config.pop("initial_weights_sha256_key")
+    pretrained_path = Path(config[weights_key])
     if project_root is not None and not pretrained_path.is_absolute():
         pretrained_path = Path(project_root) / pretrained_path
     if not pretrained_path.is_file():
         raise FileNotFoundError(pretrained_path)
-    if file_sha256(pretrained_path) != config["pretrained_weights_sha256"]:
+    if file_sha256(pretrained_path) != config[hash_key]:
         raise ValueError("pretrained YOLO11n weights SHA256 mismatch")
     commit = _require_clean_commit(project_root)
     try:
@@ -202,7 +211,9 @@ def train_yolo(
         "run_id": config["run_id"] + ("-smoke" if smoke else ""),
         "training_view_identity_sha256": identity.training_view_identity_sha256,
         "training_code_commit_sha": commit,
-        "pretrained_weights": config["pretrained_weights"],
+        "initial_weights": config[weights_key],
+        "initial_weights_role": weights_key,
+        "pretrained_weights": config[weights_key],
         "pretrained_weights_sha256": (
             file_sha256(pretrained_path)
         ),
@@ -210,10 +221,8 @@ def train_yolo(
         "resolved_config_identity": object_sha256(
             {
                 "training_arguments": resolved,
-                "pretrained_weights": config["pretrained_weights"],
-                "pretrained_weights_sha256": config[
-                    "pretrained_weights_sha256"
-                ],
+                "initial_weights": config[weights_key],
+                "initial_weights_sha256": config[hash_key],
             }
         ),
         "actual_device": str(trainer.device),

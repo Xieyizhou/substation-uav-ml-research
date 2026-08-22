@@ -1,5 +1,7 @@
 """Runtime validation plus perception and replanning configuration."""
 
+import json
+
 from src.flight.dynamic_blocker import load_dynamic_scenario
 
 def validate_runtime_args(args):
@@ -55,6 +57,17 @@ def validate_runtime_args(args):
             raise ValueError("dynamic benchmark requires Gazebo LiDAR perception")
         if not args.return_home:
             raise ValueError("dynamic benchmark requires --return-home")
+    runtime_mode = getattr(args, "runtime_mode", "standard")
+    active_plan = getattr(args, "active_inspection_plan", None)
+    if runtime_mode == "active_semantic_inspection":
+        if not args.enable_perception or getattr(args, "equipment_model", None) is None:
+            raise ValueError("active semantic inspection requires perception and an equipment model")
+        trial_path = getattr(args, "active_inspection_trial", None)
+        if trial_path is not None:
+            from src.flight.active_inspection_trial import load_active_inspection_trial
+            trial = load_active_inspection_trial(trial_path)
+            if args.max_speed > trial["maximum_horizontal_speed_m_s"]:
+                raise ValueError("active inspection trial max speed exceeds frozen limit")
 
 def build_perception_config(args):
     """Return perception settings consumed by the detector, logger, and flight loop."""
@@ -125,6 +138,22 @@ def build_replan_config(args, planner_config):
 
     dynamic_path = getattr(args, "dynamic_replan_scenario", None)
     dynamic_scenario = load_dynamic_scenario(dynamic_path) if dynamic_path else None
+    semantic_runtime_mode = getattr(args, "runtime_mode", "standard")
+    trial_path = getattr(args, "active_inspection_trial", None)
+    semantic_trial = None
+    if trial_path is not None:
+        from src.flight.active_inspection_trial import load_active_inspection_trial
+        semantic_trial = load_active_inspection_trial(trial_path)
+    semantic_decisions = []
+    if semantic_runtime_mode == "active_semantic_inspection":
+        plan_path = getattr(args, "active_inspection_plan", None)
+        if plan_path is not None:
+            plan = json.loads(plan_path.read_text(encoding="utf-8"))
+            if plan.get("runtime_mode") != semantic_runtime_mode:
+                raise ValueError("active inspection plan runtime mode mismatch")
+            if not isinstance(plan.get("decisions"), list):
+                raise ValueError("active inspection plan decisions must be a list")
+            semantic_decisions = plan["decisions"]
     return {
         "enabled": enabled,
         "mode": args.replan_mode,
@@ -142,6 +171,9 @@ def build_replan_config(args, planner_config):
         "allow_diagonal": args.allow_diagonal,
         "allow_return_replan": dynamic_scenario is not None,
         "dynamic_scenario": dynamic_scenario,
+        "semantic_runtime_mode": semantic_runtime_mode,
+        "semantic_decisions": semantic_decisions,
+        "semantic_trial": semantic_trial,
     }
 
 

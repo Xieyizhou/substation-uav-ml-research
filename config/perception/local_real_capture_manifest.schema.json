@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Local real-domain capture manifest row",
+  "type": "object",
+  "required": [
+    "sample_id", "source_id", "site_group_id", "sequence_group_id",
+    "partition", "relative_image_path", "image_sha256", "capture_time",
+    "capture_platform", "review_status", "labels"
+  ],
+  "properties": {
+    "sample_id": {"type": "string", "minLength": 1},
+    "source_id": {"type": "string", "minLength": 1},
+    "site_group_id": {"type": "string", "minLength": 1},
+    "sequence_group_id": {"type": "string", "minLength": 1},
+    "partition": {"enum": ["development", "validation", "blind"]},
+    "relative_image_path": {"type": "string", "minLength": 1},
+    "image_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "capture_time": {"type": "string", "format": "date-time"},
+    "capture_platform": {"enum": ["uav", "inspection_camera"]},
+    "flight_id": {"type": ["string", "null"]},
+    "review_status": {"enum": ["accepted", "ambiguous", "ignored"]},
+    "labels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["class_name", "bbox_xywh_normalized", "whole_equipment_confirmed"],
+        "properties": {
+          "class_name": {"enum": ["transformer", "switchgear", "capacitor_bank", "reactor"]},
+          "bbox_xywh_normalized": {
+            "type": "array", "minItems": 4, "maxItems": 4,
+            "items": {"type": "number", "minimum": 0, "maximum": 1}
+          },
+          "whole_equipment_confirmed": {"type": "boolean"}
+        }
+      }
+    }
+  },
+  "additionalProperties": false
+}

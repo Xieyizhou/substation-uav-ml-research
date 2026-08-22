@@ -164,6 +164,28 @@ def build_argument_parser():
         help="Optional YOLO/ONNX equipment model used by semantic research tasks.",
     )
     parser.add_argument(
+        "--runtime-mode",
+        choices=["standard", "active_semantic_inspection"],
+        default="standard",
+        help="Flight scheduling mode. Default: standard",
+    )
+    parser.add_argument(
+        "--active-inspection-plan",
+        type=Path,
+        help="Frozen active-inspection plan consumed by active_semantic_inspection mode.",
+    )
+    parser.add_argument(
+        "--active-inspection-trial",
+        type=Path,
+        help="Frozen short-flight execution envelope for active inspection.",
+    )
+    parser.add_argument(
+        "--inspection-scheduler",
+        choices=("fixed_serpentine", "nearest_target_first", "active_utility"),
+        default="active_utility",
+        help="Live active-inspection scheduler. Default: active_utility",
+    )
+    parser.add_argument(
         "--detection-range",
         type=float,
         default=4.0,

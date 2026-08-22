@@ -4,6 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from src.cli.visual_real_domain import (
+    add_real_domain_parsers,
+    handle_real_domain_command,
+)
+from src.cli.visual_diagnostics import (
+    add_diagnostic_parsers,
+    handle_diagnostic_command,
+)
+
 from src.vision.evaluation.heldout_view import materialize_heldout_view
 from src.vision.evaluation.paired_heldout import (
     evaluate_paired_heldout,
@@ -17,15 +26,6 @@ from src.vision.replay.static_replay import (
 )
 from src.vision.evaluation.yolo_evaluation import evaluate_yolo
 from src.vision.evaluation.yolo_package import export_yolo_package, validate_yolo_package
-from src.vision.evaluation.temporal_observations import (
-    evaluate_temporal_jsonl,
-    evaluate_temporal_replay,
-)
-from src.vision.evaluation.reality_stress import (
-    evaluate_reality_stress,
-    materialize_reality_stress,
-)
-from src.vision.evaluation.onnx_latency_probe import probe_onnx_latency
 from src.vision.training.yolo_training import train_yolo
 
 
@@ -36,6 +36,9 @@ DEFAULT_RUN = Path("models/equipment/visual-yolo11n-baseline-v1")
 
 
 def add_training_parsers(commands):
+    add_real_domain_parsers(commands)
+    add_diagnostic_parsers(commands)
+
     view = commands.add_parser(
         "training-view-materialize",
         help="Create a deterministic split-safe YOLO training view",
@@ -79,6 +82,10 @@ def add_training_parsers(commands):
         "--equivalence-dataset", type=Path, default=DEFAULT_TRAINING_VIEW
     )
     export.add_argument("--equivalence-device", default="cpu")
+    export.add_argument(
+        "--v3-gate", type=Path,
+        help="Passing real-domain v3 gate to bind into the package",
+    )
 
     inspect = commands.add_parser(
         "model-package-inspect", help="Validate a visual YOLO model package"
@@ -146,58 +153,13 @@ def add_training_parsers(commands):
         help="Run only this materialized condition; repeat to select more",
     )
 
-    temporal = commands.add_parser(
-        "temporal-observations",
-        help="Apply frozen temporal confirmation to ordered prediction JSONL",
-    )
-    temporal.add_argument("--input", type=Path, required=True)
-    temporal.add_argument("--output", type=Path, required=True)
-    temporal.add_argument("--threshold", type=float, default=0.05)
-
-    temporal_replay = commands.add_parser(
-        "temporal-replay-evaluate",
-        help="Evaluate saved static replay predictions on the full timeline",
-    )
-    temporal_replay.add_argument("--predictions", type=Path, required=True)
-    temporal_replay.add_argument("--membership", type=Path, required=True)
-    temporal_replay.add_argument("--dataset", type=Path, required=True)
-    temporal_replay.add_argument("--output", type=Path, required=True)
-    temporal_replay.add_argument("--threshold", type=float, default=0.37)
-    temporal_replay.add_argument("--source-rate", type=float, default=30.0)
-    temporal_replay.add_argument("--imgsz", type=int, choices=[320, 640], default=320)
-
-    stress_view = commands.add_parser(
-        "reality-stress-materialize",
-        help="Create a provenance-bound real-image stress view",
-    )
-    stress_view.add_argument("--source", type=Path, required=True)
-    stress_view.add_argument("--annotations", type=Path, required=True)
-    stress_view.add_argument("--output", type=Path, required=True)
-
-    stress_evaluate = commands.add_parser(
-        "reality-stress-evaluate",
-        help="Evaluate a frozen model on a real-image stress view",
-    )
-    stress_evaluate.add_argument("--model", type=Path, required=True)
-    stress_evaluate.add_argument("--dataset", type=Path, required=True)
-    stress_evaluate.add_argument("--output", type=Path, required=True)
-    stress_evaluate.add_argument("--device", default="cpu")
-    stress_evaluate.add_argument("--imgsz", type=int, choices=[320, 640], default=640)
-    stress_evaluate.add_argument("--threshold", type=float, default=0.37)
-
-    latency = commands.add_parser(
-        "onnx-latency-probe",
-        help="Measure first-use and sustained ONNX inference latency",
-    )
-    latency.add_argument("--model", type=Path, required=True)
-    latency.add_argument("--image", type=Path, required=True)
-    latency.add_argument("--output", type=Path, required=True)
-    latency.add_argument("--device", default="cpu")
-    latency.add_argument("--imgsz", type=int, choices=[320, 416, 640], default=416)
-    latency.add_argument("--warm-iterations", type=int, default=200)
-
-
 def handle_training_command(args):
+    handled, result = handle_real_domain_command(args)
+    if handled:
+        return result
+    handled, result = handle_diagnostic_command(args)
+    if handled:
+        return result
     if args.command == "training-view-materialize":
         return materialize_training_view(
             args.collection_root, args.output, seed=args.seed
@@ -228,6 +190,7 @@ def handle_training_command(args):
             args.output,
             equivalence_dataset=args.equivalence_dataset,
             equivalence_device=args.equivalence_device,
+            v3_gate_path=args.v3_gate,
         )
     if args.command == "model-package-inspect":
         return validate_yolo_package(args.input)
@@ -260,41 +223,5 @@ def handle_training_command(args):
             args.package,
             args.dataset,
             condition_ids=args.condition_ids,
-        )
-    if args.command == "temporal-observations":
-        return evaluate_temporal_jsonl(
-            args.input, args.output, threshold=args.threshold
-        )
-    if args.command == "temporal-replay-evaluate":
-        return evaluate_temporal_replay(
-            args.predictions,
-            args.membership,
-            args.dataset,
-            args.output,
-            threshold=args.threshold,
-            source_rate_hz=args.source_rate,
-            input_size=args.imgsz,
-        )
-    if args.command == "reality-stress-materialize":
-        return materialize_reality_stress(
-            args.source, args.annotations, args.output
-        )
-    if args.command == "reality-stress-evaluate":
-        return evaluate_reality_stress(
-            args.model,
-            args.dataset,
-            args.output,
-            device=args.device,
-            imgsz=args.imgsz,
-            threshold=args.threshold,
-        )
-    if args.command == "onnx-latency-probe":
-        return probe_onnx_latency(
-            args.model,
-            args.image,
-            args.output,
-            device=args.device,
-            imgsz=args.imgsz,
-            warm_iterations=args.warm_iterations,
         )
     return None

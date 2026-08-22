@@ -9,6 +9,7 @@ from src.flight.active_replan_runtime import (
     active_replan_replacement,
     publish_dynamic_replan_event,
 )
+from src.flight.active_semantic_runtime import active_semantic_replacement, complete_semantic_waypoint
 from src.flight.flight_config import (
     LANDING_TIMEOUT_S,
     MAX_HORIZONTAL_SPEED_M_S,
@@ -285,6 +286,22 @@ async def fly_to_waypoint(
             await drone.offboard.set_velocity_ned(last_command)
             await asyncio.sleep(0.2)
             continue
+        semantic_safety_active = bool(
+            safety_decision
+            and safety_decision.action in {
+                "hover", "hover_then_land", "replan_or_hover",
+            }
+        )
+        replan_state["safety_replan_active"] = semantic_safety_active
+        semantic_replacement = await active_semantic_replacement(
+            drone,
+            phase_state,
+            replan_config,
+            replan_state,
+            safety_replan_active=semantic_safety_active,
+        )
+        if semantic_replacement:
+            return semantic_replacement
         risk_action = perception_config.get("risk_action", "log_only")
         if risk_action == "stop_and_land" and risk_level == "danger":
             last_command = VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
@@ -297,8 +314,9 @@ async def fly_to_waypoint(
             last_command = VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
             await drone.offboard.set_velocity_ned(last_command)
             print(f"Reached {waypoint['name']}.")
-            await asyncio.sleep(TURN_SETTLE_S)
-            return None
+            follow_up = await complete_semantic_waypoint(drone, phase_state, replan_config, replan_state, waypoint, asyncio.get_running_loop().time())
+            await asyncio.sleep(max(TURN_SETTLE_S, float(waypoint.get("dwell_s", 0))))
+            return follow_up
         adjusted_speed_scale = risk_adjusted_speed_scale(
             speed_scale, risk_level, risk_action
         )
@@ -361,7 +379,7 @@ async def fly_waypoint_route(
             replan_config,
             replan_state,
         )
-        if replan_config.get("mode") == "active" and replacement_waypoints:
+        if replacement_waypoints and (replan_config.get("mode") == "active" or replan_config.get("semantic_runtime_mode") == "active_semantic_inspection"):
             active_waypoints = list(replacement_waypoints)
             waypoint_index = 0
             publish_dynamic_replan_event(
@@ -377,6 +395,37 @@ async def fly_waypoint_route(
             continue
         completed_waypoints.append(active_waypoints[waypoint_index])
         waypoint_index += 1
+    if (
+        replan_config.get("semantic_runtime_mode") == "active_semantic_inspection"
+        and not replan_state.get("semantic_mission_complete")
+    ):
+        replan_config.setdefault("semantic_feedback", []).append({
+            "event": "waypoint_reached",
+            "trigger": "waypoint_reached",
+            "route_kind": replan_state.get("semantic_active_kind", "bootstrap"),
+            "timestamp_s": asyncio.get_running_loop().time(),
+        })
+        publish_mission_event(
+            phase_state,
+            "planner_feedback_received",
+            feedback="waypoint_reached",
+            route_kind=replan_state.get("semantic_active_kind", "bootstrap"),
+        )
+        while not replan_state.get("semantic_mission_complete"):
+            replacement = await active_semantic_replacement(
+                drone, phase_state, replan_config, replan_state,
+                safety_replan_active=bool(replan_state.get("safety_replan_active")),
+            )
+            if replacement:
+                return completed_waypoints + await fly_waypoint_route(
+                    drone, latest, phase_state, target_state, replacement,
+                    phase_name, route_direction, perception_config,
+                    perception_detector, replan_config, replan_state, speed_scale,
+                )
+            await drone.offboard.set_velocity_ned(
+                VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
+            )
+            await asyncio.sleep(0.2)
     return completed_waypoints
 
 

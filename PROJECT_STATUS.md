@@ -234,6 +234,11 @@ mixing sensor-driven results into the map-oracle comparison.
   had zero matched true positives and high no-target false-positive rates;
   transformer and reactor remain unsupported. Synthetic blind metrics must
   not be presented as real-domain evidence.
+- The real-domain v3 source registry now separates approved, quarantined, and
+  evaluation-only sources. Gomes/Zenodo is approved only as a single-site
+  development candidate; five public candidates remain quarantined pending
+  upstream provenance, semantic, grouping, and duplicate review. Training is
+  blocked because independent validation and blind coverage is not established.
 - Semantic equipment estimates can now generate inspection missions only after
   matching a compatible mapped target and passing the same Route Quality gate.
   A deterministic 2.5D height-layer planner also emits identity-bound planning
@@ -258,9 +263,9 @@ mixing sensor-driven results into the map-oracle comparison.
 
 1. Extend the two-class real-image stress view with licensed transformer and
    reactor coverage instead of inferring unsupported metrics.
-2. Build a new real-domain candidate with reviewed class semantics and
-   representative development data; do not tune the frozen v2 package on the
-   stress results.
+2. Audit the quarantined real-domain sources in the recorded priority order,
+   then collect only class/partition cells that remain missing. Do not tune the
+   frozen v2 package on the stress results.
 3. Validate semantic inspection and height-layer routes in PX4/Gazebo before
    promoting either planning artifact to a flight capability.
 4. Keep real-airframe claims explicitly outside the validated scope until

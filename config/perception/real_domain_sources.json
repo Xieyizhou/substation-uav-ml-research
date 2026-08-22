@@ -1,0 +1,500 @@
+{
+  "real_domain_source_registry_schema_version": 2,
+  "policy": {
+    "allowed_licenses": [
+      "MIT",
+      "CC0-1.0",
+      "CC-BY-4.0"
+    ],
+    "canonical_classes": [
+      "transformer",
+      "switchgear",
+      "capacitor_bank",
+      "reactor"
+    ],
+    "evaluation_only_source_families_are_training_forbidden": true,
+    "site_or_sequence_group_is_atomic_across_splits": true
+  },
+  "sources": [
+    {
+      "source_id": "gomes-substation-equipment-zenodo-7884270",
+      "name": "Substation equipment image dataset",
+      "version": "zenodo-7884270",
+      "landing_url": "https://zenodo.org/records/7884270",
+      "download_url": "https://zenodo.org/records/7884270",
+      "declared_license_id": "CC-BY-4.0",
+      "declared_license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_url": "https://doi.org/10.5281/zenodo.7884270",
+      "upstream_license_id": "CC-BY-4.0",
+      "citation": "Gomes et al., Substation Equipment Image Dataset, 2023",
+      "source_family": "gomes-brazil-substation-01",
+      "review_priority": 0,
+      "provenance_status": "verified",
+      "ingestion_status": "approved",
+      "usage_role": "development_candidate",
+      "eligible_partitions": [
+        "development"
+      ],
+      "annotation_format": "polygon-json-and-masks",
+      "public_artifact": {
+        "url": "https://zenodo.org/api/records/7884270/files/substation-semantic-dataset.zip/content",
+        "filename": "substation-semantic-dataset.zip",
+        "bytes": 1844470522,
+        "upstream_checksum": "md5:ca897cb85a3b944af6a1355e83530c32"
+      },
+      "site_group_count": 1,
+      "reported_image_count": 1660,
+      "class_candidates": {
+        "transformer": {
+          "source_labels": [
+            "power transformer"
+          ],
+          "semantic_status": "verified"
+        },
+        "switchgear": {
+          "source_labels": [
+            "breaker",
+            "recloser",
+            "disconnect switch"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "blocking_issues": [
+        "Switchgear mappings require whole-equipment review",
+        "All samples must remain in one development site group"
+      ]
+    },
+    {
+      "source_id": "roboflow-substation-equipment-34",
+      "name": "Substation Equipment 34-class",
+      "version": "universe-page-2026-08-20-v2",
+      "landing_url": "https://universe.roboflow.com/substation-equipment-florence2-datasets/substation-equipment",
+      "download_url": "https://universe.roboflow.com/substation-equipment-florence2-datasets/substation-equipment",
+      "declared_license_id": "CC-BY-4.0",
+      "declared_license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_url": "",
+      "upstream_license_id": "",
+      "citation": "Roboflow Universe Substation Equipment dataset",
+      "source_family": "roboflow-substation-equipment-34",
+      "review_priority": 999,
+      "provenance_status": "pending",
+      "ingestion_status": "rejected",
+      "usage_role": "evaluation_only",
+      "eligible_partitions": [],
+      "annotation_format": "roboflow-detect-or-segmentation",
+      "access": {
+        "mode": "authenticated_manual_export",
+        "dataset_locator": "substation-equipment-florence2-datasets/substation-equipment/1",
+        "export_format": "coco-segmentation",
+        "review_sample_urls": [
+          "https://source.roboflow.com/iZD7OnLCH8ws1wmuy8o0/010TIXZyYCHrXicTtHTT/thumb.jpg",
+          "https://source.roboflow.com/iZD7OnLCH8ws1wmuy8o0/0IT1HX5d5EHO7QsNSwvw/thumb.jpg",
+          "https://source.roboflow.com/iZD7OnLCH8ws1wmuy8o0/0IgRSVnQVuPzwDIgSOQ7/thumb.jpg",
+          "https://source.roboflow.com/iZD7OnLCH8ws1wmuy8o0/0Lf5iPT5YzOoABKjx2TW/thumb.jpg"
+        ]
+      },
+      "site_group_count": null,
+      "reported_image_count": 1584,
+      "public_preview_image_count": 636,
+      "class_candidates": {
+        "transformer": {
+          "source_labels": [
+            "main_power_transformer"
+          ],
+          "semantic_status": "review"
+        },
+        "switchgear": {
+          "source_labels": [
+            "Switch_cabinet"
+          ],
+          "semantic_status": "review"
+        },
+        "capacitor_bank": {
+          "source_labels": [
+            "Capacitor"
+          ],
+          "semantic_status": "review"
+        },
+        "reactor": {
+          "source_labels": [
+            "Electric_reactor"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "blocking_issues": [
+        "Upstream image provenance and redistribution rights are unresolved",
+        "Site and sequence grouping is unresolved",
+        "Capacitor label may represent components rather than complete banks",
+        "Public previews mix field imagery with product and advertising imagery"
+      ]
+    },
+    {
+      "source_id": "space-weather-reactors",
+      "name": "Space Weather Reactors",
+      "version": "universe-page-2026-08-20",
+      "landing_url": "https://universe.roboflow.com/space-weather/reactors-pfsjm",
+      "download_url": "https://universe.roboflow.com/space-weather/reactors-pfsjm",
+      "declared_license_id": "CC-BY-4.0",
+      "declared_license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_url": "",
+      "upstream_license_id": "",
+      "citation": "Roboflow Universe Space Weather Reactors dataset",
+      "source_family": "space-weather-power-equipment",
+      "review_priority": 1,
+      "provenance_status": "pending",
+      "ingestion_status": "quarantine",
+      "usage_role": "development_candidate",
+      "eligible_partitions": [],
+      "annotation_format": "roboflow-detect",
+      "access": {
+        "mode": "authenticated_manual_export",
+        "dataset_locator": "space-weather/reactors-pfsjm",
+        "export_format": "yolov11",
+        "review_sample_urls": []
+      },
+      "site_group_count": null,
+      "reported_image_count": 950,
+      "class_candidates": {
+        "reactor": {
+          "source_labels": [
+            "Reactor"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "blocking_issues": [
+        "Upstream provenance is unresolved",
+        "Overlap with Space Weather merged datasets must be measured",
+        "Site and sequence grouping is unresolved"
+      ]
+    },
+    {
+      "source_id": "space-weather-merged-power",
+      "name": "Space Weather Merged Dataset",
+      "version": "universe-page-2026-08-20",
+      "landing_url": "https://universe.roboflow.com/space-weather/merged-dataset-gzbkg",
+      "download_url": "https://universe.roboflow.com/space-weather/merged-dataset-gzbkg",
+      "declared_license_id": "CC-BY-4.0",
+      "declared_license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_url": "",
+      "upstream_license_id": "",
+      "citation": "Roboflow Universe Space Weather Merged Dataset",
+      "source_family": "space-weather-power-equipment",
+      "review_priority": 4,
+      "provenance_status": "pending",
+      "ingestion_status": "rejected",
+      "usage_role": "evaluation_only",
+      "eligible_partitions": [
+        "stress"
+      ],
+      "annotation_format": "roboflow-detect",
+      "access": {
+        "mode": "authenticated_manual_export",
+        "dataset_locator": "space-weather/merged-dataset-gzbkg",
+        "export_format": "yolov11",
+        "review_sample_urls": []
+      },
+      "site_group_count": null,
+      "reported_image_count": 1389,
+      "class_candidates": {
+        "transformer": {
+          "source_labels": [
+            "Transformer"
+          ],
+          "semantic_status": "review"
+        },
+        "switchgear": {
+          "source_labels": [
+            "Circuit Breaker"
+          ],
+          "semantic_status": "review"
+        },
+        "reactor": {
+          "source_labels": [
+            "Reactor"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "blocking_issues": [
+        "Satellite/map screenshot domain is incompatible with low-altitude UAV imagery",
+        "Targets are too small for whole-equipment semantic confirmation",
+        "Retained only as an evaluation stress source"
+      ]
+    },
+    {
+      "source_id": "fin-switch-gear",
+      "name": "fin_switch gear",
+      "version": "universe-page-2026-08-20",
+      "landing_url": "https://universe.roboflow.com/sankets-workspace-qdfcy/fin_switch-gear",
+      "download_url": "https://universe.roboflow.com/sankets-workspace-qdfcy/fin_switch-gear",
+      "declared_license_id": "CC-BY-4.0",
+      "declared_license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_url": "",
+      "upstream_license_id": "",
+      "citation": "Roboflow Universe fin_switch gear dataset",
+      "source_family": "fin-switch-gear",
+      "review_priority": 2,
+      "provenance_status": "pending",
+      "ingestion_status": "quarantine",
+      "usage_role": "supplemental_candidate",
+      "eligible_partitions": [],
+      "annotation_format": "roboflow-detect",
+      "access": {
+        "mode": "authenticated_manual_export",
+        "dataset_locator": "sankets-workspace-qdfcy/fin-switch-gear/2",
+        "export_format": "yolov11",
+        "review_sample_urls": []
+      },
+      "site_group_count": null,
+      "reported_image_count": 1894,
+      "class_candidates": {
+        "switchgear": {
+          "source_labels": [
+            "Circuit_Breaker",
+            "SF6 Circuit breaker"
+          ],
+          "semantic_status": "review"
+        },
+        "capacitor_bank": {
+          "source_labels": [
+            "Capacitor Bank"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "blocking_issues": [
+        "Upstream provenance is unresolved",
+        "Component labels must not be mapped to complete switchgear",
+        "Site and sequence grouping is unresolved"
+      ]
+    },
+    {
+      "source_id": "roboflow-substation-equipment-det-2-v2",
+      "name": "Substation Equipment det-2",
+      "version": "universe-page-2026-08-20-v2",
+      "landing_url": "https://universe.roboflow.com/substation-equipment-florence2-datasets/substation-equipment-det-2",
+      "download_url": "https://universe.roboflow.com/substation-equipment-florence2-datasets/substation-equipment-det-2",
+      "declared_license_id": "CC-BY-4.0",
+      "declared_license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_url": "",
+      "upstream_license_id": "",
+      "citation": "Roboflow Universe Substation Equipment det-2 dataset",
+      "source_family": "roboflow-substation-equipment-det-2",
+      "review_priority": 3,
+      "provenance_status": "pending",
+      "ingestion_status": "quarantine",
+      "usage_role": "supplemental_candidate",
+      "eligible_partitions": [],
+      "annotation_format": "roboflow-segmentation",
+      "access": {
+        "mode": "authenticated_manual_export",
+        "dataset_locator": "substation-equipment-florence2-datasets/substation-equipment-det-2/2",
+        "export_format": "yolov11-segmentation",
+        "review_sample_urls": []
+      },
+      "site_group_count": null,
+      "reported_image_count": 335,
+      "class_candidates": {
+        "transformer": {
+          "source_labels": [
+            "Main transformer-",
+            "main_power_transformer"
+          ],
+          "semantic_status": "review"
+        },
+        "switchgear": {
+          "source_labels": [
+            "Switch cabinet-"
+          ],
+          "semantic_status": "review"
+        },
+        "capacitor_bank": {
+          "source_labels": [
+            "Capacitor bank-"
+          ],
+          "semantic_status": "review"
+        },
+        "reactor": {
+          "source_labels": [
+            "Electric reactor-"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "blocking_issues": [
+        "This polygon source requires full duplicate and split audit",
+        "Component labels may describe cabinets rather than complete switchgear",
+        "Segmentation labels must preserve polygon provenance before conversion"
+      ]
+    },
+    {
+      "source_id": "electrical-devices-vit-atwcp",
+      "name": "Electrical Devices",
+      "version": "universe-page-2026-08-20",
+      "landing_url": "https://universe.roboflow.com/vit-atwcp/electrical-devices",
+      "download_url": "https://universe.roboflow.com/vit-atwcp/electrical-devices",
+      "declared_license_id": "CC-BY-4.0",
+      "declared_license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_url": "",
+      "upstream_license_id": "",
+      "citation": "Roboflow Universe Electrical Devices dataset",
+      "source_family": "electrical-devices-vit-atwcp",
+      "review_priority": 5,
+      "provenance_status": "pending",
+      "ingestion_status": "quarantine",
+      "usage_role": "supplemental_candidate",
+      "eligible_partitions": [],
+      "annotation_format": "roboflow-detect",
+      "access": {
+        "mode": "authenticated_manual_export",
+        "dataset_locator": "vit-atwcp/electrical-devices",
+        "export_format": "yolov11",
+        "review_sample_urls": []
+      },
+      "site_group_count": null,
+      "reported_image_count": 1163,
+      "class_candidates": {
+        "switchgear": {
+          "source_labels": [
+            "Air Circuit Breakers"
+          ],
+          "semantic_status": "review"
+        },
+        "capacitor_bank": {
+          "source_labels": [
+            "Capacitors"
+          ],
+          "semantic_status": "review"
+        },
+        "reactor": {
+          "source_labels": [
+            "Phase-Reactor"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "blocking_issues": [
+        "Upstream provenance is unresolved",
+        "Labels may describe components rather than complete outdoor equipment"
+      ]
+    },
+    {
+      "source_id": "gomes-yolo-figshare-24060960",
+      "name": "Gomes YOLO annotated substation equipment",
+      "version": "figshare-24060960-v1",
+      "landing_url": "https://figshare.com/articles/dataset/24060960",
+      "download_url": "https://api.figshare.com/v2/articles/24060960",
+      "declared_license_id": "CC-BY-4.0",
+      "declared_license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "upstream_url": "https://doi.org/10.6084/m9.figshare.24060960.v1",
+      "upstream_license_id": "CC-BY-4.0",
+      "citation": "Gomes, Andreas (2023), A YOLO Annotated 15-class Ground Truth Dataset for Substation Equipment",
+      "source_family": "gomes-brazil-substation-01",
+      "review_priority": 6,
+      "provenance_status": "verified",
+      "ingestion_status": "quarantine",
+      "usage_role": "development_candidate",
+      "eligible_partitions": [],
+      "annotation_format": "yolo-detection-capture-groups",
+      "site_group_count": 1,
+      "reported_image_count": 7539,
+      "class_candidates": {
+        "transformer": {
+          "source_labels": [
+            "Power transformer"
+          ],
+          "semantic_status": "verified"
+        },
+        "switchgear": {
+          "source_labels": [
+            "Breaker"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "artifact_components": [
+        {
+          "filename": "misc.zip",
+          "bytes": 7871613555,
+          "md5": "049ff48013636712607260cf6f2dd322",
+          "capture_group": "misc"
+        },
+        {
+          "filename": "agv_day.zip",
+          "bytes": 1236144371,
+          "md5": "979c51db56b20d909ccc8a3aab8df5c2",
+          "capture_group": "agv_day"
+        },
+        {
+          "filename": "agv_night_light.zip",
+          "bytes": 276808123,
+          "md5": "8f76903e41fdefa3c1aaded50e94236f",
+          "capture_group": "agv_night_light"
+        },
+        {
+          "filename": "agv_night_dark.zip",
+          "bytes": 64800731,
+          "md5": "c23c35523a97928be9933c15aff711a5",
+          "capture_group": "agv_night_dark"
+        },
+        {
+          "filename": "classes.txt",
+          "bytes": 320,
+          "md5": "bb2fc558d534392f7a251b82796661b9",
+          "capture_group": "metadata"
+        }
+      ],
+      "blocking_issues": [
+        "All captures belong to the same Brazilian substation and must remain one atomic site group",
+        "Overlap with the 1660-image semantic release must be measured before approval",
+        "Only downloaded and checksum-verified components may contribute candidate counts"
+      ]
+    },
+    {
+      "source_id": "power-equipment-image-dataset-mit",
+      "name": "Power equipment image dataset",
+      "version": "github-main-2026-08-20",
+      "landing_url": "https://github.com/xiongsiheng/Power-equipment-image-dataset",
+      "download_url": "https://github.com/xiongsiheng/Power-equipment-image-dataset",
+      "declared_license_id": "MIT",
+      "declared_license_url": "https://github.com/xiongsiheng/Power-equipment-image-dataset/blob/main/LICENSE",
+      "upstream_url": "https://github.com/xiongsiheng/Power-equipment-image-dataset",
+      "upstream_license_id": "MIT",
+      "citation": "xiongsiheng/Power-equipment-image-dataset",
+      "source_family": "sxiong-power-equipment",
+      "review_priority": 999,
+      "provenance_status": "verified",
+      "ingestion_status": "rejected",
+      "usage_role": "evaluation_only",
+      "eligible_partitions": [
+        "stress"
+      ],
+      "annotation_format": "repository-specific",
+      "site_group_count": null,
+      "reported_image_count": 753,
+      "class_candidates": {
+        "switchgear": {
+          "source_labels": [
+            "GIS",
+            "switch",
+            "breaker"
+          ],
+          "semantic_status": "review"
+        },
+        "capacitor_bank": {
+          "source_labels": [
+            "capacitor"
+          ],
+          "semantic_status": "review"
+        }
+      },
+      "blocking_issues": [
+        "The source family is frozen as an external stress set",
+        "Complete transformer and reactor classes are not covered"
+      ]
+    }
+  ]
+}

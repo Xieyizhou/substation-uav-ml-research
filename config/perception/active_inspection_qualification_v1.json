@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "trial_id": "active-inspection-yolo-qualification-v1",
+  "airborne_budget_s": 180,
+  "max_semantic_replacements": 4,
+  "max_route_distance_m": 8,
+  "minimum_altitude_m": 1.5,
+  "maximum_horizontal_speed_m_s": 1.0,
+  "end_behavior": "land_current",
+  "exploration_yaw_scan_deg": [0, 90, 180, 270],
+  "exploration_yaw_dwell_s": 1.5
+}

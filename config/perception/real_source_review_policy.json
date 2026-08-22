@@ -1,0 +1,34 @@
+{
+  "space-weather-merged-power": {
+    "default": "ignored",
+    "reason": "Satellite/map screenshot domain is incompatible with low-altitude UAV imagery"
+  },
+  "fin-switch-gear": {
+    "capacitor_bank": {
+      "default": "accepted",
+      "ignored": [33, 43, 45, 46, 48, 62],
+      "ambiguous": [5, 14, 28, 40, 44, 51, 59],
+      "reason": "Accept only visible complete capacitor cabinets; reject mislabeled mechanisms"
+    }
+  },
+  "roboflow-substation-equipment-det-2-v2": {
+    "capacitor_bank": {
+      "default": "ignored",
+      "reason": "Annotations describe individual capacitor units rather than complete banks"
+    },
+    "reactor": {
+      "default": "ignored",
+      "reason": "Annotations are component-level or semantically inconsistent"
+    },
+    "switchgear": {
+      "default": "ignored",
+      "accepted": [50],
+      "reason": "Only item 50 contains complete switch cabinets; other boxes target auxiliaries"
+    },
+    "transformer": {
+      "default": "ignored",
+      "accepted": [2, 7, 8, 10, 11, 12, 14, 17, 18, 19, 22, 23, 24, 25, 26, 27, 29, 30, 32, 33, 34, 35, 39, 41, 44, 45, 46, 47, 48, 51, 54, 57, 60, 61, 64, 65, 67, 68],
+      "reason": "Accept field/installed complete transformers; reject product renders and collages"
+    }
+  }
+}

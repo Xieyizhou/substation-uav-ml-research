@@ -4,6 +4,7 @@ import asyncio
 import contextlib
 
 from src.flight.async_runtime import cancel_tasks
+from src.flight.active_inspection_trial import wait_for_trial_budget
 from src.flight.dynamic_blocker import coordinate_dynamic_blocker
 from src.flight.mavsdk_connection import connect_mavsdk
 from src.flight.mission_events import MissionEventWriter
@@ -22,6 +23,7 @@ async def execute_flight(
     perception_detector=None,
     return_home=False,
     visual_mission_events=None,
+    visual_runtime=None,
 ):
     drone = None
     log_path = services["make_log_path"]()
@@ -55,6 +57,7 @@ async def execute_flight(
     telemetry_task = None
     mission_task = None
     blocker_task = None
+    trial_task = None
     pending_error = None
     landing_confirmed = None
     status_path = services["write_run_status"](log_path, "starting", "connecting")
@@ -82,6 +85,9 @@ async def execute_flight(
         await services["wait_for_position_ready"](
             drone, settings.position_ready_timeout_s
         )
+        if visual_runtime is not None:
+            await visual_runtime.start(latest, phase_state, replan_config, replan_state)
+            await visual_runtime.wait_ready(perception_config.get("sensor_startup_timeout_s", 5.0))
         print(f"Starting telemetry log: {log_path}")
         telemetry_task = asyncio.create_task(
             services["log_telemetry"](
@@ -118,6 +124,19 @@ async def execute_flight(
             ),
             name="flight-mission",
         )
+        semantic_trial = replan_config.get("semantic_trial")
+        if semantic_trial is not None:
+            trial_task = asyncio.create_task(
+                wait_for_trial_budget(latest, semantic_trial["airborne_budget_s"]),
+                name="active-inspection-trial-budget",
+            )
+            if event_writer is not None:
+                event_writer.publish(
+                    "trial_started",
+                    trial_id=semantic_trial["trial_id"],
+                    budget_s=semantic_trial["airborne_budget_s"],
+                    trial_identity=semantic_trial["artifact_identity"],
+                )
         dynamic_scenario = replan_config.get("dynamic_scenario")
         if dynamic_scenario is not None:
             coordinator = services.get(
@@ -131,6 +150,8 @@ async def execute_flight(
             watched = {mission_task, telemetry_task}
             if blocker_task is not None and not blocker_task.done():
                 watched.add(blocker_task)
+            if trial_task is not None and not trial_task.done():
+                watched.add(trial_task)
             done, _ = await asyncio.wait(
                 watched, return_when=asyncio.FIRST_COMPLETED
             )
@@ -141,13 +162,38 @@ async def execute_flight(
                         "Telemetry logger failed during flight"
                     ) from logger_error
                 raise RuntimeError("Telemetry logger stopped unexpectedly during flight")
+            if trial_task is not None and trial_task in done:
+                replan_state["semantic_trial_stop_requested"] = True
+                replan_state["semantic_mission_complete"] = True
+                if event_writer is not None:
+                    event_writer.publish(
+                        "trial_budget_reached",
+                        budget_s=semantic_trial["airborne_budget_s"],
+                    )
+                await cancel_tasks(
+                    [mission_task], settings.logger_shutdown_timeout_s
+                )
+                mission_task = None
+                landing_confirmed = await services["attempt_safe_landing"](
+                    drone, latest, phase_state, "landing_after_trial"
+                )
+                if not landing_confirmed:
+                    raise RuntimeError("active inspection trial landing was not confirmed")
+                if event_writer is not None:
+                    event_writer.publish(
+                        "trial_completed",
+                        reason="airborne_budget",
+                        landing_confirmed=True,
+                    )
+                break
             if blocker_task is not None and blocker_task in done:
                 blocker_error = blocker_task.exception()
                 if blocker_error is not None:
                     raise RuntimeError(
                         "Dynamic blocker coordinator failed during flight"
                     ) from blocker_error
-        await mission_task
+        if mission_task is not None:
+            await mission_task
         if blocker_task is not None:
             await blocker_task
         landing_confirmed = phase_state["phase"] == "landed"
@@ -157,6 +203,11 @@ async def execute_flight(
             log_path, "completed", phase_state["phase"], landing_confirmed=True
         )
         if event_writer is not None:
+            event_writer.publish(
+                "landing_confirmed",
+                phase=phase_state["phase"],
+                landing_confirmed=True,
+            )
             event_writer.publish(
                 "mission_completed",
                 status="completed",
@@ -198,6 +249,8 @@ async def execute_flight(
             await cancel_tasks([mission_task], settings.logger_shutdown_timeout_s)
         if blocker_task is not None and not blocker_task.done():
             await cancel_tasks([blocker_task], settings.logger_shutdown_timeout_s)
+        if trial_task is not None and not trial_task.done():
+            await cancel_tasks([trial_task], settings.logger_shutdown_timeout_s)
         if telemetry_task is not None:
             print("Stopping telemetry logging...")
             stop_logging.set()
@@ -233,6 +286,12 @@ async def execute_flight(
                     pending_error = RuntimeError(
                         f"Perception source did not stop cleanly: {error}"
                     )
+        if visual_runtime is not None:
+            try:
+                await visual_runtime.stop()
+            except Exception as error:
+                if pending_error is None:
+                    pending_error = RuntimeError(f"Visual runtime did not stop cleanly: {error}")
         close_system = services.get("close_system")
         if close_system is not None and drone is not None:
             try:

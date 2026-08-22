@@ -122,7 +122,7 @@ def run_preview(entry, return_home=False):
     return subprocess.run(command, cwd=PROJECT_ROOT).returncode
 
 
-def launcher_environment(entry, vehicle_model="x500"):
+def launcher_environment(entry, vehicle_model="x500", display_mode="headless"):
     environment = os.environ.copy()
     environment.update(
         {
@@ -133,6 +133,9 @@ def launcher_environment(entry, vehicle_model="x500"):
             "PX4_GZ_MODEL_POSE": spawn_pose_text(entry),
             "OBSTACLE_CONFIG": entry["obstacle_config"],
             "SIM_MODEL": vehicle_model,
+            "UAV_SANDBOX_DISPLAY_MODE": display_mode,
+            "GZ_IP": "127.0.0.1",
+            "GZ_PARTITION": "substation_uav",
         }
     )
     return environment
@@ -154,7 +157,7 @@ def check_map(entry, vehicle_model="x500"):
     ).returncode
 
 
-def start_map(entry, vehicle_model="x500"):
+def start_map(entry, vehicle_model="x500", display_mode="headless"):
     if not require_project_idle("start a new map"):
         return 1
     entry = select_map(entry["id"])
@@ -163,7 +166,7 @@ def start_map(entry, vehicle_model="x500"):
         return subprocess.run(
             ["bash", str(PROJECT_ROOT / "scripts" / "flight" / "start_px4_substation.sh")],
             cwd=PROJECT_ROOT,
-            env=launcher_environment(entry, vehicle_model),
+            env=launcher_environment(entry, vehicle_model, display_mode),
         ).returncode
     except KeyboardInterrupt:
         print("\nPX4/Gazebo stopped.", file=sys.stderr)
@@ -207,6 +210,11 @@ def build_parser():
         choices=["x500", "x500_lidar_2d", "x500_research"],
         default="x500",
         help="PX4 Gazebo vehicle model. Default: x500",
+    )
+    start_parser.add_argument(
+        "--display-mode",
+        choices=["headless", "visual_preview"],
+        default="headless",
     )
     check_parser = subparsers.add_parser(
         "check", help="Validate the selected map launcher without starting PX4"
@@ -253,7 +261,7 @@ def main():
             return run_preview(entry, args.return_home)
         if args.command == "start":
             entry = map_by_id(args.map_id) if args.map_id else current_map()
-            return start_map(entry, args.vehicle_model)
+            return start_map(entry, args.vehicle_model, args.display_mode)
         if args.command == "check":
             entry = map_by_id(args.map_id) if args.map_id else current_map()
             return check_map(entry, args.vehicle_model)

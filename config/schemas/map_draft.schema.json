@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "type": "object",
+  "required": ["schema_version", "source_image_sha256", "image_width_px", "image_height_px", "candidates"],
+  "properties": {
+    "schema_version": {"const": 1}, "source_image_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "image_width_px": {"type": "integer", "minimum": 1}, "image_height_px": {"type": "integer", "minimum": 1},
+    "candidates": {"type": "array", "items": {"type": "object", "required": ["candidate_id", "class_name", "confidence", "east_m", "north_m", "width_m", "depth_m", "height_m", "yaw_deg", "image_region_xyxy", "user_confirmation_status"]}}
+  }, "additionalProperties": false
+}
