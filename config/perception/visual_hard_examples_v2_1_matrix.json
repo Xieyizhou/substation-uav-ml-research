@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.1-flights",
+  "run_revision": "v2",
+  "cooldown_s": 30,
+  "frames_per_run": 240,
+  "emit_stride": 15,
+  "runs": [
+    {"map_id": "simple", "seed": 4101, "split": "development"},
+    {"map_id": "simple", "seed": 4102, "split": "development"},
+    {"map_id": "simple", "seed": 4103, "split": "development", "run_revision": "v2-retry1"},
+    {"map_id": "simple", "seed": 4104, "split": "development", "run_revision": "v2-retry1"},
+    {"map_id": "medium", "seed": 4105, "split": "development"},
+    {"map_id": "medium", "seed": 4106, "split": "development"},
+    {"map_id": "medium", "seed": 4107, "split": "development"},
+    {"map_id": "medium", "seed": 4108, "split": "development"},
+    {"map_id": "simple", "seed": 4201, "split": "validation"},
+    {"map_id": "simple", "seed": 4202, "split": "validation"},
+    {"map_id": "medium", "seed": 4203, "split": "validation"},
+    {"map_id": "medium", "seed": 4204, "split": "validation"}
+  ]
+}

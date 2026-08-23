@@ -10,7 +10,12 @@ ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.vision.training.hard_example_curator import build_receipt, curate, load_collection
+from src.vision.training.hard_example_curator import (
+    build_receipt,
+    curate,
+    curate_multilabel,
+    load_collection,
+)
 
 
 def main():
@@ -34,12 +39,28 @@ def main():
             seen_collections.add(collection.resolve())
             rows, failures, identity = load_collection(collection, protocol["classes"], perceptual_hash_algorithm=protocol["perceptual_hash_algorithm"], hash_cache=hash_cache)
             candidates.extend(rows); rejected.extend(failures); identities.append(identity)
-    quotas = {
-        **{(map_id, "target", split): count for map_id in protocol["maps"] for split, count in (("development", 600), ("validation", 300))},
-        ("all", "no_target", "development"): 400,
-        ("all", "no_target", "validation"): 200,
-    }
-    selected, duplicate_rejections, clusters, coverage, shortfall = curate(candidates, quotas, protocol["near_duplicate_hamming_threshold"])
+    if "class_frame_quotas" in protocol:
+        quotas = {
+            (class_name, "target", split): int(count)
+            for split, values in protocol["class_frame_quotas"].items()
+            for class_name, count in values.items()
+        }
+        quotas.update(
+            {
+                ("all", "no_target", split): int(count)
+                for split, count in protocol["no_target_frame_quotas"].items()
+            }
+        )
+        selected, duplicate_rejections, clusters, coverage, shortfall = curate_multilabel(
+            candidates, quotas, protocol["near_duplicate_hamming_threshold"]
+        )
+    else:
+        quotas = {
+            **{(map_id, "target", split): count for map_id in protocol["maps"] for split, count in (("development", 600), ("validation", 300))},
+            ("all", "no_target", "development"): 400,
+            ("all", "no_target", "validation"): 200,
+        }
+        selected, duplicate_rejections, clusters, coverage, shortfall = curate(candidates, quotas, protocol["near_duplicate_hamming_threshold"])
     rejected.extend(duplicate_rejections)
     receipt = build_receipt(selected, rejected, clusters, coverage, shortfall, identities, quotas, protocol["near_duplicate_hamming_threshold"], protocol["perceptual_hash_algorithm"])
     args.output.mkdir(parents=True, exist_ok=True)

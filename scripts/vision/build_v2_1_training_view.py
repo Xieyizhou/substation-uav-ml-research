@@ -98,14 +98,16 @@ def main():
     parser.add_argument("--hard-view", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--replay-per-class", type=int, default=1000)
+    parser.add_argument("--view-version", choices=("v2.1", "v2.2"), default="v2.1")
     args = parser.parse_args()
     if args.output.exists() and any(args.output.iterdir()):
         raise ValueError("v2.1 training-view output must be absent or empty")
     identity_dir = args.output / "identity"; identity_dir.mkdir(parents=True, exist_ok=True)
     v2_identity = json.loads((args.v2_view / "identity/training_view_identity.json").read_text())
     hard_receipt = json.loads((args.hard_view / "training-view-receipt.json").read_text())
-    if hard_receipt.get("status") != "complete" or hard_receipt.get("member_count") != 2400:
+    if hard_receipt.get("status") != "complete" or hard_receipt.get("member_count", 0) <= 0:
         raise ValueError("hard-example view is not complete")
+    hard_role = "v2_1_hard_example" if args.view_version == "v2.1" else "v2_2_hard_example"
     replay = _select_replay(_read_jsonl(args.v2_view / "identity/train_membership.jsonl"), args.replay_per_class)
     hard_rows = _read_jsonl(args.hard_view / "membership.jsonl")
     train_members, validation_members, train_labels, validation_labels = [], [], [], []
@@ -123,7 +125,7 @@ def main():
         label_relative = Path("labels") / destination_split / f"hard-{row['sample_id']}.txt"
         _materialize_hard_image(args.hard_view / row["image_relative_path"], args.output / image_relative)
         _link(args.hard_view / row["label_relative_path"], args.output / label_relative)
-        member = {**row, "source_role": "v2_1_hard_example", "source_image_sha256": row["image_sha256"], "image_sha256": _sha256(args.output / image_relative), "image_relative_path": image_relative.as_posix(), "label_relative_path": label_relative.as_posix()}
+        member = {**row, "source_role": hard_role, "source_image_sha256": row["image_sha256"], "image_sha256": _sha256(args.output / image_relative), "image_relative_path": image_relative.as_posix(), "label_relative_path": label_relative.as_posix()}
         if destination_split == "train":
             train_members.append(member); train_labels.append(args.output / label_relative)
         else:
@@ -151,7 +153,7 @@ def main():
     identity = TrainingViewIdentity(
         source_development_dataset_identity=source_development,
         source_validation_dataset_identity=hard_receipt["curated_identity"],
-        sampling_algorithm="v2_development_grouped_replay_1000_per_class_plus_hard_v2_1",
+        sampling_algorithm=f"v2_development_grouped_replay_{args.replay_per_class}_per_class_plus_hard_{args.view_version.replace('.', '_')}",
         sampling_seed=7,
         train_membership_sha256=_sha256(train_membership), validation_membership_sha256=_sha256(validation_membership),
         full_validation_membership_sha256=v2_identity["full_validation_membership_sha256"], labels_manifest_sha256=_sha256(labels_manifest_path),

@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "gate_id": "visual-yolo11n-baseline-v2.2-offline-gate",
+  "candidate_model_id": "visual-yolo11n-baseline-v2.2-candidate",
+  "hard_validation": {
+    "classes": ["transformer", "switchgear", "capacitor_bank"],
+    "minimum_precision": 0.9,
+    "minimum_recall": 0.9,
+    "minimum_independent_frames": {
+      "transformer": 120,
+      "switchgear": 120,
+      "capacitor_bank": 60
+    }
+  },
+  "full_validation_regression": {
+    "classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
+    "maximum_map50_drop": 0.02,
+    "maximum_macro_f1_drop": 0.02,
+    "maximum_no_target_false_positive_rate_increase": 0.005,
+    "baseline_model_sha256": "3d440244a328ba4a5b31bd5314f0706bd2e92a8d537cf828c3dd65c708fbff1a",
+    "baseline_map50": 0.9471174818999103,
+    "baseline_macro_f1": 0.9341803492225047,
+    "baseline_no_target_false_positive_rate": 0.015780389578367717
+  },
+  "qualification_requires_all_offline_gates": true
+}

@@ -42,8 +42,13 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text())
-    if manifest.get("status") != "complete" or manifest.get("selected_count") != 2400:
-        raise ValueError("curated manifest has not passed the 2400-frame gate")
+    if (
+        manifest.get("status") != "complete"
+        or not isinstance(manifest.get("selected_count"), int)
+        or manifest["selected_count"] <= 0
+        or any(manifest.get("shortfall", {}).values())
+    ):
+        raise ValueError("curated manifest has not passed its frozen quota gate")
     if args.output.exists() and any(args.output.iterdir()):
         raise ValueError("output training view must be absent or empty")
     membership = []
@@ -54,8 +59,11 @@ def main():
         source = Path(row["collection"]) / row["rgb_path"]
         if _sha256(source) != row["image_sha256"]:
             raise ValueError("curated source image SHA256 mismatch")
-        image_relative = Path("images") / split / f"{row['frame_id']}.ppm"
-        label_relative = Path("labels") / split / f"{row['frame_id']}.txt"
+        sample_id = hashlib.sha256(
+            f"{row['collection_identity']}:{row['frame_id']}".encode()
+        ).hexdigest()
+        image_relative = Path("images") / split / f"{sample_id}.ppm"
+        label_relative = Path("labels") / split / f"{sample_id}.txt"
         image_path, label_path = args.output / image_relative, args.output / label_relative
         image_path.parent.mkdir(parents=True, exist_ok=True)
         label_path.parent.mkdir(parents=True, exist_ok=True)
@@ -65,7 +73,7 @@ def main():
         label_text = _labels(row["objects"])
         label_path.write_text(label_text)
         membership.append({
-            "sample_id": row["frame_id"], "map_id": row["map_id"], "seed": row["seed"], "split": split,
+            "sample_id": sample_id, "source_frame_id": row["frame_id"], "map_id": row["map_id"], "seed": row["seed"], "split": split,
             "image_relative_path": image_relative.as_posix(), "label_relative_path": label_relative.as_posix(),
             "image_sha256": row["image_sha256"], "label_sha256": hashlib.sha256(label_text.encode()).hexdigest(),
             "perceptual_hash": row["perceptual_hash"], "classes": sorted({item["class_name"] for item in row["objects"]}),
