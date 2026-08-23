@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import shutil
 import sys
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
@@ -74,6 +75,14 @@ def _link(source, destination):
     os.link(source, destination)
 
 
+def _materialize_hard_image(source, destination):
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    if destination.exists():
+        raise ValueError(f"duplicate training-view destination: {destination.name}")
+    with Image.open(source) as image:
+        image.save(destination, format="PNG", optimize=False, compress_level=6)
+
+
 def _class_counts(label_paths):
     counts = {name: 0 for name in CLASSES}
     for path in label_paths:
@@ -110,12 +119,11 @@ def main():
         train_members.append({**row, "replay_quota_class": class_name, "source_role": "v2_development_replay", "image_relative_path": image_relative.as_posix(), "label_relative_path": label_relative.as_posix()})
     for row in hard_rows:
         destination_split = "train" if row["split"] == "development" else "validation"
-        suffix = Path(row["image_relative_path"]).suffix
-        image_relative = Path("images") / destination_split / f"hard-{row['sample_id']}{suffix}"
+        image_relative = Path("images") / destination_split / f"hard-{row['sample_id']}.png"
         label_relative = Path("labels") / destination_split / f"hard-{row['sample_id']}.txt"
-        _link(args.hard_view / row["image_relative_path"], args.output / image_relative)
+        _materialize_hard_image(args.hard_view / row["image_relative_path"], args.output / image_relative)
         _link(args.hard_view / row["label_relative_path"], args.output / label_relative)
-        member = {**row, "source_role": "v2_1_hard_example", "image_relative_path": image_relative.as_posix(), "label_relative_path": label_relative.as_posix()}
+        member = {**row, "source_role": "v2_1_hard_example", "source_image_sha256": row["image_sha256"], "image_sha256": _sha256(args.output / image_relative), "image_relative_path": image_relative.as_posix(), "label_relative_path": label_relative.as_posix()}
         if destination_split == "train":
             train_members.append(member); train_labels.append(args.output / label_relative)
         else:
