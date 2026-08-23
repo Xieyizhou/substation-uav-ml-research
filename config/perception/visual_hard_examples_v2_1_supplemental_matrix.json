@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.1-target-supplemental",
+  "run_revision": "v2",
+  "cooldown_s": 30,
+  "frames_per_run": 200,
+  "emit_stride": 15,
+  "runs": [
+    {"map_id": "simple", "seed": 4303, "split": "development", "frames": 80, "visual_route": "data/research/visual_hard_examples_v2_1/routes/simple-switchgear.json"},
+    {"map_id": "simple", "seed": 4401, "split": "validation", "visual_route": "data/research/visual_hard_examples_v2_1/routes/simple-switchgear.json"},
+    {"map_id": "simple", "seed": 4402, "split": "validation", "visual_route": "data/research/visual_hard_examples_v2_1/routes/simple-switchgear.json"},
+    {"map_id": "medium", "seed": 4305, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_1/routes/medium-switchgear.json"},
+    {"map_id": "medium", "seed": 4306, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_1/routes/medium-capacitor.json"},
+    {"map_id": "medium", "seed": 4403, "split": "validation", "visual_route": "data/research/visual_hard_examples_v2_1/routes/medium-switchgear.json"},
+    {"map_id": "medium", "seed": 4404, "split": "validation", "visual_route": "data/research/visual_hard_examples_v2_1/routes/medium-capacitor.json"}
+  ]
+}

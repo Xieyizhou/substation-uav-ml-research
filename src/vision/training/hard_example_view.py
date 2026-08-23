@@ -9,7 +9,8 @@ def load_protocol(path):
     return record
 
 def audit_members(rows, protocol):
-    allowed={seed:"development" for seed in protocol["development_seeds"]}|{seed:"validation" for seed in protocol["validation_seeds"]}; hashes={}; counts={"development":0,"validation":0}
+    allowed={seed:"development" for seed in protocol["development_seeds"]}|{seed:"validation" for seed in protocol["validation_seeds"]}; hashes={}; perceptual=[]; counts={"development":0,"validation":0}
+    threshold=int(protocol.get("near_duplicate_hamming_threshold",6))
     for row in rows:
         seed=int(row["seed"]); split=row["split"]
         if allowed.get(seed)!=split: raise ValueError("hard-example seed appears in the wrong split")
@@ -17,5 +18,12 @@ def audit_members(rows, protocol):
         digest=row["image_sha256"]
         if digest in hashes and hashes[digest]!=split: raise ValueError("exact duplicate crosses hard-example splits")
         hashes[digest]=split; counts[split]+=1
+        visual=row.get("perceptual_hash")
+        if visual is not None:
+            value=int(visual,16)
+            for previous, previous_split in perceptual:
+                if previous_split!=split and (value^previous).bit_count()<=threshold:
+                    raise ValueError("near duplicate crosses hard-example splits")
+            perceptual.append((value,split))
     result={"schema_version":1,"protocol_id":protocol["protocol_id"],"member_count":len(rows),"split_counts":counts,"membership":[row["sample_id"] for row in sorted(rows,key=lambda x:x["sample_id"])]}
     result["identity"]=hashlib.sha256(json.dumps(result,sort_keys=True,separators=(",",":")).encode()).hexdigest(); return result

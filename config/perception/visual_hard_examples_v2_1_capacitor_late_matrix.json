@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.1-capacitor-late",
+  "run_revision": "v1",
+  "cooldown_s": 30,
+  "frames_per_run": 200,
+  "emit_stride": 15,
+  "runs": [
+    {
+      "map_id": "medium",
+      "seed": 4307,
+      "split": "development",
+      "collection_start_delay_s": 90,
+      "visual_route": "data/research/visual_hard_examples_v2_1/routes/medium-capacitor.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 4405,
+      "split": "validation",
+      "collection_start_delay_s": 90,
+      "visual_route": "data/research/visual_hard_examples_v2_1/routes/medium-capacitor.json"
+    }
+  ]
+}

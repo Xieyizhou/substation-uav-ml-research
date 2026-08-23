@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.1-gap-fill",
+  "run_revision": "v1",
+  "cooldown_s": 30,
+  "frames_per_run": 220,
+  "emit_stride": 15,
+  "runs": [
+    {"map_id": "simple", "seed": 4311, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_1/routes/simple-switchgear-west.json"},
+    {"map_id": "medium", "seed": 4312, "split": "development", "frames": 140, "visual_route": "data/research/visual_hard_examples_v2_1/routes/medium-switchgear-east.json"},
+    {"map_id": "medium", "seed": 4313, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_1/routes/medium-background-away.json"},
+    {"map_id": "simple", "seed": 4411, "split": "validation", "frames": 160, "visual_route": "data/research/visual_hard_examples_v2_1/routes/simple-background-away.json"}
+  ]
+}
