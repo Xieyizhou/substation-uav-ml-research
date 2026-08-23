@@ -45,6 +45,7 @@ CONFIG_FIELDS = {
     "copy_paste",
     "close_mosaic",
     "save_period",
+    "freeze",
 }
 
 
@@ -65,8 +66,17 @@ def load_training_config(path):
     expected = record.get(hash_key)
     if not isinstance(expected, str) or len(expected) != 64:
         raise ValueError("training config must pin the initial weights SHA256")
-    if record.get("oom_fallback_batch") != 4 or record["batch"] != 8:
+    batch = record.get("batch")
+    fallback = record.get("oom_fallback_batch")
+    if schema == 1 and (batch != 8 or fallback != 4):
         raise ValueError("baseline batch policy must be 8 with OOM fallback 4")
+    if schema == 2 and (
+        batch not in {8, 16, 24}
+        or not isinstance(fallback, int)
+        or fallback <= 0
+        or fallback >= batch
+    ):
+        raise ValueError("fine-tune batch policy must use 8/16/24 with a smaller positive fallback")
     if record["imgsz"] != 640:
         raise ValueError("baseline training input must be 640")
     record["initial_weights_key"] = weights_key
@@ -188,7 +198,7 @@ def train_yolo(
                 marker in message for marker in ("out of memory", "mps backend")
             ):
                 raise
-            archive = output_root.parent / f"{run_name}-failed-batch8"
+            archive = output_root.parent / f"{run_name}-failed-batch{config['batch']}"
             if archive.exists():
                 raise ValueError(f"OOM archive already exists: {archive}") from error
             if run_directory.exists():
