@@ -98,7 +98,9 @@ def main():
     parser.add_argument("--hard-view", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--replay-per-class", type=int, default=1000)
-    parser.add_argument("--view-version", choices=("v2.1", "v2.2"), default="v2.1")
+    parser.add_argument(
+        "--view-version", choices=("v2.1", "v2.2", "v2.3"), default="v2.1"
+    )
     args = parser.parse_args()
     if args.output.exists() and any(args.output.iterdir()):
         raise ValueError("v2.1 training-view output must be absent or empty")
@@ -107,7 +109,7 @@ def main():
     hard_receipt = json.loads((args.hard_view / "training-view-receipt.json").read_text())
     if hard_receipt.get("status") != "complete" or hard_receipt.get("member_count", 0) <= 0:
         raise ValueError("hard-example view is not complete")
-    hard_role = "v2_1_hard_example" if args.view_version == "v2.1" else "v2_2_hard_example"
+    hard_role = f"{args.view_version.replace('.', '_')}_hard_example"
     replay = _select_replay(_read_jsonl(args.v2_view / "identity/train_membership.jsonl"), args.replay_per_class)
     hard_rows = _read_jsonl(args.hard_view / "membership.jsonl")
     train_members, validation_members, train_labels, validation_labels = [], [], [], []
