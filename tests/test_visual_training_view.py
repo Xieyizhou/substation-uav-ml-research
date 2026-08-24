@@ -139,6 +139,20 @@ class SamplingTests(unittest.TestCase):
             [1, 5, 8],
         )
 
+    def test_even_selection_supports_hard_example_source_frame_ids(self):
+        rows = [
+            {
+                "sample_id": f"hard-{index}",
+                "source_frame_id": f"medium-4301-{index:08d}",
+            }
+            for index in range(10)
+        ]
+        selected = evenly_select(list(reversed(rows)), 3)
+        self.assertEqual(
+            [row["source_frame_id"] for row in selected],
+            ["medium-4301-00000001", "medium-4301-00000005", "medium-4301-00000008"],
+        )
+
     def test_paired_bootstrap_is_deterministic_and_recording_based(self):
         counts = {}
         for candidate, true_positives in (("v1", 1), ("v2", 2)):

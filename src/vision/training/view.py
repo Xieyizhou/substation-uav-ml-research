@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import hashlib
 import math
 from pathlib import Path
 
@@ -55,7 +56,15 @@ def evenly_select(rows, count):
     def sequence(row):
         if "sequence_number" in row:
             return int(row["sequence_number"])
-        return int(row["annotation"]["sequence_number"])
+        annotation = row.get("annotation")
+        if annotation and "sequence_number" in annotation:
+            return int(annotation["sequence_number"])
+        source_frame_id = row.get("source_frame_id")
+        if source_frame_id:
+            suffix = str(source_frame_id).rsplit("-", 1)[-1]
+            if suffix.isdigit():
+                return int(suffix)
+        return int(hashlib.sha256(row["sample_id"].encode()).hexdigest()[:16], 16)
 
     rows = sorted(
         rows,
