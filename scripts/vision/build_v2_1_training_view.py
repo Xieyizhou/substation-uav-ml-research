@@ -92,6 +92,24 @@ def _class_counts(label_paths):
     return counts
 
 
+def _matches_oversample_profile(label_path, class_name, profile):
+    if not class_name:
+        return False
+    if profile == "all":
+        return True
+    if profile != "transformer_extreme_visibility" or class_name != "transformer":
+        raise ValueError(f"unsupported oversample profile for {class_name}: {profile}")
+    for line in label_path.read_text().splitlines():
+        values = line.split()
+        if not values or CLASSES[int(values[0])] != class_name:
+            continue
+        _, _, width, height = map(float, values[1:5])
+        area = width * height
+        if area <= 0.02 or width >= 0.60 or area >= 0.35:
+            return True
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--v2-view", type=Path, required=True)
@@ -101,6 +119,11 @@ def main():
     parser.add_argument("--view-version", default="v2.1")
     parser.add_argument("--oversample-class", choices=CLASSES)
     parser.add_argument("--oversample-factor", type=int, default=1)
+    parser.add_argument(
+        "--oversample-profile",
+        choices=("all", "transformer_extreme_visibility"),
+        default="all",
+    )
     args = parser.parse_args()
     if args.oversample_factor < 1:
         raise ValueError("oversample factor must be at least one")
@@ -134,7 +157,11 @@ def main():
         member = {**row, "source_role": hard_role, "source_image_sha256": row["image_sha256"], "image_sha256": _sha256(args.output / image_relative), "image_relative_path": image_relative.as_posix(), "label_relative_path": label_relative.as_posix()}
         if destination_split == "train":
             train_members.append(member); train_labels.append(args.output / label_relative)
-            if args.oversample_class in row["classes"]:
+            if args.oversample_class in row["classes"] and _matches_oversample_profile(
+                args.output / label_relative,
+                args.oversample_class,
+                args.oversample_profile,
+            ):
                 for replica in range(2, args.oversample_factor + 1):
                     duplicate_image_relative = Path("images/train") / f"hard-{row['sample_id']}-{args.oversample_class}-replica-{replica}.png"
                     duplicate_label_relative = Path("labels/train") / f"hard-{row['sample_id']}-{args.oversample_class}-replica-{replica}.txt"
@@ -147,6 +174,7 @@ def main():
                         "source_role": f"{hard_role}_{args.oversample_class}_oversample",
                         "oversample_source_sample_id": row["sample_id"],
                         "oversample_class": args.oversample_class,
+                        "oversample_profile": args.oversample_profile,
                         "oversample_replica": replica,
                         "image_relative_path": duplicate_image_relative.as_posix(),
                         "label_relative_path": duplicate_label_relative.as_posix(),
@@ -164,6 +192,7 @@ def main():
         "schema_version": 1, "classes": list(CLASSES), "hard_view_identity": hard_receipt["identity"],
         "v2_training_view_identity": v2_identity["training_view_identity_sha256"], "replay_per_class": args.replay_per_class,
         "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor,
+        "oversample_profile": args.oversample_profile,
     }
     labels_manifest_path = identity_dir / "labels_manifest.json"
     labels_manifest_path.write_text(json.dumps(labels_manifest, indent=2, sort_keys=True) + "\n")
@@ -173,11 +202,11 @@ def main():
     dataset = [f"path: {args.output.resolve()}", "train: images/train", "val: images/validation", "test: images/full_validation", "names:"]
     dataset.extend(f"  {index}: {name}" for index, name in enumerate(CLASSES))
     (args.output / "dataset.yaml").write_text("\n".join(dataset) + "\n")
-    source_development = object_sha256({"v2": v2_identity["training_view_identity_sha256"], "hard": hard_receipt["identity"], "replay_per_class": args.replay_per_class, "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor})
+    source_development = object_sha256({"v2": v2_identity["training_view_identity_sha256"], "hard": hard_receipt["identity"], "replay_per_class": args.replay_per_class, "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor, "oversample_profile": args.oversample_profile})
     identity = TrainingViewIdentity(
         source_development_dataset_identity=source_development,
         source_validation_dataset_identity=hard_receipt["curated_identity"],
-        sampling_algorithm=f"v2_development_grouped_replay_{args.replay_per_class}_per_class_plus_hard_{args.view_version.replace('.', '_')}_{args.oversample_class or 'no'}_oversample_{args.oversample_factor}",
+        sampling_algorithm=f"v2_development_grouped_replay_{args.replay_per_class}_per_class_plus_hard_{args.view_version.replace('.', '_')}_{args.oversample_class or 'no'}_{args.oversample_profile}_oversample_{args.oversample_factor}",
         sampling_seed=7,
         train_membership_sha256=_sha256(train_membership), validation_membership_sha256=_sha256(validation_membership),
         full_validation_membership_sha256=v2_identity["full_validation_membership_sha256"], labels_manifest_sha256=_sha256(labels_manifest_path),
@@ -187,7 +216,7 @@ def main():
         validation_no_target_count=sum(not row["classes"] for row in validation_members),
     )
     (identity_dir / "training_view_identity.json").write_text(json.dumps(identity.to_record(), indent=2, sort_keys=True) + "\n")
-    report = {"status": "complete", "training_view_identity": identity.training_view_identity_sha256, "train_frames": len(train_members), "validation_frames": len(validation_members), "replay_frames": len(replay), "hard_frames": len(hard_rows), "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor}
+    report = {"status": "complete", "training_view_identity": identity.training_view_identity_sha256, "train_frames": len(train_members), "validation_frames": len(validation_members), "replay_frames": len(replay), "hard_frames": len(hard_rows), "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor, "oversample_profile": args.oversample_profile}
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
