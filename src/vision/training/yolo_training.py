@@ -48,6 +48,10 @@ CONFIG_FIELDS = {
     "freeze",
 }
 
+OPTIONAL_CONFIG_FIELDS = {
+    "cls",
+}
+
 
 def load_training_config(path):
     record = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -164,6 +168,9 @@ def train_yolo(
     except ImportError as error:
         raise RuntimeError("visual training requires requirements-ml.txt") from error
     resolved = {key: config[key] for key in CONFIG_FIELDS}
+    resolved.update(
+        {key: config[key] for key in OPTIONAL_CONFIG_FIELDS if key in config}
+    )
     resolved.update(
         {
             "data": str((dataset_root / "dataset.yaml").resolve()),
