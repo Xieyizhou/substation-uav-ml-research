@@ -98,10 +98,14 @@ def main():
     parser.add_argument("--hard-view", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--replay-per-class", type=int, default=1000)
-    parser.add_argument(
-        "--view-version", choices=("v2.1", "v2.2", "v2.3"), default="v2.1"
-    )
+    parser.add_argument("--view-version", default="v2.1")
+    parser.add_argument("--oversample-class", choices=CLASSES)
+    parser.add_argument("--oversample-factor", type=int, default=1)
     args = parser.parse_args()
+    if args.oversample_factor < 1:
+        raise ValueError("oversample factor must be at least one")
+    if args.oversample_factor > 1 and not args.oversample_class:
+        raise ValueError("oversample class is required when factor exceeds one")
     if args.output.exists() and any(args.output.iterdir()):
         raise ValueError("v2.1 training-view output must be absent or empty")
     identity_dir = args.output / "identity"; identity_dir.mkdir(parents=True, exist_ok=True)
@@ -130,6 +134,23 @@ def main():
         member = {**row, "source_role": hard_role, "source_image_sha256": row["image_sha256"], "image_sha256": _sha256(args.output / image_relative), "image_relative_path": image_relative.as_posix(), "label_relative_path": label_relative.as_posix()}
         if destination_split == "train":
             train_members.append(member); train_labels.append(args.output / label_relative)
+            if args.oversample_class in row["classes"]:
+                for replica in range(2, args.oversample_factor + 1):
+                    duplicate_image_relative = Path("images/train") / f"hard-{row['sample_id']}-{args.oversample_class}-replica-{replica}.png"
+                    duplicate_label_relative = Path("labels/train") / f"hard-{row['sample_id']}-{args.oversample_class}-replica-{replica}.txt"
+                    _link(args.output / image_relative, args.output / duplicate_image_relative)
+                    _link(args.output / label_relative, args.output / duplicate_label_relative)
+                    train_labels.append(args.output / duplicate_label_relative)
+                    train_members.append({
+                        **member,
+                        "sample_id": f"{row['sample_id']}:{args.oversample_class}:replica:{replica}",
+                        "source_role": f"{hard_role}_{args.oversample_class}_oversample",
+                        "oversample_source_sample_id": row["sample_id"],
+                        "oversample_class": args.oversample_class,
+                        "oversample_replica": replica,
+                        "image_relative_path": duplicate_image_relative.as_posix(),
+                        "label_relative_path": duplicate_label_relative.as_posix(),
+                    })
         else:
             validation_members.append(member); validation_labels.append(args.output / label_relative)
     train_members.sort(key=lambda row: (row["source_role"], row["sample_id"]))
@@ -142,6 +163,7 @@ def main():
     labels_manifest = {
         "schema_version": 1, "classes": list(CLASSES), "hard_view_identity": hard_receipt["identity"],
         "v2_training_view_identity": v2_identity["training_view_identity_sha256"], "replay_per_class": args.replay_per_class,
+        "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor,
     }
     labels_manifest_path = identity_dir / "labels_manifest.json"
     labels_manifest_path.write_text(json.dumps(labels_manifest, indent=2, sort_keys=True) + "\n")
@@ -151,11 +173,11 @@ def main():
     dataset = [f"path: {args.output.resolve()}", "train: images/train", "val: images/validation", "test: images/full_validation", "names:"]
     dataset.extend(f"  {index}: {name}" for index, name in enumerate(CLASSES))
     (args.output / "dataset.yaml").write_text("\n".join(dataset) + "\n")
-    source_development = object_sha256({"v2": v2_identity["training_view_identity_sha256"], "hard": hard_receipt["identity"], "replay_per_class": args.replay_per_class})
+    source_development = object_sha256({"v2": v2_identity["training_view_identity_sha256"], "hard": hard_receipt["identity"], "replay_per_class": args.replay_per_class, "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor})
     identity = TrainingViewIdentity(
         source_development_dataset_identity=source_development,
         source_validation_dataset_identity=hard_receipt["curated_identity"],
-        sampling_algorithm=f"v2_development_grouped_replay_{args.replay_per_class}_per_class_plus_hard_{args.view_version.replace('.', '_')}",
+        sampling_algorithm=f"v2_development_grouped_replay_{args.replay_per_class}_per_class_plus_hard_{args.view_version.replace('.', '_')}_{args.oversample_class or 'no'}_oversample_{args.oversample_factor}",
         sampling_seed=7,
         train_membership_sha256=_sha256(train_membership), validation_membership_sha256=_sha256(validation_membership),
         full_validation_membership_sha256=v2_identity["full_validation_membership_sha256"], labels_manifest_sha256=_sha256(labels_manifest_path),
@@ -165,7 +187,7 @@ def main():
         validation_no_target_count=sum(not row["classes"] for row in validation_members),
     )
     (identity_dir / "training_view_identity.json").write_text(json.dumps(identity.to_record(), indent=2, sort_keys=True) + "\n")
-    report = {"status": "complete", "training_view_identity": identity.training_view_identity_sha256, "train_frames": len(train_members), "validation_frames": len(validation_members), "replay_frames": len(replay), "hard_frames": len(hard_rows)}
+    report = {"status": "complete", "training_view_identity": identity.training_view_identity_sha256, "train_frames": len(train_members), "validation_frames": len(validation_members), "replay_frames": len(replay), "hard_frames": len(hard_rows), "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor}
     print(json.dumps(report, indent=2, sort_keys=True))
 
 
