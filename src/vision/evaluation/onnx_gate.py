@@ -69,14 +69,21 @@ def validate_onnx_equivalence(
 ):
     rows = _read_jsonl(Path(dataset_root) / "identity/validation_membership.jsonl")
     selected = calibration_members(rows)
+    calibration_classes = sorted(
+        {class_name for row in selected for class_name in row["classes"]}
+    )
+    if not calibration_classes:
+        raise ValueError("ONNX calibration view has no target classes")
     with tempfile.TemporaryDirectory() as directory:
         calibration_root = Path(directory)
         yaml = _calibration_dataset(dataset_root, calibration_root, selected)
         pt_metrics = _standard_metrics(
-            pt_model, yaml, split="val", device=device, imgsz=imgsz
+            pt_model, yaml, split="val", device=device, imgsz=imgsz,
+            required_classes=calibration_classes,
         )
         onnx_metrics = _standard_metrics(
-            onnx_model, yaml, split="val", device="cpu", imgsz=imgsz
+            onnx_model, yaml, split="val", device="cpu", imgsz=imgsz,
+            required_classes=calibration_classes,
         )
         pt_frames = collect_predictions(
             pt_model,
@@ -103,6 +110,7 @@ def validate_onnx_equivalence(
         "equivalence_code_commit_sha": _formal_commit(),
         "input_size": imgsz,
         "calibration_frame_count": len(selected),
+        "calibration_classes": calibration_classes,
         "calibration_membership": [row["sample_id"] for row in selected],
         "prediction_confidence_floor": PREDICTION_CONFIDENCE_FLOOR,
         "pt_model_sha256": file_sha256(Path(pt_model)),

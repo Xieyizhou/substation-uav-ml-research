@@ -104,6 +104,7 @@ def collect_predictions(
 
 def _standard_metrics(
     model_path, dataset_yaml, *, split, device, imgsz, output_root=None,
+    required_classes=None,
 ):
     from ultralytics import YOLO
 
@@ -145,7 +146,10 @@ def _standard_metrics(
         "per_class": per_class,
         "confusion_matrix": confusion.tolist() if confusion is not None else None,
     }
-    if set(per_class) != set(EQUIPMENT_CLASSES):
+    expected_classes = set(
+        EQUIPMENT_CLASSES if required_classes is None else required_classes
+    )
+    if set(per_class) != expected_classes:
         raise ValueError("evaluation did not produce metrics for every class")
     _require_finite(result)
     return result
