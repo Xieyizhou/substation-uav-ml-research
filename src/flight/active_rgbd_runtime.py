@@ -219,7 +219,7 @@ class ActiveRgbdRuntime:
             tracking_ids = []
             candidate_id = item.get("candidate_id")
             track = self.planner.tracks.get(candidate_id) if candidate_id else None
-            if track is not None:
+            if item["event"] == "target_completed" and track is not None:
                 tracking_ids = sorted(track.source_tracking_ids)
             before = len(self.planner.decisions)
             self._sync_planner_busy()

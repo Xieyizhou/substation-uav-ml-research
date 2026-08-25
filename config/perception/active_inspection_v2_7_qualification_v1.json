@@ -18,7 +18,8 @@
       ],
       "runs": {
         "active_utility": [
-          "complex-active-v2-7-qualification-run-1"
+          "complex-active-v2-7-qualification-run-1",
+          "complex-active-v2-7-qualification-run-2"
         ]
       }
     }
