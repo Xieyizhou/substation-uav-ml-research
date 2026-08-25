@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "matrix_id": "simple-switchgear-diagnostic-v1",
+  "model": "models/equipment/visual-yolo11n-baseline-v2.7-candidate-package-v3/weights/best.pt",
+  "policy": "config/perception/active_inspection_multimap_qualification_policy_v1.json",
+  "output_root": "outputs/sandbox/active_rgbd_v2_7_simple_diagnostic",
+  "runtime_root": "outputs/sandbox/active_rgbd_runtime",
+  "maps": [
+    {
+      "map_id": "simple",
+      "obstacle_config": "config/substation_obstacles.json",
+      "expected_classes": ["transformer", "switchgear"],
+      "runs": {
+        "active_utility": ["simple-switchgear-diagnostic-run-1"]
+      }
+    }
+  ]
+}

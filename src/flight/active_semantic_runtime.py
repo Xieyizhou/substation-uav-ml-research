@@ -25,6 +25,10 @@ def replacement_waypoints(decision, *, safety_replan_active):
             "north_m": float(item["north_m"]),
             "down_m": -abs(float(item["altitude_m"])),
             "yaw_deg": float(item.get("yaw_deg", 0)),
+            **(
+                {"confirmation_anchor": True}
+                if item.get("confirmation_anchor") else {}
+            ),
         }
         for index, item in enumerate(decision.get("replacement_waypoints", []), 1)
     ]
@@ -84,16 +88,24 @@ async def active_semantic_replacement(
         if decision.get("kind") == "exploration" and replacement:
             scan = trial.get("exploration_yaw_scan_deg", [])
             if scan:
-                anchor = dict(replacement[-1])
-                replacement.extend([
-                    {
-                        **anchor,
-                        "name": f"SIRWP{len(replacement) + offset:02d}",
+                confirmation = bool(
+                    decision.get("features", {}).get("confirmation_sweep")
+                )
+                expanded = []
+                for waypoint in replacement:
+                    expanded.append(waypoint)
+                    if confirmation and not waypoint.get("confirmation_anchor"):
+                        continue
+                    if not confirmation and waypoint is not replacement[-1]:
+                        continue
+                    expanded.extend({
+                        **waypoint,
                         "yaw_deg": float(yaw),
                         "dwell_s": float(trial["exploration_yaw_dwell_s"]),
-                    }
-                    for offset, yaw in enumerate(scan, 1)
-                ])
+                    } for yaw in scan)
+                replacement = expanded
+                for offset, waypoint in enumerate(replacement, 1):
+                    waypoint["name"] = f"SIRWP{offset:02d}"
     if not replacement:
         replan_state["semantic_decision_index"] = index + 1
         publish_mission_event(

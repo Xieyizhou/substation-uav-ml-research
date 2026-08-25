@@ -29,6 +29,7 @@ class ActiveInspectionLiveBridge:
         self.camera_extrinsics = dict(camera_extrinsics or {})
         if float(self.camera_intrinsics.get("fx", 0)) <= 0:
             raise ValueError("active inspection requires positive camera fx")
+        self.last_audit = None
 
     @staticmethod
     def _detection_row(detection) -> dict[str, Any]:
@@ -52,11 +53,17 @@ class ActiveInspectionLiveBridge:
             [self._detection_row(item) for item in detections], timestamp_s,
         )
         observations = []
+        rejected = {"held": 0, "unstable": 0, "invalid_depth": 0}
         for row in tracked:
-            if row.get("held") or not row.get("stable", True):
+            if row.get("held"):
+                rejected["held"] += 1
+                continue
+            if not row.get("stable", True):
+                rejected["unstable"] += 1
                 continue
             depth_m = self.depth_provider(frame, row)
             if depth_m is None or not .2 <= float(depth_m) <= 100:
+                rejected["invalid_depth"] += 1
                 continue
             observations.append({
                 "tracking_id": row.get("tracking_id"),
@@ -69,6 +76,13 @@ class ActiveInspectionLiveBridge:
                 "camera_intrinsics": self.camera_intrinsics,
                 "localized_position": localize_bbox(depth_m, row["bbox"], self.camera_intrinsics, vehicle_pose, self.camera_extrinsics),
             })
+        self.last_audit = {
+            "timestamp_s": timestamp_s,
+            "raw_detections": [self._detection_row(item) for item in detections],
+            "temporal_observations": [dict(row) for row in tracked],
+            "accepted_observation_count": len(observations),
+            "rejected": rejected,
+        }
         if not observations:
             return None
         return {

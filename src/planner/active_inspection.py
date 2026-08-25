@@ -47,6 +47,8 @@ class ActiveInspectionPolicy:
     mission_budget_s: float = 600.0
     observation_hold_s: float = 2.0
     low_clearance_cells: int = 2
+    confirmation_sweep_passes: int = 1
+    confirmation_max_route_cells: int = 80
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any]) -> "ActiveInspectionPolicy":
@@ -69,6 +71,8 @@ class ActiveInspectionPolicy:
             mission_budget_s=float(limits.get("mission_budget_s", 600)),
             observation_hold_s=float(limits.get("observation_hold_s", 2)),
             low_clearance_cells=int(limits.get("low_clearance_cells", 2)),
+            confirmation_sweep_passes=int(limits.get("confirmation_sweep_passes", 1)),
+            confirmation_max_route_cells=int(limits.get("confirmation_max_route_cells", 80)),
         )
 
     @property
@@ -179,6 +183,7 @@ class ActiveInspectionPlanner:
         self._next_track = 1
         self._exploration = self._exploration_points()
         self._visited: set[tuple[int, int]] = set()
+        self.confirmation_sweeps_completed = 0
 
     def _emit(self, kind: str, timestamp_s: float, **details: Any) -> None:
         self.events.append({"sequence": len(self.events) + 1, "event": kind, "timestamp_s": timestamp_s, **details})
@@ -378,6 +383,83 @@ class ActiveInspectionPlanner:
                    utility=decision["utility"])
         self._emit("semantic_route_replaced", now, decision_id=decision["decision_id"], waypoint_count=len(waypoints))
 
+    def _schedule_confirmation_sweep(
+        self, now: float, pose: Mapping[str, Any], trigger: str
+    ) -> bool:
+        start = self._cell(
+            float(pose.get("east_m", 0)), float(pose.get("north_m", 0))
+        )
+        band = max(1, self.policy.exploration_stride_cells)
+        remaining = {
+            point for point in self._exploration
+            if min(
+                point[0], point[1],
+                self.map.width_cells - 1 - point[0],
+                self.map.height_cells - 1 - point[1],
+            ) <= band
+        }
+        route, current = [], start
+        anchor_indices = set()
+        while remaining and len(route) < self.policy.confirmation_max_route_cells:
+            target = min(
+                remaining,
+                key=lambda point: (
+                    abs(point[0] - current[0]) + abs(point[1] - current[1]),
+                    point[1], point[0],
+                ),
+            )
+            segment = _astar(self.map, current, target)
+            remaining.remove(target)
+            if not segment:
+                continue
+            available = self.policy.confirmation_max_route_cells - len(route)
+            addition = segment if not route else segment[1:]
+            route.extend(addition[:available])
+            current = route[-1]
+            if current == target:
+                anchor_indices.add(len(route) - 1)
+        if not route:
+            self._emit("confirmation_sweep_unavailable", now, reason="no_reachable_boundary_route")
+            return False
+        waypoints = [
+            {
+                "east_m": cell[0] * self.map.resolution_m,
+                "north_m": cell[1] * self.map.resolution_m,
+                "altitude_m": float(pose.get("altitude_m", 1.5)),
+                "confirmation_anchor": index in anchor_indices,
+            }
+            for index, cell in enumerate(route)
+        ]
+        decision = {
+            "decision_id": f"decision-{len(self.decisions) + 1:04d}",
+            "timestamp_s": now,
+            "trigger": trigger,
+            "candidate_id": f"confirmation:{self.confirmation_sweeps_completed + 1}",
+            "kind": "exploration",
+            "utility": 0.0,
+            "scheduler": self.scheduler,
+            "features": {
+                "confirmation_sweep": True,
+                "route_cells": len(route),
+                "anchor_count": len(anchor_indices),
+            },
+            "replacement_waypoints": waypoints,
+            "transit_cells": [list(cell) for cell in route],
+        }
+        self.decisions.append(decision)
+        self.confirmation_sweeps_completed += 1
+        self._emit(
+            "confirmation_sweep_started", now,
+            decision_id=decision["decision_id"],
+            pass_index=self.confirmation_sweeps_completed,
+            route_cells=len(route), anchor_count=len(anchor_indices),
+        )
+        self._emit(
+            "semantic_route_replaced", now,
+            decision_id=decision["decision_id"], waypoint_count=len(waypoints),
+        )
+        return True
+
     def process(self, record: Mapping[str, Any]) -> None:
         if self.terminated:
             return
@@ -415,9 +497,19 @@ class ActiveInspectionPlanner:
                 track.inspected = True
                 self._emit("target_inspected", now, target_id=track.target_id)
         valid = [track for track in self.tracks.values() if not track.ambiguous]
-        if self.coverage >= self.policy.exploration_completion and all(track.inspected for track in valid):
-            self.terminated = True
-            self._emit("exploration_completed", now, coverage=self.coverage)
+        completion_feedback = trigger in {"waypoint_reached", "target_completed"}
+        if (
+            completion_feedback
+            and self.coverage >= self.policy.exploration_completion
+            and all(track.inspected for track in valid)
+        ):
+            if self.confirmation_sweeps_completed < self.policy.confirmation_sweep_passes:
+                if not self._schedule_confirmation_sweep(now, pose, trigger):
+                    self.terminated = True
+                    self._emit("exploration_completed", now, coverage=self.coverage)
+            else:
+                self.terminated = True
+                self._emit("exploration_completed", now, coverage=self.coverage)
         else:
             self._schedule(now, pose, trigger)
 

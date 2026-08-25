@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "matrix_id": "active-inspection-v2.7-multimap-qualification-v3",
+  "model": "models/equipment/visual-yolo11n-baseline-v2.7-candidate-package-v3/weights/best.pt",
+  "model_package_identity": "344d8643affda45d1d7d265dea21518fbf308f0a6e09d8a8da01cb7d1c9ebe50",
+  "policy": "config/perception/active_inspection_multimap_qualification_policy_v1.json",
+  "output_root": "outputs/sandbox/active_rgbd_v2_7_multimap_qualification",
+  "runtime_root": "outputs/sandbox/active_rgbd_runtime",
+  "maps": [
+    {
+      "map_id": "simple",
+      "obstacle_config": "config/substation_obstacles.json",
+      "expected_classes": ["transformer", "switchgear"],
+      "runs": {"active_utility": ["simple-active-v2-7-formal-qualification-run-3"]}
+    },
+    {
+      "map_id": "medium",
+      "obstacle_config": "config/maps/substation_medium.json",
+      "expected_classes": ["transformer", "switchgear", "capacitor_bank"],
+      "runs": {"active_utility": ["medium-active-v2-7-formal-qualification-run-1"]}
+    },
+    {
+      "map_id": "complex",
+      "obstacle_config": "config/maps/substation_complex.json",
+      "expected_classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
+      "runs": {"active_utility": ["complex-active-v2-7-formal-qualification-run-1"]}
+    }
+  ],
+  "thresholds": {
+    "pairing_rate_min": 0.95,
+    "skew_p95_ms_max": 33.334,
+    "class_recall_min": 0.95,
+    "class_accuracy_min": 0.90,
+    "localization_median_m_max": 1.0,
+    "localization_p95_m_max": 2.0,
+    "exploration_coverage_min": 0.90
+  }
+}

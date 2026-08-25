@@ -3,9 +3,11 @@
 import asyncio
 import json
 from pathlib import Path
+import shutil
 
 from PIL import Image
 
+from src.ml.artifacts import file_sha256
 from src.flight.semantic_decision_queue import enqueue_decision, pending_queue_depth
 from src.planner.active_inspection import ActiveInspectionPlanner, ActiveInspectionPolicy, RuntimeMap, object_identity
 from src.planner.executed_coverage import ExecutedCoverageTracker
@@ -17,10 +19,11 @@ from src.vision.evaluation.temporal_observations import TemporalObservationFilte
 
 
 class ActiveRgbdRuntime:
-    def __init__(self, runtime_map, policy, weights, output_directory, *, scheduler="active_utility", rgb_topic="auto", depth_topic="auto"):
+    def __init__(self, runtime_map, policy, weights, output_directory, *, scheduler="active_utility", rgb_topic="auto", depth_topic="auto", diagnostics_directory=None, diagnostic_stride=60, diagnostic_max_frames=160):
         self.output = Path(output_directory)
         self.output.mkdir(parents=True, exist_ok=True)
         self.source = NativeGazeboRgbDepthSource(self.output / "frames")
+        policy = {**policy, "model_artifact_identity": file_sha256(weights)}
         self.planner = ActiveInspectionPlanner(
             RuntimeMap.from_mapping(runtime_map),
             ActiveInspectionPolicy.from_mapping(policy),
@@ -37,6 +40,16 @@ class ActiveRgbdRuntime:
         self.start_timestamp = None
         self.exploration_started = False
         self.world = runtime_map.get("name", runtime_map.get("map_id", "substation_complex"))
+        self.diagnostics_directory = Path(diagnostics_directory) if diagnostics_directory else None
+        self.diagnostic_stride = max(1, int(diagnostic_stride))
+        self.diagnostic_max_frames = max(1, int(diagnostic_max_frames))
+        self.diagnostic_frame_count = 0
+        if self.diagnostics_directory:
+            self.diagnostics_directory.mkdir(parents=True, exist_ok=True)
+            self.diagnostic_event_path = self.diagnostics_directory / "observation-audit.jsonl"
+            (self.diagnostics_directory / "frames").mkdir(exist_ok=True)
+        else:
+            self.diagnostic_event_path = None
 
     async def start(self, latest, phase_state, replan_config, replan_state):
         self.latest, self.phase_state = latest, phase_state
@@ -164,6 +177,7 @@ class ActiveRgbdRuntime:
                  "roll_deg": 0.0, "pitch_deg": 0.0, "yaw_deg": 0.0},
             )
             record = bridge.record(rgb, pose, elapsed_s=elapsed_s)
+            self._write_diagnostic(rgb, pose, bridge.last_audit)
             if record is None:
                 self._start_exploration(rgb.capture_timestamp, pose)
                 continue
@@ -178,6 +192,31 @@ class ActiveRgbdRuntime:
             self.planner.process(record)
             self._append_new_decisions(before)
             self._sync_terminal_state()
+
+    def _write_diagnostic(self, rgb, pose, audit):
+        if self.diagnostic_event_path is None or audit is None:
+            return
+        raw_classes = {row["class_name"] for row in audit["raw_detections"]}
+        sampled = self.processed_pairs % self.diagnostic_stride == 0
+        candidate = "switchgear" in raw_classes
+        frame_path = None
+        if (sampled or candidate) and self.diagnostic_frame_count < self.diagnostic_max_frames:
+            source = self.output / "frames" / rgb.payload_relative_path
+            if source.is_file():
+                frame_path = f"frames/{self.diagnostic_frame_count:04d}.jpg"
+                shutil.copy2(source, self.diagnostics_directory / frame_path)
+                self.diagnostic_frame_count += 1
+        row = {
+            "sequence": self.processed_pairs,
+            "timestamp_s": float(rgb.capture_timestamp),
+            "vehicle_pose": dict(pose),
+            "frame": frame_path,
+            "sampled": sampled,
+            "switchgear_candidate": candidate,
+            **audit,
+        }
+        with self.diagnostic_event_path.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(row, sort_keys=True) + "\n")
 
     def _start_exploration(self, timestamp, pose):
         if self.exploration_started:
@@ -291,6 +330,12 @@ class ActiveRgbdRuntime:
                        ),
                        "terminal_reason": self.replan_state.get("terminal_reason"),
                    },
+                   "diagnostics": {
+                       "enabled": self.diagnostics_directory is not None,
+                       "directory": str(self.diagnostics_directory) if self.diagnostics_directory else None,
+                       "frame_count": self.diagnostic_frame_count,
+                       "stride": self.diagnostic_stride if self.diagnostics_directory else None,
+                   },
                    "tracks": [track.public() if hasattr(track, "public") else track.__dict__ for track in self.planner.tracks.values()]}
         receipt["artifact_identity"] = object_identity(receipt)
         receipt["identity"] = receipt["artifact_identity"]
@@ -313,6 +358,8 @@ def build_active_rgbd_runtime(args, planner_config):
         scheduler=getattr(args, "inspection_scheduler", "active_utility"),
         rgb_topic="auto",
         depth_topic="auto",
+        diagnostics_directory=getattr(args, "active_inspection_diagnostics", None),
+        diagnostic_stride=getattr(args, "active_inspection_diagnostic_stride", 60),
     )
 
 

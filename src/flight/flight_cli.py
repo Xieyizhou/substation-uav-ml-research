@@ -180,6 +180,20 @@ def build_argument_parser():
         help="Frozen short-flight execution envelope for active inspection.",
     )
     parser.add_argument(
+        "--active-inspection-diagnostics",
+        type=Path,
+        help=(
+            "Optional truth-blind RGB-D diagnostic output directory. "
+            "It records bounded sampled RGB frames and observation filtering metadata."
+        ),
+    )
+    parser.add_argument(
+        "--active-inspection-diagnostic-stride",
+        type=int,
+        default=60,
+        help="Paired-frame stride for active-inspection diagnostic samples. Default: 60",
+    )
+    parser.add_argument(
         "--inspection-scheduler",
         choices=("fixed_serpentine", "nearest_target_first", "active_utility"),
         default="active_utility",

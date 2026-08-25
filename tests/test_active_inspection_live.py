@@ -49,6 +49,14 @@ class ActiveInspectionLiveBridgeTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             ActiveInspectionLiveBridge(Detector(), lambda *_: [], lambda *_: 1, lambda x: x, {"fx": 0, "cx": 0})
 
+    def test_audit_records_invalid_depth_rejection(self):
+        frame = type("Frame", (), {"capture_timestamp": 1.0})()
+        bridge = self.bridge(None)
+        self.assertIsNone(bridge.record(
+            frame, {"east_m": 0, "north_m": 0, "altitude_m": 1, "yaw_deg": 0}, elapsed_s=1,
+        ))
+        self.assertEqual(bridge.last_audit["rejected"]["invalid_depth"], 1)
+
 
 class ActiveRgbdRuntimeFeedbackTests(unittest.TestCase):
     def test_runtime_map_name_uses_obstacle_config(self):

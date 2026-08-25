@@ -21,6 +21,7 @@ def main():
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--map-id", required=True)
     parser.add_argument("--run-id", required=True)
+    parser.add_argument("--diagnostics-output", type=Path)
     args = parser.parse_args()
     manifest = json.loads(args.manifest.read_text())
     map_row = next(row for row in manifest["maps"] if row["map_id"] == args.map_id)
@@ -52,7 +53,7 @@ def main():
         if probe.returncode:
             return probe.returncode
         with (output / f"{args.run_id}-console.log").open("w") as console:
-            flight = subprocess.run([
+            flight_command = [
                 str(ROOT / ".venv/bin/python"), "main.py", "astar", "fly", "--compact-output",
                 "--runtime-mode", "active_semantic_inspection", "--active-inspection-trial", manifest["policy"],
                 "--inspection-scheduler", scheduler, "--equipment-model", manifest["model"],
@@ -60,7 +61,10 @@ def main():
                 "--risk-fusion", "safety_max", "--risk-action", "stop_and_land", "--enable-local-replan",
                 "--replan-mode", "active", "--max-speed", "1.0", "--altitude", "1.5", "--sensor-startup-timeout", "30",
                 "--visual-mission-events", str(output / f"{args.run_id}-events.jsonl"),
-            ], cwd=ROOT, env=env, stdout=console, stderr=subprocess.STDOUT)
+            ]
+            if args.diagnostics_output:
+                flight_command.extend(["--active-inspection-diagnostics", str(args.diagnostics_output)])
+            flight = subprocess.run(flight_command, cwd=ROOT, env=env, stdout=console, stderr=subprocess.STDOUT)
         return flight.returncode
     finally:
         if owned_launcher_pid is not None:

@@ -90,6 +90,34 @@ class ActiveInspectionTrialTests(unittest.IsolatedAsyncioTestCase):
             call.args[1] == "target_completed" for call in publish.call_args_list
         ))
 
+    async def test_confirmation_sweep_scans_each_marked_anchor(self):
+        drone = SimpleNamespace(
+            offboard=SimpleNamespace(set_velocity_ned=AsyncMock())
+        )
+        trial = load_active_inspection_trial(
+            "config/perception/active_inspection_multimap_qualification_policy_v1.json"
+        )
+        config = {
+            "semantic_runtime_mode": "active_semantic_inspection",
+            "semantic_trial": trial,
+            "semantic_decisions": [{
+                "decision_id": "confirmation-1",
+                "candidate_id": "confirmation:1",
+                "kind": "exploration",
+                "features": {"confirmation_sweep": True},
+                "replacement_waypoints": [
+                    {"east_m": 1, "north_m": 1, "altitude_m": 1.5, "confirmation_anchor": True},
+                    {"east_m": 2, "north_m": 1, "altitude_m": 1.5},
+                    {"east_m": 3, "north_m": 1, "altitude_m": 1.5, "confirmation_anchor": True},
+                ],
+            }],
+        }
+        replacement = await active_semantic_replacement(
+            drone, {}, config, {}, safety_replan_active=False
+        )
+        self.assertEqual(len(replacement), 11)
+        self.assertEqual(sum("dwell_s" in row for row in replacement), 8)
+
 
 if __name__ == "__main__":
     unittest.main()

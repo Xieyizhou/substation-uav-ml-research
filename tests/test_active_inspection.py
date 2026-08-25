@@ -52,6 +52,21 @@ class ActiveInspectionTests(unittest.TestCase):
         self.assertFalse(any(row["event"] == "semantic_route_replaced" for row in safe["events"]))
         self.assertEqual(replacement_waypoints({}, safety_replan_active=True), [])
 
+    def test_coverage_completion_waits_for_route_feedback(self):
+        planner = ActiveInspectionPlanner(
+            RuntimeMap.from_mapping(MAP), ActiveInspectionPolicy.from_mapping(POLICY)
+        )
+        planner.executed_coverage = .95
+        stable = {**event(), "observations": []}
+        planner.process(stable)
+        self.assertFalse(planner.terminated)
+        planner.process({**stable, "timestamp_s": 2, "elapsed_s": 2, "trigger": "waypoint_reached"})
+        self.assertFalse(planner.terminated)
+        self.assertEqual(planner.events[-2]["event"], "confirmation_sweep_started")
+        planner.process({**stable, "timestamp_s": 3, "elapsed_s": 3, "trigger": "waypoint_reached"})
+        self.assertTrue(planner.terminated)
+        self.assertEqual(planner.events[-1]["event"], "exploration_completed")
+
     def test_map_draft_seam(self):
         candidate = MapDraftCandidate("c1", "transformer", .9, 1, 2, 3, 4, 5, 0, (0, 0, 20, 20))
         self.assertEqual(len(MapDraft("b"*64, 640, 480, (candidate,)).artifact_identity), 64)
