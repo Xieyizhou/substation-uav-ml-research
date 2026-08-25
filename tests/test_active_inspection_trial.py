@@ -18,6 +18,16 @@ TRIAL_PATH = Path("config/perception/active_inspection_trial_v1.json")
 
 
 class ActiveInspectionTrialTests(unittest.IsolatedAsyncioTestCase):
+    def test_multimap_qualification_is_frozen_with_yaw_scan(self):
+        qualification = load_active_inspection_trial(
+            "config/perception/active_inspection_multimap_qualification_policy_v1.json"
+        )
+        self.assertEqual(qualification["airborne_budget_s"], 600)
+        self.assertEqual(qualification["max_semantic_replacements"], 10000)
+        self.assertEqual(
+            qualification["exploration_yaw_scan_deg"], [0, 90, 180, 270]
+        )
+
     def test_formal_watchdog_is_frozen_without_route_caps(self):
         formal = load_active_inspection_trial(
             "config/perception/active_inspection_complex_formal_v1.json"

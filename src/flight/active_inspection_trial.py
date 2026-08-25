@@ -41,10 +41,28 @@ FORMAL_REQUIRED = {
     "end_behavior": "land_current",
 }
 
+MULTIMAP_QUALIFICATION_REQUIRED = {
+    "schema_version": 1,
+    "trial_id": "active-inspection-multimap-qualification-v1",
+    "airborne_budget_s": 600,
+    "max_semantic_replacements": 10000,
+    "max_route_distance_m": 10000,
+    "minimum_altitude_m": 1.5,
+    "maximum_horizontal_speed_m_s": 1.0,
+    "end_behavior": "land_current",
+    "exploration_yaw_scan_deg": [0, 90, 180, 270],
+    "exploration_yaw_dwell_s": 1.5,
+}
+
 
 def load_active_inspection_trial(path):
     payload = json.loads(Path(path).read_text(encoding="utf-8"))
-    if payload not in (REQUIRED, QUALIFICATION_REQUIRED, FORMAL_REQUIRED):
+    if payload not in (
+        REQUIRED,
+        QUALIFICATION_REQUIRED,
+        FORMAL_REQUIRED,
+        MULTIMAP_QUALIFICATION_REQUIRED,
+    ):
         raise ValueError("active inspection trial configuration is not frozen v1")
     encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     return {**payload, "artifact_identity": hashlib.sha256(encoded).hexdigest()}
