@@ -8,6 +8,33 @@
   "runtime_root": "outputs/sandbox/active_rgbd_runtime",
   "maps": [
     {
+      "map_id": "simple",
+      "obstacle_config": "config/substation_obstacles.json",
+      "expected_classes": [
+        "transformer",
+        "switchgear"
+      ],
+      "runs": {
+        "active_utility": [
+          "simple-active-v2-7-qualification-run-1"
+        ]
+      }
+    },
+    {
+      "map_id": "medium",
+      "obstacle_config": "config/maps/substation_medium.json",
+      "expected_classes": [
+        "transformer",
+        "switchgear",
+        "capacitor_bank"
+      ],
+      "runs": {
+        "active_utility": [
+          "medium-active-v2-7-qualification-run-1"
+        ]
+      }
+    },
+    {
       "map_id": "complex",
       "obstacle_config": "config/maps/substation_complex.json",
       "expected_classes": [
