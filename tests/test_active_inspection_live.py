@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from types import SimpleNamespace
 from unittest.mock import Mock
 
-from src.flight.active_rgbd_runtime import ActiveRgbdRuntime
+from src.flight.active_rgbd_runtime import ActiveRgbdRuntime, runtime_map_name
 from src.vision.active_inspection_live import ActiveInspectionLiveBridge
 
 
@@ -51,6 +51,10 @@ class ActiveInspectionLiveBridgeTests(unittest.TestCase):
 
 
 class ActiveRgbdRuntimeFeedbackTests(unittest.TestCase):
+    def test_runtime_map_name_uses_obstacle_config(self):
+        args = SimpleNamespace(obstacle_config="config/substation_obstacles.json")
+        self.assertEqual(runtime_map_name(args, {}), "simple")
+
     def runtime(self, event):
         runtime = object.__new__(ActiveRgbdRuntime)
         runtime.replan_config = {

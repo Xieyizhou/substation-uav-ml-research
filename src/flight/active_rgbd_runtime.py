@@ -299,7 +299,7 @@ class ActiveRgbdRuntime:
 
 def build_active_rgbd_runtime(args, planner_config):
     policy = json.loads(Path("config/perception/active_inspection_policy.json").read_text())
-    runtime_map = {"name": planner_config.get("map_id", "substation_complex"),
+    runtime_map = {"name": runtime_map_name(args, planner_config),
                    "width_cells": planner_config["width"], "height_cells": planner_config["height"],
                    "resolution_m": planner_config["resolution_m"],
                    "occupied_cells": [list(cell) for cell in planner_config["inflated_blocking_cells"]]}
@@ -314,3 +314,15 @@ def build_active_rgbd_runtime(args, planner_config):
         rgb_topic="auto",
         depth_topic="auto",
     )
+
+
+def runtime_map_name(args, planner_config):
+    if planner_config.get("map_id"):
+        return str(planner_config["map_id"])
+    obstacle_config = getattr(args, "obstacle_config", None)
+    stem = Path(obstacle_config).stem if obstacle_config else ""
+    return {
+        "substation_obstacles": "simple",
+        "substation_medium": "medium",
+        "substation_complex": "complex",
+    }.get(stem, stem or "substation_complex")
