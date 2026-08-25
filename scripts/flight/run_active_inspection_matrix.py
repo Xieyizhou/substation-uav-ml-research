@@ -16,6 +16,28 @@ import time
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def wait_for_rgbd_topics(simulator, env, timeout_s=240):
+    """Wait for the research vehicle to finish launching before pre-arm."""
+    deadline = time.monotonic() + timeout_s
+    required = ("research_camera/image", "research_camera/depth")
+    while time.monotonic() < deadline:
+        if simulator.poll() is not None:
+            raise RuntimeError("map launcher exited before RGB-D topics were ready")
+        snapshot = subprocess.run(
+            ["gz", "topic", "-l"],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        topics = snapshot.stdout.splitlines() if snapshot.returncode == 0 else []
+        if all(any(topic.endswith(name) for topic in topics) for name in required):
+            return
+        time.sleep(5)
+    raise RuntimeError("RGB-D topics were not ready before launcher timeout")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, required=True)
@@ -30,7 +52,13 @@ def main():
         raise SystemExit("run-id is not registered for map-id")
     output = ROOT / manifest["output_root"]
     output.mkdir(parents=True, exist_ok=True)
-    env = {**os.environ, "PYTHONPATH": str(ROOT), "MPLCONFIGDIR": "/tmp/matplotlib-cache"}
+    env = {
+        **os.environ,
+        "PYTHONPATH": str(ROOT),
+        "MPLCONFIGDIR": "/tmp/matplotlib-cache",
+        "GZ_IP": "127.0.0.1",
+        "GZ_PARTITION": "substation_uav",
+    }
     launcher_pid_path = ROOT / ".runtime/px4_launcher.pid"
     launcher_pid_before = launcher_pid_path.read_text().strip() if launcher_pid_path.exists() else None
     owned_launcher_pid = None
@@ -40,7 +68,7 @@ def main():
         cwd=ROOT, env=env, stdout=simulator_log, stderr=subprocess.STDOUT,
     )
     try:
-        time.sleep(70)
+        wait_for_rgbd_topics(simulator, env)
         launcher_pid_after = launcher_pid_path.read_text().strip() if launcher_pid_path.exists() else None
         if launcher_pid_after and launcher_pid_after != launcher_pid_before:
             owned_launcher_pid = int(launcher_pid_after)

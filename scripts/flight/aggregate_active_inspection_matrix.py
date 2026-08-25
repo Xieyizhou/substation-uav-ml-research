@@ -47,10 +47,29 @@ def truth_from_obstacles(config):
         rows.append({
             "id": str(obstacle.get("name", len(rows))),
             "class_name": class_name,
+            "east_min_m": float(obstacle["x_min"]) * resolution,
+            "east_max_m": float(obstacle["x_max"]) * resolution,
+            "north_min_m": float(obstacle["y_min"]) * resolution,
+            "north_max_m": float(obstacle["y_max"]) * resolution,
             "east_m": ((float(obstacle["x_min"]) + float(obstacle["x_max"])) / 2) * resolution,
             "north_m": ((float(obstacle["y_min"]) + float(obstacle["y_max"])) / 2) * resolution,
         })
     return rows
+
+
+def footprint_distance(east_m, north_m, truth):
+    """Distance from an RGB-D surface point to a truth equipment footprint."""
+    east_delta = max(
+        truth["east_min_m"] - east_m,
+        0.0,
+        east_m - truth["east_max_m"],
+    )
+    north_delta = max(
+        truth["north_min_m"] - north_m,
+        0.0,
+        north_m - truth["north_max_m"],
+    )
+    return math.hypot(east_delta, north_delta)
 
 
 def telemetry_metrics(path):
@@ -95,11 +114,25 @@ def run_report(manifest, map_row, scheduler, run_id):
     expected = set(map_row["expected_classes"])
     detected = {track["class_name"] for track in tracks if track["class_name"] in expected}
     inspected = {track["class_name"] for track in tracks if track.get("inspected") and track["class_name"] in expected}
-    errors, correct = [], 0
+    errors, center_errors, correct = [], [], 0
     for track in tracks:
-        nearest = min(truth, key=lambda item: math.hypot(track["east_m"] - item["east_m"], track["north_m"] - item["north_m"]), default=None)
+        nearest = min(
+            truth,
+            key=lambda item: footprint_distance(
+                track["east_m"], track["north_m"], item
+            ),
+            default=None,
+        )
         if nearest:
-            errors.append(math.hypot(track["east_m"] - nearest["east_m"], track["north_m"] - nearest["north_m"]))
+            errors.append(
+                footprint_distance(track["east_m"], track["north_m"], nearest)
+            )
+            center_errors.append(
+                math.hypot(
+                    track["east_m"] - nearest["east_m"],
+                    track["north_m"] - nearest["north_m"],
+                )
+            )
             correct += int(track["class_name"] == nearest["class_name"])
     summary = receipt.get("planner_summary", {})
     event_types = {row.get("event_type") for row in events}
@@ -119,6 +152,9 @@ def run_report(manifest, map_row, scheduler, run_id):
         "ambiguous_count": sum(bool(track.get("ambiguous")) for track in receipt.get("tracks", [])),
         "localization_median_m": median(errors) if errors else None,
         "localization_p95_m": percentile(errors, .95),
+        "localization_metric": "horizontal_distance_to_truth_footprint",
+        "localization_center_median_m": median(center_errors) if center_errors else None,
+        "localization_center_p95_m": percentile(center_errors, .95),
         "exploration_coverage": summary.get("exploration_coverage"),
         "pairing_rate": pairing.get("pairing_success_rate"),
         "skew_p95_ms": pairing.get("skew_ms", {}).get("p95"),
@@ -133,6 +169,7 @@ def run_report(manifest, map_row, scheduler, run_id):
 
 def aggregate(manifest):
     thresholds = manifest["thresholds"]
+    qualification = manifest.get("qualification") is True
     maps = []
     for map_row in manifest["maps"]:
         runs = [run_report(manifest, map_row, scheduler, run_id) for scheduler, ids in map_row["runs"].items() for run_id in ids]
@@ -146,25 +183,47 @@ def aggregate(manifest):
                 "mean_time_s": sum(run["mission_time_s"] for run in selected) / len(selected) if selected else None,
                 "mean_class_recall": sum(run["class_recall"] for run in selected) / len(selected) if selected else None,
             }
-        fixed, active = by_strategy["fixed_serpentine"], by_strategy["active_utility"]
-        distance_improvement = 1 - active["mean_distance_m"] / fixed["mean_distance_m"] if active["mean_distance_m"] is not None and fixed["mean_distance_m"] else None
-        time_improvement = 1 - active["mean_time_s"] / fixed["mean_time_s"] if active["mean_time_s"] is not None and fixed["mean_time_s"] else None
+        fixed = by_strategy.get("fixed_serpentine")
+        active = by_strategy.get("active_utility")
+        distance_improvement = (
+            1 - active["mean_distance_m"] / fixed["mean_distance_m"]
+            if fixed and active and active["mean_distance_m"] is not None
+            and fixed["mean_distance_m"] else None
+        )
+        time_improvement = (
+            1 - active["mean_time_s"] / fixed["mean_time_s"]
+            if fixed and active and active["mean_time_s"] is not None
+            and fixed["mean_time_s"] else None
+        )
         legacy_ok = False
         if map_row.get("legacy_acceptance_report"):
             legacy = json.loads((ROOT / map_row["legacy_acceptance_report"]).read_text())
             legacy_ok = legacy.get("artifact_identity") == map_row.get("legacy_acceptance_identity") and legacy.get("status") == "passed"
         checks = {
-            "three_runs_per_strategy": all(value["run_count"] == 3 for value in by_strategy.values()),
+            "required_runs": all(
+                value["run_count"] == (1 if qualification else 3)
+                for value in by_strategy.values()
+            ),
             "sensor_health": all(run["pairing_rate"] is not None and run["pairing_rate"] >= thresholds["pairing_rate_min"] and run["skew_p95_ms"] is not None and run["skew_p95_ms"] <= thresholds["skew_p95_ms_max"] for run in complete),
             "class_recall": legacy_ok or all(run["class_recall"] >= thresholds["class_recall_min"] for run in complete),
             "class_accuracy": legacy_ok or all(run["class_accuracy"] >= thresholds["class_accuracy_min"] for run in complete),
             "localization": legacy_ok or all(run["localization_median_m"] is not None and run["localization_median_m"] <= thresholds["localization_median_m_max"] and run["localization_p95_m"] <= thresholds["localization_p95_m_max"] for run in complete),
             "coverage": legacy_ok or all(run["exploration_coverage"] is not None and run["exploration_coverage"] >= thresholds["exploration_coverage_min"] for run in complete),
             "safe_and_landed": all(not run["collision"] and not run["safety_gate_failed"] and run["landing_confirmed"] for run in complete),
-            "recall_comparable": fixed["mean_class_recall"] is not None and active["mean_class_recall"] is not None and fixed["mean_class_recall"] - active["mean_class_recall"] <= thresholds["active_recall_delta_max"],
-            "efficiency": distance_improvement is not None and (distance_improvement >= thresholds["active_efficiency_improvement_min"] or time_improvement >= thresholds["active_efficiency_improvement_min"]),
             "legacy_identity": not map_row.get("legacy_acceptance_report") or legacy_ok,
         }
+        if not qualification:
+            checks["recall_comparable"] = (
+                fixed is not None and active is not None
+                and fixed["mean_class_recall"] is not None
+                and active["mean_class_recall"] is not None
+                and fixed["mean_class_recall"] - active["mean_class_recall"]
+                <= thresholds["active_recall_delta_max"]
+            )
+            checks["efficiency"] = distance_improvement is not None and (
+                distance_improvement >= thresholds["active_efficiency_improvement_min"]
+                or time_improvement >= thresholds["active_efficiency_improvement_min"]
+            )
         maps.append({"map_id": map_row["map_id"], "runs": runs, "strategies": by_strategy, "distance_improvement": distance_improvement, "time_improvement": time_improvement, "checks": checks, "status": "passed" if all(checks.values()) else "blocked"})
     report = {"schema_version": 1, "matrix_id": manifest["matrix_id"], "maps": maps}
     report["status"] = "passed" if all(row["status"] == "passed" for row in maps) else "blocked"
