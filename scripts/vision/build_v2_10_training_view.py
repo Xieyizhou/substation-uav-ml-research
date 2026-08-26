@@ -60,6 +60,11 @@ def main():
         raise ValueError("negative hard view is not complete")
 
     shutil.copytree(args.base_view, args.output, copy_function=os.link, symlinks=True)
+    # Ultralytics cache files contain the base view's resolved image list. They
+    # must never cross a training-view identity boundary after new members are
+    # appended, otherwise the added hard negatives are silently skipped.
+    for cache_name in ("train.cache", "validation.cache"):
+        (args.output / "labels" / cache_name).unlink(missing_ok=True)
     identity_dir = args.output / "identity"
     train = _read_jsonl(identity_dir / "train_membership.jsonl")
     validation = _read_jsonl(identity_dir / "validation_membership.jsonl")
