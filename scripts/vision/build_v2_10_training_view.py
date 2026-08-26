@@ -40,6 +40,12 @@ def _write_jsonl(path, rows):
     )
 
 
+def _break_hardlink(path):
+    content = path.read_bytes()
+    path.unlink()
+    path.write_bytes(content)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-view", type=Path, required=True)
@@ -80,6 +86,13 @@ def main():
         encoding="utf-8",
     )
     identity_dir = args.output / "identity"
+    for metadata_name in (
+        "train_membership.jsonl",
+        "validation_membership.jsonl",
+        "labels_manifest.json",
+        "training_view_identity.json",
+    ):
+        _break_hardlink(identity_dir / metadata_name)
     train = _read_jsonl(identity_dir / "train_membership.jsonl")
     validation = _read_jsonl(identity_dir / "validation_membership.jsonl")
     negatives = _read_jsonl(args.negative_view / "membership.jsonl")
