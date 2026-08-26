@@ -109,6 +109,11 @@ def normalize_yaw_deg(yaw_deg):
     return 180.0 if normalized == -180.0 else normalized
 
 
+def waypoint_dwell_s(waypoint):
+    requested = float(waypoint.get("dwell_s", 0.0))
+    return max(TURN_SETTLE_S, requested) if requested > 0 else 0.0
+
+
 def risk_adjusted_speed_scale(base_speed_scale, risk_level, risk_action):
     if risk_action != "slow_down":
         return base_speed_scale
@@ -311,11 +316,18 @@ async def fly_to_waypoint(
             error["horizontal_m"] < REACHED_HORIZONTAL_ERROR_M
             and abs(error["down_m"]) < REACHED_VERTICAL_ERROR_M
         ):
-            last_command = VelocityNedYaw(0.0, 0.0, 0.0, 0.0)
+            last_command = VelocityNedYaw(
+                0.0,
+                0.0,
+                0.0,
+                normalize_yaw_deg(waypoint.get("yaw_deg", 0.0)),
+            )
             await drone.offboard.set_velocity_ned(last_command)
             print(f"Reached {waypoint['name']}.")
             follow_up = await complete_semantic_waypoint(drone, phase_state, replan_config, replan_state, waypoint, asyncio.get_running_loop().time())
-            await asyncio.sleep(max(TURN_SETTLE_S, float(waypoint.get("dwell_s", 0))))
+            dwell_s = waypoint_dwell_s(waypoint)
+            if dwell_s > 0:
+                await asyncio.sleep(dwell_s)
             return follow_up
         adjusted_speed_scale = risk_adjusted_speed_scale(
             speed_scale, risk_level, risk_action

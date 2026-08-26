@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.10-complex-negatives",
+  "protocol": "config/perception/visual_hard_examples_v2_10.json",
+  "run_revision": "v1",
+  "cooldown_s": 30,
+  "frames_per_run": 200,
+  "emit_stride": 12,
+  "runs": [
+    {
+      "map_id": "complex",
+      "seed": 4501,
+      "split": "development",
+      "collection_start_delay_s": 70,
+      "visual_route": "data/research/visual_hard_examples_v2_10/routes/complex-control-building.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 4502,
+      "split": "development",
+      "collection_start_delay_s": 70,
+      "visual_route": "data/research/visual_hard_examples_v2_10/routes/complex-cabinet-center.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 4601,
+      "split": "validation",
+      "collection_start_delay_s": 70,
+      "visual_route": "data/research/visual_hard_examples_v2_10/routes/complex-control-building.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 4602,
+      "split": "validation",
+      "collection_start_delay_s": 70,
+      "visual_route": "data/research/visual_hard_examples_v2_10/routes/complex-cabinet-center.json"
+    }
+  ]
+}

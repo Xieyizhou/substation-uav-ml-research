@@ -62,5 +62,5 @@ async def collect(args):
     receipt["identity"]=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(",",":")).encode()).hexdigest(); args.output.mkdir(parents=True,exist_ok=True); (args.output/"collection-receipt.json").write_text(json.dumps(receipt,indent=2,sort_keys=True)+"\n")
     return 0 if len(members)==args.frames else 2
 def main():
-    p=argparse.ArgumentParser(); p.add_argument("--map-id",choices=("simple","medium"),required=True); p.add_argument("--seed",type=int,required=True); p.add_argument("--split",choices=("development","validation"),required=True); p.add_argument("--frames",type=int,required=True); p.add_argument("--output",type=Path,required=True); p.add_argument("--emit-stride",type=int,default=6); p.add_argument("--timeout",type=float,default=15); return asyncio.run(collect(p.parse_args()))
+    p=argparse.ArgumentParser(); p.add_argument("--map-id",choices=("simple","medium","complex"),required=True); p.add_argument("--seed",type=int,required=True); p.add_argument("--split",choices=("development","validation"),required=True); p.add_argument("--frames",type=int,required=True); p.add_argument("--output",type=Path,required=True); p.add_argument("--emit-stride",type=int,default=6); p.add_argument("--timeout",type=float,default=15); return asyncio.run(collect(p.parse_args()))
 if __name__=="__main__": raise SystemExit(main())

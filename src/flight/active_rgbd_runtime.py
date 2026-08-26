@@ -18,6 +18,27 @@ from src.vision.evaluation.detector import EquipmentDetector
 from src.vision.evaluation.temporal_observations import TemporalObservationFilter
 
 
+def _candidate_confidence_for_weights(weights, fallback):
+    """Load the candidate threshold bound to a packaged model's weights."""
+    weights = Path(weights)
+    manifest_path = weights.parent.parent / "manifest.json"
+    if not manifest_path.is_file():
+        return float(fallback), None
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    packaged_weights = manifest.get("weights", {})
+    if packaged_weights.get("path") != f"weights/{weights.name}":
+        raise ValueError("visual package manifest does not reference runtime weights")
+    if packaged_weights.get("sha256") != file_sha256(weights):
+        raise ValueError("visual package weights SHA256 does not match runtime weights")
+    threshold = float(manifest["frozen_confidence_threshold"])
+    if not 0 < threshold <= float(fallback):
+        raise ValueError(
+            "visual candidate threshold must be positive and no greater than "
+            "the planner stable-confidence threshold"
+        )
+    return threshold, manifest.get("package_identity_sha256")
+
+
 class ActiveRgbdRuntime:
     def __init__(self, runtime_map, policy, weights, output_directory, *, scheduler="active_utility", rgb_topic="auto", depth_topic="auto", diagnostics_directory=None, diagnostic_stride=60, diagnostic_max_frames=160):
         self.output = Path(output_directory)
@@ -30,7 +51,14 @@ class ActiveRgbdRuntime:
             scheduler=scheduler,
         )
         self.coverage = ExecutedCoverageTracker(self.planner.map, radius_m=2.0)
-        self.detector = EquipmentDetector(weights, confidence=self.planner.policy.stable_confidence)
+        self.candidate_confidence, self.model_package_identity = (
+            _candidate_confidence_for_weights(
+                weights, self.planner.policy.stable_confidence
+            )
+        )
+        self.detector = EquipmentDetector(
+            weights, confidence=self.candidate_confidence
+        )
         self.temporal = TemporalObservationFilter()
         self.ready = asyncio.Event()
         self.task = None
@@ -198,9 +226,12 @@ class ActiveRgbdRuntime:
             return
         raw_classes = {row["class_name"] for row in audit["raw_detections"]}
         sampled = self.processed_pairs % self.diagnostic_stride == 0
-        candidate = "switchgear" in raw_classes
+        capacitor_candidate = "capacitor_bank" in raw_classes
         frame_path = None
-        if (sampled or candidate) and self.diagnostic_frame_count < self.diagnostic_max_frames:
+        if (
+            (sampled or capacitor_candidate)
+            and self.diagnostic_frame_count < self.diagnostic_max_frames
+        ):
             source = self.output / "frames" / rgb.payload_relative_path
             if source.is_file():
                 frame_path = f"frames/{self.diagnostic_frame_count:04d}.jpg"
@@ -212,7 +243,8 @@ class ActiveRgbdRuntime:
             "vehicle_pose": dict(pose),
             "frame": frame_path,
             "sampled": sampled,
-            "switchgear_candidate": candidate,
+            "raw_candidate_classes": sorted(raw_classes),
+            "capacitor_candidate": capacitor_candidate,
             **audit,
         }
         with self.diagnostic_event_path.open("a", encoding="utf-8") as handle:
@@ -289,6 +321,9 @@ class ActiveRgbdRuntime:
             blocked_reasons.append("rgb_depth_skew_p95_exceeded")
         receipt = {"schema_version": "1.0", "evidence_level": "gazebo_live_rgbd",
                    "world": self.world, "model": self.planner.policy.model_artifact_identity,
+                   "model_package_identity": self.model_package_identity,
+                   "candidate_confidence_threshold": self.candidate_confidence,
+                   "stable_registration_confidence_threshold": self.planner.policy.stable_confidence,
                    "policy": self.planner.policy.artifact_identity,
                    "scheduler": self.planner.scheduler,
                    "processed_pairs": self.processed_pairs,

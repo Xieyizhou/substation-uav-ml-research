@@ -92,6 +92,11 @@ def path_from_console(console, label):
     return Path(match[-1].strip()) if match else None
 
 
+def verified_class_accuracy(verified, observed):
+    verified, observed = set(verified), set(observed)
+    return len(verified & observed) / len(observed) if observed else 0.0
+
+
 def run_report(manifest, map_row, scheduler, run_id):
     output = ROOT / manifest["output_root"]
     runtime = ROOT / manifest["runtime_root"] / f"{run_id}-events" / "rgb-depth-runtime-receipt.json"
@@ -112,9 +117,11 @@ def run_report(manifest, map_row, scheduler, run_id):
     tracks = [track for track in receipt.get("tracks", []) if not track.get("ambiguous")]
     truth = truth_from_obstacles(json.loads((ROOT / map_row["obstacle_config"]).read_text()))
     expected = set(map_row["expected_classes"])
-    detected = {track["class_name"] for track in tracks if track["class_name"] in expected}
+    observed = {track["class_name"] for track in tracks}
+    detected = observed & expected
     inspected = {track["class_name"] for track in tracks if track.get("inspected") and track["class_name"] in expected}
     errors, center_errors, correct = [], [], 0
+    spatially_verified_classes = set()
     for track in tracks:
         nearest = min(
             truth,
@@ -133,7 +140,20 @@ def run_report(manifest, map_row, scheduler, run_id):
                     track["north_m"] - nearest["north_m"],
                 )
             )
-            correct += int(track["class_name"] == nearest["class_name"])
+            same_class_error = min(
+                (
+                    footprint_distance(track["east_m"], track["north_m"], item)
+                    for item in truth
+                    if item["class_name"] == track["class_name"]
+                ),
+                default=math.inf,
+            )
+            is_correct = same_class_error <= float(
+                manifest["thresholds"]["localization_p95_m_max"]
+            )
+            correct += int(is_correct)
+            if is_correct:
+                spatially_verified_classes.add(track["class_name"])
     summary = receipt.get("planner_summary", {})
     event_types = {row.get("event_type") for row in events}
     pairing = receipt.get("pairing", {})
@@ -145,10 +165,15 @@ def run_report(manifest, map_row, scheduler, run_id):
         "status": "complete",
         "class_recall": len(detected) / len(expected),
         "inspected_class_recall": len(inspected) / len(expected),
-        "class_accuracy": correct / len(tracks) if tracks else 0,
+        "class_accuracy": verified_class_accuracy(
+            spatially_verified_classes, observed
+        ),
+        "spatially_verified_classes": sorted(spatially_verified_classes),
+        "track_instance_accuracy": correct / len(tracks) if tracks else 0,
         "detected_classes": sorted(detected),
         "inspected_classes": sorted(inspected),
         "registered_count": len(receipt.get("tracks", [])),
+        "duplicate_track_count": max(0, len(tracks) - len(observed)),
         "ambiguous_count": sum(bool(track.get("ambiguous")) for track in receipt.get("tracks", [])),
         "localization_median_m": median(errors) if errors else None,
         "localization_p95_m": percentile(errors, .95),

@@ -145,6 +145,57 @@ class ReplannedRouteHistoryTests(unittest.IsolatedAsyncioTestCase):
             )
         drone.offboard.set_velocity_ned.assert_awaited()
 
+    @patch("src.flight.waypoint_executor.asyncio.sleep", return_value=None)
+    @patch("src.flight.waypoint_executor.current_perception_detection")
+    async def test_reached_waypoint_dwell_preserves_scan_yaw(
+        self, detection, _sleep
+    ):
+        detection.return_value = {
+            "risk_level": "safe",
+            "sensor_healthy": True,
+            "sensor_frame_age_s": 0.0,
+            "dynamic_grid_cells": [],
+            "detected_obstacles": [],
+            "nearest_obstacle": None,
+        }
+        drone = SimpleNamespace(
+            offboard=SimpleNamespace(set_velocity_ned=AsyncMock())
+        )
+        position = SimpleNamespace(north_m=1.0, east_m=2.0, down_m=-1.5)
+        latest = {
+            "position_velocity": SimpleNamespace(position=position),
+            "attitude": None,
+            "updated_at": {"position_velocity": float("inf")},
+        }
+        waypoint = {
+            "name": "SCAN270",
+            "north_m": 1.0,
+            "east_m": 2.0,
+            "down_m": -1.5,
+            "yaw_deg": 270.0,
+            "dwell_s": 1.5,
+        }
+        with patch(
+            "src.flight.waypoint_executor.ensure_critical_telemetry_fresh"
+        ):
+            await waypoint_executor.fly_to_waypoint(
+                drone, latest, {}, {}, waypoint, "outbound_to_goal", "outbound",
+                0.6, {"source": "gazebo_lidar_2d"}, object(),
+                {"enabled": False}, {},
+            )
+        command = drone.offboard.set_velocity_ned.await_args.args[0]
+        self.assertEqual(command.north_m_s, 0.0)
+        self.assertEqual(command.east_m_s, 0.0)
+        self.assertEqual(command.yaw_deg, -90.0)
+        _sleep.assert_awaited_once_with(1.5)
+
+    def test_transit_waypoint_has_no_artificial_dwell(self):
+        self.assertEqual(waypoint_executor.waypoint_dwell_s({}), 0.0)
+        self.assertEqual(
+            waypoint_executor.waypoint_dwell_s({"dwell_s": 1.5}),
+            max(waypoint_executor.TURN_SETTLE_S, 1.5),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

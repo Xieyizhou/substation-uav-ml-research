@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "qualification": true,
+  "matrix_id": "active-inspection-v2.9-medium-qualification-yaw-hold-v1",
+  "model": "models/equipment/visual-yolo11n-baseline-v2.9-candidate-package-v1/weights/best.pt",
+  "model_package_identity": "2b1e5e646d4f9fc3e9689d2389bedf2e6cb9dec4e96e2252afdda06a3af98d11",
+  "policy": "config/perception/active_inspection_multimap_qualification_policy_v1.json",
+  "output_root": "outputs/sandbox/active_rgbd_v2_9_medium_qualification",
+  "runtime_root": "outputs/sandbox/active_rgbd_runtime",
+  "maps": [
+    {
+      "map_id": "medium",
+      "obstacle_config": "config/maps/substation_medium.json",
+      "expected_classes": ["transformer", "switchgear", "capacitor_bank"],
+      "runs": {
+        "active_utility": ["medium-active-v2-9-qualification-run-3"]
+      }
+    }
+  ],
+  "thresholds": {
+    "pairing_rate_min": 0.95,
+    "skew_p95_ms_max": 33.334,
+    "class_recall_min": 0.95,
+    "class_accuracy_min": 0.90,
+    "localization_median_m_max": 1.0,
+    "localization_p95_m_max": 2.0,
+    "exploration_coverage_min": 0.90
+  }
+}

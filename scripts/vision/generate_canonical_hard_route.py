@@ -36,8 +36,8 @@ def _point(target, bearing, distance):
 def generate(config_path, target_name, output, fixed_bearing=None, heading_offset=0.0):
     source = json.loads(config_path.read_text())
     target_row = next((row for row in source["obstacles"] if row["name"] == target_name), None)
-    if target_row is None or target_row.get("visual_category") not in {"switchgear", "capacitor_bank"}:
-        raise ValueError("target must be a labelled switchgear or capacitor bank")
+    if target_row is None or target_row.get("type") != "rect" or not target_row.get("visual_category"):
+        raise ValueError("target must be a named visual rectangle")
     target = _center(target_row); navigation = build_obstacle_map(source); blocked = navigation["inflated_blocking_cells"]
     start = tuple(source["start_cell"]); selected = None
     bearings = (float(fixed_bearing) % 360,) if fixed_bearing is not None else range(0, 360, 15)
@@ -74,7 +74,17 @@ def generate(config_path, target_name, output, fixed_bearing=None, heading_offse
     waypoints = []
     for spec, path_index in zip(specs, path_indexes):
         name, phase, point, hold, offset = spec
-        waypoints.append(ObservationWaypoint(name, phase, point[0], point[1], 1.5, (_yaw(point, target) + heading_offset + offset) % 360, hold, "labelled_target" if heading_offset % 360 == 0 else "truth_audited", () if path_index is None else paths[path_index]))
+        labelled = target_row["visual_category"] in {
+            "transformer", "switchgear", "capacitor_bank", "reactor"
+        }
+        expected_truth = (
+            "labelled_target"
+            if labelled and heading_offset % 360 == 0
+            else "verified_no_target"
+            if not labelled
+            else "truth_audited"
+        )
+        waypoints.append(ObservationWaypoint(name, phase, point[0], point[1], 1.5, (_yaw(point, target) + heading_offset + offset) % 360, hold, expected_truth, () if path_index is None else paths[path_index]))
     bearing_suffix = "" if fixed_bearing is None else f"-bearing-{int(float(fixed_bearing) % 360):03d}"
     heading_suffix = "" if heading_offset % 360 == 0 else f"-heading-{int(float(heading_offset) % 360):03d}"
     route = VisualRoute(f"canonical-{target_name}{bearing_suffix}{heading_suffix}-hard-v1", f"canonical-{source['map_name']}", target_row["visual_category"], target_name, start, tuple(waypoints), return_path)

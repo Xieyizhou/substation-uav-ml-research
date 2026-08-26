@@ -55,6 +55,8 @@ def main():
             raise SystemExit(f"blocked evidence already exists for {run_id}; use a new run ID")
         _wait_for_launcher_exit()
         command = [str(ROOT / ".venv/bin/python"), "scripts/vision/run_hard_example_flight.py", "--map-id", row["map_id"], "--seed", str(row["seed"]), "--split", row["split"], "--frames", str(row.get("frames", matrix["frames_per_run"])), "--emit-stride", str(row.get("emit_stride", matrix["emit_stride"])), "--scheduler", row.get("scheduler", "active_utility"), "--output", str(run_root)]
+        if matrix.get("protocol"):
+            command.extend(["--protocol", str(ROOT / matrix["protocol"])])
         if row.get("collection_start_delay_s") is not None:
             command.extend(["--collection-start-delay", str(row["collection_start_delay_s"])])
         if row.get("visual_route"):

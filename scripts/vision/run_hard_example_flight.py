@@ -93,7 +93,7 @@ def _wait_for_previous_launcher(pid_path, timeout=300):
 
 
 def run(args):
-    protocol = json.loads(PROTOCOL.read_text())
+    protocol = json.loads(args.protocol.read_text())
     expected_split = "development" if args.seed in protocol["development_seeds"] else "validation" if args.seed in protocol["validation_seeds"] else None
     if expected_split != args.split:
         raise ValueError("seed is not registered for the requested split")
@@ -129,7 +129,11 @@ def run(args):
         if args.visual_route is None:
             command = [str(ROOT / ".venv/bin/python"), "main.py", "astar", "fly", "--compact-output", "--runtime-mode", "active_semantic_inspection", "--active-inspection-trial", str(POLICY), "--inspection-scheduler", args.scheduler, "--equipment-model", str(MODEL), "--enable-perception", "--perception-source", "gazebo_lidar_2d", "--risk-model", "geometric", "--risk-fusion", "safety_max", "--risk-action", "stop_and_land", "--enable-local-replan", "--replan-mode", "active", "--max-speed", "1.0", "--altitude", "1.5", "--sensor-startup-timeout", "30", "--visual-mission-events", str(events)]
         else:
-            obstacle = ROOT / ("config/substation_obstacles.json" if args.map_id == "simple" else "config/maps/substation_medium.json")
+            obstacle = ROOT / {
+                "simple": "config/substation_obstacles.json",
+                "medium": "config/maps/substation_medium.json",
+                "complex": "config/maps/substation_complex.json",
+            }[args.map_id]
             command = [str(ROOT / ".venv/bin/python"), "main.py", "task", "run", "fly_round_trip", "--", "--obstacle-config", str(obstacle), "--visual-route", str(args.visual_route), "--return-home", "--visual-mission-events", str(events)]
         flight = subprocess.Popen(command, cwd=ROOT, env=env, stdout=flight_log, stderr=subprocess.STDOUT)
         _wait_any_event(events, ("takeoff_completed", "waypoint_started"), flight, 60)
@@ -183,7 +187,8 @@ def run(args):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--map-id", choices=("simple", "medium"), required=True)
+    parser.add_argument("--map-id", choices=("simple", "medium", "complex"), required=True)
+    parser.add_argument("--protocol", type=Path, default=PROTOCOL)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--split", choices=("development", "validation"), required=True)
     parser.add_argument("--frames", type=int, default=300)

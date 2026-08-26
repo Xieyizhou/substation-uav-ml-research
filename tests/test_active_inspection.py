@@ -36,6 +36,27 @@ class ActiveInspectionTests(unittest.TestCase):
         self.assertEqual(first["artifact_identity"], second["artifact_identity"])
         self.assertEqual(first["tracks"][0]["observation_count"], 2)
 
+    def test_localization_outlier_does_not_move_stable_track(self):
+        planner = ActiveInspectionPlanner(
+            RuntimeMap.from_mapping(MAP), ActiveInspectionPolicy.from_mapping(POLICY)
+        )
+        planner.process(event())
+        track = next(iter(planner.tracks.values()))
+        initial = (track.east_m, track.north_m)
+        shifted = event(2, tracking_id="t1")
+        shifted["observations"][0]["localized_position"] = {
+            "east_m": initial[0] + 5,
+            "north_m": initial[1] + 5,
+            "altitude_m": track.altitude_m,
+        }
+        planner.process(shifted)
+        self.assertEqual((track.east_m, track.north_m), initial)
+        self.assertEqual(track.observation_count, 1)
+        self.assertTrue(any(
+            row["event"] == "localization_outlier_rejected"
+            for row in planner.events
+        ))
+
     def test_class_conflict_and_held_isolation(self):
         result = run_active_inspection(MAP, POLICY, [event(), event(2, "reactor", "t1")])
         self.assertTrue(all(track["ambiguous"] for track in result["tracks"]))

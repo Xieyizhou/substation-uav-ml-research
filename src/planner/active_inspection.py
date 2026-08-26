@@ -8,6 +8,7 @@ import heapq
 import json
 import math
 from pathlib import Path
+from statistics import median
 from typing import Any, Iterable, Mapping, Sequence
 
 
@@ -181,6 +182,7 @@ class ActiveInspectionPlanner:
         self.route_active = False
         self.executed_coverage = None
         self._next_track = 1
+        self._position_history: dict[str, list[tuple[float, float, float]]] = {}
         self._exploration = self._exploration_points()
         self._visited: set[tuple[int, int]] = set()
         self.confirmation_sweeps_completed = 0
@@ -256,12 +258,29 @@ class ActiveInspectionPlanner:
             match = DeviceTrack(target_id, class_name, confidence, *position, 1, confidence, depth, now,
                                 [source_id] if source_id else [])
             self.tracks[target_id] = match
+            self._position_history[target_id] = [position]
             self._emit("target_registered", now, target_id=target_id, class_name=class_name)
         else:
-            old_count, count = match.observation_count, match.observation_count + 1
-            match.east_m = (match.east_m * old_count + position[0]) / count
-            match.north_m = (match.north_m * old_count + position[1]) / count
-            match.altitude_m = (match.altitude_m * old_count + position[2]) / count
+            displacement = _distance((match.east_m, match.north_m), position[:2])
+            if displacement > self.policy.merge_distance_m:
+                self._emit(
+                    "localization_outlier_rejected",
+                    now,
+                    target_id=match.target_id,
+                    displacement_m=displacement,
+                    rejection_threshold_m=self.policy.merge_distance_m,
+                )
+                return
+            count = match.observation_count + 1
+            history = self._position_history.setdefault(
+                match.target_id,
+                [(match.east_m, match.north_m, match.altitude_m)],
+            )
+            history.append(position)
+            del history[:-31]
+            match.east_m = median(value[0] for value in history)
+            match.north_m = median(value[1] for value in history)
+            match.altitude_m = median(value[2] for value in history)
             match.observation_count, match.confidence, match.last_seen_s = count, confidence, now
             if confidence >= match.best_confidence:
                 match.best_confidence, match.best_depth_m = confidence, depth
