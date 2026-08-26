@@ -65,6 +65,15 @@ def main():
     # appended, otherwise the added hard negatives are silently skipped.
     for cache_name in ("train.cache", "validation.cache"):
         (args.output / "labels" / cache_name).unlink(missing_ok=True)
+    dataset_path = args.output / "dataset.yaml"
+    dataset_text = dataset_path.read_text(encoding="utf-8")
+    base_path = f"path: {args.base_view.resolve()}"
+    if base_path not in dataset_text:
+        raise ValueError("base dataset path is not bound to the base view")
+    dataset_path.write_text(
+        dataset_text.replace(base_path, f"path: {args.output.resolve()}", 1),
+        encoding="utf-8",
+    )
     identity_dir = args.output / "identity"
     train = _read_jsonl(identity_dir / "train_membership.jsonl")
     validation = _read_jsonl(identity_dir / "validation_membership.jsonl")
