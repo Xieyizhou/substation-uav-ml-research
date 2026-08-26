@@ -72,6 +72,9 @@ def main():
     base_path = f"path: {args.base_view.resolve()}"
     if base_path not in dataset_text:
         raise ValueError("base dataset path is not bound to the base view")
+    # copytree uses hard links for the large immutable view. Break the metadata
+    # link before rebinding it so the frozen base dataset is not modified.
+    dataset_path.unlink()
     dataset_path.write_text(
         dataset_text.replace(base_path, f"path: {args.output.resolve()}", 1),
         encoding="utf-8",
