@@ -11,6 +11,8 @@ from pathlib import Path
 import shutil
 import sys
 
+from PIL import Image
+
 ROOT = Path(__file__).resolve().parents[2]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
@@ -84,12 +86,14 @@ def main():
         for replica in range(1, replicas + 1):
             suffix = "" if replica == 1 else f"-replica-{replica}"
             basename = f"hard-negative-v2-10-{row['sample_id']}{suffix}"
-            image_relative = Path("images") / destination_split / f"{basename}.ppm"
+            image_relative = Path("images") / destination_split / f"{basename}.png"
             label_relative = Path("labels") / destination_split / f"{basename}.txt"
-            os.link(
-                args.negative_view / row["image_relative_path"],
-                args.output / image_relative,
-            )
+            if replica == 1:
+                with Image.open(args.negative_view / row["image_relative_path"]) as image:
+                    image.save(args.output / image_relative, format="PNG", compress_level=6)
+                first_image = args.output / image_relative
+            else:
+                os.link(first_image, args.output / image_relative)
             os.link(
                 args.negative_view / row["label_relative_path"],
                 args.output / label_relative,
