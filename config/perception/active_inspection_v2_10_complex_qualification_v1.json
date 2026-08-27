@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "qualification": true,
+  "matrix_id": "active-inspection-v2.10-complex-qualification-v1",
+  "model": "models/equipment/visual-yolo11n-baseline-v2.10-candidate-package-v1/weights/best.pt",
+  "model_package_identity": "a6ba2ae10c5235c6d17966903d234a29372174bbcdf8c04917f9d1879f43ea71",
+  "policy": "config/perception/active_inspection_multimap_qualification_policy_v1.json",
+  "output_root": "outputs/sandbox/active_rgbd_v2_10_complex_qualification",
+  "runtime_root": "outputs/sandbox/active_rgbd_runtime",
+  "maps": [
+    {
+      "map_id": "complex",
+      "obstacle_config": "config/maps/substation_complex.json",
+      "expected_classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
+      "runs": {
+        "active_utility": ["complex-active-v2-10-qualification-run-1"]
+      }
+    }
+  ],
+  "thresholds": {
+    "pairing_rate_min": 0.95,
+    "skew_p95_ms_max": 33.334,
+    "class_recall_min": 0.95,
+    "class_accuracy_min": 0.90,
+    "localization_median_m_max": 1.0,
+    "localization_p95_m_max": 2.0,
+    "exploration_coverage_min": 0.90
+  }
+}
