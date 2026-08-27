@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.11-complex-switchgear-profiles",
+  "protocol": "config/perception/visual_hard_examples_v2_11.json",
+  "run_revision": "v1",
+  "cooldown_s": 30,
+  "frames_per_run": 240,
+  "emit_stride": 3,
+  "runs": [
+    {
+      "map_id": "complex",
+      "seed": 4701,
+      "split": "development",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_11/routes/complex-switchgear-west-profile-a.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 4702,
+      "split": "development",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_11/routes/complex-switchgear-west-profile-b.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 4801,
+      "split": "validation",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_11/routes/complex-switchgear-west-profile-a.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 4802,
+      "split": "validation",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_11/routes/complex-switchgear-west-profile-b.json"
+    }
+  ]
+}
