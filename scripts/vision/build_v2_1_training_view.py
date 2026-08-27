@@ -44,7 +44,12 @@ def _select_replay(rows, per_class):
         groups = defaultdict(list)
         for row in rows:
             if class_name in row["classes"] and row["sample_id"] not in used:
-                groups[row["recording_id"]].append(row)
+                recording_id = row.get("recording_id")
+                if not recording_id:
+                    recording_id = row.get("source_collection_identity")
+                if not recording_id and row.get("seed") is not None:
+                    recording_id = f"{row.get('map_id', 'unknown')}:{row['seed']}"
+                groups[recording_id or row["sample_id"]].append(row)
         for values in groups.values():
             values.sort(key=lambda row: hashlib.sha256((class_name + ":" + row["sample_id"]).encode()).hexdigest())
         group_ids = sorted(groups, key=lambda value: hashlib.sha256((class_name + ":" + value).encode()).hexdigest())

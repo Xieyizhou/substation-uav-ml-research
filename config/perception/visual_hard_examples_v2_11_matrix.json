@@ -32,6 +32,7 @@
       "map_id": "complex",
       "seed": 4802,
       "split": "validation",
+      "run_revision": "v2",
       "collection_start_delay_s": 55,
       "visual_route": "data/research/visual_hard_examples_v2_11/routes/complex-switchgear-west-profile-b.json"
     }
