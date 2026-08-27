@@ -234,7 +234,7 @@ class ActiveRgbdRuntime:
         ):
             source = self.output / "frames" / rgb.payload_relative_path
             if source.is_file():
-                frame_path = f"frames/{self.diagnostic_frame_count:04d}.jpg"
+                frame_path = f"frames/{self.diagnostic_frame_count:04d}.ppm"
                 shutil.copy2(source, self.diagnostics_directory / frame_path)
                 self.diagnostic_frame_count += 1
         row = {

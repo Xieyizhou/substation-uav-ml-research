@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-transformer-gap-fill",
+  "protocol": "config/perception/visual_hard_examples_v2_12.json",
+  "run_revision": "v1",
+  "cooldown_s": 30,
+  "frames_per_run": 240,
+  "emit_stride": 3,
+  "runs": [
+    {
+      "map_id": "complex",
+      "seed": 4903,
+      "split": "development",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-sw.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 5003,
+      "split": "validation",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-mid.json"
+    }
+  ]
+}

@@ -57,6 +57,26 @@ class ActiveInspectionLiveBridgeTests(unittest.TestCase):
         ))
         self.assertEqual(bridge.last_audit["rejected"]["invalid_depth"], 1)
 
+    def test_truncated_bbox_cannot_register(self):
+        frame = type("Frame", (), {
+            "capture_timestamp": 1.0,
+            "width": 1920,
+            "height": 1080,
+        })()
+        bridge = self.bridge(7.0)
+        bridge.temporal_update = lambda rows, _timestamp: [{
+            **rows[0],
+            "tracking_id": "temporal-edge",
+            "stable": True,
+            "bbox": [1600, 500, 1920, 1080],
+        }]
+        self.assertIsNone(bridge.record(
+            frame,
+            {"east_m": 0, "north_m": 0, "altitude_m": 1, "yaw_deg": 0},
+            elapsed_s=1,
+        ))
+        self.assertEqual(bridge.last_audit["rejected"]["truncated_bbox"], 1)
+
 
 class ActiveRgbdRuntimeFeedbackTests(unittest.TestCase):
     def test_runtime_map_name_uses_obstacle_config(self):

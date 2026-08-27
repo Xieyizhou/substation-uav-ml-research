@@ -53,7 +53,12 @@ class ActiveInspectionLiveBridge:
             [self._detection_row(item) for item in detections], timestamp_s,
         )
         observations = []
-        rejected = {"held": 0, "unstable": 0, "invalid_depth": 0}
+        rejected = {
+            "held": 0,
+            "unstable": 0,
+            "truncated_bbox": 0,
+            "invalid_depth": 0,
+        }
         for row in tracked:
             if row.get("held"):
                 rejected["held"] += 1
@@ -61,6 +66,13 @@ class ActiveInspectionLiveBridge:
             if not row.get("stable", True):
                 rejected["unstable"] += 1
                 continue
+            width = getattr(frame, "width", None)
+            height = getattr(frame, "height", None)
+            if width is not None and height is not None:
+                x1, y1, x2, y2 = map(float, row["bbox"])
+                if x1 <= 0 or y1 <= 0 or x2 >= float(width) or y2 >= float(height):
+                    rejected["truncated_bbox"] += 1
+                    continue
             depth_m = self.depth_provider(frame, row)
             if depth_m is None or not .2 <= float(depth_m) <= 100:
                 rejected["invalid_depth"] += 1

@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-complex-truncated-equipment",
+  "protocol": "config/perception/visual_hard_examples_v2_12.json",
+  "run_revision": "v1",
+  "cooldown_s": 30,
+  "frames_per_run": 300,
+  "emit_stride": 3,
+  "runs": [
+    {
+      "map_id": "complex",
+      "seed": 4901,
+      "split": "development",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_11/routes/complex-switchgear-west-profile-b.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 4902,
+      "split": "development",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_10/routes/complex-cabinet-center.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 5001,
+      "split": "validation",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_11/routes/complex-switchgear-west-profile-b.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 5002,
+      "split": "validation",
+      "collection_start_delay_s": 55,
+      "visual_route": "data/research/visual_hard_examples_v2_10/routes/complex-cabinet-center.json"
+    }
+  ]
+}
