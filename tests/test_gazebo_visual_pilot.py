@@ -211,10 +211,11 @@ class GazeboConfigurationTests(unittest.TestCase):
         }
         for obstacle in MAP_SPECS[2]["obstacles"]:
             label = models[obstacle["name"]].findtext(
-                "plugin[@name='gz::sim::systems::Label']/label"
+                ".//visual/plugin[@name='gz::sim::systems::Label']/label"
             )
             expected = GAZEBO_VISUAL_LABELS.get(obstacle["visual_category"])
-            self.assertEqual(int(label) if label is not None else None, expected)
+            observed = int(label) if label is not None else None
+            self.assertEqual(None if observed is None else (observed - 1) // 50, expected)
 
     def test_classic_simple_world_labels_only_transformers(self):
         world = ET.parse(
@@ -448,6 +449,18 @@ class GazeboTruthTests(unittest.TestCase):
         self.assertEqual(truth.objects[0].bbox_xyxy, (0.0, 0.0, 2.0, 1.0))
         self.assertEqual(truth.objects[0].truncation_status, "truncated")
         self.assertEqual(truth.objects[0].visibility_status, "unknown")
+
+    def test_instance_label_decodes_to_class_without_merging_identity(self):
+        truth = parse_gazebo_truth_message(
+            truth_message(1.0, [box(101, 0, 0, 1, 1), box(149, 2, 0, 3, 1)]),
+            topic="/research_camera/boxes",
+            width=4,
+            height=3,
+            receive_index=1,
+        )
+        self.assertTrue(truth.valid)
+        self.assertEqual([item.class_name for item in truth.objects], ["switchgear", "switchgear"])
+        self.assertNotEqual(truth.objects[0].annotation_id, truth.objects[1].annotation_id)
 
     def test_no_target_is_valid_but_unknown_and_zero_area_are_invalid(self):
         no_target = parse_gazebo_truth_message(

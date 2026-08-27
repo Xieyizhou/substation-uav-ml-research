@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from src.vision.training.hard_example_curator import (
+    apply_bbox_policy,
     build_receipt,
     curate,
     curate_multilabel,
@@ -38,7 +39,9 @@ def main():
                 continue
             seen_collections.add(collection.resolve())
             rows, failures, identity = load_collection(collection, protocol["classes"], perceptual_hash_algorithm=protocol["perceptual_hash_algorithm"], hash_cache=hash_cache)
+            rows, framing_failures = apply_bbox_policy(rows, protocol.get("bbox_policy"))
             candidates.extend(rows); rejected.extend(failures); identities.append(identity)
+            rejected.extend(framing_failures)
     if "class_frame_quotas" in protocol:
         quotas = {
             (class_name, "target", split): int(count)

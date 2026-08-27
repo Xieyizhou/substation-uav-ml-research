@@ -53,6 +53,19 @@ def _wait_any_event(path, event_types, process, timeout):
     raise TimeoutError(f"timed out waiting for one of {sorted(expected)}")
 
 
+def _wait_event_fields(path, event_type, process, timeout, **fields):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        for row in _events(path):
+            observed = row.get("event") or row.get("event_type")
+            if observed == event_type and all(row.get(key) == value for key, value in fields.items()):
+                return
+        if process.poll() is not None:
+            raise RuntimeError(f"flight exited before {event_type} matching {fields}")
+        time.sleep(0.2)
+    raise TimeoutError(f"timed out waiting for {event_type} matching {fields}")
+
+
 def _terminate(process, timeout=30):
     if process is None or process.poll() is not None:
         return
@@ -137,6 +150,10 @@ def run(args):
             command = [str(ROOT / ".venv/bin/python"), "main.py", "task", "run", "fly_round_trip", "--", "--obstacle-config", str(obstacle), "--visual-route", str(args.visual_route), "--return-home", "--visual-mission-events", str(events)]
         flight = subprocess.Popen(command, cwd=ROOT, env=env, stdout=flight_log, stderr=subprocess.STDOUT)
         _wait_any_event(events, ("takeoff_completed", "waypoint_started"), flight, 60)
+        collection_trigger = "takeoff_or_waypoint"
+        if args.visual_route is not None:
+            _wait_event_fields(events, "yaw_settled", flight, 240, waypoint_name="complete_distant")
+            collection_trigger = "yaw_settled:complete_distant"
         if args.collection_start_delay:
             deadline = time.monotonic() + args.collection_start_delay
             while time.monotonic() < deadline:
@@ -176,7 +193,7 @@ def run(args):
                 except ProcessLookupError: break
                 time.sleep(0.2)
         simulator_log.close(); flight_log.close()
-    receipt = {"schema_version":1,"protocol_id":protocol["protocol_id"],"status":stage,"map_id":args.map_id,"seed":args.seed,"split":args.split,"scheduler":args.scheduler if args.visual_route is None else "target_centered_route","visual_route":str(args.visual_route) if args.visual_route is not None else None,"requested_frames":args.frames,"collection_start_delay_s":args.collection_start_delay,"probe_returncode":probe_rc,"collector_returncode":collector_rc,"flight_returncode":flight_rc,"landing_confirmed":any(row.get("event") == "landing_confirmed" or row.get("event_type") == "landing_confirmed" for row in _events(events)),"error":error}
+    receipt = {"schema_version":1,"protocol_id":protocol["protocol_id"],"status":stage,"map_id":args.map_id,"seed":args.seed,"split":args.split,"scheduler":args.scheduler if args.visual_route is None else "target_centered_route","visual_route":str(args.visual_route) if args.visual_route is not None else None,"requested_frames":args.frames,"collection_trigger":locals().get("collection_trigger"),"collection_start_delay_s":args.collection_start_delay,"probe_returncode":probe_rc,"collector_returncode":collector_rc,"flight_returncode":flight_rc,"landing_confirmed":any(row.get("event") == "landing_confirmed" or row.get("event_type") == "landing_confirmed" for row in _events(events)),"error":error}
     collection_receipt = args.output / "collection/collection-receipt.json"
     receipt["collection_identity"] = json.loads(collection_receipt.read_text())["identity"] if collection_receipt.exists() else None
     receipt["identity"] = hashlib.sha256(_canonical(receipt).encode()).hexdigest()

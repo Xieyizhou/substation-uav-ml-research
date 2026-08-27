@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "protocol_id": "visual-hard-examples-v2.12-complete-equipment-run2",
+  "maps": ["complex"],
+  "split_group": "recording_seed",
+  "perceptual_hash_algorithm": "dhash64-v1",
+  "near_duplicate_hamming_threshold": 2,
+  "development_seeds": [5101, 5102, 5301, 5302, 5401, 5402, 5501, 5502, 5601, 5602, 5701, 5702, 5801, 5802, 5901, 5902, 6001, 6002, 6101, 6102],
+  "validation_seeds": [5201, 5202, 6201, 6202],
+  "forbidden_partitions": ["full_validation", "blind", "heldout_test", "qualification"],
+  "classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
+  "bbox_policy": {
+    "development": {
+      "mode": "drop_invalid_objects",
+      "minimum_border_margin_px": 2,
+      "maximum_bbox_width_fraction": 0.9,
+      "maximum_bbox_height_fraction": 0.9
+    },
+    "validation": {
+      "mode": "drop_invalid_objects",
+      "minimum_border_margin_px": 8,
+      "maximum_bbox_width_fraction": 0.85,
+      "maximum_bbox_height_fraction": 0.85
+    }
+  },
+  "class_frame_quotas": {
+    "development": {"transformer": 80, "switchgear": 120, "capacitor_bank": 0, "reactor": 0},
+    "validation": {"transformer": 30, "switchgear": 40, "capacitor_bank": 0, "reactor": 0}
+  },
+  "no_target_frame_quotas": {"development": 0, "validation": 0}
+}

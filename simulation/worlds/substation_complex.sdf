@@ -966,1043 +966,6 @@
           </visual>
         </link>
       </model>
-      <model name="entry_switchgear">
-        <static>true</static>
-        <pose>6 1.5 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>2</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 0.7 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.84 2.76 1.4</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.92 2.88 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 0.7 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.72 2.58 1.26</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.08 0.38 0.48 1</ambient>
-              <diffuse>0.08 0.38 0.48 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="front_panel">
-            <pose>0 -1.305 0.7 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.24 0.025 0.812</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.20 0.21 1</ambient>
-              <diffuse>0.16 0.20 0.21 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="west_switchgear_01">
-        <static>true</static>
-        <pose>1 6.5 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>2</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.84 2.76 1.6</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.92 2.88 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.72 2.58 1.44</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.08 0.38 0.48 1</ambient>
-              <diffuse>0.08 0.38 0.48 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="front_panel">
-            <pose>0 -1.305 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.24 0.025 0.928</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.20 0.21 1</ambient>
-              <diffuse>0.16 0.20 0.21 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="west_switchgear_02">
-        <static>true</static>
-        <pose>1 10.5 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>2</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.84 2.76 1.6</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.92 2.88 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.72 2.58 1.44</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.08 0.38 0.48 1</ambient>
-              <diffuse>0.08 0.38 0.48 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="front_panel">
-            <pose>0 -1.305 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.24 0.025 0.928</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.20 0.21 1</ambient>
-              <diffuse>0.16 0.20 0.21 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="west_switchgear_03">
-        <static>true</static>
-        <pose>1 14.5 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>2</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.84 2.76 1.6</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.92 2.88 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.72 2.58 1.44</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.08 0.38 0.48 1</ambient>
-              <diffuse>0.08 0.38 0.48 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="front_panel">
-            <pose>0 -1.305 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.24 0.025 0.928</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.20 0.21 1</ambient>
-              <diffuse>0.16 0.20 0.21 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="west_switchgear_04">
-        <static>true</static>
-        <pose>1 18 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>2</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.84 1.84 1.6</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.92 1.92 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.72 1.72 1.44</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.08 0.38 0.48 1</ambient>
-              <diffuse>0.08 0.38 0.48 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="front_panel">
-            <pose>0 -0.87 0.8 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.24 0.025 0.928</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.20 0.21 1</ambient>
-              <diffuse>0.16 0.20 0.21 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="transformer_sw">
-        <static>true</static>
-        <pose>7 7 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>1</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 1 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.68 3.68 2</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.84 3.84 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 1 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.44 3.44 1.8</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.07 0.16 0.19 1</ambient>
-              <diffuse>0.07 0.16 0.19 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_1">
-            <pose>-1.12 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_2">
-            <pose>0 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_3">
-            <pose>1.12 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="transformer_se">
-        <static>true</static>
-        <pose>17 8 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>1</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 1 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.68 3.68 2</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.84 3.84 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 1 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.44 3.44 1.8</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.07 0.16 0.19 1</ambient>
-              <diffuse>0.07 0.16 0.19 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_1">
-            <pose>-1.12 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_2">
-            <pose>0 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_3">
-            <pose>1.12 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="transformer_mid">
-        <static>true</static>
-        <pose>12 18 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>1</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 1 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.68 3.68 2</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.84 3.84 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 1 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.44 3.44 1.8</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.07 0.16 0.19 1</ambient>
-              <diffuse>0.07 0.16 0.19 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_1">
-            <pose>-1.12 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_2">
-            <pose>0 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="bushing_3">
-            <pose>1.12 0 2.18 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.09</radius>
-                <length>0.36</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.75 0.72 0.64 1</ambient>
-              <diffuse>0.75 0.72 0.64 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="control_building">
-        <static>true</static>
-        <pose>22 20 0 0 0 0</pose>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 1.4 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.68 3.68 2.8</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.84 3.84 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 1.4 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>3.44 3.44 2.52</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.32 0.34 0.35 1</ambient>
-              <diffuse>0.32 0.34 0.35 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="front_panel">
-            <pose>0 -1.74 1.4 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>2.48 0.025 1.624</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.20 0.21 1</ambient>
-              <diffuse>0.16 0.20 0.21 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="switchgear_west">
-        <static>true</static>
-        <pose>4.5 16.5 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>2</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 0.75 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>2.76 2.76 1.5</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>2.88 2.88 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 0.75 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>2.58 2.58 1.35</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.08 0.38 0.48 1</ambient>
-              <diffuse>0.08 0.38 0.48 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="front_panel">
-            <pose>0 -1.305 0.75 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.86 0.025 0.87</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.20 0.21 1</ambient>
-              <diffuse>0.16 0.20 0.21 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="capacitor_east">
-        <static>true</static>
-        <pose>21.5 12.5 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>3</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 0.9 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>2.76 2.76 1.8</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>2.88 2.88 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 0.9 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>2.58 2.58 1.62</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.35 0.40 1</ambient>
-              <diffuse>0.16 0.35 0.40 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="capacitor_-0.22_-0.25">
-            <pose>-0.75 -0.66 0.98 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.1</radius>
-                <length>1.17</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.72 0.74 0.70 1</ambient>
-              <diffuse>0.72 0.74 0.70 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="capacitor_-0.22_0.0">
-            <pose>0 -0.66 0.98 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.1</radius>
-                <length>1.17</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.72 0.74 0.70 1</ambient>
-              <diffuse>0.72 0.74 0.70 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="capacitor_-0.22_0.25">
-            <pose>0.75 -0.66 0.98 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.1</radius>
-                <length>1.17</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.72 0.74 0.70 1</ambient>
-              <diffuse>0.72 0.74 0.70 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="capacitor_0.22_-0.25">
-            <pose>-0.75 0.66 0.98 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.1</radius>
-                <length>1.17</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.72 0.74 0.70 1</ambient>
-              <diffuse>0.72 0.74 0.70 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="capacitor_0.22_0.0">
-            <pose>0 0.66 0.98 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.1</radius>
-                <length>1.17</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.72 0.74 0.70 1</ambient>
-              <diffuse>0.72 0.74 0.70 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="capacitor_0.22_0.25">
-            <pose>0.75 0.66 0.98 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.1</radius>
-                <length>1.17</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.72 0.74 0.70 1</ambient>
-              <diffuse>0.72 0.74 0.70 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="reactor_north">
-        <static>true</static>
-        <pose>7.5 23.5 0 0 0 0</pose>
-        <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
-          <label>4</label>
-        </plugin>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 1.1 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>1.02</radius>
-                <length>2.2</length>
-              </cylinder>
-            </geometry>
-          </collision>
-          <visual name="reactor">
-            <pose>0 0 1.1 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.9384</radius>
-                <length>2.024</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.24 0.29 0.34 1</ambient>
-              <diffuse>0.24 0.29 0.34 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>2.7 2.7 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.12 0.12 0.12 1</ambient>
-              <diffuse>0.12 0.12 0.12 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="cabinet_center">
-        <static>true</static>
-        <pose>17 15 0 0 0 0</pose>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 0.75 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.84 1.84 1.5</size>
-              </box>
-            </geometry>
-          </collision>
-          <visual name="base">
-            <pose>0 0 0.08 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.92 1.92 0.16</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.10 0.10 0.10 1</ambient>
-              <diffuse>0.10 0.10 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="body">
-            <pose>0 0 0.75 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.72 1.72 1.35</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.02 0.32 0.43 1</ambient>
-              <diffuse>0.02 0.32 0.43 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="front_panel">
-            <pose>0 -0.87 0.75 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.24 0.025 0.87</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.16 0.20 0.21 1</ambient>
-              <diffuse>0.16 0.20 0.21 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="pole_a">
-        <static>true</static>
-        <pose>11.5 11.5 0 0 0 0</pose>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 2.4 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.22</radius>
-                <length>4.8</length>
-              </cylinder>
-            </geometry>
-          </collision>
-          <visual name="pole">
-            <pose>0 0 2.4 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.18</radius>
-                <length>4.8</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.08 0.09 0.09 1</ambient>
-              <diffuse>0.08 0.09 0.09 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="crossarm">
-            <pose>0 0 4.6 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.25 0.12 0.12</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.18 0.16 0.10 1</ambient>
-              <diffuse>0.18 0.16 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="pole_b">
-        <static>true</static>
-        <pose>18.5 16.5 0 0 0 0</pose>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 2.4 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.22</radius>
-                <length>4.8</length>
-              </cylinder>
-            </geometry>
-          </collision>
-          <visual name="pole">
-            <pose>0 0 2.4 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.18</radius>
-                <length>4.8</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.08 0.09 0.09 1</ambient>
-              <diffuse>0.08 0.09 0.09 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="crossarm">
-            <pose>0 0 4.6 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.25 0.12 0.12</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.18 0.16 0.10 1</ambient>
-              <diffuse>0.18 0.16 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="pole_c">
-        <static>true</static>
-        <pose>24.5 10.5 0 0 0 0</pose>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 2.4 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.22</radius>
-                <length>4.8</length>
-              </cylinder>
-            </geometry>
-          </collision>
-          <visual name="pole">
-            <pose>0 0 2.4 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.18</radius>
-                <length>4.8</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.08 0.09 0.09 1</ambient>
-              <diffuse>0.08 0.09 0.09 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="crossarm">
-            <pose>0 0 4.6 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.25 0.12 0.12</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.18 0.16 0.10 1</ambient>
-              <diffuse>0.18 0.16 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
-      <model name="pole_d">
-        <static>true</static>
-        <pose>14.5 23.5 0 0 0 0</pose>
-        <link name="link">
-          <collision name="collision">
-            <pose>0 0 2.4 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.22</radius>
-                <length>4.8</length>
-              </cylinder>
-            </geometry>
-          </collision>
-          <visual name="pole">
-            <pose>0 0 2.4 0 0 0</pose>
-            <geometry>
-              <cylinder>
-                <radius>0.18</radius>
-                <length>4.8</length>
-              </cylinder>
-            </geometry>
-            <material>
-              <ambient>0.08 0.09 0.09 1</ambient>
-              <diffuse>0.08 0.09 0.09 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-          <visual name="crossarm">
-            <pose>0 0 4.6 0 0 0</pose>
-            <geometry>
-              <box>
-                <size>1.25 0.12 0.12</size>
-              </box>
-            </geometry>
-            <material>
-              <ambient>0.18 0.16 0.10 1</ambient>
-              <diffuse>0.18 0.16 0.10 1</diffuse>
-              <specular>0.08 0.08 0.08 1</specular>
-            </material>
-          </visual>
-        </link>
-      </model>
       <model name="fence_north">
         <static>true</static>
         <pose>14 27.88 0.45 0 0 0</pose>
@@ -2111,6 +1074,1139 @@
           </visual>
         </link>
       </model>
+    </model>
+    <model name="entry_switchgear">
+      <static>true</static>
+      <pose>-8 -12.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.7 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.84 2.76 1.4</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.92 2.88 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>127</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 0.7 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.72 2.58 1.26</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.08 0.38 0.48 1</ambient>
+            <diffuse>0.08 0.38 0.48 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>127</label>
+          </plugin>
+        </visual>
+        <visual name="front_panel">
+          <pose>0 -1.305 0.7 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.24 0.025 0.812</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.20 0.21 1</ambient>
+            <diffuse>0.16 0.20 0.21 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>127</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="west_switchgear_01">
+      <static>true</static>
+      <pose>-13 -7.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.84 2.76 1.6</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.92 2.88 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>118</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.72 2.58 1.44</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.08 0.38 0.48 1</ambient>
+            <diffuse>0.08 0.38 0.48 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>118</label>
+          </plugin>
+        </visual>
+        <visual name="front_panel">
+          <pose>0 -1.305 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.24 0.025 0.928</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.20 0.21 1</ambient>
+            <diffuse>0.16 0.20 0.21 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>118</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="west_switchgear_02">
+      <static>true</static>
+      <pose>-13 -3.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.84 2.76 1.6</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.92 2.88 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>128</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.72 2.58 1.44</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.08 0.38 0.48 1</ambient>
+            <diffuse>0.08 0.38 0.48 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>128</label>
+          </plugin>
+        </visual>
+        <visual name="front_panel">
+          <pose>0 -1.305 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.24 0.025 0.928</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.20 0.21 1</ambient>
+            <diffuse>0.16 0.20 0.21 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>128</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="west_switchgear_03">
+      <static>true</static>
+      <pose>-13 0.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.84 2.76 1.6</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.92 2.88 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>139</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.72 2.58 1.44</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.08 0.38 0.48 1</ambient>
+            <diffuse>0.08 0.38 0.48 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>139</label>
+          </plugin>
+        </visual>
+        <visual name="front_panel">
+          <pose>0 -1.305 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.24 0.025 0.928</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.20 0.21 1</ambient>
+            <diffuse>0.16 0.20 0.21 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>139</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="west_switchgear_04">
+      <static>true</static>
+      <pose>-13 4 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.84 1.84 1.6</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.92 1.92 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>149</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.72 1.72 1.44</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.08 0.38 0.48 1</ambient>
+            <diffuse>0.08 0.38 0.48 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>149</label>
+          </plugin>
+        </visual>
+        <visual name="front_panel">
+          <pose>0 -0.87 0.8 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.24 0.025 0.928</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.20 0.21 1</ambient>
+            <diffuse>0.16 0.20 0.21 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>149</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="transformer_sw">
+      <static>true</static>
+      <pose>-7 -7 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.68 3.68 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.84 3.84 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>76</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.44 3.44 1.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.07 0.16 0.19 1</ambient>
+            <diffuse>0.07 0.16 0.19 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>76</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_1">
+          <pose>-1.12 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>76</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_2">
+          <pose>0 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>76</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_3">
+          <pose>1.12 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>76</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="transformer_se">
+      <static>true</static>
+      <pose>3 -6 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.68 3.68 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.84 3.84 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>57</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.44 3.44 1.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.07 0.16 0.19 1</ambient>
+            <diffuse>0.07 0.16 0.19 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>57</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_1">
+          <pose>-1.12 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>57</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_2">
+          <pose>0 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>57</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_3">
+          <pose>1.12 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>57</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="transformer_mid">
+      <static>true</static>
+      <pose>-2 4 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.68 3.68 2</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.84 3.84 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>64</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 1 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.44 3.44 1.8</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.07 0.16 0.19 1</ambient>
+            <diffuse>0.07 0.16 0.19 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>64</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_1">
+          <pose>-1.12 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>64</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_2">
+          <pose>0 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>64</label>
+          </plugin>
+        </visual>
+        <visual name="bushing_3">
+          <pose>1.12 0 2.18 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.09</radius>
+              <length>0.36</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.75 0.72 0.64 1</ambient>
+            <diffuse>0.75 0.72 0.64 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>64</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="control_building">
+      <static>true</static>
+      <pose>8 6 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 1.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.68 3.68 2.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.84 3.84 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+        <visual name="body">
+          <pose>0 0 1.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>3.44 3.44 2.52</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.32 0.34 0.35 1</ambient>
+            <diffuse>0.32 0.34 0.35 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+        <visual name="front_panel">
+          <pose>0 -1.74 1.4 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.48 0.025 1.624</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.20 0.21 1</ambient>
+            <diffuse>0.16 0.20 0.21 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="switchgear_west">
+      <static>true</static>
+      <pose>-9.5 2.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.76 2.76 1.5</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.88 2.88 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>113</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.58 2.58 1.35</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.08 0.38 0.48 1</ambient>
+            <diffuse>0.08 0.38 0.48 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>113</label>
+          </plugin>
+        </visual>
+        <visual name="front_panel">
+          <pose>0 -1.305 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.86 0.025 0.87</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.20 0.21 1</ambient>
+            <diffuse>0.16 0.20 0.21 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>113</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="capacitor_east">
+      <static>true</static>
+      <pose>7.5 -1.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.9 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.76 2.76 1.8</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.88 2.88 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>178</label>
+          </plugin>
+        </visual>
+        <visual name="body">
+          <pose>0 0 0.9 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.58 2.58 1.62</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.35 0.40 1</ambient>
+            <diffuse>0.16 0.35 0.40 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>178</label>
+          </plugin>
+        </visual>
+        <visual name="capacitor_-0.22_-0.25">
+          <pose>-0.75 -0.66 0.98 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1</radius>
+              <length>1.17</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.72 0.74 0.70 1</ambient>
+            <diffuse>0.72 0.74 0.70 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>178</label>
+          </plugin>
+        </visual>
+        <visual name="capacitor_-0.22_0.0">
+          <pose>0 -0.66 0.98 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1</radius>
+              <length>1.17</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.72 0.74 0.70 1</ambient>
+            <diffuse>0.72 0.74 0.70 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>178</label>
+          </plugin>
+        </visual>
+        <visual name="capacitor_-0.22_0.25">
+          <pose>0.75 -0.66 0.98 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1</radius>
+              <length>1.17</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.72 0.74 0.70 1</ambient>
+            <diffuse>0.72 0.74 0.70 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>178</label>
+          </plugin>
+        </visual>
+        <visual name="capacitor_0.22_-0.25">
+          <pose>-0.75 0.66 0.98 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1</radius>
+              <length>1.17</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.72 0.74 0.70 1</ambient>
+            <diffuse>0.72 0.74 0.70 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>178</label>
+          </plugin>
+        </visual>
+        <visual name="capacitor_0.22_0.0">
+          <pose>0 0.66 0.98 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1</radius>
+              <length>1.17</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.72 0.74 0.70 1</ambient>
+            <diffuse>0.72 0.74 0.70 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>178</label>
+          </plugin>
+        </visual>
+        <visual name="capacitor_0.22_0.25">
+          <pose>0.75 0.66 0.98 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.1</radius>
+              <length>1.17</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.72 0.74 0.70 1</ambient>
+            <diffuse>0.72 0.74 0.70 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>178</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="reactor_north">
+      <static>true</static>
+      <pose>-6.5 9.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 1.1 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>1.02</radius>
+              <length>2.2</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="reactor">
+          <pose>0 0 1.1 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.9384</radius>
+              <length>2.024</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.24 0.29 0.34 1</ambient>
+            <diffuse>0.24 0.29 0.34 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>208</label>
+          </plugin>
+        </visual>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>2.7 2.7 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.12 0.12 0.12 1</ambient>
+            <diffuse>0.12 0.12 0.12 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+          <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+            <label>208</label>
+          </plugin>
+        </visual>
+      </link>
+    </model>
+    <model name="cabinet_center">
+      <static>true</static>
+      <pose>3 1 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.84 1.84 1.5</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="base">
+          <pose>0 0 0.08 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.92 1.92 0.16</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.10 0.10 0.10 1</ambient>
+            <diffuse>0.10 0.10 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+        <visual name="body">
+          <pose>0 0 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.72 1.72 1.35</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.02 0.32 0.43 1</ambient>
+            <diffuse>0.02 0.32 0.43 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+        <visual name="front_panel">
+          <pose>0 -0.87 0.75 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.24 0.025 0.87</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.16 0.20 0.21 1</ambient>
+            <diffuse>0.16 0.20 0.21 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="pole_a">
+      <static>true</static>
+      <pose>-2.5 -2.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 2.4 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.22</radius>
+              <length>4.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="pole">
+          <pose>0 0 2.4 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.18</radius>
+              <length>4.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.08 0.09 0.09 1</ambient>
+            <diffuse>0.08 0.09 0.09 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+        <visual name="crossarm">
+          <pose>0 0 4.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.25 0.12 0.12</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.18 0.16 0.10 1</ambient>
+            <diffuse>0.18 0.16 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="pole_b">
+      <static>true</static>
+      <pose>4.5 2.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 2.4 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.22</radius>
+              <length>4.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="pole">
+          <pose>0 0 2.4 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.18</radius>
+              <length>4.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.08 0.09 0.09 1</ambient>
+            <diffuse>0.08 0.09 0.09 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+        <visual name="crossarm">
+          <pose>0 0 4.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.25 0.12 0.12</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.18 0.16 0.10 1</ambient>
+            <diffuse>0.18 0.16 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="pole_c">
+      <static>true</static>
+      <pose>10.5 -3.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 2.4 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.22</radius>
+              <length>4.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="pole">
+          <pose>0 0 2.4 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.18</radius>
+              <length>4.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.08 0.09 0.09 1</ambient>
+            <diffuse>0.08 0.09 0.09 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+        <visual name="crossarm">
+          <pose>0 0 4.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.25 0.12 0.12</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.18 0.16 0.10 1</ambient>
+            <diffuse>0.18 0.16 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="pole_d">
+      <static>true</static>
+      <pose>0.5 9.5 0 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <pose>0 0 2.4 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.22</radius>
+              <length>4.8</length>
+            </cylinder>
+          </geometry>
+        </collision>
+        <visual name="pole">
+          <pose>0 0 2.4 0 0 0</pose>
+          <geometry>
+            <cylinder>
+              <radius>0.18</radius>
+              <length>4.8</length>
+            </cylinder>
+          </geometry>
+          <material>
+            <ambient>0.08 0.09 0.09 1</ambient>
+            <diffuse>0.08 0.09 0.09 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+        <visual name="crossarm">
+          <pose>0 0 4.6 0 0 0</pose>
+          <geometry>
+            <box>
+              <size>1.25 0.12 0.12</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.18 0.16 0.10 1</ambient>
+            <diffuse>0.18 0.16 0.10 1</diffuse>
+            <specular>0.08 0.08 0.08 1</specular>
+          </material>
+        </visual>
+      </link>
     </model>
   </world>
 </sdf>

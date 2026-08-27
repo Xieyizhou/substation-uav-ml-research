@@ -9,6 +9,7 @@ import json
 from src.ml import EQUIPMENT_CLASSES
 from src.ml.artifacts import object_sha256
 from src.vision.contracts.annotations import VisualObjectAnnotation
+from src.vision.collection.simulator_labels import class_for_simulator_label
 from src.sensors.gazebo_visual_transport import (
     GAZEBO_SIM_CLOCK,
     GAZEBO_JSON_STREAM_LIMIT_BYTES,
@@ -21,14 +22,6 @@ from src.sensors.gazebo_visual_transport import (
     stop_stream_process,
     transport_environment,
 )
-
-
-SIMULATOR_LABELS = {
-    1: "transformer",
-    2: "switchgear",
-    3: "capacitor_bank",
-    4: "reactor",
-}
 
 
 @dataclass(frozen=True)
@@ -113,9 +106,9 @@ def _annotation(item, *, index, width, height, message_id):
         simulator_label = int(item.get("label"))
     except (TypeError, ValueError) as error:
         raise ValueError("truth item label must be an integer") from error
-    if simulator_label not in SIMULATOR_LABELS:
+    class_name = class_for_simulator_label(simulator_label)
+    if class_name is None:
         raise ValueError(f"unknown simulator label: {simulator_label}")
-    class_name = SIMULATOR_LABELS[simulator_label]
     original = _box_corners(item)
     x_min, y_min, x_max, y_max = original
     clipped = (
@@ -127,7 +120,7 @@ def _annotation(item, *, index, width, height, message_id):
     if clipped[2] <= clipped[0] or clipped[3] <= clipped[1]:
         raise ValueError("truth bounding box has zero visible area after clipping")
     return VisualObjectAnnotation(
-        annotation_id=f"{message_id}-box-{index:04d}",
+        annotation_id=f"{message_id}-instance-{simulator_label:04d}-box-{index:04d}",
         class_id=EQUIPMENT_CLASSES.index(class_name),
         class_name=class_name,
         bbox_xyxy=clipped,

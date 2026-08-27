@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-formal-run2",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run2.json",
+  "run_revision": "formal-v1",
+  "cooldown_s": 30,
+  "frames_per_run": 360,
+  "emit_stride": 3,
+  "runs": [
+    {"map_id": "complex", "seed": 6101, "split": "development", "collection_start_delay_s": 0, "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-complete-pilot-v2.json"},
+    {"map_id": "complex", "seed": 6102, "split": "development", "collection_start_delay_s": 0, "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-complete-pilot-v2.json"},
+    {"map_id": "complex", "seed": 6201, "split": "validation", "collection_start_delay_s": 0, "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-complete-pilot-v2.json"},
+    {"map_id": "complex", "seed": 6202, "split": "validation", "collection_start_delay_s": 0, "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-complete-pilot-v2.json"}
+  ]
+}

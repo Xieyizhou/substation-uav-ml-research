@@ -1,7 +1,7 @@
 import tempfile
 import unittest
 
-from src.vision.training.hard_example_curator import Candidate, curate, hamming_hex
+from src.vision.training.hard_example_curator import Candidate, apply_bbox_policy, curate, hamming_hex
 
 
 def candidate(frame, split, sha, phash, map_id="simple", target=True):
@@ -10,6 +10,15 @@ def candidate(frame, split, sha, phash, map_id="simple", target=True):
 
 
 class HardExampleCuratorTests(unittest.TestCase):
+    def test_validation_bbox_policy_rejects_truncated_truth(self):
+        truncated = candidate("edge", "validation", "a", "0" * 16)
+        complete = candidate("complete", "validation", "b", "f" * 16)
+        truncated = Candidate(**{**truncated.__dict__, "objects": ({"annotation_id": "edge", "class_name": "transformer", "bbox_xyxy": [0, 100, 500, 900]},)})
+        complete = Candidate(**{**complete.__dict__, "objects": ({"annotation_id": "complete", "class_name": "transformer", "bbox_xyxy": [100, 100, 900, 900]},)})
+        accepted, rejected = apply_bbox_policy([truncated, complete], {"validation": {"minimum_border_margin_px": 2, "maximum_bbox_width_fraction": 0.9, "maximum_bbox_height_fraction": 0.9}})
+        self.assertEqual([row.frame_id for row in accepted], ["complete"])
+        self.assertEqual(rejected[0]["reason"], "bbox_touches_frame_boundary")
+
     def test_hamming_hex(self):
         self.assertEqual(hamming_hex("0000000000000000", "0000000000000003"), 2)
 

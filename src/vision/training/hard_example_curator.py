@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from bisect import bisect_left
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 import json
 from pathlib import Path
@@ -109,6 +109,37 @@ def load_collection(collection, allowed_classes, maximum_truth_skew_ms=33.334, p
             perceptual_hash, objects,
         ))
     return accepted, rejected, receipt["identity"]
+
+
+def apply_bbox_policy(candidates, policy):
+    """Reject frames whose labelled equipment violates split-specific framing rules."""
+    if not policy:
+        return list(candidates), []
+    accepted, rejected = [], []
+    for candidate in candidates:
+        rules = policy.get(candidate.split, {})
+        filter_objects = rules.get("mode") == "drop_invalid_objects"
+        margin = float(rules.get("minimum_border_margin_px", 0.0))
+        maximum_width = float(rules.get("maximum_bbox_width_fraction", 1.0)) * 1920.0
+        maximum_height = float(rules.get("maximum_bbox_height_fraction", 1.0)) * 1080.0
+        kept_objects = []
+        dropped_reasons = []
+        for item in candidate.objects:
+            x1, y1, x2, y2 = map(float, item["bbox_xyxy"])
+            if x1 <= margin or y1 <= margin or x2 >= 1920.0 - margin or y2 >= 1080.0 - margin:
+                dropped_reasons.append("bbox_touches_frame_boundary")
+            elif x2 - x1 > maximum_width or y2 - y1 > maximum_height:
+                dropped_reasons.append("bbox_exceeds_framing_limit")
+            else:
+                kept_objects.append(item)
+        if filter_objects and kept_objects:
+            accepted.append(replace(candidate, objects=tuple(kept_objects)))
+            rejected.extend({"frame_id": candidate.frame_id, "collection": candidate.collection, "reason": reason, "scope": "annotation"} for reason in dropped_reasons)
+        elif not dropped_reasons:
+            accepted.append(candidate)
+        else:
+            rejected.append({"frame_id": candidate.frame_id, "collection": candidate.collection, "reason": "no_complete_target_annotation" if filter_objects else dropped_reasons[0]})
+    return accepted, rejected
 
 
 def _clusters(candidates, threshold):

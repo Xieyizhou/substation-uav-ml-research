@@ -1,0 +1,84 @@
+{
+  "layout_id": "canonical-substation_complex_v1",
+  "level_tolerance_deg": 5.0,
+  "return_transit_cells": [
+    [
+      4,
+      20
+    ],
+    [
+      7,
+      20
+    ],
+    [
+      7,
+      13
+    ],
+    [
+      3,
+      13
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      0,
+      0
+    ]
+  ],
+  "route_id": "canonical-switchgear_west-complete-pilot-v2",
+  "route_identity_sha256": "480a4f2964b91c61a6992ec7d61742f9dd9ca27f2a756f110214f5b48fe669f0",
+  "route_schema_version": 4,
+  "start_cell": [
+    0,
+    0
+  ],
+  "target_class": "switchgear",
+  "target_object_id": "switchgear_west",
+  "waypoints": [
+    {
+      "altitude_m": 2.5,
+      "east_m": 4.5,
+      "expected_truth": "truth_audited",
+      "hold_s": 65.0,
+      "mission_phase": "cruise_distant",
+      "north_m": 26.0,
+      "transit_cells": [
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          7,
+          20
+        ],
+        [
+          4,
+          20
+        ],
+        [
+          4,
+          26
+        ]
+      ],
+      "waypoint_id": "complete_distant",
+      "yaw_deg": 180.0
+    }
+  ],
+  "yaw_acquisition_timeout_s": 15.0,
+  "yaw_settle_duration_s": 0.5,
+  "yaw_tolerance_deg": 5.0
+}

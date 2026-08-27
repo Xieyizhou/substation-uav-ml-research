@@ -6,7 +6,14 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+import sys
 from xml.etree import ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.vision.collection.simulator_labels import CLASS_LABELS, instance_simulator_label
 
 
 MAP_SPECS = [
@@ -157,12 +164,7 @@ CATEGORY_COLORS = {
     "pole": "0.08 0.09 0.09 1",
 }
 
-GAZEBO_VISUAL_LABELS = {
-    "transformer": 1,
-    "switchgear": 2,
-    "capacitor_bank": 3,
-    "reactor": 4,
-}
+GAZEBO_VISUAL_LABELS = CLASS_LABELS
 
 
 def text(parent, tag, value, **attributes):
@@ -230,12 +232,12 @@ def add_static_model(parent, name, pose):
     return model
 
 
-def add_visual_label(model, category):
-    label = GAZEBO_VISUAL_LABELS.get(category)
+def add_visual_label(visual, category, object_id):
+    label = instance_simulator_label(category, object_id)
     if label is None:
         return
     plugin = ET.SubElement(
-        model,
+        visual,
         "plugin",
         filename="gz-sim-label-system",
         name="gz::sim::systems::Label",
@@ -255,7 +257,7 @@ def obstacle_bounds(obstacle):
     return x_min, x_max, y_min, y_max
 
 
-def add_equipment(parent, obstacle):
+def add_equipment(parent, obstacle, origin=(0.0, 0.0)):
     x_min, x_max, y_min, y_max = obstacle_bounds(obstacle)
     size_x = x_max - x_min + 1
     size_y = y_max - y_min + 1
@@ -268,14 +270,15 @@ def add_equipment(parent, obstacle):
     category = obstacle.get("visual_category", "cabinet")
     color = CATEGORY_COLORS.get(category, CATEGORY_COLORS["cabinet"])
 
-    model = add_static_model(parent, obstacle["name"], [center_x, center_y, 0, 0, 0, 0])
-    add_visual_label(model, category)
+    model = add_static_model(parent, obstacle["name"], [center_x + origin[0], center_y + origin[1], 0, 0, 0, 0])
     link = ET.SubElement(model, "link", name="link")
 
     if category == "pole":
         add_cylinder_collision(link, "collision", [0, 0, center_z, 0, 0, 0], 0.22, height)
         add_cylinder_visual(link, "pole", [0, 0, center_z, 0, 0, 0], 0.18, height, color)
         add_box_visual(link, "crossarm", [0, 0, z_max - 0.2, 0, 0, 0], [1.25, 0.12, 0.12], "0.18 0.16 0.10 1")
+        for visual in link.findall("visual"):
+            add_visual_label(visual, category, obstacle["name"])
         return
 
     if category == "reactor":
@@ -283,6 +286,8 @@ def add_equipment(parent, obstacle):
         add_cylinder_collision(link, "collision", [0, 0, center_z, 0, 0, 0], radius, height)
         add_cylinder_visual(link, "reactor", [0, 0, center_z, 0, 0, 0], radius * 0.92, height * 0.92, color)
         add_box_visual(link, "base", [0, 0, 0.08, 0, 0, 0], [size_x * 0.9, size_y * 0.9, 0.16], "0.12 0.12 0.12 1")
+        for visual in link.findall("visual"):
+            add_visual_label(visual, category, obstacle["name"])
         return
 
     add_box_collision(link, "collision", [0, 0, center_z, 0, 0, 0], [size_x * 0.92, size_y * 0.92, height])
@@ -318,6 +323,8 @@ def add_equipment(parent, obstacle):
             [size_x * 0.62, 0.025, height * 0.58],
             "0.16 0.20 0.21 1",
         )
+    for visual in link.findall("visual"):
+        add_visual_label(visual, category, obstacle["name"])
 
 
 def add_boundary_fence(parent, width, height):
@@ -403,7 +410,7 @@ def build_world(spec):
         add_cylinder_visual(link, "visual", [0, 0, 0, 0, 0, 0], 0.8, 0.03, color)
 
     for obstacle in spec["obstacles"]:
-        add_equipment(map_model, obstacle)
+        add_equipment(world, obstacle, origin=origin[:2])
     add_boundary_fence(map_model, width, height)
     return ET.ElementTree(sdf), origin
 
