@@ -119,12 +119,27 @@ def apply_bbox_policy(candidates, policy):
     for candidate in candidates:
         rules = policy.get(candidate.split, {})
         filter_objects = rules.get("mode") == "drop_invalid_objects"
+        target_labels = {
+            int(value)
+            for value in policy.get("target_instance_labels_by_seed", {}).get(str(candidate.seed), [])
+        }
         margin = float(rules.get("minimum_border_margin_px", 0.0))
         maximum_width = float(rules.get("maximum_bbox_width_fraction", 1.0)) * 1920.0
         maximum_height = float(rules.get("maximum_bbox_height_fraction", 1.0)) * 1080.0
         kept_objects = []
         dropped_reasons = []
         for item in candidate.objects:
+            if target_labels:
+                marker = "-instance-"
+                annotation_id = str(item.get("annotation_id", ""))
+                try:
+                    instance_label = int(annotation_id.split(marker, 1)[1].split("-", 1)[0])
+                except (IndexError, ValueError):
+                    dropped_reasons.append("missing_instance_lineage")
+                    continue
+                if instance_label not in target_labels:
+                    dropped_reasons.append("non_target_instance")
+                    continue
             x1, y1, x2, y2 = map(float, item["bbox_xyxy"])
             if x1 <= margin or y1 <= margin or x2 >= 1920.0 - margin or y2 >= 1080.0 - margin:
                 dropped_reasons.append("bbox_touches_frame_boundary")

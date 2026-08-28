@@ -19,6 +19,19 @@ class HardExampleCuratorTests(unittest.TestCase):
         self.assertEqual([row.frame_id for row in accepted], ["complete"])
         self.assertEqual(rejected[0]["reason"], "bbox_touches_frame_boundary")
 
+    def test_seed_policy_keeps_only_bound_target_instance(self):
+        row = candidate("frame", "development", "a", "0" * 16)
+        row = Candidate(**{**row.__dict__, "seed": 6101, "objects": (
+            {"annotation_id": "truth-instance-0057-box-0000", "class_name": "transformer", "bbox_xyxy": [100, 100, 900, 900]},
+            {"annotation_id": "truth-instance-0127-box-0001", "class_name": "switchgear", "bbox_xyxy": [100, 100, 900, 900]},
+        )})
+        accepted, rejected = apply_bbox_policy([row], {
+            "target_instance_labels_by_seed": {"6101": [57]},
+            "development": {"mode": "drop_invalid_objects"},
+        })
+        self.assertEqual([item["class_name"] for item in accepted[0].objects], ["transformer"])
+        self.assertIn("non_target_instance", {item["reason"] for item in rejected})
+
     def test_hamming_hex(self):
         self.assertEqual(hamming_hex("0000000000000000", "0000000000000003"), 2)
 

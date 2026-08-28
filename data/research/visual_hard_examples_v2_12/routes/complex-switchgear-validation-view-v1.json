@@ -1,0 +1,92 @@
+{
+  "layout_id": "canonical-substation_complex_v1",
+  "level_tolerance_deg": 5.0,
+  "return_transit_cells": [
+    [
+      4,
+      26
+    ],
+    [
+      4,
+      20
+    ],
+    [
+      7,
+      20
+    ],
+    [
+      7,
+      13
+    ],
+    [
+      3,
+      13
+    ],
+    [
+      3,
+      3
+    ],
+    [
+      0,
+      3
+    ],
+    [
+      0,
+      0
+    ]
+  ],
+  "route_id": "canonical-switchgear_west-validation-view-v1",
+  "route_identity_sha256": "70bb9558886b2bbe2a385312df64393f1a62547263eda8fb3c0d76f974fa9757",
+  "route_schema_version": 4,
+  "start_cell": [
+    0,
+    0
+  ],
+  "target_class": "switchgear",
+  "target_object_id": "switchgear_west",
+  "waypoints": [
+    {
+      "altitude_m": 2.8,
+      "east_m": 7.0,
+      "expected_truth": "truth_audited",
+      "hold_s": 65.0,
+      "mission_phase": "cruise_distant",
+      "north_m": 26.0,
+      "transit_cells": [
+        [
+          3,
+          0
+        ],
+        [
+          3,
+          10
+        ],
+        [
+          7,
+          10
+        ],
+        [
+          7,
+          20
+        ],
+        [
+          4,
+          20
+        ],
+        [
+          4,
+          26
+        ],
+        [
+          7,
+          26
+        ]
+      ],
+      "waypoint_id": "complete_distant",
+      "yaw_deg": 195.0
+    }
+  ],
+  "yaw_acquisition_timeout_s": 15.0,
+  "yaw_settle_duration_s": 0.5,
+  "yaw_tolerance_deg": 5.0
+}

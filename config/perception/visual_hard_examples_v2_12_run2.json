@@ -6,10 +6,18 @@
   "perceptual_hash_algorithm": "dhash64-v1",
   "near_duplicate_hamming_threshold": 2,
   "development_seeds": [5101, 5102, 5301, 5302, 5401, 5402, 5501, 5502, 5601, 5602, 5701, 5702, 5801, 5802, 5901, 5902, 6001, 6002, 6101, 6102],
-  "validation_seeds": [5201, 5202, 6201, 6202],
+  "validation_seeds": [5201, 5202, 6201, 6202, 6301, 6302],
   "forbidden_partitions": ["full_validation", "blind", "heldout_test", "qualification"],
   "classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
   "bbox_policy": {
+    "target_instance_labels_by_seed": {
+      "6101": [57],
+      "6102": [113],
+      "6201": [57],
+      "6202": [113],
+      "6301": [57],
+      "6302": [113]
+    },
     "development": {
       "mode": "drop_invalid_objects",
       "minimum_border_margin_px": 2,
