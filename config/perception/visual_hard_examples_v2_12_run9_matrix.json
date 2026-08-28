@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run9-targeted-v1",
+  "run_revision": "run9-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run9_targeted.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {
+      "map_id": "complex",
+      "seed": 7001,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run9-heading-minus-008-v1.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 7002,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run9-heading-plus-008-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 7003,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-context-run9-heading-minus-008-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 7004,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-context-run9-heading-plus-008-v1.json"
+    }
+  ]
+}
