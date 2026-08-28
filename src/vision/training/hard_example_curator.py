@@ -188,6 +188,11 @@ def curate(candidates, quotas, near_duplicate_hamming_threshold=6):
     deficits = dict(quotas)
     assignments = []
     for rows in clusters:
+        available_splits = tuple(
+            split
+            for split in ("development", "validation")
+            if any(row.split == split for row in rows)
+        )
         split_scores = {}
         for split in ("development", "validation"):
             counts = defaultdict(int)
@@ -198,7 +203,10 @@ def curate(candidates, quotas, near_duplicate_hamming_threshold=6):
                 min(count, deficits.get(bucket, 0))
                 for bucket, count in counts.items()
             )
-        assigned = max(("development", "validation"), key=lambda split: (split_scores[split], split == "validation"))
+        assigned = max(
+            available_splits,
+            key=lambda split: (split_scores[split], split == "validation"),
+        )
         assignments.append(assigned)
         for row in rows:
             if row.split != assigned:
@@ -266,7 +274,12 @@ def _multilabel_keys(candidate):
     )
 
 
-def curate_multilabel(candidates, quotas, near_duplicate_hamming_threshold=6):
+def curate_multilabel(
+    candidates,
+    quotas,
+    near_duplicate_hamming_threshold=6,
+    selection_group=None,
+):
     """Select split-isolated frames against per-class, multi-label quotas."""
     rejected = []
     exact_groups = defaultdict(list)
@@ -296,6 +309,11 @@ def curate_multilabel(candidates, quotas, near_duplicate_hamming_threshold=6):
     assignments = []
     deficits = dict(quotas)
     for rows in clusters:
+        available_splits = tuple(
+            split
+            for split in ("development", "validation")
+            if any(row.split == split for row in rows)
+        )
         split_scores = {}
         split_counts = {}
         for split in ("development", "validation"):
@@ -309,7 +327,7 @@ def curate_multilabel(candidates, quotas, near_duplicate_hamming_threshold=6):
                 min(count, deficits.get(key, 0)) for key, count in counts.items()
             )
         assigned = max(
-            ("development", "validation"),
+            available_splits,
             key=lambda split: (split_scores[split], split == "validation"),
         )
         assignments.append(assigned)
@@ -386,6 +404,7 @@ def curate_multilabel(candidates, quotas, near_duplicate_hamming_threshold=6):
     )
     deficits = dict(quotas)
     selected = []
+    selected_group_counts = defaultdict(int)
     while any(value > 0 for value in deficits.values()):
         ranked = []
         for row in remaining:
@@ -395,8 +414,21 @@ def curate_multilabel(candidates, quotas, near_duplicate_hamming_threshold=6):
             normalized_need = sum(
                 deficits[key] / max(quotas[key], 1) for key in active
             )
+            group_load = 0
+            if selection_group == "recording_seed":
+                group_load = sum(
+                    selected_group_counts[(key, row.seed)] for key in active
+                )
             ranked.append(
-                (-len(active), -normalized_need, row.perceptual_hash, row.image_sha256, row.key, row)
+                (
+                    -len(active),
+                    -normalized_need,
+                    group_load,
+                    row.perceptual_hash,
+                    row.image_sha256,
+                    row.key,
+                    row,
+                )
             )
         if not ranked:
             break
@@ -405,6 +437,8 @@ def curate_multilabel(candidates, quotas, near_duplicate_hamming_threshold=6):
         remaining.remove(chosen)
         for key in _multilabel_keys(chosen):
             deficits[key] = max(0, deficits.get(key, 0) - 1)
+            if selection_group == "recording_seed":
+                selected_group_counts[(key, chosen.seed)] += 1
 
     selected_set = {row.key for row in selected}
     rejected.extend(
@@ -434,13 +468,25 @@ def curate_multilabel(candidates, quotas, near_duplicate_hamming_threshold=6):
     )
 
 
-def build_receipt(selected, rejected, clusters, coverage, shortfall, inputs, quotas, threshold, hash_algorithm):
+def build_receipt(
+    selected,
+    rejected,
+    clusters,
+    coverage,
+    shortfall,
+    inputs,
+    quotas,
+    threshold,
+    hash_algorithm,
+    selection_group=None,
+):
     record = {
         "schema_version": 1,
         "status": "complete" if not any(shortfall.values()) else "shortfall",
         "input_collection_identities": sorted(inputs),
         "near_duplicate_hamming_threshold": threshold,
         "perceptual_hash_algorithm": hash_algorithm,
+        "selection_group": selection_group,
         "quotas": {"/".join(key): value for key, value in sorted(quotas.items())},
         "coverage": coverage,
         "shortfall": shortfall,

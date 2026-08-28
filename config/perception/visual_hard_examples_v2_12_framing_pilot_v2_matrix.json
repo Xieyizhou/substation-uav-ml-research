@@ -1,0 +1,25 @@
+{
+  "cooldown_s": 30,
+  "emit_stride": 3,
+  "frames_per_run": 120,
+  "matrix_id": "visual-hard-examples-v2.12-complete-framing-pilot-v2",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run2.json",
+  "run_revision": "pilot-v2",
+  "runs": [
+    {
+      "collection_start_delay_s": 45,
+      "map_id": "complex",
+      "seed": 5301,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-complete-pilot-v2.json"
+    },
+    {
+      "collection_start_delay_s": 45,
+      "map_id": "complex",
+      "seed": 5302,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-complete-pilot-v2.json"
+    }
+  ],
+  "schema_version": 1
+}

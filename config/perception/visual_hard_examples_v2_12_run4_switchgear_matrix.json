@@ -1,0 +1,32 @@
+{
+  "cooldown_s": 30,
+  "emit_stride": 3,
+  "frames_per_run": 180,
+  "matrix_id": "visual-hard-examples-v2.12-run4-switchgear-oblique-development",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run2.json",
+  "run_revision": "run4-switchgear-oblique-v1",
+  "runs": [
+    {
+      "collection_start_delay_s": 0,
+      "map_id": "complex",
+      "seed": 6401,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-left-oblique-v1.json"
+    },
+    {
+      "collection_start_delay_s": 0,
+      "map_id": "complex",
+      "seed": 6402,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-high-oblique-v1.json"
+    },
+    {
+      "collection_start_delay_s": 0,
+      "map_id": "complex",
+      "seed": 6403,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-right-oblique-v1.json"
+    }
+  ],
+  "schema_version": 1
+}

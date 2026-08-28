@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-target-event-pilot",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run2.json",
+  "run_revision": "target-event-v1",
+  "cooldown_s": 30,
+  "frames_per_run": 120,
+  "emit_stride": 3,
+  "runs": [
+    {"map_id": "complex", "seed": 5901, "split": "development", "collection_start_delay_s": 0, "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-complete-pilot-v2.json"},
+    {"map_id": "complex", "seed": 5902, "split": "development", "collection_start_delay_s": 0, "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-complete-pilot-v2.json"}
+  ]
+}

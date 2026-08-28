@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run7-targeted-v1",
+  "run_revision": "run7-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run7_targeted.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {
+      "map_id": "complex",
+      "seed": 6701,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-east-high-v1.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 6702,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-west-low-v1.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 6703,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-opposite-side-v1.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 6711,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-left-oblique-v1.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 6712,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-right-oblique-v1.json"
+    },
+    {
+      "map_id": "complex",
+      "seed": 6713,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-high-oblique-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6801,
+      "split": "validation",
+      "scheduler": "active_utility",
+      "collection_start_delay_s": 5
+    },
+    {
+      "map_id": "medium",
+      "seed": 6802,
+      "split": "validation",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run7-validation-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6803,
+      "split": "validation",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run7-validation-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6804,
+      "split": "validation",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-run7-validation-v1.json"
+    }
+  ]
+}

@@ -55,7 +55,10 @@ def main():
             }
         )
         selected, duplicate_rejections, clusters, coverage, shortfall = curate_multilabel(
-            candidates, quotas, protocol["near_duplicate_hamming_threshold"]
+            candidates,
+            quotas,
+            protocol["near_duplicate_hamming_threshold"],
+            selection_group=protocol.get("selection_group"),
         )
     else:
         quotas = {
@@ -65,7 +68,18 @@ def main():
         }
         selected, duplicate_rejections, clusters, coverage, shortfall = curate(candidates, quotas, protocol["near_duplicate_hamming_threshold"])
     rejected.extend(duplicate_rejections)
-    receipt = build_receipt(selected, rejected, clusters, coverage, shortfall, identities, quotas, protocol["near_duplicate_hamming_threshold"], protocol["perceptual_hash_algorithm"])
+    receipt = build_receipt(
+        selected,
+        rejected,
+        clusters,
+        coverage,
+        shortfall,
+        identities,
+        quotas,
+        protocol["near_duplicate_hamming_threshold"],
+        protocol["perceptual_hash_algorithm"],
+        selection_group=protocol.get("selection_group"),
+    )
     args.output.mkdir(parents=True, exist_ok=True)
     (args.output / "curated-manifest.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
     (args.output / "rejected.jsonl").write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rejected))

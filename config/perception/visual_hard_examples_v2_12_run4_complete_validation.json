@@ -19,12 +19,6 @@
       "6202": [
         113
       ],
-      "6301": [
-        57
-      ],
-      "6302": [
-        113
-      ],
       "6401": [
         113
       ],
@@ -102,10 +96,11 @@
     "validation": 0
   },
   "perceptual_hash_algorithm": "dhash64-v1",
-  "protocol_id": "visual-hard-examples-v2.12-complete-equipment-run2",
+  "protocol_id": "visual-hard-examples-v2.12-run4-complete-scene-validation",
   "schema_version": 1,
   "selection_group": "recording_seed",
   "split_group": "recording_seed",
+  "validation_annotation_scope": "all_complete_visible_equipment",
   "validation_seeds": [
     5201,
     5202,

@@ -1,0 +1,18 @@
+{
+  "cooldown_s": 0,
+  "emit_stride": 3,
+  "frames_per_run": 180,
+  "matrix_id": "visual-hard-examples-v2.12-run6-transformer-opposite-side",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run5_complete_scene.json",
+  "run_revision": "run6-transformer-opposite-v1",
+  "runs": [
+    {
+      "collection_start_delay_s": 0,
+      "map_id": "complex",
+      "seed": 6601,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-opposite-side-v1.json"
+    }
+  ],
+  "schema_version": 1
+}

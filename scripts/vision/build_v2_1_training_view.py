@@ -38,9 +38,11 @@ def _write_jsonl(path, rows):
     path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
 
 
-def _select_replay(rows, per_class):
+def _select_replay(rows, per_class, class_counts=None):
     selected, used = [], set()
+    class_counts = class_counts or {}
     for class_name in CLASSES:
+        target_count = class_counts.get(class_name, per_class)
         groups = defaultdict(list)
         for row in rows:
             if class_name in row["classes"] and row["sample_id"] not in used:
@@ -54,21 +56,21 @@ def _select_replay(rows, per_class):
             values.sort(key=lambda row: hashlib.sha256((class_name + ":" + row["sample_id"]).encode()).hexdigest())
         group_ids = sorted(groups, key=lambda value: hashlib.sha256((class_name + ":" + value).encode()).hexdigest())
         chosen, offset = [], 0
-        while len(chosen) < per_class and group_ids:
+        while len(chosen) < target_count and group_ids:
             next_groups = []
             for group_id in group_ids:
                 if offset < len(groups[group_id]):
                     row = groups[group_id][offset]
                     if row["sample_id"] not in used:
                         chosen.append(row); used.add(row["sample_id"])
-                        if len(chosen) == per_class:
+                        if len(chosen) == target_count:
                             break
                 if offset + 1 < len(groups[group_id]):
                     next_groups.append(group_id)
             group_ids = next_groups
             offset += 1
-        if len(chosen) != per_class:
-            raise ValueError(f"v2 development replay lacks {per_class} exclusive {class_name} frames")
+        if len(chosen) != target_count:
+            raise ValueError(f"v2 development replay lacks {target_count} exclusive {class_name} frames")
         selected.extend((class_name, row) for row in chosen)
     return selected
 
@@ -121,6 +123,13 @@ def main():
     parser.add_argument("--hard-view", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--replay-per-class", type=int, default=1000)
+    parser.add_argument(
+        "--replay-class-count",
+        action="append",
+        default=[],
+        metavar="CLASS=COUNT",
+        help="override replay count for one class; may be repeated",
+    )
     parser.add_argument("--view-version", default="v2.1")
     parser.add_argument("--oversample-class", choices=CLASSES)
     parser.add_argument("--oversample-factor", type=int, default=1)
@@ -134,6 +143,16 @@ def main():
         raise ValueError("oversample factor must be at least one")
     if args.oversample_factor > 1 and not args.oversample_class:
         raise ValueError("oversample class is required when factor exceeds one")
+    replay_class_counts = {}
+    for value in args.replay_class_count:
+        try:
+            class_name, raw_count = value.split("=", 1)
+            count = int(raw_count)
+        except ValueError as error:
+            raise ValueError("replay class count must use CLASS=COUNT") from error
+        if class_name not in CLASSES or count < 0:
+            raise ValueError("replay class count requires a known class and non-negative count")
+        replay_class_counts[class_name] = count
     if args.output.exists() and any(args.output.iterdir()):
         raise ValueError("v2.1 training-view output must be absent or empty")
     identity_dir = args.output / "identity"; identity_dir.mkdir(parents=True, exist_ok=True)
@@ -142,7 +161,11 @@ def main():
     if hard_receipt.get("status") != "complete" or hard_receipt.get("member_count", 0) <= 0:
         raise ValueError("hard-example view is not complete")
     hard_role = f"{args.view_version.replace('.', '_')}_hard_example"
-    replay = _select_replay(_read_jsonl(args.v2_view / "identity/train_membership.jsonl"), args.replay_per_class)
+    replay = _select_replay(
+        _read_jsonl(args.v2_view / "identity/train_membership.jsonl"),
+        args.replay_per_class,
+        replay_class_counts,
+    )
     hard_rows = _read_jsonl(args.hard_view / "membership.jsonl")
     train_members, validation_members, train_labels, validation_labels = [], [], [], []
     for class_name, row in replay:
@@ -196,6 +219,7 @@ def main():
     labels_manifest = {
         "schema_version": 1, "classes": list(CLASSES), "hard_view_identity": hard_receipt["identity"],
         "v2_training_view_identity": v2_identity["training_view_identity_sha256"], "replay_per_class": args.replay_per_class,
+        "replay_class_counts": replay_class_counts,
         "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor,
         "oversample_profile": args.oversample_profile,
     }
@@ -207,11 +231,11 @@ def main():
     dataset = [f"path: {args.output.resolve()}", "train: images/train", "val: images/validation", "test: images/full_validation", "names:"]
     dataset.extend(f"  {index}: {name}" for index, name in enumerate(CLASSES))
     (args.output / "dataset.yaml").write_text("\n".join(dataset) + "\n")
-    source_development = object_sha256({"v2": v2_identity["training_view_identity_sha256"], "hard": hard_receipt["identity"], "replay_per_class": args.replay_per_class, "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor, "oversample_profile": args.oversample_profile})
+    source_development = object_sha256({"v2": v2_identity["training_view_identity_sha256"], "hard": hard_receipt["identity"], "replay_per_class": args.replay_per_class, "replay_class_counts": replay_class_counts, "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor, "oversample_profile": args.oversample_profile})
     identity = TrainingViewIdentity(
         source_development_dataset_identity=source_development,
         source_validation_dataset_identity=hard_receipt["curated_identity"],
-        sampling_algorithm=f"v2_development_grouped_replay_{args.replay_per_class}_per_class_plus_hard_{args.view_version.replace('.', '_')}_{args.oversample_class or 'no'}_{args.oversample_profile}_oversample_{args.oversample_factor}",
+        sampling_algorithm=f"v2_development_grouped_replay_{args.replay_per_class}_per_class_overrides_{object_sha256(replay_class_counts)[:12]}_plus_hard_{args.view_version.replace('.', '_')}_{args.oversample_class or 'no'}_{args.oversample_profile}_oversample_{args.oversample_factor}",
         sampling_seed=7,
         train_membership_sha256=_sha256(train_membership), validation_membership_sha256=_sha256(validation_membership),
         full_validation_membership_sha256=v2_identity["full_validation_membership_sha256"], labels_manifest_sha256=_sha256(labels_manifest_path),
@@ -221,7 +245,7 @@ def main():
         validation_no_target_count=sum(not row["classes"] for row in validation_members),
     )
     (identity_dir / "training_view_identity.json").write_text(json.dumps(identity.to_record(), indent=2, sort_keys=True) + "\n")
-    report = {"status": "complete", "training_view_identity": identity.training_view_identity_sha256, "train_frames": len(train_members), "validation_frames": len(validation_members), "replay_frames": len(replay), "hard_frames": len(hard_rows), "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor, "oversample_profile": args.oversample_profile}
+    report = {"status": "complete", "training_view_identity": identity.training_view_identity_sha256, "train_frames": len(train_members), "validation_frames": len(validation_members), "replay_frames": len(replay), "replay_class_counts": replay_class_counts, "hard_frames": len(hard_rows), "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor, "oversample_profile": args.oversample_profile}
     print(json.dumps(report, indent=2, sort_keys=True))
 
 

@@ -1,0 +1,108 @@
+{
+  "schema_version": 1,
+  "protocol_id": "visual-hard-examples-v2.12-run7-targeted-v1",
+  "classes": [
+    "transformer",
+    "switchgear",
+    "capacitor_bank",
+    "reactor"
+  ],
+  "maps": [
+    "complex",
+    "medium"
+  ],
+  "development_seeds": [
+    5101,
+    5102,
+    5301,
+    5302,
+    5401,
+    5402,
+    5501,
+    5502,
+    5601,
+    5602,
+    5701,
+    5702,
+    5801,
+    5802,
+    5901,
+    5902,
+    6001,
+    6002,
+    6101,
+    6102,
+    6401,
+    6402,
+    6403,
+    6501,
+    6502,
+    6601,
+    6701,
+    6702,
+    6703,
+    6711,
+    6712,
+    6713
+  ],
+  "validation_seeds": [
+    5201,
+    5202,
+    6201,
+    6202,
+    6301,
+    6302,
+    6801,
+    6802,
+    6803,
+    6804,
+    6812,
+    6813,
+    6814
+  ],
+  "forbidden_partitions": [
+    "full_validation",
+    "blind",
+    "heldout_test",
+    "qualification"
+  ],
+  "split_group": "recording_seed",
+  "selection_group": "recording_seed",
+  "perceptual_hash_algorithm": "dhash64-v1",
+  "near_duplicate_hamming_threshold": 2,
+  "development_annotation_scope": "all_complete_visible_equipment",
+  "validation_annotation_scope": "all_complete_visible_equipment",
+  "class_frame_quotas": {
+    "development": {
+      "transformer": 180,
+      "switchgear": 180,
+      "capacitor_bank": 0,
+      "reactor": 0
+    },
+    "validation": {
+      "transformer": 30,
+      "switchgear": 40,
+      "capacitor_bank": 40,
+      "reactor": 20
+    }
+  },
+  "no_target_frame_quotas": {
+    "development": 0,
+    "validation": 0
+  },
+  "bbox_policy": {
+    "development": {
+      "mode": "drop_invalid_objects",
+      "minimum_border_margin_px": 2,
+      "maximum_bbox_width_fraction": 0.9,
+      "maximum_bbox_height_fraction": 0.9
+    },
+    "validation": {
+      "mode": "drop_invalid_objects",
+      "minimum_border_margin_px": 8,
+      "maximum_bbox_width_fraction": 0.85,
+      "maximum_bbox_height_fraction": 0.85
+    },
+    "target_instance_labels_by_seed": {}
+  }
+}

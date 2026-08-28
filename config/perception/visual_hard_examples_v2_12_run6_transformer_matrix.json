@@ -1,0 +1,25 @@
+{
+  "cooldown_s": 30,
+  "emit_stride": 3,
+  "frames_per_run": 180,
+  "matrix_id": "visual-hard-examples-v2.12-run6-transformer-distant-development",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run5_complete_scene.json",
+  "run_revision": "run6-transformer-distant-v1",
+  "runs": [
+    {
+      "collection_start_delay_s": 0,
+      "map_id": "complex",
+      "seed": 6501,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-west-low-v1.json"
+    },
+    {
+      "collection_start_delay_s": 0,
+      "map_id": "complex",
+      "seed": 6502,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-east-high-v1.json"
+    }
+  ],
+  "schema_version": 1
+}

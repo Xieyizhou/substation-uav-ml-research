@@ -6,35 +6,7 @@
       "minimum_border_margin_px": 2,
       "mode": "drop_invalid_objects"
     },
-    "target_instance_labels_by_seed": {
-      "6101": [
-        57
-      ],
-      "6102": [
-        113
-      ],
-      "6201": [
-        57
-      ],
-      "6202": [
-        113
-      ],
-      "6301": [
-        57
-      ],
-      "6302": [
-        113
-      ],
-      "6401": [
-        113
-      ],
-      "6402": [
-        113
-      ],
-      "6403": [
-        113
-      ]
-    },
+    "target_instance_labels_by_seed": {},
     "validation": {
       "maximum_bbox_height_fraction": 0.85,
       "maximum_bbox_width_fraction": 0.85,
@@ -62,6 +34,7 @@
     "capacitor_bank",
     "reactor"
   ],
+  "development_annotation_scope": "all_complete_visible_equipment",
   "development_seeds": [
     5101,
     5102,
@@ -85,7 +58,10 @@
     6102,
     6401,
     6402,
-    6403
+    6403,
+    6501,
+    6502,
+    6601
   ],
   "forbidden_partitions": [
     "full_validation",
@@ -102,10 +78,11 @@
     "validation": 0
   },
   "perceptual_hash_algorithm": "dhash64-v1",
-  "protocol_id": "visual-hard-examples-v2.12-complete-equipment-run2",
+  "protocol_id": "visual-hard-examples-v2.12-run5-complete-scene",
   "schema_version": 1,
   "selection_group": "recording_seed",
   "split_group": "recording_seed",
+  "validation_annotation_scope": "all_complete_visible_equipment",
   "validation_seeds": [
     5201,
     5202,
