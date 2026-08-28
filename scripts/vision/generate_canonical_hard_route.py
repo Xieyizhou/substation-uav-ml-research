@@ -61,7 +61,7 @@ def generate(config_path, target_name, output, fixed_bearing=None, heading_offse
         raise ValueError("no reachable target-centered route")
     points, paths, return_path = selected
     specs = [
-        ("distant", "cruise_distant", points[0], 15.0, 0.0),
+        ("complete_distant", "cruise_distant", points[0], 15.0, 0.0),
         ("approach", "approach", points[1], 12.0, 0.0),
         ("close_a_left", "close_inspection", points[2], 12.0, -30.0),
         ("close_a_center", "close_inspection", points[2], 18.0, 0.0),

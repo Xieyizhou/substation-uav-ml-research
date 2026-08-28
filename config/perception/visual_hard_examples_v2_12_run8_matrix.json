@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run8-targeted-v1",
+  "run_revision": "run8-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run8_targeted.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {
+      "map_id": "medium",
+      "seed": 6901,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-run8-bearing-030-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6902,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-run8-bearing-150-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6903,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-run8-bearing-165-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6904,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run8-bearing-000-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6905,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run8-bearing-015-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6906,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run8-bearing-315-v1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 6907,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run8-bearing-330-v1.json"
+    }
+  ]
+}

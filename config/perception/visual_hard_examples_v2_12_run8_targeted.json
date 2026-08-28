@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "protocol_id": "visual-hard-examples-v2.12-run8-targeted-v1",
+  "classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
+  "maps": ["complex", "medium"],
+  "development_seeds": [
+    6701, 6702, 6703, 6711, 6712, 6713,
+    6901, 6902, 6903, 6904, 6905, 6906, 6907
+  ],
+  "validation_seeds": [6301, 6302, 6812, 6813, 6814],
+  "forbidden_partitions": ["full_validation", "blind", "heldout_test", "qualification"],
+  "split_group": "recording_seed",
+  "selection_group": "recording_seed",
+  "perceptual_hash_algorithm": "dhash64-v1",
+  "near_duplicate_hamming_threshold": 2,
+  "development_annotation_scope": "all_complete_visible_equipment",
+  "validation_annotation_scope": "all_complete_visible_equipment",
+  "class_frame_quotas": {
+    "development": {
+      "transformer": 180,
+      "switchgear": 180,
+      "capacitor_bank": 120,
+      "reactor": 0
+    },
+    "validation": {
+      "transformer": 60,
+      "switchgear": 60,
+      "capacitor_bank": 40,
+      "reactor": 20
+    }
+  },
+  "no_target_frame_quotas": {"development": 0, "validation": 0},
+  "bbox_policy": {
+    "development": {
+      "mode": "drop_invalid_objects",
+      "minimum_border_margin_px": 2,
+      "maximum_bbox_width_fraction": 0.9,
+      "maximum_bbox_height_fraction": 0.9
+    },
+    "validation": {
+      "mode": "drop_invalid_objects",
+      "minimum_border_margin_px": 8,
+      "maximum_bbox_width_fraction": 0.85,
+      "maximum_bbox_height_fraction": 0.85
+    },
+    "target_instance_labels_by_seed": {}
+  }
+}
