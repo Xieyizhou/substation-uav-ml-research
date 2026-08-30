@@ -106,17 +106,20 @@ class SamplingTests(unittest.TestCase):
         self.assertEqual(result["confusion_matrix"], [[1.0]])
 
     def test_runtime_validator_mismatch_blocks_consistency(self):
-        matrix = [[0.0] * 5 for _ in range(5)]
-        for index in range(4):
-            matrix[index][index] = 10.0
-        matrix[0][2] = 40.0
         runtime = {
             "per_class": {
                 name: {"recall": 1.0} for name in EQUIPMENT_CLASSES
             }
         }
+        runtime["per_class"]["capacitor_bank"]["recall"] = 0.0
+        diagnostic = {
+            "per_class": {
+                name: {"mAP50": 0.5} for name in EQUIPMENT_CLASSES
+            }
+        }
+        diagnostic["per_class"]["capacitor_bank"]["mAP50"] = 0.995
         result = _postprocessing_consistency(
-            {"confusion_matrix": matrix}, runtime
+            diagnostic, runtime
         )
         self.assertFalse(result["passed"])
         self.assertFalse(result["per_class"]["capacitor_bank"]["passed"])

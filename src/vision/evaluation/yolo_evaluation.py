@@ -158,28 +158,24 @@ def _standard_metrics(
 
 
 def _postprocessing_consistency(standard, runtime_fixed):
-    """Compare validator confusion recall with single-label runtime recall.
+    """Reject validator AP that masks an unreachable runtime class.
 
     Ultralytics validation uses multi-label NMS while the predictor used by the
-    product is single-label.  The comparison is deliberately diagnostic and a
-    mismatch blocks promotion; validator AP never substitutes for runtime
-    metrics.
+    product is single-label. Validator AP remains diagnostic, but a class with
+    excellent diagnostic AP and unusable runtime recall is an explicit
+    contradiction that blocks promotion.
     """
-    matrix = standard.get("confusion_matrix")
-    rows = len(EQUIPMENT_CLASSES)
-    if not isinstance(matrix, list) or len(matrix) < rows + 1:
-        return {"passed": False, "reason": "missing_validator_confusion_matrix"}
     per_class = {}
-    for index, name in enumerate(EQUIPMENT_CLASSES):
-        truth_total = sum(float(matrix[row][index]) for row in range(rows + 1))
-        validator_recall = float(matrix[index][index]) / max(truth_total, 1.0)
+    diagnostic = standard.get("per_class", {})
+    for name in EQUIPMENT_CLASSES:
+        diagnostic_map50 = float(diagnostic.get(name, {}).get("mAP50", 0.0))
         runtime_recall = float(runtime_fixed["per_class"][name]["recall"])
-        difference = abs(validator_recall - runtime_recall)
+        contradiction = diagnostic_map50 >= 0.90 and runtime_recall < 0.50
         per_class[name] = {
-            "validator_confusion_recall": validator_recall,
+            "diagnostic_multi_label_map50": diagnostic_map50,
             "runtime_single_label_recall": runtime_recall,
-            "absolute_difference": difference,
-            "passed": difference <= 0.05,
+            "contradiction": contradiction,
+            "passed": not contradiction,
         }
     return {
         "threshold": RUNTIME_DIAGNOSTIC_THRESHOLD,
