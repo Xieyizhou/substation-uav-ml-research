@@ -30,6 +30,7 @@ from src.vision.training.view import (
 from src.vision.training.yolo_dataset import link_image, yolo_label_text
 from src.vision.training.yolo_training import load_training_config
 from src.vision.evaluation.yolo_evaluation import (
+    _postprocessing_consistency,
     _standard_metrics,
     collect_predictions,
     evaluate_yolo,
@@ -103,6 +104,22 @@ class SamplingTests(unittest.TestCase):
         self.assertTrue(model.val.call_args.kwargs["plots"])
         self.assertFalse(model.val.call_args.kwargs["rect"])
         self.assertEqual(result["confusion_matrix"], [[1.0]])
+
+    def test_runtime_validator_mismatch_blocks_consistency(self):
+        matrix = [[0.0] * 5 for _ in range(5)]
+        for index in range(4):
+            matrix[index][index] = 10.0
+        matrix[0][2] = 40.0
+        runtime = {
+            "per_class": {
+                name: {"recall": 1.0} for name in EQUIPMENT_CLASSES
+            }
+        }
+        result = _postprocessing_consistency(
+            {"confusion_matrix": matrix}, runtime
+        )
+        self.assertFalse(result["passed"])
+        self.assertFalse(result["per_class"]["capacitor_bank"]["passed"])
 
     def test_prediction_collection_uses_static_square_preprocessing(self):
         model = types.SimpleNamespace(predict=Mock(return_value=[]))
@@ -508,6 +525,7 @@ class TrainingCliTests(unittest.TestCase):
         self.assertEqual(config["batch"], 8)
         self.assertEqual(config["imgsz"], 640)
         self.assertFalse(config["amp"])
+        self.assertFalse(config["cls_remap"])
 
     def test_heldout_evaluation_requires_package_access_receipt(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -698,7 +716,11 @@ class TrainingCliTests(unittest.TestCase):
                 identity.training_view_identity_sha256,
             )
             self.assertEqual(result["evaluation_code_commit_sha"], "evaluation-commit")
-            self.assertEqual(result["prediction_batch_size"], 16)
+            self.assertEqual(result["prediction_batch_size"], 1)
+            self.assertEqual(
+                result["standard_metrics_role"],
+                "diagnostic_multi_label_validator_only",
+            )
             self.assertEqual(len(result["confidence_evaluation"]["candidates"]), 71)
 
 

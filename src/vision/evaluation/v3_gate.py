@@ -65,9 +65,7 @@ def validate_v3_candidate(real_validation_results, synthetic_regression_results,
     if real.get("model_sha256") != regression.get("model_sha256"):
         raise ValueError("real and synthetic results reference different weights")
     selected = _selected(real)
-    standard = real.get("standard_metrics", {})
     checks = {
-        "real_map50_95": float(standard.get("mAP50_95", math.nan)) >= 0.45,
         "real_macro_f1": float(selected.get("macro_f1", math.nan)) >= 0.65,
         "real_per_class_recall": all(
             float(selected.get("per_class", {}).get(name, {}).get("recall", math.nan)) >= 0.50
@@ -81,6 +79,9 @@ def validate_v3_candidate(real_validation_results, synthetic_regression_results,
             isinstance(selected.get("no_target_false_positive_rate"), (int, float))
             and selected["no_target_false_positive_rate"] <= 0.10
         ),
+        "runtime_validator_consistency": real.get(
+            "postprocessing_consistency", {}
+        ).get("passed") is True,
     }
     regression_threshold = regression.get("threshold_metrics", {})
     baseline_selected = _selected(baseline)
@@ -103,6 +104,9 @@ def validate_v3_candidate(real_validation_results, synthetic_regression_results,
         ),
         "v2_synthetic_baseline_sha256": file_sha256(Path(v2_synthetic_baseline)),
         "checks": checks,
+        "diagnostic_standard_map50_95": real.get(
+            "standard_metrics", {}
+        ).get("mAP50_95"),
         "passed": all(checks.values()),
     }
     record["gate_identity_sha256"] = object_sha256(record)

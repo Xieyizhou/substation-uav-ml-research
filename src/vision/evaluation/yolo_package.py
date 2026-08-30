@@ -77,6 +77,13 @@ def export_yolo_package(
     validation_results = json.loads(Path(validation_results_path).read_text())
     if validation_results.get("partition") != "full_validation":
         raise ValueError("model package requires full-validation results")
+    if validation_results.get("visual_evaluation_schema_version", 1) >= 2 and (
+        validation_results.get("postprocessing_consistency", {}).get("passed")
+        is not True
+    ):
+        raise ValueError(
+            "model package requires runtime/validator postprocessing consistency"
+        )
     if validation_results.get("model_sha256") != file_sha256(weights):
         raise ValueError("full-validation results reference different weights")
     validation_dataset = validation_results.get("dataset_provenance", {})

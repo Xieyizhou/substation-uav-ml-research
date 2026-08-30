@@ -136,6 +136,7 @@ def _train(weights, view, run_root, recipe, resume):
             lrf=0.01, weight_decay=0.0005, warmup_epochs=3, cos_lr=True,
             flipud=0.0, perspective=0.0, mixup=0.0, copy_paste=0.0,
             close_mosaic=min(10, parameters["epochs"]), verbose=True,
+            cls_remap=False,
         )
     best = directory / "weights/best.pt"
     if not best.is_file():

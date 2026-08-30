@@ -16,6 +16,8 @@ from src.vision.contracts.training_identity import TrainingViewIdentity
 
 
 PREDICTION_CONFIDENCE_FLOOR = 0.05
+RUNTIME_PREDICTION_BATCH_SIZE = 1
+RUNTIME_DIAGNOSTIC_THRESHOLD = 0.25
 
 
 def _truth(label_path, width=1920, height=1080, input_size=640):
@@ -155,6 +157,37 @@ def _standard_metrics(
     return result
 
 
+def _postprocessing_consistency(standard, runtime_fixed):
+    """Compare validator confusion recall with single-label runtime recall.
+
+    Ultralytics validation uses multi-label NMS while the predictor used by the
+    product is single-label.  The comparison is deliberately diagnostic and a
+    mismatch blocks promotion; validator AP never substitutes for runtime
+    metrics.
+    """
+    matrix = standard.get("confusion_matrix")
+    rows = len(EQUIPMENT_CLASSES)
+    if not isinstance(matrix, list) or len(matrix) < rows + 1:
+        return {"passed": False, "reason": "missing_validator_confusion_matrix"}
+    per_class = {}
+    for index, name in enumerate(EQUIPMENT_CLASSES):
+        truth_total = sum(float(matrix[row][index]) for row in range(rows + 1))
+        validator_recall = float(matrix[index][index]) / max(truth_total, 1.0)
+        runtime_recall = float(runtime_fixed["per_class"][name]["recall"])
+        difference = abs(validator_recall - runtime_recall)
+        per_class[name] = {
+            "validator_confusion_recall": validator_recall,
+            "runtime_single_label_recall": runtime_recall,
+            "absolute_difference": difference,
+            "passed": difference <= 0.05,
+        }
+    return {
+        "threshold": RUNTIME_DIAGNOSTIC_THRESHOLD,
+        "per_class": per_class,
+        "passed": all(row["passed"] for row in per_class.values()),
+    }
+
+
 def _require_finite(value):
     if isinstance(value, dict):
         for item in value.values():
@@ -228,11 +261,12 @@ def evaluate_yolo(
         device=device,
         imgsz=imgsz,
     )
-    prediction_batch = 1 if Path(model_path).suffix == ".onnx" else 16
+    prediction_batch = RUNTIME_PREDICTION_BATCH_SIZE
     frames = collect_predictions(
         model_path, dataset_root, partition, device=device, imgsz=imgsz,
         batch=prediction_batch,
     )
+    runtime_fixed = threshold_metrics(frames, RUNTIME_DIAGNOSTIC_THRESHOLD)
     if partition == "full_validation":
         confidence = select_confidence_threshold(frames)
         threshold_source = "full_validation_macro_f1_sweep"
@@ -254,7 +288,7 @@ def evaluate_yolo(
         threshold_source = "fixed_diagnostic_threshold"
         dataset_provenance = _full_validation_provenance(dataset_root)
     result = {
-        "visual_evaluation_schema_version": 1,
+        "visual_evaluation_schema_version": 2,
         "model_sha256": file_sha256(Path(model_path)),
         "partition": partition,
         "frame_count": len(frames),
@@ -266,6 +300,16 @@ def evaluate_yolo(
         "dataset_provenance": dataset_provenance,
         "heldout_access_receipt": heldout_receipt,
         "standard_metrics": standard,
+        "standard_metrics_role": "diagnostic_multi_label_validator_only",
+        "runtime_postprocessing": {
+            "nms": "single_label_predictor",
+            "batch_size": RUNTIME_PREDICTION_BATCH_SIZE,
+            "promotion_authority": True,
+        },
+        "runtime_diagnostic_metrics": runtime_fixed,
+        "postprocessing_consistency": _postprocessing_consistency(
+            standard, runtime_fixed
+        ),
         "confidence_threshold_source": threshold_source,
         "confidence_evaluation": confidence,
     }

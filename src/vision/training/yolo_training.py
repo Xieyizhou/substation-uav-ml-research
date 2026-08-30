@@ -50,6 +50,7 @@ CONFIG_FIELDS = {
 
 OPTIONAL_CONFIG_FIELDS = {
     "cls",
+    "cls_remap",
 }
 
 
@@ -58,6 +59,7 @@ def load_training_config(path):
     schema = record.get("training_config_schema_version")
     if schema not in {1, 2}:
         raise ValueError("unsupported visual training config schema")
+    record.setdefault("freeze", 0)
     missing = CONFIG_FIELDS - set(record)
     if missing:
         raise ValueError(f"training config missing fields: {sorted(missing)}")
@@ -83,6 +85,9 @@ def load_training_config(path):
         raise ValueError("fine-tune batch policy must use 8/16/24 with a smaller positive fallback")
     if record["imgsz"] != 640:
         raise ValueError("baseline training input must be 640")
+    record.setdefault("cls_remap", False)
+    if record["cls_remap"] is not False:
+        raise ValueError("visual training must disable Ultralytics class-head remapping")
     record["initial_weights_key"] = weights_key
     record["initial_weights_sha256_key"] = hash_key
     return record
