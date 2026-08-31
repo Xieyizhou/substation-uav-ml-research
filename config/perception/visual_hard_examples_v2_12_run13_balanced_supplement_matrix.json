@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run13-balanced-supplement-v1",
+  "run_revision": "run13-balanced-supplement-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run13_balanced.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {"map_id": "complex", "seed": 7221, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-a-v1.json"},
+    {"map_id": "complex", "seed": 7222, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-b-v1.json"},
+    {"map_id": "complex", "seed": 7223, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-c-v1.json"},
+    {"map_id": "medium", "seed": 7224, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-run13-supplement-v1.json"},
+    {"map_id": "simple", "seed": 7225, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/simple-background-run13-v1.json"},
+    {"map_id": "medium", "seed": 7226, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-background-north-run13-v1.json"},
+    {"map_id": "medium", "seed": 7227, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-background-south-run13-v1.json"},
+    {"map_id": "medium", "seed": 7228, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-background-east-run13-v1.json"},
+    {"map_id": "complex", "seed": 7229, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-background-mid-run13-v1.json"},
+    {"map_id": "complex", "seed": 7230, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-background-north-run13-v1.json"}
+  ]
+}

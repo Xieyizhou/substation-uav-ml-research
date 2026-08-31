@@ -3,7 +3,7 @@
   "protocol_id": "visual-hard-examples-v2.12-run13-balanced-v1",
   "classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
   "maps": ["simple", "medium", "complex"],
-  "development_seeds": [7201, 7202, 7203, 7204, 7205, 7206, 7207, 7208, 7209, 7210, 7211, 7212, 7213, 7214, 7215, 7216],
+  "development_seeds": [7201, 7202, 7203, 7204, 7205, 7206, 7207, 7208, 7209, 7210, 7211, 7212, 7213, 7214, 7215, 7216, 7221, 7222, 7223, 7224, 7225, 7226, 7227, 7228, 7229, 7230],
   "validation_seeds": [],
   "forbidden_partitions": ["full_validation", "blind", "heldout_test", "qualification"],
   "split_group": "recording_seed",
