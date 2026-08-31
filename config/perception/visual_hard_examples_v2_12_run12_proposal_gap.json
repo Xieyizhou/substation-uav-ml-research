@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "protocol_id": "visual-hard-examples-v2.12-run12-proposal-gap-v1",
+  "protocol_id": "visual-hard-examples-v2.12-run12-proposal-gap-v2",
   "classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
   "maps": ["simple", "medium", "complex"],
-  "development_seeds": [7101, 7102, 7103, 7104, 7105, 7106, 7107, 7108],
+  "development_seeds": [7111, 7112, 7113, 7114, 7115, 7116, 7117, 7118],
   "validation_seeds": [],
   "forbidden_partitions": ["full_validation", "blind", "heldout_test", "qualification"],
   "split_group": "recording_seed",
