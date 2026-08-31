@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run12-proposal-gap-v1",
+  "run_revision": "run12-proposal-gap-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run12_proposal_gap.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {"map_id": "simple", "seed": 7101, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/simple-transformer-run12-t1-v1.json"},
+    {"map_id": "simple", "seed": 7102, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/simple-transformer-run12-t2-v1.json"},
+    {"map_id": "medium", "seed": 7103, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run8-bearing-000-v1.json"},
+    {"map_id": "medium", "seed": 7104, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run8-bearing-015-v1.json"},
+    {"map_id": "complex", "seed": 7105, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-west-low-v1.json"},
+    {"map_id": "complex", "seed": 7106, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-east-high-v1.json"},
+    {"map_id": "complex", "seed": 7107, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-opposite-side-v1.json"},
+    {"map_id": "complex", "seed": 7108, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run9-heading-minus-008-v1.json"}
+  ]
+}

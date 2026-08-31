@@ -25,6 +25,7 @@ from src.vision.replay.static_replay import (
     run_static_replay,
 )
 from src.vision.evaluation.yolo_evaluation import evaluate_yolo
+from src.vision.evaluation.proposal_audit import audit_proposals
 from src.vision.evaluation.yolo_package import export_yolo_package, validate_yolo_package
 from src.vision.training.yolo_training import train_yolo
 
@@ -55,6 +56,17 @@ def add_training_parsers(commands):
     train.add_argument("--output", type=Path, default=DEFAULT_RUN)
     train.add_argument("--resume", action="store_true")
     train.add_argument("--smoke", action="store_true")
+
+    proposal = commands.add_parser(
+        "proposal-audit", help="Audit runtime-equivalent class-agnostic proposals"
+    )
+    proposal.add_argument("--model", type=Path, required=True)
+    proposal.add_argument("--dataset", type=Path, required=True)
+    proposal.add_argument("--output", type=Path, required=True)
+    proposal.add_argument("--partition", default="validation")
+    proposal.add_argument("--source-id", required=True)
+    proposal.add_argument("--device", default="cpu")
+    proposal.add_argument("--imgsz", type=int, default=640)
 
     evaluate = commands.add_parser(
         "evaluate-yolo", help="Evaluate a visual YOLO model on an allowed view"
@@ -171,6 +183,12 @@ def handle_training_command(args):
             args.output,
             resume=args.resume,
             smoke=args.smoke,
+        )
+    if args.command == "proposal-audit":
+        return audit_proposals(
+            args.model, args.dataset, args.output,
+            partition=args.partition, source_id=args.source_id,
+            device=args.device, imgsz=args.imgsz,
         )
     if args.command == "evaluate-yolo":
         return evaluate_yolo(
