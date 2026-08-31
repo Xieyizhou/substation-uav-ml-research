@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run13-balanced-v1",
+  "run_revision": "run13-balanced-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run13_balanced.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {"map_id": "simple", "seed": 7201, "split": "development", "scheduler": "active_utility"},
+    {"map_id": "simple", "seed": 7202, "split": "development", "scheduler": "active_utility"},
+    {"map_id": "medium", "seed": 7203, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run8-bearing-000-v1.json"},
+    {"map_id": "medium", "seed": 7204, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run8-bearing-015-v1.json"},
+    {"map_id": "medium", "seed": 7205, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run8-bearing-315-v1.json"},
+    {"map_id": "medium", "seed": 7206, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run8-bearing-330-v1.json"},
+    {"map_id": "medium", "seed": 7207, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-context-run9-bearing-030-v1.json"},
+    {"map_id": "medium", "seed": 7208, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-context-run9-bearing-180-v1.json"},
+    {"map_id": "medium", "seed": 7209, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-context-run9-bearing-300-v1.json"},
+    {"map_id": "complex", "seed": 7210, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-west-low-v1.json"},
+    {"map_id": "complex", "seed": 7211, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-east-high-v1.json"},
+    {"map_id": "complex", "seed": 7212, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-opposite-side-v1.json"},
+    {"map_id": "complex", "seed": 7213, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run9-heading-plus-008-v1.json"},
+    {"map_id": "complex", "seed": 7214, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-high-oblique-v1.json"},
+    {"map_id": "complex", "seed": 7215, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-left-oblique-v1.json"},
+    {"map_id": "complex", "seed": 7216, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-switchgear-run4-right-oblique-v1.json"}
+  ]
+}
