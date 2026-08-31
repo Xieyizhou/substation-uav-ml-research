@@ -167,6 +167,7 @@ def main():
         replay_class_counts,
     )
     hard_rows = _read_jsonl(args.hard_view / "membership.jsonl")
+    inherit_v2_validation = not any(row["split"] == "validation" for row in hard_rows)
     train_members, validation_members, train_labels, validation_labels = [], [], [], []
     for class_name, row in replay:
         token = hashlib.sha256(row["sample_id"].encode()).hexdigest()
@@ -209,6 +210,9 @@ def main():
                     })
         else:
             validation_members.append(member); validation_labels.append(args.output / label_relative)
+    if inherit_v2_validation:
+        validation_members = _read_jsonl(args.v2_view / "identity/validation_membership.jsonl")
+        validation_labels = [args.output / row["label_relative_path"] for row in validation_members]
     train_members.sort(key=lambda row: (row["source_role"], row["sample_id"]))
     validation_members.sort(key=lambda row: row["sample_id"])
     train_membership = identity_dir / "train_membership.jsonl"
@@ -222,10 +226,14 @@ def main():
         "replay_class_counts": replay_class_counts,
         "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor,
         "oversample_profile": args.oversample_profile,
+        "validation_source": "v2_validation" if inherit_v2_validation else "hard_view_validation",
     }
     labels_manifest_path = identity_dir / "labels_manifest.json"
     labels_manifest_path.write_text(json.dumps(labels_manifest, indent=2, sort_keys=True) + "\n")
     (args.output / "images").mkdir(exist_ok=True); (args.output / "labels").mkdir(exist_ok=True)
+    if inherit_v2_validation:
+        os.symlink((args.v2_view / "images/validation").resolve(), args.output / "images/validation")
+        os.symlink((args.v2_view / "labels/validation").resolve(), args.output / "labels/validation")
     os.symlink((args.v2_view / "images/full_validation").resolve(), args.output / "images/full_validation")
     os.symlink((args.v2_view / "labels/full_validation").resolve(), args.output / "labels/full_validation")
     dataset = [f"path: {args.output.resolve()}", "train: images/train", "val: images/validation", "test: images/full_validation", "names:"]
@@ -234,7 +242,11 @@ def main():
     source_development = object_sha256({"v2": v2_identity["training_view_identity_sha256"], "hard": hard_receipt["identity"], "replay_per_class": args.replay_per_class, "replay_class_counts": replay_class_counts, "oversample_class": args.oversample_class, "oversample_factor": args.oversample_factor, "oversample_profile": args.oversample_profile})
     identity = TrainingViewIdentity(
         source_development_dataset_identity=source_development,
-        source_validation_dataset_identity=hard_receipt["curated_identity"],
+        source_validation_dataset_identity=(
+            v2_identity["source_validation_dataset_identity"]
+            if inherit_v2_validation
+            else hard_receipt["curated_identity"]
+        ),
         sampling_algorithm=f"v2_development_grouped_replay_{args.replay_per_class}_per_class_overrides_{object_sha256(replay_class_counts)[:12]}_plus_hard_{args.view_version.replace('.', '_')}_{args.oversample_class or 'no'}_{args.oversample_profile}_oversample_{args.oversample_factor}",
         sampling_seed=7,
         train_membership_sha256=_sha256(train_membership), validation_membership_sha256=_sha256(validation_membership),
