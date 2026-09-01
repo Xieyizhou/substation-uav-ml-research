@@ -80,10 +80,13 @@ class TrainingViewIdentity:
             "validation_no_target_count",
         ):
             _count(getattr(self, name), name)
+        allowed_class_sets = {frozenset(EQUIPMENT_CLASSES), frozenset(("equipment",))}
         for name in ("train_class_counts", "validation_class_counts"):
             counts = dict(getattr(self, name))
-            if set(counts) != set(EQUIPMENT_CLASSES):
-                raise ValueError(f"{name} must match the locked class order")
+            if frozenset(counts) not in allowed_class_sets:
+                raise ValueError(
+                    f"{name} must match the locked equipment or proposal class order"
+                )
             for key, value in counts.items():
                 _count(value, f"{name}.{key}")
             object.__setattr__(self, name, dict(sorted(counts.items())))

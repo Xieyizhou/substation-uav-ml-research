@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run14-dense-transformer-recovery-v1",
+  "run_revision": "run14-dense-transformer-recovery-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run14_dense_transformer.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {"map_id": "complex", "seed": 7313, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run9-heading-minus-008-v1.json"},
+    {"map_id": "complex", "seed": 7307, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run9-heading-minus-008-v1.json"},
+    {"map_id": "complex", "seed": 7308, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run9-heading-plus-008-v1.json"},
+    {"map_id": "complex", "seed": 7309, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-west-low-v1.json"},
+    {"map_id": "complex", "seed": 7310, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-east-high-v1.json"},
+    {"map_id": "complex", "seed": 7311, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-opposite-side-v1.json"},
+    {"map_id": "complex", "seed": 7312, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run9-heading-plus-008-v1.json"}
+  ]
+}
