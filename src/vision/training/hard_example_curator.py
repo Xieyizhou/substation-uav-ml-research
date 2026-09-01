@@ -123,6 +123,10 @@ def apply_bbox_policy(candidates, policy):
             int(value)
             for value in policy.get("target_instance_labels_by_seed", {}).get(str(candidate.seed), [])
         }
+        required_instances = policy.get(
+            "required_instance_area_fraction_by_seed", {}
+        ).get(str(candidate.seed), [])
+        matched_requirements = set()
         margin = float(rules.get("minimum_border_margin_px", 0.0))
         maximum_width = float(rules.get("maximum_bbox_width_fraction", 1.0)) * 1920.0
         maximum_height = float(rules.get("maximum_bbox_height_fraction", 1.0)) * 1080.0
@@ -130,17 +134,20 @@ def apply_bbox_policy(candidates, policy):
         kept_objects = []
         dropped_reasons = []
         for item in candidate.objects:
-            if target_labels:
+            instance_label = None
+            if target_labels or required_instances:
                 marker = "-instance-"
                 annotation_id = str(item.get("annotation_id", ""))
                 try:
                     instance_label = int(annotation_id.split(marker, 1)[1].split("-", 1)[0])
                 except (IndexError, ValueError):
-                    dropped_reasons.append("missing_instance_lineage")
-                    continue
+                    if target_labels:
+                        dropped_reasons.append("missing_instance_lineage")
+                        continue
                 if instance_label not in target_labels:
-                    dropped_reasons.append("non_target_instance")
-                    continue
+                    if target_labels:
+                        dropped_reasons.append("non_target_instance")
+                        continue
             x1, y1, x2, y2 = map(float, item["bbox_xyxy"])
             class_area_rules = area_rules.get(item.get("class_name"), {})
             area_fraction = ((x2 - x1) * (y2 - y1)) / (1920.0 * 1080.0)
@@ -156,6 +163,21 @@ def apply_bbox_policy(candidates, policy):
                 dropped_reasons.append("bbox_area_above_class_maximum")
             else:
                 kept_objects.append(item)
+                for index, requirement in enumerate(required_instances):
+                    if (
+                        item.get("class_name") == requirement.get("class_name")
+                        and instance_label == int(requirement["instance_label"])
+                        and float(requirement["minimum"]) <= area_fraction
+                        <= float(requirement["maximum"])
+                    ):
+                        matched_requirements.add(index)
+        if len(matched_requirements) != len(required_instances):
+            rejected.append({
+                "frame_id": candidate.frame_id,
+                "collection": candidate.collection,
+                "reason": "required_instance_area_not_satisfied",
+            })
+            continue
         if filter_objects and kept_objects:
             accepted.append(replace(candidate, objects=tuple(kept_objects)))
             rejected.extend({"frame_id": candidate.frame_id, "collection": candidate.collection, "reason": reason, "scope": "annotation"} for reason in dropped_reasons)
