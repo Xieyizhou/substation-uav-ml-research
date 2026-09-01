@@ -104,10 +104,16 @@ def main() -> None:
         memberships[split] = rows
         _write_jsonl(identity_dir / membership_name, rows)
 
-        source_images = (args.input / "images" / split).resolve()
-        os.symlink(source_images, args.output / "images" / split)
         box_count = 0
         for row in rows:
+            source_image = (args.input / row["image_relative_path"]).resolve()
+            destination_image = args.output / row["image_relative_path"]
+            destination_image.parent.mkdir(parents=True, exist_ok=True)
+            if destination_image.exists():
+                raise ValueError(
+                    f"duplicate proposal-view image destination: {destination_image}"
+                )
+            os.link(source_image, destination_image)
             source_label = args.input / row["label_relative_path"]
             destination_label = args.output / row["label_relative_path"]
             box_count += _collapse_label(source_label, destination_label)
