@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run18-supplement-v1",
+  "run_revision": "run18-supplement-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run18_supplement.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {"map_id": "complex", "seed": 7621, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-a-v1.json"},
+    {"map_id": "complex", "seed": 7622, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-b-v1.json"},
+    {"map_id": "complex", "seed": 7623, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-c-v1.json"},
+    {"map_id": "complex", "seed": 7624, "split": "development", "scheduler": "active_utility"},
+    {"map_id": "simple", "seed": 7625, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/simple-background-run13-v1.json"},
+    {"map_id": "medium", "seed": 7626, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-background-east-run13-v1.json"},
+    {"map_id": "medium", "seed": 7627, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-background-north-run13-v1.json"},
+    {"map_id": "medium", "seed": 7628, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-background-south-run13-v1.json"},
+    {"map_id": "complex", "seed": 7629, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-background-mid-run13-v1.json"},
+    {"map_id": "complex", "seed": 7630, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-background-north-run13-v1.json"},
+    {"map_id": "simple", "seed": 7631, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/simple-background-run13-v1.json"},
+    {"map_id": "complex", "seed": 7632, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-background-mid-run13-v1.json"}
+  ]
+}

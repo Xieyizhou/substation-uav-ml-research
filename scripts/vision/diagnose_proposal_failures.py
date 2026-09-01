@@ -127,6 +127,7 @@ def main() -> None:
             failures.append(
                 {
                     "sample_id": member["sample_id"],
+                    "recording_id": member.get("recording_id"),
                     "source_frame_id": member.get("source_frame_id"),
                     "source_collection_identity": member.get("source_collection_identity"),
                     "map_id": member.get("map_id"),
@@ -150,6 +151,7 @@ def main() -> None:
         frame_summaries.append(
             {
                 "sample_id": member["sample_id"],
+                "recording_id": member.get("recording_id"),
                 "source_frame_id": member.get("source_frame_id"),
                 "map_id": member.get("map_id"),
                 "seed": member.get("seed"),

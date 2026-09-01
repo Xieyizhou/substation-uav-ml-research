@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "protocol_id": "visual-hard-examples-v2.12-run18-balanced-small-dense-v1",
+  "classes": ["transformer", "switchgear", "capacitor_bank", "reactor"],
+  "maps": ["simple", "medium", "complex"],
+  "development_seeds": [7601, 7602, 7603, 7604, 7605, 7606, 7607, 7608, 7609, 7610, 7611, 7612, 7613, 7614, 7615, 7616, 7617, 7618, 7619, 7620, 7621, 7622, 7623, 7624, 7625, 7626, 7627, 7628, 7629, 7630, 7631, 7632],
+  "validation_seeds": [],
+  "forbidden_seeds": [3031, 3032, 3033, 3034, 3035, 3036, 3037, 3038, 3039, 3040, 6814],
+  "forbidden_partitions": ["full_validation", "blind", "heldout_test", "qualification"],
+  "split_group": "recording_seed",
+  "selection_group": "recording_seed",
+  "perceptual_hash_algorithm": "dhash64-v1",
+  "near_duplicate_hamming_threshold": 2,
+  "development_annotation_scope": "all_complete_visible_equipment",
+  "validation_annotation_scope": "none",
+  "failure_attribution": {
+    "source_candidate": "visual-yolo11n-proposal-v2.12-candidate-run17b",
+    "diagnostic_identity": "f715cef0524830699f2e2419a3b5b49bb99c21655e12ab296f96f0d1711b1a13",
+    "failure_count": 265,
+    "primary_failure_modes": ["localization_iou_below_gate", "detector_miss", "max_proposals_truncated"],
+    "primary_bbox_area_fraction": [0.0, 0.01],
+    "allowed_change": "balanced full-label small-object and dense-view development collection",
+    "frozen_iou_gate": 0.5,
+    "frozen_max_proposals": 16
+  },
+  "class_frame_quotas": {
+    "development": {
+      "transformer": 600,
+      "switchgear": 600,
+      "capacitor_bank": 600,
+      "reactor": 600
+    },
+    "validation": {
+      "transformer": 0,
+      "switchgear": 0,
+      "capacitor_bank": 0,
+      "reactor": 0
+    }
+  },
+  "no_target_frame_quotas": {"development": 600, "validation": 0},
+  "bbox_policy": {
+    "development": {
+      "mode": "drop_invalid_objects",
+      "minimum_border_margin_px": 2,
+      "maximum_bbox_width_fraction": 0.9,
+      "maximum_bbox_height_fraction": 0.9
+    },
+    "validation": {
+      "mode": "drop_invalid_objects",
+      "minimum_border_margin_px": 8,
+      "maximum_bbox_width_fraction": 0.85,
+      "maximum_bbox_height_fraction": 0.85
+    },
+    "target_instance_labels_by_seed": {}
+  }
+}

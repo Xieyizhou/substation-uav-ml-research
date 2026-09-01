@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run18-balanced-small-dense-v1",
+  "run_revision": "run18-balanced-small-dense-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run18_balanced_small_dense.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {"map_id": "simple", "seed": 7601, "split": "development", "scheduler": "active_utility"},
+    {"map_id": "simple", "seed": 7602, "split": "development", "scheduler": "active_utility"},
+    {"map_id": "simple", "seed": 7603, "split": "development", "scheduler": "active_utility"},
+    {"map_id": "simple", "seed": 7604, "split": "development", "scheduler": "active_utility"},
+    {"map_id": "medium", "seed": 7605, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run8-bearing-000-v1.json"},
+    {"map_id": "medium", "seed": 7606, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-transformer-run8-bearing-015-v1.json"},
+    {"map_id": "complex", "seed": 7607, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-east-high-v1.json"},
+    {"map_id": "complex", "seed": 7608, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-transformer-run6-opposite-side-v1.json"},
+    {"map_id": "medium", "seed": 7609, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run8-bearing-315-v1.json"},
+    {"map_id": "medium", "seed": 7610, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run8-bearing-330-v1.json"},
+    {"map_id": "medium", "seed": 7611, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-a-v1.json"},
+    {"map_id": "medium", "seed": 7612, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-e-v1.json"},
+    {"map_id": "medium", "seed": 7613, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-context-run9-bearing-030-v1.json"},
+    {"map_id": "medium", "seed": 7614, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-context-run9-bearing-180-v1.json"},
+    {"map_id": "medium", "seed": 7615, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-context-run9-bearing-270-v1.json"},
+    {"map_id": "medium", "seed": 7616, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-capacitor-run13-supplement-v1.json"},
+    {"map_id": "complex", "seed": 7617, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-a-v1.json"},
+    {"map_id": "complex", "seed": 7618, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-b-v1.json"},
+    {"map_id": "complex", "seed": 7619, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/complex-reactor-run13-bearing-c-v1.json"},
+    {"map_id": "complex", "seed": 7620, "split": "development", "scheduler": "active_utility"}
+  ]
+}
