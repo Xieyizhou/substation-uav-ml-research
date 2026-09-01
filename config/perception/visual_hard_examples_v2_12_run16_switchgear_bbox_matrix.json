@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run16-switchgear-bbox-v1",
+  "run_revision": "run16-switchgear-bbox-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run16_switchgear_bbox.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {"map_id": "medium", "seed": 7401, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run16-distant-yaw-131-v1.json"},
+    {"map_id": "medium", "seed": 7402, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run16-distant-yaw-135-v1.json"},
+    {"map_id": "medium", "seed": 7403, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run16-distant-yaw-139-v1.json"},
+    {"map_id": "medium", "seed": 7404, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run16-distant-west-v1.json"},
+    {"map_id": "medium", "seed": 7405, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run16-distant-east-v1.json"},
+    {"map_id": "medium", "seed": 7406, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run16-distant-south-v1.json"},
+    {"map_id": "medium", "seed": 7407, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run16-distant-north-v1.json"},
+    {"map_id": "medium", "seed": 7408, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run16-distant-high-v1.json"}
+  ]
+}

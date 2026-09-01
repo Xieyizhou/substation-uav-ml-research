@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "matrix_id": "visual-hard-examples-v2.12-run17-switchgear-pressure-v1",
+  "run_revision": "run17-switchgear-pressure-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run17_switchgear_pressure.json",
+  "frames_per_run": 180,
+  "emit_stride": 3,
+  "cooldown_s": 5,
+  "runs": [
+    {"map_id": "medium", "seed": 7501, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-a-v1.json"},
+    {"map_id": "medium", "seed": 7502, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-b-v1.json"},
+    {"map_id": "medium", "seed": 7503, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-c-v1.json"},
+    {"map_id": "medium", "seed": 7504, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-d-v1.json"},
+    {"map_id": "medium", "seed": 7505, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-e-v1.json"},
+    {"map_id": "medium", "seed": 7506, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-f-v1.json"},
+    {"map_id": "medium", "seed": 7507, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-g-v1.json"},
+    {"map_id": "medium", "seed": 7508, "split": "development", "visual_route": "data/research/visual_hard_examples_v2_12/routes/medium-switchgear-run17-pressure-h-v1.json"}
+  ]
+}

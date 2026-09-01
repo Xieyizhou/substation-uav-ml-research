@@ -126,6 +126,7 @@ def apply_bbox_policy(candidates, policy):
         margin = float(rules.get("minimum_border_margin_px", 0.0))
         maximum_width = float(rules.get("maximum_bbox_width_fraction", 1.0)) * 1920.0
         maximum_height = float(rules.get("maximum_bbox_height_fraction", 1.0)) * 1080.0
+        area_rules = rules.get("bbox_area_fraction_by_class", {})
         kept_objects = []
         dropped_reasons = []
         for item in candidate.objects:
@@ -141,10 +142,18 @@ def apply_bbox_policy(candidates, policy):
                     dropped_reasons.append("non_target_instance")
                     continue
             x1, y1, x2, y2 = map(float, item["bbox_xyxy"])
+            class_area_rules = area_rules.get(item.get("class_name"), {})
+            area_fraction = ((x2 - x1) * (y2 - y1)) / (1920.0 * 1080.0)
+            minimum_area = float(class_area_rules.get("minimum", 0.0))
+            maximum_area = float(class_area_rules.get("maximum", 1.0))
             if x1 <= margin or y1 <= margin or x2 >= 1920.0 - margin or y2 >= 1080.0 - margin:
                 dropped_reasons.append("bbox_touches_frame_boundary")
             elif x2 - x1 > maximum_width or y2 - y1 > maximum_height:
                 dropped_reasons.append("bbox_exceeds_framing_limit")
+            elif area_fraction < minimum_area:
+                dropped_reasons.append("bbox_area_below_class_minimum")
+            elif area_fraction > maximum_area:
+                dropped_reasons.append("bbox_area_above_class_maximum")
             else:
                 kept_objects.append(item)
         if filter_objects and kept_objects:
