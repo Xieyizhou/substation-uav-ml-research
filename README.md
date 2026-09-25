@@ -22,7 +22,7 @@ datasets and flight receipts shown here are local research artifacts, not bundle
 
 ## What this project is
 
-A local research sandbox connecting **PX4 SITL and Gazebo simulation**, **A* route
+A local research sandbox connecting **PX4 SITL and Gazebo simulation**, **A\* route
 planning**, and **visual model iteration**. Use the desktop browser workspace or
 the optional macOS shell; the same managed workflows are available through the CLI.
 
@@ -92,7 +92,8 @@ python3 main.py sandbox --profile demo demo-inspect --input outputs/sandbox/demo
 | **Development · simulation** | Compatible PX4/Gazebo, required model/data and scenario assets | Map flight, collection and the fixed-scene feedback loop. |
 | **Formal** | Frozen artifacts and the matching experiment protocol | Evidence-preserving evaluation; not an aircraft certification. |
 
-Start a development environment:
+Start a development environment with **Python 3.12+** (the pinned local ML
+acceptance environment used Python 3.14):
 
 ```sh
 python3 -m venv .venv
@@ -162,6 +163,8 @@ cloning this repository.
 </details>
 
 ## Develop and verify
+
+Use Python 3.12+ for the complete core suite; Demo still supports Python 3.11.
 
 ```sh
 python3 -m venv .venv

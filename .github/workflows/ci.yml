@@ -61,7 +61,12 @@ jobs:
           --input outputs/sandbox/demo/beta-install/ci/beta_install_gate.json
 
   offline-validation:
+    name: Portable core · Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13"]
 
     steps:
       - name: Check out repository
@@ -70,7 +75,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: "3.11"
+          python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: |
             requirements.txt
@@ -84,7 +89,7 @@ jobs:
       - name: Run portable core tests
         run: python scripts/run_tests.py --suite core --report outputs/core-tests.json
 
-      - name: Compile portable core sources on Python 3.11
+      - name: Compile portable core sources
         run: python -m compileall -q src main.py scripts/run_tests.py scripts/export_source.py
 
       - name: Check all flight shell syntax

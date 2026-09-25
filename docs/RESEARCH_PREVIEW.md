@@ -9,15 +9,15 @@ layouts and real aircraft are outside this preview's acceptance scope.
 | Task | Python / dependencies | External inputs |
 | --- | --- | --- |
 | Browser Demo | Python 3.11+; standard library only | None |
-| Portable core tests | `requirements-test.txt` (includes core runtime) | None; tests use fixtures and simulated interfaces |
+| Portable core tests | Python 3.12+; `requirements-test.txt` (includes core runtime) | None; tests use fixtures and simulated interfaces |
 | Planning and analysis | `requirements.txt` | Small tracked map definitions; your logs for analysis |
-| Visual training and ONNX | Core + `requirements-ml.txt` | A reviewed YOLO dataset; parent weights where applicable |
+| Visual training and ONNX | Python 3.12+; core + `requirements-ml.txt` | A reviewed YOLO dataset; parent weights where applicable |
 | Historical research tests | `requirements-research.txt` | Original datasets, models and receipts |
 | PX4/Gazebo flight | Compatible simulator installation plus relevant Python dependencies | Validated map, vehicle/sensor resources and action-specific inputs |
 | Selected-model fixed-scene flight | Full local simulation + verified Workbench model | Registered historical archive to restore six fixed assets, then new current-runtime qualification |
 | macOS shell build | Full Xcode with Swift 6 support | No Python for native Demo; external runtime for research profiles |
 
-Demo CI uses Python 3.11 and 3.13 on Linux. Portable core CI uses Python 3.11
+Demo CI uses Python 3.11 and 3.13 on Linux. Portable core CI uses Python 3.12 and 3.13
 on Linux. Native tests/build/package checks run on macOS 15. See the live
 [workflow](../.github/workflows/ci.yml); these checks do not certify SITL across
 all operating systems.
@@ -25,8 +25,11 @@ all operating systems.
 The pinned ML/research stack was exercised on macOS arm64 with Python 3.14.
 `scipy==1.18.1` in the research requirements requires Python 3.12 or newer.
 Do not use the Demo's minimum Python version as a promise that every optional
-research dependency supports it. Some frozen research scripts also use Python 3.12+ syntax; CI compiles the
-complete historical tree on Python 3.13 and the portable core on Python 3.11.
+research dependency supports it. The full core test set still exercises frozen geometry adapters that import
+research helpers with Python 3.12+ syntax. It therefore requires Python 3.12+,
+even without the ML stack. No tests are dropped for Python 3.11: that version is
+validated for Demo, while the complete core runs on 3.12 and 3.13. CI also
+compiles the full historical tree on Python 3.13.
 Core pins MAVSDK 3.17.2 because this project
 uses its gRPC interface; MAVSDK 4 changes that interface.
 

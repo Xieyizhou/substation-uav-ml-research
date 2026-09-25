@@ -2,6 +2,9 @@
 
 ## 核心检查
 
+完整核心集合需要 Python 3.12+：其中保留的几何适配器测试会导入使用新版语法的冻结研究辅助脚本。
+Demo 仍支持 Python 3.11；CI 分别在 3.11 / 3.13 检查 Demo、3.12 / 3.13 检查完整核心。
+
 ```sh
 python -m venv .venv
 .venv/bin/python -m pip install -r requirements-test.txt

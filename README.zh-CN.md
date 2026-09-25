@@ -20,7 +20,7 @@
 
 ## 这是什么
 
-这个项目把 **PX4 SITL / Gazebo 仿真、A* 路径规划与视觉模型迭代**放进同一个本地工作区。
+这个项目把 **PX4 SITL / Gazebo 仿真、A\* 路径规划与视觉模型迭代**放进同一个本地工作区。
 可以使用桌面浏览器、可选的 macOS 原生外壳，或统一 CLI 操作。
 
 当前定位为**研究预览版**：Demo 可以直接体验；训练和仿真需要自行安装依赖并准备相应资产。
@@ -83,6 +83,8 @@ python3 main.py sandbox --profile demo demo-inspect --input outputs/sandbox/demo
 | **Development · 仿真** | 兼容的 PX4/Gazebo、模型、数据及场景资产 | 地图飞行、采集与固定场景模型闭环。 |
 | **Formal** | 冻结资产与对应实验协议 | 保持证据身份的评估，不是航空器认证。 |
 
+开发环境使用 **Python 3.12+**；本地 ML 验收使用 Python 3.14。
+
 ```sh
 python3 -m venv .venv
 source .venv/bin/activate
@@ -126,6 +128,8 @@ open "dist/UAV Research Sandbox.app"
 反馈审核使用 AI 辅助，不是独立人工标注；保留的基础验证划分也不证明不同物理场景相互独立。
 
 ## 开发与检查
+
+完整核心测试需要 Python 3.12+；Demo 仍支持 Python 3.11。
 
 ```sh
 python3 -m venv .venv

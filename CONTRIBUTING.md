@@ -8,7 +8,7 @@ geometric and learned-risk interfaces, and local replanning.
 
 ## Development Setup
 
-Create and activate a Python virtual environment:
+Use Python 3.12+ for the full core suite. Create and activate a virtual environment:
 
 ```bash
 python3 -m venv .venv

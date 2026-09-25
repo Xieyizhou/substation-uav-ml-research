@@ -126,7 +126,8 @@ release gate and clean-install gate run in GitHub Actions on Python 3.11 and
 See [Research preview setup](RESEARCH_PREVIEW.md) for optional ML versions and
 the datasets, models and fixed-scene assets that are not included in a clone.
 
-Create the project environment and install the core runtime dependencies:
+Use Python 3.12+ for Development and research workflows. Create the project
+environment and install the core runtime dependencies:
 
 ```bash
 python3 -m venv .venv
