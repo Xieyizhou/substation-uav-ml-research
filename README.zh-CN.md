@@ -6,7 +6,7 @@
 
 规划路线 · 飞行采集 · 审核标注 · 训练比较 · 仿真验收
 
-[![验证](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml/badge.svg)](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)
+[![验证](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)
 ![研究预览版](https://img.shields.io/badge/status-research_preview-087f70)
 ![仅限仿真](https://img.shields.io/badge/scope-simulation_only-53657a)
 

@@ -6,7 +6,7 @@
 
 Plan a route · Collect feedback · Review labels · Train and compare · Fly in SITL
 
-[![Validation](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml/badge.svg)](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)
+[![Validation](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)
 ![Research preview](https://img.shields.io/badge/status-research_preview-087f70)
 ![Simulation only](https://img.shields.io/badge/scope-simulation_only-53657a)
 [![Project code: MIT](https://img.shields.io/badge/project_code-MIT-53657a)](LICENSE)
