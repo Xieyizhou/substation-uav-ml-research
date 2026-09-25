@@ -1,0 +1,4 @@
+# Optional historical research reproduction; requires the original evidence.
+-r requirements.txt
+-r requirements-ml.txt
+scipy==1.18.1

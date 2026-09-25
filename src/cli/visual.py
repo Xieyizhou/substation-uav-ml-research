@@ -120,6 +120,8 @@ def build_parser():
         command.add_argument("--input", type=Path, required=True)
     add_collection_parsers(commands)
     add_training_parsers(commands)
+    from src.vision.canonical.cli import add_parsers as add_canonical_parsers
+    add_canonical_parsers(commands)
     return parser
 
 
@@ -148,6 +150,11 @@ def _identity_result(command, input_path):
 
 def main(argv=None):
     args = build_parser().parse_args(argv)
+    if args.command.startswith("canonical-view-"):
+        from src.vision.canonical.cli import handle
+        result = handle(args)
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 2 if result.get("status") == "blocked" else 0
     try:
         if args.command in {
             "dataset-validate",

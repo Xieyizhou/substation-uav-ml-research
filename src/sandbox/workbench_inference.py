@@ -33,6 +33,7 @@ def verified_model(run_root):
     return {
         "experiment_id": recipe.experiment_id,
         "receipt_identity_sha256": receipt["receipt_identity_sha256"],
+        "best_weights_sha256": receipt["best_weights_sha256"],
         "onnx_model_sha256": receipt["onnx_model_sha256"],
         "onnx_path": root / f"model/model_{size}.onnx",
         "imgsz": size,

@@ -1,0 +1,118 @@
+"""Capture revalidation, full-box evidence and exact low-light frame replay."""
+import argparse,asyncio,math,re,shutil
+from pathlib import Path
+import xml.etree.ElementTree as ET
+from PIL import Image,ImageDraw
+from scripts.vision.small_scale_material_capture import OUT,freeze,prior
+from scripts.vision.build_material_view_world_drafts import check_only_materials
+from scripts.vision.cool_light_capture import LIGHT,lighting_only
+import copy
+from scripts.vision.verify_designed_full_scene_poses import replay_frame,DESIGN
+from scripts.vision.export_material_candidate_batch import label_text
+from src.vision.canonical.plan import read_record,pose_close,rotate
+from src.vision.canonical.gates import validate_preflight,validate_point
+from src.vision.canonical.recovery import resumed_views
+
+def verify_world(u):
+    p=freeze()
+    base=next(x for x in p['units'] if x['pair_id']==u['pair_id'] and x['variant']=='original' and x['illumination']=='normal')
+    original=ET.parse(Path(base['plan_path']).parent/'world.sdf').getroot()
+    changed=ET.parse(Path(u['plan_path']).parent/'world.sdf').getroot()
+    restored=copy.deepcopy(changed)
+    if u['illumination']=='cool':
+        for path,value in LIGHT.items():
+            a=original.findall(path);b=restored.findall(path)
+            if len(a)!=1 or len(b)!=1 or b[0].text!=value:raise ValueError('Light field drift')
+            b[0].text=a[0].text
+    names={o['name'] for o in read_record(u['plan_path'])['objects'] if o['category'] in ('capacitor_bank','reactor','switchgear','transformer')}
+    if u['variant']=='gray035':
+        from scripts.vision.build_material_view_world_drafts import material_nodes
+        if any(n.text!='0.35 0.35 0.35 1' for n in material_nodes(restored,names).values()):raise ValueError('Material value drift')
+        check_only_materials(original,restored,names)
+    elif ET.tostring(original)!=ET.tostring(restored):raise ValueError('Non-allowed world change')
+
+def verify_capture(u):
+    pp=Path(u['plan_path']);p=read_record(pp);gate,cfg,mapping=validate_preflight(p,pp.parent,p['calibration_views'])
+    verify_world(u)
+    cp=OUT/'captures'/u['unit_id']/'collection-receipt.json';c=read_record(cp)
+    if c['status']!='complete_pending_review' or c['world_sha256']!=gate['world_sha256']:raise ValueError('Capture identity failure')
+    rows,_=resumed_views(cp,p,'calibration',p['calibration_views'],config=cfg,check_version=gate['check_version'],instance_mapping=mapping)
+    if len(rows)!=1 or len({x['object_id'] for x in mapping.values()})!=len(mapping):raise ValueError('Missing frame or mapping collision')
+    row=rows[0]
+    if not pose_close(row['actual_pose'],u['view']):raise ValueError('Actual pose failure')
+    ext=list(map(float,ET.parse(pp.parent/'world.sdf').findtext('.//link[@name="research_camera_link"]/pose').split()))[:3]
+    optical=[a+b for a,b in zip(row['actual_pose']['position'],rotate(row['actual_pose']['orientation'],ext))]
+    validate_point(optical,cfg,role='actual_optical_center');validate_point(row['actual_pose']['position'],cfg,role='actual_carrier')
+    stamps=[row[k] for k in ('rgb_timestamp','depth_timestamp','truth_timestamp')]+[row['actual_pose']['timestamp']]
+    if max(abs(t-stamps[0]) for t in stamps)>.033334+1e-9:raise ValueError('Synchronization failure')
+    return row,{str(k):v for k,v in mapping.items()},cp
+
+def evidence(u):
+    row,mapping,cp=verify_capture(u);folder=OUT/'evidence'/u['unit_id'];folder.mkdir(parents=True,exist_ok=True);dest=folder/'evidence.json'
+    if dest.exists():r=prior.read(dest);prior.verify(r);return r
+    base=next(x for x in freeze()['units'] if x['pair_id']==u['pair_id'] and x['variant']=='original' and x['illumination']=='normal')
+    refrow,refmap,refcp=verify_capture(base)
+    reference={}
+    for t in refrow['truth']['objects']:
+        match=re.search(r'instance-(\d+)-',t['annotation_id'])
+        if not match:raise ValueError('Unparsed reference instance')
+        label=str(int(match[1]))
+        name=refmap[label]['object_id']
+        if name in reference:raise ValueError('Duplicate reference instance')
+        reference[name]=t
+    events=[];seen=set()
+    im=Image.open(row['rgb_path']).convert('RGB');full=im.copy();d=ImageDraw.Draw(full)
+    deps=[cp,refcp,Path(refrow['rgb_path']),Path(row['rgb_path']),Path(row['depth_path']),Path(u['plan_path']),Path(__file__).resolve()]
+    for n,t in enumerate(row['truth']['objects']):
+        match=re.search(r'instance-(\d+)-',t['annotation_id'])
+        if not match:raise ValueError('Unparsed instance')
+        label=str(int(match[1]));identity=mapping[label];name=identity['object_id']
+        if name in seen or identity['category']!=t['class_name'] or name not in reference:raise ValueError('Identity or full supervision conflict')
+        seen.add(name);b=t['bbox_xyxy'];delta=max(abs(a-z) for a,z in zip(b,reference[name]['bbox_xyxy']))
+        if delta>1:raise ValueError('Pair alignment exceeds one pixel')
+        d.rectangle(b,outline='red',width=4);d.text((b[0],max(0,b[1]-20)),f'{n} '+name,fill='red',stroke_width=1)
+        crop=folder/f'box-{n:02}.png';im.crop((max(0,math.floor(b[0])-12),max(0,math.floor(b[1])-12),min(im.width,math.ceil(b[2])+12),min(im.height,math.ceil(b[3])+12))).save(crop);deps.append(crop)
+        events.append(dict(event_id=u['unit_id']+':'+name,object_id=name,runtime_label=label,truth=t,max_pair_box_delta=delta,crop_path=str(crop),crop_sha256=prior.file_sha256(crop)))
+    if seen!=set(reference):raise ValueError('Missing corresponding instance')
+    exact=label_text(row['truth'],*im.size)==label_text(refrow['truth'],*im.size)
+    if not exact:raise ValueError('Full paired exported labels differ; investigate before training')
+    fp=folder/'full.png';full.save(fp);deps.append(fp)
+    card=Image.new('RGB',(1440,600+240*math.ceil(len(events)/3)),'white');cd=ImageDraw.Draw(card)
+    cd.text((5,5),u['unit_id']+' '+u['pair_id']+' '+u['variant']+' '+u['illumination'],fill='black');card.paste(full.resize((960,540)),(0,35))
+    refim=Image.open(refrow['rgb_path']).convert('RGB');refim.thumbnail((470,300));card.paste(refim,(965,35));cd.text((965,15),'same-pose original material / normal light',fill='black')
+    for n,e in enumerate(events):
+        crop=Image.open(e['crop_path']);crop.thumbnail((470,210));x=(n%3)*480;y=600+(n//3)*240;card.paste(crop,(x,y+20));cd.text((x,y),e['object_id'],fill='black')
+    cpimage=folder/'card.png';card.save(cpimage);deps.append(cpimage)
+    return prior.frozen(dest,dict(status='captured_full_label_evidence_pending_review',unit_id=u['unit_id'],pair_id=u['pair_id'],variant=u['variant'],illumination=u['illumination'],
+        events=events,card_path=str(cpimage),image_path=row['rgb_path'],image_sha256=row['image_sha256'],full_truth=row['truth'],actual_pose=row['actual_pose'],instance_mapping=mapping,
+        full_paired_labels_exact=exact,pixel_visibility_certified=False,inputs={str(p):prior.file_sha256(p) for p in deps}))
+
+async def replay_unit(u):
+    e=evidence(u);row,mapping,cp=verify_capture(u);unit=OUT/'replays'/u['unit_id'];unit.mkdir(parents=True,exist_ok=True);sp=unit/'source.json'
+    if not sp.exists():prior.frozen(sp,dict(row,inputs={str(cp):prior.file_sha256(cp)}))
+    helper=unit/'gz_visibility_capture_cleanup_fixed'
+    if not helper.exists():shutil.copy2(DESIGN.parent/'native-source-replay-v2/gz_visibility_capture_cleanup_fixed',helper)
+    f=dict(member_id=u['unit_id'],lineage_id=u['pair_id'],class_name=u['view']['category'],review_ids=[u['unit_id']],source_image=row['rgb_path'],source_receipt=str(sp),source_plan=u['plan_path'],source_world=str(Path(u['plan_path']).parent/'world.sdf'),actual_pose=row['actual_pose'],world_name=read_record(u['plan_path'])['world_name'],instance_mapping=mapping,
+        events=[dict(review_id=x['event_id'],runtime_label=int(x['runtime_label']),object_id=x['object_id'],bbox_xyxy=x['truth']['bbox_xyxy']) for x in e['events']])
+    pp=unit/'protocol.json'
+    if not pp.exists():prior.frozen(pp,dict(frame=f,inputs={str(x):prior.file_sha256(x) for x in (sp,helper,OUT/'evidence'/u['unit_id']/'evidence.json',Path(__file__).resolve())}))
+    prior.verify(prior.read(pp));rp,r=await replay_frame(f,unit)
+    if not r or r['status']!='original_pixel_evidence_certified' or any(x['missing_targets'] for x in r['full_mask_coverage']):raise ValueError('Small-scale replay blocked '+u['unit_id']+' '+str(r.get('reason') if r else 'missing'))
+    dest=unit/'completion.json'
+    if not dest.exists():prior.frozen(dest,dict(status='small_capture_exact_replay_verified',receipt_path=str(rp),inputs={str(x):prior.file_sha256(x) for x in (rp,pp)}))
+    else:prior.verify(prior.read(dest))
+    print('REPLAY_VERIFIED',u['unit_id'],len(e['events']),'labels',flush=True)
+
+async def run(pilot=False):
+    p=freeze()
+    for u in p['units']:
+        if pilot and u['unit_id'] not in p['pilot_units']:continue
+        await replay_unit(u)
+
+if __name__=='__main__':
+    ap=argparse.ArgumentParser();ap.add_argument('--replay',action='store_true');ap.add_argument('--pilot',action='store_true');a=ap.parse_args()
+    if a.replay:asyncio.run(run(a.pilot))
+    else:
+        p=freeze()
+        for u in p['units']:
+            if (OUT/'captures'/u['unit_id']/'collection-receipt.json').exists():print(evidence(u)['unit_id'])

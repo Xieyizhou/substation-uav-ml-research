@@ -10,6 +10,9 @@ def launcher_environment(prepared, display_mode):
     if display_mode not in DISPLAY_MODES:
         raise ValueError(f"unsupported simulator display mode: {display_mode}")
     environment = dict(prepared["launcher_environment"])
+    # The shell launcher owns HEADLESS and defaults to headless unless this
+    # explicit mode survives the Python -> shell boundary.
+    environment["UAV_SANDBOX_DISPLAY_MODE"] = display_mode
     if display_mode == "headless":
         environment["HEADLESS"] = "1"
     else:

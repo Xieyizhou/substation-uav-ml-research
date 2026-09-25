@@ -1,0 +1,17 @@
+{
+  "cooldown_s": 5,
+  "emit_stride": 30,
+  "frames_per_run": 90,
+  "matrix_id": "visual-hard-examples-v2.12-run19-transformer-corner-pilot-v3",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run19_transformer_corner_pilot_v3.json",
+  "run_revision": "run19-transformer-corner-pilot-v3",
+  "runs": [
+    {
+      "map_id": "medium",
+      "seed": 780104,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-transformer-corner-pilot-v3/routes/medium-transformer-corner-motion-v3.json"
+    }
+  ],
+  "schema_version": 1
+}

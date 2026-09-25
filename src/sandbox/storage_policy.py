@@ -15,6 +15,10 @@ ACTION_BUDGET_BYTES = {
     "sandbox-demo": 64 * MIB,
     "sandbox-acceptance": GIB,
     "flight-smoke": GIB,
+    "live-replan-flight": 4 * GIB,
+    "visual-replan-flight": 256 * MIB,
+    "semantic-flight": 256 * MIB,
+    "evidence-verify": MIB,
     "map-flight-smoke": GIB,
     "map-record": 8 * GIB,
     "lidar-challenge-gate": 2 * GIB,
@@ -26,6 +30,7 @@ ACTION_BUDGET_BYTES = {
     "workbench-run": 16 * GIB,
     "workbench-resume": 16 * GIB,
     "workbench-dataset-import": 16 * GIB,
+    "workbench-feedback-register": 512 * MIB,
     "workbench-validate": 4 * GIB,
     "workbench-replay": 4 * GIB,
     "workbench-image-infer": 256 * MIB,
@@ -39,11 +44,17 @@ class OutputBudgetExceeded(RuntimeError):
 
 
 def directory_size(path):
+    """Count each regular-file inode once (views reuse images via hard links)."""
     total = 0
+    seen = set()
     for candidate in Path(path).rglob("*") if Path(path).exists() else ():
         try:
             if candidate.is_file() and not candidate.is_symlink():
-                total += candidate.stat().st_size
+                stat = candidate.stat()
+                identity = (stat.st_dev, stat.st_ino)
+                if identity not in seen:
+                    seen.add(identity)
+                    total += stat.st_size
         except OSError:
             continue
     return total

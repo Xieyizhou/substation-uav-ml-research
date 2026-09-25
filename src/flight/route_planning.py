@@ -22,6 +22,7 @@ def plan_path(planner_config, allow_diagonal):
         simplified_path,
         resolution_m=planner_config["resolution_m"],
         altitude_m=planner_config["altitude_m"],
+        local_frame=planner_config.get("local_frame"),
     )
     return grid_path, simplified_path, waypoints
 
@@ -38,17 +39,17 @@ def print_plan(grid_path, simplified_path, waypoints):
 def print_coordinate_summary(planner_config):
     gazebo_origin = planner_config.get("gazebo_world_origin_m", [0.0, 0.0, 0.0])
     start_local = cell_to_local_waypoint(
-        planner_config["start"], planner_config["resolution_m"], planner_config["altitude_m"]
+        planner_config["start"], planner_config["resolution_m"], planner_config["altitude_m"], local_frame=planner_config.get("local_frame")
     )
     goal_local = cell_to_local_waypoint(
-        planner_config["goal"], planner_config["resolution_m"], planner_config["altitude_m"]
+        planner_config["goal"], planner_config["resolution_m"], planner_config["altitude_m"], local_frame=planner_config.get("local_frame")
     )
     print("\nCoordinate convention:")
-    print(f"  Gazebo world x = local east + map origin x ({gazebo_origin[0]:g} m)")
-    print(f"  Gazebo world y = local north + map origin y ({gazebo_origin[1]:g} m)")
+    print(f"  Gazebo world xy = map east/north + map origin xy {gazebo_origin[:2]}")
+    print(f"  Map-to-local registration: {planner_config.get('local_frame') or 'legacy identity (not calibrated)'}")
     print("  A* grid x = east")
     print("  A* grid y = north")
-    print("  MAVSDK local NED: north=grid y, east=grid x, down=-altitude")
+    print("  MAVSDK local NED: registered horizontal coordinates; down=-route altitude (local datum)")
     print("  Cell-center conversion enabled.")
     print("\nStart:")
     print(

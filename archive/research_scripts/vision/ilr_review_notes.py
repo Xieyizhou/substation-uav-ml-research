@@ -1,0 +1,54 @@
+"""Explicit observations for this endpoint only."""
+NOTES='''
+E01|mixed_structure|框内粗杆、灰块及右下青块重叠，不能作为单一柜体内容。
+E01|mixed_structure|第二个预测同样覆盖前景粗杆与后方灰块，右侧青块混入。
+E01|mixed_structure|第三个框包含粗杆与两块背景结构，同源重复不增加独立样本。
+E02|cabinet_like|灰色矩形框体有深色面板及底边，主体外形可辨。
+E02|cabinet_like|第二个预测仍覆盖同一灰色面板块体，非独立结构。
+E03|truncated|左下图缘只见青柜侧面，主体下部和左侧越界。
+E04|truncated|近景青柜顶面和面板可见，下部在画面外。
+E05|truncated|背景变体近景柜体仍在下图缘截断。
+E06|occluded|青柜面板和顶面可辨，左下被前景柜体遮挡。
+E07|truncated|灰色变压器主体与顶面柱体可见，底部越出画面。
+E08|clear|灰柜宽侧面、窄面板和底座完整可辨。
+E09|truncated|近景变压器顶面及柱体可见，右下主体截断。
+E10|occluded|远处青柜下部被前景顶面挡住，顶面与侧背面可见。
+E11|truncated|右图缘柜体仅余窄侧面片段和相邻柜体边缘。
+E12|clear|圆柱电抗器顶面、主体与方底座完整可辨。
+E13|clear|灰色圆柱及底座完整可辨，周围无主要遮挡。
+E14|truncated|背景条件下右图缘柜体仍只见狭窄侧面。
+E15|clear|背景条件下圆柱主体、圆形顶面和底座完整可见。
+E16|truncated|低光条件下右图缘柜体只剩窄侧面片段。
+E17|truncated|右侧柜体顶面和背面可见，但右端越界。
+E18|truncated|左图缘青柜宽侧背面和底座部分可辨，左端截断。
+E19|occluded|远处柜体在前景柜体之后，只见顶面和侧背面上部。
+E20|occluded|背景变体中远处柜体下部被前景柜体遮挡。
+E21|occluded|中间柜体下部受前景顶面遮挡，剩余侧背面缺少面板细节。
+E22|unknown|框内前景变压器柱体与后方青块重叠，仅凭RGB不能可靠划分目标内容。
+E23|occluded|后方变压器主体和柱体可见，下部被前景变压器顶面遮住。
+E24|occluded|灰柜面板和侧面可见，左下与前景柜体重叠。
+E25|occluded|远处青柜下部被前景顶面及接线柱遮挡。
+E26|occluded|远处变压器下部被前景变压器顶面遮住，柱体混入框内。
+E27|truncated|右图缘青柜侧背面和顶面被截断。
+E28|unknown|小框混有前景接线柱与后方目标块体，无法可靠区分实例内容。
+E29|truncated|背景条件右图缘柜体仅保留顶面和侧面局部。
+E30|truncated|远处右图缘青柜只见局部顶面和侧背面。
+E31|occluded|变压器前有粗杆纵向遮住部分主体，顶面柱体可见。
+E32|truncated|低光右图缘青柜主体被截断，面板不可见。
+E33|cabinet_like|右图缘灰色块体窄侧面及深色面板局部可见，预测包含地面。
+E34|truncated|灰色变压器侧面和顶端柱体可见，右端越出图缘。
+E35|truncated|右边缘圆柱主体和底座局部可见，右侧截断。
+E36|clear|远处灰柜主体顶面与侧面可辨，尺度小且面板不清楚。
+E37|truncated|灰色近景变压器只见顶面和柱体，下部出图。
+E38|occluded|低光变压器中央被粗杆遮挡，左端还有图缘截断。
+E39|occluded|变压器下部被前景圆柱挡住，上部及接线柱可见。
+E40|occluded|背景条件变压器下部同样受圆柱遮挡。
+E41|truncated|左侧变压器长侧面和柱体可辨，左端出图。
+E42|occluded|后方矩形目标左下被前景青柜遮挡，其余主体可见。
+E43|truncated|左图缘目标只剩一条侧面及顶角，主体大部在图外。
+'''
+def parse():
+    result={}
+    for line in NOTES.strip().splitlines():
+        key,content,reason=line.split('|',2);result.setdefault(key,[]).append((content,reason))
+    return result

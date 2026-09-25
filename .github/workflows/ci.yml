@@ -9,6 +9,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   sandbox-demo:
     name: Sandbox demo · Python ${{ matrix.python-version }}
@@ -29,6 +32,13 @@ jobs:
 
       - name: Initialize dependency-free demo profile
         run: python main.py sandbox --profile demo bootstrap
+
+      - name: Check dependency-free desktop launcher
+        run: ./scripts/run_sandbox_app.sh --help
+
+      - name: Compile all sources including historical research (Python 3.12+)
+        if: matrix.python-version == '3.13'
+        run: python -m compileall -q src scripts archive main.py
 
       - name: Run Sandbox v0.1 release gate
         run: >-
@@ -62,18 +72,20 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: requirements.txt
+          cache-dependency-path: |
+            requirements.txt
+            requirements-test.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-test.txt
 
-      - name: Run unit tests
-        run: python -m unittest discover -s tests -p "test_*.py" -v
+      - name: Run portable core tests
+        run: python scripts/run_tests.py --suite core --report outputs/core-tests.json
 
-      - name: Compile Python sources
-        run: python -m compileall -q src scripts main.py
+      - name: Compile portable core sources on Python 3.11
+        run: python -m compileall -q src main.py scripts/run_tests.py scripts/export_source.py
 
       - name: Check all flight shell syntax
         run: |

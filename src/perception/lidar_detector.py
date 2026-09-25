@@ -8,6 +8,7 @@ import time
 from src.ml.truth_labels import label_scan
 from src.perception.local_costmap import RollingCostmapBuilder
 from src.sensors.types import RiskEstimate
+from src.planner.local_frame import LocalFrame
 
 
 class LidarRiskDetector:
@@ -29,8 +30,16 @@ class LidarRiskDetector:
         inflation_radius_m=0.5,
         risk_predictor=None,
         risk_fusion="safety_max",
+        local_frame=None,
+        sensor_forward_m=0.0,
+        sensor_left_m=0.0,
     ):
         self.source = source
+        self.local_frame = LocalFrame.from_mapping(local_frame)
+        self.sensor_forward_m = float(sensor_forward_m)
+        self.sensor_left_m = float(sensor_left_m)
+        if not all(math.isfinite(v) for v in (self.sensor_forward_m, self.sensor_left_m)):
+            raise ValueError("Nonfinite LiDAR mounting translation")
         self.resolution_m = float(resolution_m)
         self.detection_range_m = float(detection_range_m)
         self.warning_distance_m = float(warning_distance_m)
@@ -74,11 +83,17 @@ class LidarRiskDetector:
         # Gazebo scan angles are positive to body-left. Local NED compass yaw
         # is positive to the east, so relative compass bearing is -scan angle.
         bearing_rad = math.radians(yaw_deg or 0.0) - scan_angle_rad
-        obstacle_north = north_m + distance_m * math.cos(bearing_rad)
-        obstacle_east = east_m + distance_m * math.sin(bearing_rad)
+        yaw_rad = math.radians(yaw_deg or 0.0)
+        # Planar FLU mounting translation. This is not a roll/pitch-aware 3D
+        # transform; callers must independently enforce the planar assumption.
+        sensor_north = north_m + self.sensor_forward_m * math.cos(yaw_rad) + self.sensor_left_m * math.sin(yaw_rad)
+        sensor_east = east_m + self.sensor_forward_m * math.sin(yaw_rad) - self.sensor_left_m * math.cos(yaw_rad)
+        obstacle_north = sensor_north + distance_m * math.cos(bearing_rad)
+        obstacle_east = sensor_east + distance_m * math.sin(bearing_rad)
+        grid_x,grid_y=self.local_frame.cell(obstacle_east,obstacle_north,self.resolution_m)
         return (
-            int(math.floor(obstacle_east / self.resolution_m)),
-            int(math.floor(obstacle_north / self.resolution_m)),
+            grid_x,
+            grid_y,
             obstacle_north,
             obstacle_east,
         )

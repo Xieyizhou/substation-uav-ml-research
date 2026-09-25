@@ -1,6 +1,6 @@
 """Risk-triggered local A* replanning and active route replacement."""
 
-from math import floor
+from src.planner.local_frame import LocalFrame
 
 from src.perception.perception_state import risk_reaches_threshold
 from src.planner.astar_grid import astar, grid_path_to_local_waypoints, simplify_grid_path
@@ -17,13 +17,10 @@ def configure_acceptance(horizontal_m, vertical_m):
     REACHED_VERTICAL_ERROR_M = vertical_m
 
 
-def local_position_to_grid_cell(position, resolution_m):
+def local_position_to_grid_cell(position, resolution_m, local_frame=None):
     if position is None or resolution_m <= 0:
         return None
-    return (
-        int(floor(position.east_m / resolution_m)),
-        int(floor(position.north_m / resolution_m)),
-    )
+    return LocalFrame.from_mapping(local_frame).cell(position.east_m,position.north_m,resolution_m)
 
 
 def empty_replan_state():
@@ -126,7 +123,7 @@ def attempt_local_replan(
     replan_state["replan_count"] = replan_state.get("replan_count", 0) + 1
     reset_replan_event_fields(replan_state)
     replan_state["replan_triggered"] = True
-    start_cell = local_position_to_grid_cell(position, replan_config["resolution_m"])
+    start_cell = local_position_to_grid_cell(position, replan_config["resolution_m"], replan_config.get("local_frame"))
     goal_cell = goal_cell or replan_config["goal_cell"]
     if start_cell is not None:
         replan_state["replan_start_grid_x"] = start_cell[0]
@@ -147,7 +144,7 @@ def attempt_local_replan(
         print("Local replan attempt failed: current local position is unavailable.")
         return None
     planning_obstacles = set(replan_config["static_obstacles"]) | inflated_dynamic_cells
-    planning_obstacles -= {start_cell, goal_cell}
+    # A blocked endpoint is a failed plan, not permission to erase occupancy.
     try:
         replanned_path = astar(
             start=start_cell,
@@ -178,7 +175,7 @@ def attempt_local_replan(
 def replanned_path_to_waypoints(replanned_path, replan_config):
     simplified_path = simplify_grid_path(replanned_path)
     waypoints = grid_path_to_local_waypoints(
-        simplified_path, replan_config["resolution_m"], replan_config["altitude_m"]
+        simplified_path, replan_config["resolution_m"], replan_config["altitude_m"], local_frame=replan_config.get("local_frame")
     )
     for index, waypoint in enumerate(waypoints, start=1):
         waypoint["name"] = f"RWP{index:02d}"

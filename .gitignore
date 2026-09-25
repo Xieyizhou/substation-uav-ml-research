@@ -9,6 +9,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
+*.dylib
 
 # IDE/editor
 .idea/
@@ -83,6 +84,7 @@ data/raw_logs/*
 # Research datasets and model artifacts. Keep schemas/configuration in Git,
 # but never commit raw scans, images, generated labels, or learned weights.
 data/research/
+data/external/
 datasets/
 models/checkpoints/
 models/lidar/

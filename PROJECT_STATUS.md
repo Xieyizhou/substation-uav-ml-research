@@ -1,16 +1,21 @@
 # Substation UAV ML Research Status
 
-## Current Product Goal
+## Current preview · 2026-09-25
 
-Move the locally Beta-ready Sandbox v1 into a repeatable public GitHub Beta.
-The release must install cleanly, make its external-runtime boundary clear,
-run one App-managed Development flight through confirmed landing and cleanup,
-and expose the completed visual model workflow without requiring command-line
-experimentation for routine inspection.
+The current source is a **desktop research preview**. Its dependency-free Demo,
+portable core, and model feedback workflow have distinct validation boundaries.
+Start with the [README](README.md) or [中文说明](README.zh-CN.md), then consult
+[setup and artifact requirements](docs/RESEARCH_PREVIEW.md).
 
-The product release is no longer blocked by unfinished paper-oriented formal
-studies. Research evidence continues on a separate track and must retain its
-own identities and gates.
+The [September 25 acceptance report](docs/results/sandbox_core_completion_20260925.md)
+records 974 portable core tests, 2,093 full local tests, and the actual fixed-scene
+feedback/qualification loop. It retains the model metric decline and the
+controlled visual-revalidation abort. It does not certify real aircraft,
+independent real-site generalization or every future mission.
+
+The current GitHub workflow is the authority for the latest source CI status.
+Historical prerelease binaries and results below retain their original scope;
+they do not automatically describe the current checkout or its release status.
 
 ## Research Goal
 

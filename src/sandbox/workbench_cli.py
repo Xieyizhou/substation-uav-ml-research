@@ -6,6 +6,12 @@ from pathlib import Path
 
 
 def register_workbench_commands(commands):
+    feedback = commands.add_parser("workbench-feedback-register", help="Register explicitly reviewed feedback with fixed base validation")
+    feedback.add_argument("--dataset-id", required=True)
+    feedback.add_argument("--base-dataset-id", required=True)
+    feedback.add_argument("--collection-id", action="append", required=True)
+    feedback.add_argument("--base-train-limit", type=int, choices=(128, 256, 512), default=256)
+    feedback.add_argument("--validation-limit", type=int, choices=(64, 128, 256), default=64)
     imported = commands.add_parser(
         "workbench-dataset-import", help="Audit and import a YOLO Detect dataset"
     )
@@ -21,6 +27,13 @@ def register_workbench_commands(commands):
     for name in ("epochs", "patience", "imgsz", "batch", "workers"):
         recipe.add_argument(f"--{name}", type=int)
     recipe.add_argument("--device", choices=["auto", "mps", "cpu"])
+    recipe.add_argument("--freeze", type=int, choices=(0, 5, 10),
+                        help="Freeze the first N model layers during a new fine-tuning run")
+    source = recipe.add_mutually_exclusive_group()
+    source.add_argument("--initial-weights", type=Path,
+                        help="Pin a local historical .pt checkpoint for a new training run")
+    source.add_argument("--parent-experiment-id",
+                        help="Fine-tune a verified workbench model")
     for command, help_text in (
         ("workbench-run", "Run a workbench recipe"),
         ("workbench-resume", "Resume a workbench recipe"),
@@ -56,7 +69,7 @@ def _mapping(values):
 
 
 def _overrides(args):
-    names = ("epochs", "patience", "imgsz", "batch", "workers", "device")
+    names = ("epochs", "patience", "imgsz", "batch", "workers", "device", "freeze")
     return {name: getattr(args, name) for name in names if getattr(args, name) is not None}
 
 
@@ -65,6 +78,10 @@ def handle_workbench_command(args, config):
         return None
     if config.profile != "development":
         raise ValueError("model workbench is available only in development profile")
+    if args.command == "workbench-feedback-register":
+        from src.sandbox.feedback_dataset import register_feedback_dataset
+        return register_feedback_dataset(config, args.dataset_id, args.base_dataset_id, args.collection_id,
+                                         base_train_limit=args.base_train_limit, validation_limit=args.validation_limit)
     if args.command == "workbench-dataset-import":
         from src.sandbox.workbench_datasets import import_yolo_dataset
         return import_yolo_dataset(
@@ -77,6 +94,8 @@ def handle_workbench_command(args, config):
             config.project_root, config.workbench_datasets_root,
             config.workbench_runs_root, args.experiment_id, args.dataset_id,
             args.preset, _overrides(args),
+            initial_weights=args.initial_weights,
+            parent_experiment_id=args.parent_experiment_id,
         )
         return {"path": str(root / "recipe.json"), "recipe": recipe.to_record()}
     if args.command in ("workbench-run", "workbench-resume"):

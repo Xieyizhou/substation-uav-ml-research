@@ -1,207 +1,12 @@
-"""Deterministic, split-safe curation for Gazebo hard-example collections."""
+"""Public curation API; input, framing and multi-label policies are separated."""
 
-from __future__ import annotations
-
-from bisect import bisect_left
 from collections import defaultdict
-from dataclasses import dataclass, replace
 import hashlib
-import json
-from pathlib import Path
-from PIL import Image
-
-
-def _canonical(value):
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
-
-
-def hamming_hex(left, right):
-    return (int(left, 16) ^ int(right, 16)).bit_count()
-
-
-def dhash64(path):
-    with Image.open(path) as image:
-        pixels = list(image.convert("L").resize((9, 8)).getdata())
-    value = 0
-    for row in range(8):
-        offset = row * 9
-        for column in range(8):
-            value = (value << 1) | (pixels[offset + column] > pixels[offset + column + 1])
-    return f"{value:016x}"
-
-
-@dataclass(frozen=True)
-class Candidate:
-    collection: str
-    collection_identity: str
-    frame_id: str
-    map_id: str
-    split: str
-    seed: int
-    rgb_path: str
-    rgb_timestamp: float
-    image_sha256: str
-    perceptual_hash: str
-    objects: tuple[dict, ...]
-
-    @property
-    def kind(self):
-        return "target" if self.objects else "no_target"
-
-    @property
-    def key(self):
-        return self.collection, self.frame_id
-
-    def record(self):
-        return {
-            "collection": self.collection,
-            "collection_identity": self.collection_identity,
-            "frame_id": self.frame_id,
-            "image_sha256": self.image_sha256,
-            "map_id": self.map_id,
-            "objects": list(self.objects),
-            "perceptual_hash": self.perceptual_hash,
-            "rgb_path": self.rgb_path,
-            "rgb_timestamp": self.rgb_timestamp,
-            "seed": self.seed,
-            "split": self.split,
-        }
-
-
-def _bucket(candidate):
-    return ("all" if candidate.kind == "no_target" else candidate.map_id, candidate.kind, candidate.split)
-
-
-def load_collection(collection, allowed_classes, maximum_truth_skew_ms=33.334, perceptual_hash_algorithm="receipt", hash_cache=None):
-    collection = Path(collection).resolve()
-    receipt = json.loads((collection / "collection-receipt.json").read_text())
-    truth = [json.loads(line) for line in (collection / receipt["truth"]["relative_path"]).read_text().splitlines() if line.strip()]
-    truth = sorted((row for row in truth if row.get("validation_status") == "valid"), key=lambda row: row["simulation_timestamp"])
-    timestamps = [row["simulation_timestamp"] for row in truth]
-    accepted, rejected = [], []
-    hash_cache = {} if hash_cache is None else hash_cache
-    for member in receipt["members"]:
-        index = bisect_left(timestamps, member["rgb_timestamp"])
-        indexes = [item for item in (index - 1, index) if 0 <= item < len(truth)]
-        if not indexes:
-            rejected.append({"frame_id": member["frame_id"], "reason": "missing_truth"})
-            continue
-        matched = min((truth[item] for item in indexes), key=lambda row: abs(row["simulation_timestamp"] - member["rgb_timestamp"]))
-        skew_ms = abs(matched["simulation_timestamp"] - member["rgb_timestamp"]) * 1000.0
-        if skew_ms > maximum_truth_skew_ms:
-            rejected.append({"frame_id": member["frame_id"], "reason": "stale_truth", "skew_ms": skew_ms})
-            continue
-        objects = tuple(sorted((dict(item) for item in matched.get("objects", []) if item.get("validation_status") == "validated"), key=lambda item: item["annotation_id"]))
-        unknown = sorted({item.get("class_name") for item in objects} - set(allowed_classes))
-        if unknown:
-            rejected.append({"frame_id": member["frame_id"], "reason": "unknown_truth_class", "classes": unknown})
-            continue
-        perceptual_hash = member["perceptual_hash"]
-        if perceptual_hash_algorithm == "dhash64-v1":
-            if member["image_sha256"] not in hash_cache:
-                hash_cache[member["image_sha256"]] = dhash64(collection / member["rgb_path"])
-            perceptual_hash = hash_cache[member["image_sha256"]]
-        elif perceptual_hash_algorithm != "receipt":
-            raise ValueError("unsupported perceptual hash algorithm")
-        accepted.append(Candidate(
-            str(collection), receipt["identity"], member["frame_id"], receipt["map_id"], receipt["split"],
-            int(receipt["seed"]), member["rgb_path"], float(member["rgb_timestamp"]), member["image_sha256"],
-            perceptual_hash, objects,
-        ))
-    return accepted, rejected, receipt["identity"]
-
-
-def apply_bbox_policy(candidates, policy):
-    """Reject frames whose labelled equipment violates split-specific framing rules."""
-    if not policy:
-        return list(candidates), []
-    accepted, rejected = [], []
-    for candidate in candidates:
-        rules = policy.get(candidate.split, {})
-        filter_objects = rules.get("mode") == "drop_invalid_objects"
-        target_labels = {
-            int(value)
-            for value in policy.get("target_instance_labels_by_seed", {}).get(str(candidate.seed), [])
-        }
-        required_instances = policy.get(
-            "required_instance_area_fraction_by_seed", {}
-        ).get(str(candidate.seed), [])
-        matched_requirements = set()
-        margin = float(rules.get("minimum_border_margin_px", 0.0))
-        maximum_width = float(rules.get("maximum_bbox_width_fraction", 1.0)) * 1920.0
-        maximum_height = float(rules.get("maximum_bbox_height_fraction", 1.0)) * 1080.0
-        area_rules = rules.get("bbox_area_fraction_by_class", {})
-        kept_objects = []
-        dropped_reasons = []
-        for item in candidate.objects:
-            instance_label = None
-            if target_labels or required_instances:
-                marker = "-instance-"
-                annotation_id = str(item.get("annotation_id", ""))
-                try:
-                    instance_label = int(annotation_id.split(marker, 1)[1].split("-", 1)[0])
-                except (IndexError, ValueError):
-                    if target_labels:
-                        dropped_reasons.append("missing_instance_lineage")
-                        continue
-                if instance_label not in target_labels:
-                    if target_labels:
-                        dropped_reasons.append("non_target_instance")
-                        continue
-            x1, y1, x2, y2 = map(float, item["bbox_xyxy"])
-            class_area_rules = area_rules.get(item.get("class_name"), {})
-            area_fraction = ((x2 - x1) * (y2 - y1)) / (1920.0 * 1080.0)
-            minimum_area = float(class_area_rules.get("minimum", 0.0))
-            maximum_area = float(class_area_rules.get("maximum", 1.0))
-            if x1 <= margin or y1 <= margin or x2 >= 1920.0 - margin or y2 >= 1080.0 - margin:
-                dropped_reasons.append("bbox_touches_frame_boundary")
-            elif x2 - x1 > maximum_width or y2 - y1 > maximum_height:
-                dropped_reasons.append("bbox_exceeds_framing_limit")
-            elif area_fraction < minimum_area:
-                dropped_reasons.append("bbox_area_below_class_minimum")
-            elif area_fraction > maximum_area:
-                dropped_reasons.append("bbox_area_above_class_maximum")
-            else:
-                kept_objects.append(item)
-                for index, requirement in enumerate(required_instances):
-                    if (
-                        item.get("class_name") == requirement.get("class_name")
-                        and instance_label == int(requirement["instance_label"])
-                        and float(requirement["minimum"]) <= area_fraction
-                        <= float(requirement["maximum"])
-                    ):
-                        matched_requirements.add(index)
-        if len(matched_requirements) != len(required_instances):
-            rejected.append({
-                "frame_id": candidate.frame_id,
-                "collection": candidate.collection,
-                "reason": "required_instance_area_not_satisfied",
-            })
-            continue
-        if filter_objects and kept_objects:
-            accepted.append(replace(candidate, objects=tuple(kept_objects)))
-            rejected.extend({"frame_id": candidate.frame_id, "collection": candidate.collection, "reason": reason, "scope": "annotation"} for reason in dropped_reasons)
-        elif not dropped_reasons:
-            accepted.append(candidate)
-        else:
-            rejected.append({"frame_id": candidate.frame_id, "collection": candidate.collection, "reason": "no_complete_target_annotation" if filter_objects else dropped_reasons[0]})
-    return accepted, rejected
-
-
-def _clusters(candidates, threshold):
-    clusters = []
-    representatives = []
-    for candidate in sorted(candidates, key=lambda row: (row.perceptual_hash, row.key)):
-        cluster_index = next(
-            (index for index, value in enumerate(representatives) if hamming_hex(candidate.perceptual_hash, value) <= threshold),
-            None,
-        )
-        if cluster_index is None:
-            representatives.append(candidate.perceptual_hash)
-            clusters.append([candidate])
-        else:
-            clusters[cluster_index].append(candidate)
-    return [sorted(rows, key=lambda row: row.key) for rows in clusters]
+from src.vision.training.hard_example_candidates import (
+    Candidate, _bucket, _canonical, _clusters, dhash64, hamming_hex, load_collection,
+)
+from src.vision.training.hard_example_framing import apply_bbox_policy
+from src.vision.training.hard_example_multilabel import curate_multilabel, _multilabel_keys
 
 
 def curate(candidates, quotas, near_duplicate_hamming_threshold=6):
@@ -296,209 +101,6 @@ def curate(candidates, quotas, near_duplicate_hamming_threshold=6):
     return sorted(selected, key=lambda row: (row.split, row.map_id, row.kind, row.key)), rejected, cluster_records, coverage, shortfall
 
 
-def _multilabel_keys(candidate):
-    if candidate.kind == "no_target":
-        return (("all", "no_target", candidate.split),)
-    return tuple(
-        (class_name, "target", candidate.split)
-        for class_name in sorted({item["class_name"] for item in candidate.objects})
-    )
-
-
-def curate_multilabel(
-    candidates,
-    quotas,
-    near_duplicate_hamming_threshold=6,
-    selection_group=None,
-):
-    """Select split-isolated frames against per-class, multi-label quotas."""
-    rejected = []
-    exact_groups = defaultdict(list)
-    for candidate in candidates:
-        exact_groups[candidate.image_sha256].append(candidate)
-    exact_unique = []
-    for _, rows in sorted(exact_groups.items()):
-        rows.sort(key=lambda row: (row.split != "development", row.key))
-        exact_unique.append(rows[0])
-        rejected.extend(
-            {
-                "frame_id": row.frame_id,
-                "collection": row.collection,
-                "reason": "exact_duplicate",
-                "duplicate_of": rows[0].frame_id,
-            }
-            for row in rows[1:]
-        )
-
-    clusters = sorted(
-        _clusters(
-            sorted(exact_unique, key=lambda row: row.key),
-            near_duplicate_hamming_threshold,
-        ),
-        key=lambda group: (-len(group), group[0].key),
-    )
-    assignments = []
-    deficits = dict(quotas)
-    for rows in clusters:
-        available_splits = tuple(
-            split
-            for split in ("development", "validation")
-            if any(row.split == split for row in rows)
-        )
-        split_scores = {}
-        split_counts = {}
-        for split in ("development", "validation"):
-            counts = defaultdict(int)
-            for row in rows:
-                if row.split == split:
-                    for key in _multilabel_keys(row):
-                        counts[key] += 1
-            split_counts[split] = counts
-            split_scores[split] = sum(
-                min(count, deficits.get(key, 0)) for key, count in counts.items()
-            )
-        assigned = max(
-            available_splits,
-            key=lambda split: (split_scores[split], split == "validation"),
-        )
-        assignments.append(assigned)
-        for key, count in split_counts[assigned].items():
-            deficits[key] = max(0, deficits.get(key, 0) - count)
-
-    def assignment_totals(values):
-        totals = defaultdict(int)
-        for rows, assigned in zip(clusters, values):
-            for row in rows:
-                if row.split == assigned:
-                    for key in _multilabel_keys(row):
-                        totals[key] += 1
-        return totals
-
-    def objective(totals):
-        return sum(
-            min(totals.get(key, 0), required)
-            for key, required in quotas.items()
-        )
-
-    while True:
-        baseline = objective(assignment_totals(assignments))
-        best = None
-        for index, assigned in enumerate(assignments):
-            trial = list(assignments)
-            trial[index] = (
-                "validation" if assigned == "development" else "development"
-            )
-            gain = objective(assignment_totals(trial)) - baseline
-            if gain > 0 and (best is None or (gain, -index) > (best[0], -best[1])):
-                best = gain, index
-        if best is None:
-            break
-        assignments[best[1]] = (
-            "validation"
-            if assignments[best[1]] == "development"
-            else "development"
-        )
-
-    eligible = []
-    cluster_records = []
-    for cluster_id, (rows, assigned) in enumerate(
-        zip(clusters, assignments), start=1
-    ):
-        kept = [row for row in rows if row.split == assigned]
-        eligible.extend(kept)
-        for row in rows:
-            if row.split != assigned:
-                rejected.append(
-                    {
-                        "frame_id": row.frame_id,
-                        "collection": row.collection,
-                        "reason": "near_duplicate_cross_split",
-                        "cluster_id": cluster_id,
-                        "assigned_split": assigned,
-                    }
-                )
-        cluster_records.append(
-            {
-                "cluster_id": cluster_id,
-                "assigned_split": assigned,
-                "member_count": len(rows),
-                "kept_count": len(kept),
-                "perceptual_hashes": sorted(
-                    {row.perceptual_hash for row in rows}
-                ),
-            }
-        )
-
-    remaining = sorted(
-        eligible,
-        key=lambda row: (row.perceptual_hash, row.image_sha256, row.key),
-    )
-    deficits = dict(quotas)
-    selected = []
-    selected_group_counts = defaultdict(int)
-    while any(value > 0 for value in deficits.values()):
-        ranked = []
-        for row in remaining:
-            active = [key for key in _multilabel_keys(row) if deficits.get(key, 0) > 0]
-            if not active:
-                continue
-            normalized_need = sum(
-                deficits[key] / max(quotas[key], 1) for key in active
-            )
-            group_load = 0
-            if selection_group == "recording_seed":
-                group_load = sum(
-                    selected_group_counts[(key, row.seed)] for key in active
-                )
-            ranked.append(
-                (
-                    -len(active),
-                    -normalized_need,
-                    group_load,
-                    row.perceptual_hash,
-                    row.image_sha256,
-                    row.key,
-                    row,
-                )
-            )
-        if not ranked:
-            break
-        chosen = min(ranked)[-1]
-        selected.append(chosen)
-        remaining.remove(chosen)
-        for key in _multilabel_keys(chosen):
-            deficits[key] = max(0, deficits.get(key, 0) - 1)
-            if selection_group == "recording_seed":
-                selected_group_counts[(key, chosen.seed)] += 1
-
-    selected_set = {row.key for row in selected}
-    rejected.extend(
-        {
-            "frame_id": row.frame_id,
-            "collection": row.collection,
-            "reason": "quota_excess",
-        }
-        for row in remaining
-        if row.key not in selected_set
-    )
-    totals = defaultdict(int)
-    for row in selected:
-        for key in _multilabel_keys(row):
-            totals[key] += 1
-    coverage = {"/".join(key): totals.get(key, 0) for key in sorted(quotas)}
-    shortfall = {
-        "/".join(key): max(0, required - totals.get(key, 0))
-        for key, required in sorted(quotas.items())
-    }
-    return (
-        sorted(selected, key=lambda row: (row.split, row.map_id, row.kind, row.key)),
-        rejected,
-        cluster_records,
-        coverage,
-        shortfall,
-    )
-
-
 def build_receipt(
     selected,
     rejected,
@@ -510,6 +112,7 @@ def build_receipt(
     threshold,
     hash_algorithm,
     selection_group=None,
+    deduplicate_within_split=False,
 ):
     record = {
         "schema_version": 1,
@@ -526,5 +129,26 @@ def build_receipt(
         "near_duplicate_cluster_count": len(clusters),
         "selected": [row.record() for row in selected],
     }
+    if deduplicate_within_split:
+        record["deduplicate_within_split"] = True
+        record["selection_algorithm"] = "multilabel_pairwise_dhash_separated_v1"
+        # Count distinct frames per class and size band, not annotation events.
+        size_coverage = defaultdict(int)
+        for row in selected:
+            frame_keys = set()
+            for item in row.objects:
+                x1, y1, x2, y2 = map(float, item["bbox_xyxy"])
+                area = max(0.0, x2 - x1) * max(0.0, y2 - y1) / (1920.0 * 1080.0)
+                band = (
+                    "lt_0_003" if area < 0.003 else
+                    "0_003_to_0_01" if area < 0.01 else
+                    "0_01_to_0_03" if area < 0.03 else "gte_0_03"
+                )
+                frame_keys.add((row.split, item["class_name"], band))
+            for key in frame_keys:
+                size_coverage["/".join(key)] += 1
+        record["selected_class_size_frame_counts"] = dict(sorted(size_coverage.items()))
     record["identity"] = hashlib.sha256(_canonical(record).encode()).hexdigest()
     return record
+
+

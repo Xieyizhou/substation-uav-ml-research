@@ -1,0 +1,17 @@
+{
+  "cooldown_s": 5,
+  "emit_stride": 30,
+  "frames_per_run": 90,
+  "matrix_id": "visual-hard-examples-v2.12-run19-transformer-far-pilot-v2",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run19_transformer_far_pilot_v2.json",
+  "run_revision": "run19-transformer-far-pilot-v2",
+  "runs": [
+    {
+      "map_id": "medium",
+      "seed": 780103,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-transformer-far-pilot-v2/routes/medium-transformer-far-motion-v2.json"
+    }
+  ],
+  "schema_version": 1
+}

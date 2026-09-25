@@ -30,34 +30,17 @@ def register_profile_commands(commands):
         "bootstrap", help="Initialize the selected local sandbox profile"
     )
     bootstrap.add_argument("--output", type=Path)
-    bootstrap_inspect = commands.add_parser(
-        "bootstrap-inspect", help="Validate a sandbox bootstrap receipt"
-    )
-    bootstrap_inspect.add_argument("--input", type=Path, required=True)
-    demo = commands.add_parser(
-        "demo-run", help="Run the dependency-free demonstration workflow"
-    )
-    demo.add_argument("--output", type=Path, required=True)
-    demo_inspect = commands.add_parser(
-        "demo-inspect", help="Validate a demonstration workflow result"
-    )
-    demo_inspect.add_argument("--input", type=Path, required=True)
-    release = commands.add_parser(
-        "release-gate", help="Run the offline Sandbox v0.1 release gate"
-    )
-    release.add_argument("--output", type=Path, required=True)
-    release_inspect = commands.add_parser(
-        "release-gate-inspect", help="Validate a Sandbox v0.1 gate result"
-    )
-    release_inspect.add_argument("--input", type=Path, required=True)
-    beta = commands.add_parser(
-        "beta-install-gate", help="Test Demo installation in a clean source and venv"
-    )
-    beta.add_argument("--output", type=Path, required=True)
-    beta_inspect = commands.add_parser(
-        "beta-install-gate-inspect", help="Validate a Beta installation result"
-    )
-    beta_inspect.add_argument("--input", type=Path, required=True)
+    for name, help_text, argument in (
+        ("bootstrap-inspect", "Validate a sandbox bootstrap receipt", "input"),
+        ("demo-run", "Run the dependency-free demonstration workflow", "output"),
+        ("demo-inspect", "Validate a demonstration workflow result", "input"),
+        ("release-gate", "Run the offline Sandbox v0.1 release gate", "output"),
+        ("release-gate-inspect", "Validate a Sandbox v0.1 gate result", "input"),
+        ("beta-install-gate", "Test Demo installation in a clean source and venv", "output"),
+        ("beta-install-gate-inspect", "Validate a Beta installation result", "input"),
+    ):
+        command = commands.add_parser(name, help=help_text)
+        command.add_argument(f"--{argument}", type=Path, required=True)
     development = commands.add_parser(
         "development-app-gate",
         help="Bind one App-managed Development flight to release evidence",
@@ -88,26 +71,21 @@ def handle_profile_command(args, config):
     if args.command == "demo-run":
         result = run_demo(config.project_root, args.output)
         return result, 0 if result["result"]["passed"] else 1
-    if args.command == "demo-inspect":
-        result = inspect_demo(args.input)
-        return result, 0 if result["passed"] else 1
-    if args.command == "release-gate":
+    inspectors = {
+        "demo-inspect": inspect_demo,
+        "release-gate-inspect": inspect_release_gate,
+        "beta-install-gate-inspect": inspect_beta_install_gate,
+        "development-app-gate-inspect": inspect_development_app_gate,
+    }
+    if args.command in inspectors:
+        result = inspectors[args.command](args.input)
+    elif args.command == "release-gate":
         result = run_release_gate(config, args.output)
-        return result, 0 if result["passed"] else 1
-    if args.command == "release-gate-inspect":
-        result = inspect_release_gate(args.input)
-        return result, 0 if result["passed"] else 1
-    if args.command == "beta-install-gate":
+    elif args.command == "beta-install-gate":
         result = run_beta_install_gate(config.project_root, args.output)
-        return result, 0 if result["passed"] else 1
-    if args.command == "beta-install-gate-inspect":
-        result = inspect_beta_install_gate(args.input)
-        return result, 0 if result["passed"] else 1
-    if args.command == "development-app-gate":
+    elif args.command == "development-app-gate":
         result = run_development_app_gate(
             config.project_root, args.workflow_receipt,
             args.flight_summary, args.output,
         )
-        return result, 0 if result["passed"] else 1
-    result = inspect_development_app_gate(args.input)
     return result, 0 if result["passed"] else 1

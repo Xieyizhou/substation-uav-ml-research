@@ -112,4 +112,7 @@ def build_perception_detector(args, planner_config):
         ),
         risk_predictor=risk_predictor,
         risk_fusion=args.risk_fusion,
+        local_frame=planner_config.get("local_frame"),
+        sensor_forward_m=planner_config.get("lidar_mount", {}).get("forward_m", 0.),
+        sensor_left_m=planner_config.get("lidar_mount", {}).get("left_m", 0.),
     )

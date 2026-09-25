@@ -104,6 +104,13 @@ def load_planner_config(
         config_path = project_root / config_path
 
     config = load_obstacle_config(config_path)
+    from src.planner.local_frame import LocalFrame
+    LocalFrame.from_mapping(config.get("local_frame"))
+    if config.get("local_frame") and (
+        getattr(args,"runtime_mode","standard") != "standard" or
+        (getattr(args,"enable_perception",False) and getattr(args,"perception_source","map_baseline")=="map_baseline")
+    ):
+        raise ValueError('Registered local frame currently requires standard runtime and sensor-based perception, not legacy map/semantic coordinates')
     start, goal = get_start_goal(config)
     selected_target = selected_target_resolver(config_path)
     if selected_target is not None:
@@ -126,6 +133,8 @@ def load_planner_config(
     obstacles = obstacle_map["inflated_blocking_cells"]
 
     planner_config = {
+        "local_frame": config.get("local_frame"),
+        "lidar_mount": config.get("lidar_mount", {}),
         "map_name": config.get("map_name", config_path.stem),
         "target_id": selected_target["id"] if selected_target else None,
         "target_display_name": (

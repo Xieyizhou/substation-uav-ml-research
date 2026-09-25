@@ -43,7 +43,7 @@ fi
 PROJECT_ROOT="$DETECTED_PROJECT_ROOT"
 PX4_ROOT="${PX4_ROOT:-$HOME/PX4-Autopilot}"
 DISPLAY_MODE="${UAV_SANDBOX_DISPLAY_MODE:-headless}"
-[[ "$DISPLAY_MODE" == "headless" || "$DISPLAY_MODE" == "visual_preview" ]] || +  fail "unsupported display mode: $DISPLAY_MODE"
+[[ "$DISPLAY_MODE" == "headless" || "$DISPLAY_MODE" == "visual_preview" ]] || fail "unsupported display mode: $DISPLAY_MODE"
 export GZ_IP="${GZ_IP:-127.0.0.1}"
 export GZ_PARTITION="${GZ_PARTITION:-substation_uav}"
 if [[ "$DISPLAY_MODE" == "headless" ]]; then

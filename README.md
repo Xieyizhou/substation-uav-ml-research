@@ -1,420 +1,198 @@
-# Substation UAV ML Research Platform
+<div align="center">
 
-> **Status: Sandbox Product 0.3 Candidate / Experimental Research Platform**
->
-> This repository develops sensor-driven risk, traversability learning, and
-> semantic inspection planning in simulation. It is not production software,
-> does not include trained model weights, and has not been validated on a real
-> airframe or energized substation.
+# UAV Research Sandbox
 
-The project extends the stable
-[uav-path-planning-demo](https://github.com/Xieyizhou/uav-path-planning-demo)
-baseline with Gazebo LiDAR, record/replay, local costmaps, ML/ONNX research
-interfaces, deterministic camera collection, and visual model evaluation.
+**A desktop workspace for substation UAV simulation and visual model research.**
 
-![Sandbox Demo Profile](docs/assets/sandbox_demo.jpg)
+Plan a route · Collect feedback · Review labels · Train and compare · Fly in SITL
 
-![A* route preview](docs/assets/grid_path.png)
+[![Validation](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml/badge.svg)](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)
+![Research preview](https://img.shields.io/badge/status-research_preview-087f70)
+![Simulation only](https://img.shields.io/badge/scope-simulation_only-53657a)
+[![Project code: MIT](https://img.shields.io/badge/project_code-MIT-53657a)](LICENSE)
 
-[Demo video](https://github.com/Xieyizhou/uav-path-planning-demo/releases/tag/v0.1-demo)
-· [Command reference](docs/CLI_REFERENCE.md)
-· [Architecture](docs/architecture.md)
-· [Local sandbox app](docs/RESEARCH_INSPECTOR.md)
-· [Sandbox quick start](docs/SANDBOX_QUICKSTART.md)
-· [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
-· [ML research platform](docs/ML_RESEARCH_PLATFORM.md)
-· [ML study workflow](docs/STUDY_WORKFLOW.md)
-· [Research roadmap](ROADMAP.md)
-· [Project provenance](PROVENANCE.md)
+[Quick start](#try-the-demo) · [中文说明](README.zh-CN.md) · [Workflow guide](docs/VALIDATION.md) · [CLI reference](docs/CLI_REFERENCE.md) · [Project status](PROJECT_STATUS.md)
 
-## Project Snapshot
+</div>
 
-| Area | Implementation |
+![Development profile: Flight Console with a completed, qualified simulation task](docs/assets/research_preview_desktop.png)
+
+*Actual desktop capture from the September 25, 2026 local acceptance run. The model,
+datasets and flight receipts shown here are local research artifacts, not bundled demo data.*
+
+## What this project is
+
+A local research sandbox connecting **PX4 SITL and Gazebo simulation**, **A* route
+planning**, and **visual model iteration**. Use the desktop browser workspace or
+the optional macOS shell; the same managed workflows are available through the CLI.
+
+This is a **research preview**. The dependency-free Demo is ready to explore;
+training and flight need separately installed tools and supplied research assets.
+The project has not been validated on real aircraft or energized substations.
+
+## Explore the workspace
+
+| Workspace | What you can do |
 | --- | --- |
-| Autonomous planning | Height-aware A* routing, obstacle inflation, path simplification, and return-route generation |
-| Flight execution | MAVSDK local-NED waypoint control against PX4 SITL and Gazebo |
-| Risk response | Map-oracle baseline plus live/replayed 2D LiDAR costmaps, geometric risk, safety actions, and optional ONNX fusion |
-| ML research | Reproducible randomized worlds, automatic LiDAR truth labels, versioned datasets/model packages, deterministic 1D CNN training, and resumable paired studies |
-| Local replanning | Candidate-only evaluation and active replacement of remaining outbound waypoints |
-| Test environments | 5 coordinated Gazebo/A* maps, 5 safe destination presets per map, and map/target switching |
-| Custom map sandbox | Desktop 2D editor, deterministic immutable revisions, A* route previews, controlled flight, live trajectory, and optional dataset registration |
-| Evaluation | Structured telemetry, run manifests, plots, stage summaries, and cross-stage comparisons |
-| Reliability | Explicit failure codes, timeout-bounded runtime tasks, landing confirmation, PID-scoped cleanup, and parameter validation |
-| Developer experience | One modular `main.py` command center plus a local sandbox app for health checks, bounded jobs, recording review, and aggregate ML results |
+| **Map Studio** | Edit a substation layout, check routes and freeze an immutable map revision. |
+| **Flight Console** | Run managed simulation tasks, inspect trajectories, and request a controlled stop and landing. |
+| **Dataset Manager** | Inspect collected frames, explicitly accept or reject labels, and register a versioned dataset. |
+| **Training Studio** | Run bounded YOLO experiments, fine-tune a verified parent and export ONNX. |
+| **Model Tester** | Inspect verified candidates and compare local-image predictions; native image import is available in the macOS shell. |
+| **Report Viewer** | Inspect evaluation results, job logs and identity-bound receipts. |
 
-## Selected Engineering Contributions
+The current model feedback loop is:
 
-- Built an end-to-end autonomy pipeline from grid planning to simulated flight,
-  telemetry collection, risk response, replanning, and experiment analysis.
-- Kept the Gazebo world, PX4 spawn pose, A* obstacle grid, and selected
-  destination synchronized through a validated map catalog.
-- Designed five test environments ranging from a 16 × 16 m training yard to a
-  dense 32 × 32 m multi-voltage station, with 25 validated destination presets.
-- Added four reproducible experiment stages: static A*, perception response,
-  log-only local replanning, and active route replacement.
-- Hardened execution with connection, telemetry, waypoint, landing, and logger
-  timeouts; atomic run-status records; confirmed landing state; and cleanup
-  limited to project-managed processes.
-- Refactored project execution into a small modular CLI while preserving
-  advanced flight parameters and correct subprocess exit codes.
-
-## Measured Simulation Results
-
-The committed sample artifacts contain one selected landmark run from each
-official stage:
-
-| Stage | Flight time | Key result | Safety-buffer violations | Status |
-| --- | ---: | --- | ---: | --- |
-| Static A* | 149.316 s | Completed a 68 m planned round trip | 0 | PASS |
-| Perception response | 174.563 s | 671 risk detections and 296 slow-down events | 0 | PASS |
-| Replan log-only | 149.850 s | 4 successful candidates from 4 replan attempts | 0 | PASS |
-| Active replan | 222.392 s | 3 successful replans and 1 active route replacement | 0 | PASS |
-
-Source data: [comparison summary](data/sample_outputs/comparison_summary.md) and
-[selected run metadata](data/sample_outputs/selected_runs.json).
-
-The refreshed landmark uses active run `as_20260713_070842`. The latest three
-eligible active-replan runs all pass strict target-switching validation with a
-contiguous `RWP01` through `RWP06` sequence, no old outbound `WP` target after
-replacement, original-goal arrival, and completed landing.
-
-The aggregate comparison now includes 4 static, 3 perception-response, 3
-log-only replan, and 6 active-replan runs. All 16 are completed and marked
-`PASS`, with zero recorded safety-buffer violations. See the committed
-[aggregate summary](data/sample_outputs/aggregate_summary.md).
-
-### Live LiDAR v0.1 evidence
-
-On 2026-07-28, the `x500_research` vehicle completed a 600-second LiDAR
-stability capture in the held-out `extreme` world and six sensor-driven round
-trips across the `complex` and `extreme` worlds. Each map used the `left`,
-`center`, and `top_right` targets:
-
-| Evidence | Result |
-| --- | --- |
-| Stability capture | 18,165 frames; 599.577 s sensor timestamp span; 30.295 Hz |
-| Data health | 0 dropped or invalid frames; 11.56 ms P95 frame age |
-| Closed-loop missions | 6/6 completed with confirmed landing |
-| Safety result | 0 physical collisions; 0 inflated-buffer entries |
-| In-flight LiDAR health | ≥99.82% healthy samples; ≤31.64 ms P95 frame age; 0 drops |
-| Closed-loop flight time | 1,288.365 s total; 214.727 s mean |
-| Geometric inference | ≤3.11 ms P95 across all six runs |
-
-The capture command ran for 600 seconds; the timestamp span starts at the
-first received scan. Raw scans, telemetry, simulator logs, and generated plots
-remain outside Git. The exact run IDs, hashes, limitations, and per-target
-metrics are recorded in the
-[v0.1 LiDAR validation report](docs/results/v0.1_lidar_validation_20260728.md)
-and its [machine-readable summary](data/sample_outputs/v0.1_lidar_validation_20260728.json).
-
-### Visual v2 and planning baseline audit
-
-The frozen YOLO11n v2 package completed a 68,511-frame paired blind evaluation
-at 82.07% mAP50-95, 93.25% macro-F1, 81.96% small-object recall, and 2.34%
-no-target false-positive rate. Its training-view identity, package identity,
-three ONNX equivalence receipts, and nine-condition static replay manifest are
-consistent.
-
-The local 120-run LiDAR tree is retained only as a historical static
-diagnostic. Although it contains all 30 scenarios × four conditions and its
-comparison report matches the result arithmetic, the files span 11 study
-identities/commits and contain zero truth-danger samples. It therefore does
-not validate deterministic dynamic-obstacle detection or replanning. See the
-[baseline audit](docs/results/verified_visual_and_flight_baselines_20260820.md)
-for exact identities, metrics, and evidence boundaries.
-
-The replacement dynamic benchmark uses 12 deterministic Gazebo blockers
-across three map structures and early, mid-route, near-target, and return-leg
-injection phases. All 12 runs recorded the required spawn, detection,
-decision, hover, replanning, route-acceptance, resumption, completion, and
-landing events. Replanning, route-switch correctness, mission completion, and
-landing were 100%, with no collisions, safety failures, or false replans. The
-associated temporal-perception, semantic-inspection, and height-layer planning
-results are summarized in the
-[planning reliability report](docs/results/planning_reliability_20260820.md).
-The subsequent 60-run speed envelope recommends 0.50 m/s as the highest
-contiguous validated speed. A 752-image licensed real-domain stress view found
-zero matched true positives for its two represented target classes, so the
-strong synthetic result must not be described as real-image generalization.
-The [real-domain v3 intake policy](docs/REAL_DOMAIN_V3_SOURCES.md) now gates
-public sources by upstream provenance, canonical equipment semantics, source
-grouping, and split eligibility before any image can enter training.
-
-## System Architecture
-
-```text
-Map + destination catalog
-          ↓
-Height-aware obstacle grid → A* global route → simplified waypoints
-                                                ↓
-Gazebo world ← PX4 SITL ← MAVSDK local-NED flight controller
-                                                ↓
-                         telemetry + map oracle / LiDAR perception
-                                                ↓
-                      risk action / local route replacement
-                                                ↓
-                    CSV logs → metrics → plots → comparisons
+```mermaid
+flowchart LR
+    A[Collect in SITL] --> B[Review every frame]
+    B --> C[Register dataset]
+    C --> D[Train and compare]
+    D --> E[Qualify selected model]
+    E --> F[Execute in fixed scene]
+    F --> A
 ```
 
-The project separates user commands, flight execution, planning, perception,
-map management, and reporting into small modules under `src/`.
+Predictions are review drafts, not automatic ground truth. A selected model needs
+both a complete-task check and an in-motion controlled-stop check for the current
+runtime identity. Changes to the bound code, model or runtime require new checks.
+Custom-map flight and the qualified fixed-scene model task are separate workflows.
 
-## Technology Stack
+## Try the Demo
 
-- Python 3.11, `asyncio`, `unittest`
-- PX4 SITL, Gazebo Sim, MAVSDK
-- A* search and grid-based obstacle modeling
-- pandas and Matplotlib for telemetry analysis
-- Bash experiment launchers and GitHub Actions offline validation
-- JSON/SDF configuration for synchronized planning and simulation maps
+**Requirements:** Git, Python 3.11+ and a desktop browser on macOS or Linux.
+No Python packages, trained weights, datasets, PX4 or Gazebo are needed for Demo.
 
-## Quick Start: App Demo
-
-The native Demo Profile does not require Python, a repository, local datasets,
-trained weights, PX4, or Gazebo. The repository-hosted browser workflow uses
-Python 3.11+:
-
-```bash
+```sh
 git clone https://github.com/Xieyizhou/substation-uav-ml-research.git
 cd substation-uav-ml-research
 ./scripts/run_sandbox_app.sh
 ```
 
-Open `http://127.0.0.1:8765`, choose **Model Lab → Train**, and run **Demo
-classifier**. The result is an identity-bound workflow example built from
-synthetic features and is explicitly excluded from formal research evidence.
+Open **[localhost:8765](http://127.0.0.1:8765/#results/acceptance)** →
+**Acceptance** → **Demo classifier** → **Create recipe and run**.
+The deterministic synthetic example demonstrates recipes and receipts; it does
+not measure detector quality. Press `Ctrl-C` in the terminal to stop the server.
 
-Development Profile also provides a visual model workbench for real YOLO11n
-experiments. It registers native visual training views or imports a standard
-YOLO Detect directory, then runs a bounded recipe through training, validation,
-static ONNX export, PT/ONNX equivalence, ordered replay, and an optional paired
-baseline comparison. PX4 and Gazebo are not required for this offline path.
+For a terminal-only run:
 
-Development Profile now also includes **Map Studio**. A user can copy a
-tracked template or build a 16–60 m substation from the allow-listed equipment
-library, validate collision and reachability constraints, freeze an immutable
-revision, and send it to **Flight Console**. Headless and Visual Preview runs
-bind the same map and route identities. The console overlays the planned path,
-approximately 5 Hz MAVSDK trajectory, pose, yaw, phase, speed, altitude, and
-telemetry health. Optional PNG/truth recording must pass an audit before it can
-be registered as a development-only Workbench dataset.
-
-Completed receipt-verified runs can also process a local PNG/JPEG from the
-native App under **Model Lab → Test Image**. The model lab applies the frozen validation threshold, draws
-class/confidence boxes, records latency and hashes, and can compare two
-verified candidates on the same image. The browser cannot provide a filesystem
-path, arbitrary ONNX file, or threshold.
-
-```bash
-python main.py sandbox --profile development workbench-recipe-create \
-  --experiment-id visual-smoke-01 --dataset-id visual_yolo_v2 --preset smoke
-python main.py sandbox --profile development workbench-run \
-  --recipe outputs/sandbox/workbench/runs/visual-smoke-01/recipe.json
+```sh
+python3 main.py sandbox --profile demo demo-run --output outputs/sandbox/demo/runs/first
+python3 main.py sandbox --profile demo demo-inspect --input outputs/sandbox/demo/runs/first
 ```
 
-### Native macOS shell
+[First-run guide and troubleshooting →](docs/SANDBOX_QUICKSTART.md)
 
-The optional SwiftUI application manages the same loopback Sandbox service. A
-native status page summarizes the active profile, environment checks, managed
-job, runtime processes, and storage. The complete browser workbench remains
-available in the same window:
+## Choose a research setup
 
-```bash
+| Mode | Additional requirements | Scope |
+| --- | --- | --- |
+| **Demo** | None beyond Python | Synthetic workflow tour; no flight or real YOLO training. |
+| **Development · offline** | Core + ML dependencies and your own reviewed YOLO dataset | Training, ONNX checks, replay and comparison. |
+| **Development · simulation** | Compatible PX4/Gazebo, required model/data and scenario assets | Map flight, collection and the fixed-scene feedback loop. |
+| **Formal** | Frozen artifacts and the matching experiment protocol | Evidence-preserving evaluation; not an aircraft certification. |
+
+Start a development environment:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+# Optional: install before using real visual training; see the compatibility guide.
+python -m pip install -r requirements-ml.txt
+./scripts/run_sandbox_app.sh --profile development
+```
+
+The ML pins were validated locally on **Python 3.14 / macOS arm64**; that is
+separate from the Demo and core CI matrix. A source clone does **not** include
+trained weights, raw datasets, PX4/Gazebo, or the local frozen evidence archive.
+Some advanced workflows therefore remain unavailable until their inputs are
+provided. There is no automatic download of the author's research environment.
+
+[Setup and artifact boundaries](docs/RESEARCH_PREVIEW.md) ·
+[Dataset import and training](docs/RESEARCH_INSPECTOR.md) ·
+[Current model qualification](docs/VALIDATION.md#桌面反馈迭代)
+
+### Optional macOS app
+
+With a full Xcode installation, build the native shell from this checkout:
+
+```sh
 ./scripts/build_macos_app.sh release
 open "dist/UAV Research Sandbox.app"
 ```
 
-Create a versioned preview DMG, ZIP, release manifest, and SHA256 checksum list
-with:
+The native Demo can run without a repository or Python. Development and Formal
+use an external Python/simulator environment. Local builds are ad-hoc signed,
+not Apple-notarized. Existing older prerelease binaries do not necessarily match
+this source snapshot; see the [macOS guide](docs/MACOS_APP.md).
 
-```bash
-./scripts/package_macos_release.sh 0.7.0
-```
+## What has been verified
 
-Demo Profile runs entirely inside the App without a repository or Python.
-Development and Formal continue to use the repository's Python environment and
-keep PX4/Gazebo as external dependencies. Before launch, the App discovers and
-validates Python, PX4, Gazebo, OpenCV, and Qt. **Candidates…** lists every known
-installation with its source, version, compatibility result, and selected path;
-the choice is saved in the user's Application Support directory. Multiple
-installations may coexist, and the App does not silently use the first
-incompatible command on `PATH`. See
-[the macOS App guide](docs/MACOS_APP.md)
-for profiles, build requirements, preview, unsigned Beta, and future notarized
-Beta releases, plus the distribution boundary.
+| Evidence | Result and boundary |
+| --- | --- |
+| Portable core, September 25 | **974 tests passed** in an independently unpacked source tree with core test dependencies and no ML stack. Current CI is linked above. |
+| Full local research environment, September 25 | **2,093 tests passed**. Research checks require local artifacts and are separate from source-only CI. |
+| Desktop feedback loop | Collected 51 frames; AI-assisted explicit review accepted 46 and rejected 5; registered, fine-tuned, compared and flew the selected model in the existing fixed scene. |
+| Model comparison | Parent macro-F1 **0.970238 → 0.968013** on the same 64-image development validation set. The new model did **not** improve this metric. |
+| Runtime checks | Complete-task and controlled-stop checks passed. One later task aborted during visual revalidation and landed safely; an unchanged retry completed. No statistical success-rate claim. |
+| Historical evidence | 50 original records were reverified from a portable archive. These records do not qualify changed code or models. |
 
-Build the current integrity-verifiable unsigned Beta from a clean tracked
-worktree with `./scripts/package_macos_beta.sh 0.7.0`. Its manifest binds the
-source commit and artifact SHA256 identities while explicitly declaring that it
-is not Apple-notarized. The repository also retains a separate Developer ID and
-notarization workflow for future signed releases.
+[Acceptance report and exact identities →](docs/results/sandbox_core_completion_20260925.md)
 
-Run the complete offline release check with:
+**Known limits:** simulation only; desktop only; no demonstrated real-image
+transfer or real-airframe readiness. The reviewed feedback used AI assistance,
+not independent human annotation. The retained base validation split is not
+proof of independence across physical sites. Historical selected runs are not
+universal performance guarantees.
 
-```bash
-python3 main.py sandbox --profile demo release-gate \
-  --output outputs/sandbox/demo/release-gate/local
-```
+<details>
+<summary>Earlier research results and their evidence boundaries</summary>
 
-Before publishing or reviewing a Beta, reproduce a first-time installation in
-a tracked-source copy and fresh virtual environment:
+- [Live LiDAR stability and six round trips](docs/results/v0.1_lidar_validation_20260728.md)
+- [Frozen visual baseline and historical-study audit](docs/results/verified_visual_and_flight_baselines_20260820.md)
+- [Dynamic replanning and speed-envelope results](docs/results/planning_reliability_20260820.md)
+- [Real-domain source eligibility](docs/REAL_DOMAIN_V3_SOURCES.md)
+- [Selected demonstration metrics](data/sample_outputs/comparison_summary.md)
 
-```bash
-python3 main.py sandbox --profile demo beta-install-gate \
-  --output outputs/sandbox/demo/beta-install/local
-```
+Raw scans, model weights and most generated receipts are not stored in Git.
+Reports identify historical observations, not tests automatically reproduced by
+cloning this repository.
 
-This gate uses no network access. It runs bootstrap, the deterministic Demo,
-receipt inspection, and a loopback App smoke check without using the current
-virtual environment or local research data.
+</details>
 
-See the [Sandbox quick start](docs/SANDBOX_QUICKSTART.md) for profile boundaries,
-outputs, and the first experiment walkthrough.
+## Develop and verify
 
-## Full Simulator Setup
-
-Prerequisites: Python 3.11+, PX4 SITL/Gazebo, and a compatible PX4 checkout.
-`~/PX4-Autopilot` remains the default, while `PX4_ROOT` and the App's manual
-runtime chooser support other locations.
-
-```bash
+```sh
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-python main.py check environment
+python -m pip install -r requirements-test.txt
+python scripts/run_tests.py --suite core --report outputs/core-tests.json
 ```
 
-Select a map and destination:
-
-```bash
-python main.py map
-python main.py point
-```
-
-Start PX4/Gazebo in terminal A:
-
-```bash
-python main.py map start
-```
-
-Preview or fly in terminal B:
-
-```bash
-source .venv/bin/activate
-python main.py task run preview_route
-python main.py task run fly_round_trip
-```
-
-Flight commands control PX4 SITL. Use the preview command first when testing a
-new map or destination.
-
-## Unified Command Center
-
-```bash
-python main.py --help
-
-python main.py map list
-python main.py point list
-python main.py task list
-
-python main.py astar preview --return-home
-python main.py astar fly --return-home --max-speed 0.8
-
-python main.py experiment run static
-python main.py experiment run-all --trials 3
-
-python main.py report summarize
-python main.py report compare --mode both --min-runs-per-stage 3
-
-python main.py check all
-
-python main.py map start complex --vehicle-model x500_research
-python main.py sensor check --source gazebo_lidar_2d
-python main.py data --help
-python main.py model --help
-python main.py study --help
-python main.py model protocol --config config/perception/research_protocol.json
-
-python main.py sandbox serve --host 127.0.0.1 --port 8765
-```
-
-See [docs/CLI_REFERENCE.md](docs/CLI_REFERENCE.md) for every command and advanced
-parameter-forwarding example.
-
-## Repository Structure
+CI checks the dependency-free Demo, portable core, and native macOS tests/build/
+packaging. Offline checks do not run PX4/Gazebo missions or reproduce the author's
+full training data. See [validation](docs/VALIDATION.md) and
+[contributing](CONTRIBUTING.md) for research tests and contribution expectations.
 
 | Path | Purpose |
 | --- | --- |
-| `main.py` | Unified user entry point |
-| `src/cli/` | Modular command routing |
-| `src/planner/` | A* search, obstacle conversion, and path simplification |
-| `src/flight/` | MAVSDK flight runtime, task presets, and replanning orchestration |
-| `src/perception/` | Simulated obstacle detector and risk-state logic |
-| `src/sensors/` | Unified live/replay sensor sources and stable data contracts |
-| `src/ml/` | LiDAR learning, generic dataset utilities, and non-visual model tooling |
-| `src/vision/` | Camera contracts, collection, training views, evaluation, packaging, and static replay |
-| `src/inspection/` | Read-only sandbox observations, recording browser, and aggregate ML lifecycle results |
-| `src/sandbox/` | Allowlisted local jobs, single-instance control, bounded execution, and job history |
-| `src/study/` | SQLite registry, tier matrices, resumable queues, gates, and paired statistics |
-| `apps/macos/SandboxApp/` | Native SwiftUI shell for the controlled local Sandbox service |
-| `src/maps/` | Map catalog, target selection, and Gazebo marker synchronization |
-| `src/logging/` | Telemetry, metrics, plots, reports, and comparisons |
-| `scripts/flight/experiments/` | Reproducible four-stage experiment launchers |
-| `config/maps/` | Generated map-specific A* configurations |
-| `simulation/worlds/` | Gazebo SDF test environments |
-| `tests/` | Offline regression and safety tests |
+| `src/` / `main.py` | Maintained application, CLI, planning, perception and flight modules |
+| `apps/macos/` | Optional SwiftUI shell |
+| `config/` / `simulation/` | Contracts, presets and simulator definitions |
+| `scripts/` | Entry points and evidence-dependent research tooling |
+| `archive/research_scripts/` | Preserved historical scripts with checksum manifest |
+| `tests/` | Portable core and separately declared research tests |
+| `docs/` / `data/sample_outputs/` | Guides, dated reports and curated small samples |
 
-## Verification
+For lightweight sharing, `python3 scripts/export_source.py --output dist/source.zip`
+creates a source-only bundle with a per-file hash manifest. Local datasets,
+weights, environments and generated runs stay outside the bundle.
 
-```bash
-python main.py check perception
-python main.py check replan
-python main.py check maps
-python main.py check tests
-python main.py check all
-```
+## License and provenance
 
-The dependency-free suite covers CLI routing, map/target
-alignment, A* reachability, parameter safety, exit-code propagation, timeout
-behavior, landing confirmation, sensor parsing/replay, costmaps, dataset
-isolation, visual replay, task presets,
-goal-marker synchronization, and active-replan validation. PX4/Gazebo stability,
-closed-loop flight, and model benchmarks remain separate research runs and are
-not implied by a passing offline CI run.
-
-## Scope and Limitations
-
-- Simulation only; the system has not been validated on real UAV hardware.
-- The legacy four-stage comparison artifacts use the map oracle. The separate
-  v0.1 evidence above uses live Gazebo LiDAR with geometric risk; neither is a
-  learned-perception result.
-- Live/replayed 2D LiDAR, deterministic fault injection, automatic truth
-  labels, ONNX packaging, and the 120-run paired study registry are
-  implemented. The existing 120-run output is mixed-identity historical
-  diagnostics, not verified formal evidence.
-- The frozen YOLO v2 simulation baseline has completed its paired blind and
-  static replay gates. Real-camera and real-airframe validation remain open.
-- Reproducible unknown static obstacles, equipment pose/scale variation, scan
-  noise/dropout, stream outage, and attitude-label jitter are implemented.
-  Their formal closed-loop comparison is still pending.
-- Active route replacement has passed the deterministic cross-map blocker
-  benchmark. The fixed 60-run envelope recommends 0.50 m/s; higher tiers had
-  non-monotonic route-switch, event-chain, or collision failures.
-- Real-airframe validation remains open, and the current detector did not
-  transfer to the two-class licensed real-image stress view.
-- The committed results are selected demonstration runs, not a statistical
-  performance claim.
-
-## Resume-Ready Summary
-
-- Engineered a PX4/Gazebo UAV autonomy pipeline integrating A* route planning,
-  MAVSDK waypoint control, simulated perception, telemetry analysis, and local
-  route replanning across five substation test environments.
-- Developed a four-stage experimental framework with structured logs,
-  reproducible reports, and safety-aware runtime controls; measured an average
-  of 300 perception-triggered slow-down events across three response runs and
-  validated active route replacement in simulation with zero recorded
-  safety-buffer violations across 16 analyzed runs.
-- Improved maintainability and reliability through a unified modular CLI, 25
-  validated target presets, bounded asynchronous cleanup, explicit failure
-  propagation, and automated offline safety and research-contract tests.
+Project-authored code retains the [MIT license](LICENSE) from
+[uav-path-planning-demo](https://github.com/Xieyizhou/uav-path-planning-demo).
+See [provenance](PROVENANCE.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
+External dependencies and assets have their own terms; in particular, the
+optional Ultralytics stack is AGPL-3.0 and is not relicensed by this repository.

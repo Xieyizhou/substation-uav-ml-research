@@ -1,0 +1,62 @@
+"""Explicit current image observations; no automatic approvals."""
+NOTES='''
+E01|cabinet_like|青色块体的矩形面板、侧面及底座可见，框主要覆盖柜状主体。
+E02|cabinet_like|右图缘灰色块体仅露出深色面板及窄侧面，预测框含地面。
+E03|occluded|后方青色矩形目标下左部被前景柜体遮挡，上部和右侧可见。
+E04|occluded|远处圆柱仅露出上部，底部被前景青色柜体遮住。
+E05|truncated|近景柜体顶面和面板上部可见，主体下部越出画面。
+E06|occluded|后方变压器主体与接线柱可见，下部混入前景变压器顶面和柱体。
+E07|unknown|框内前景柱体与后方青块重叠，仅凭RGB无法可靠分离目标内容。
+E08|truncated|右侧变压器主体及顶端柱体可辨，但右端被图缘截断。
+E09|truncated|近景变压器顶面柱体清楚，下部越出画面。
+E10|clear|青柜主体、窄面板、顶面及底座完整可辨。
+E11|truncated|右边缘圆柱主体、底座部分可见，右侧越界。
+E12|truncated|近景灰色变压器只见顶面和柱体，下部出图。
+E13|truncated|背景条件下右侧圆柱主体仍被图缘切断。
+E14|occluded|变压器中央被粗杆纵向遮挡，左侧另有图缘截断。
+E15|occluded|后方变压器下部被前景圆柱遮挡，顶面和柱体可见。
+E16|occluded|灰色变压器下部被前景块体顶面部分挡住，上部柱体可见。
+E17|occluded|背景条件下变压器下部被圆柱遮挡，上部和柱体可见。
+E18|clear|低光青柜宽侧背面、顶面和底座完整可辨，面板不可见。
+E19|truncated|右下青柜只剩顶面和部分侧背面，其余越界。
+E20|unknown|小框内前景柱体与后方青块交叠，无法可靠认定每块可见内容的实例归属。
+E21|occluded|变压器主体被粗杆部分遮挡，顶端柱体和两侧可见。
+E22|truncated|左侧变压器长侧面及接线柱可见，左端越界。
+E23|clear|暗青柜顶面、侧背面、底座可辨，未见明显主体遮挡。
+E24|clear|孤立暗青块体的顶面、侧背面及底座完整可见。
+E25|truncated|左边缘仅保留青柜窄条侧面与顶角。
+E26|truncated|背景条件中左图缘目标同样只剩窄条内容。
+E27|truncated|低光中左图缘目标只剩狭窄侧面片段。
+E28|mixed_structure|框内粗杆与灰色块体、右下青块重叠，不能归为单一柜体面板。
+E29|occluded|后方矩形目标下左被前景青柜挡住，顶面与右侧可见。
+E30|clear|灰色圆柱主体和方底座完整可辨，无明显前景遮挡。
+E31|clear|背景条件下圆柱主体、顶面和底座完整可辨。
+E32|truncated|近景青柜顶面面板可见，主体底部在画面外。
+E33|occluded|青柜面板与顶面可见，左下部被前景柜体遮挡。
+E34|occluded|背景变体中青柜左下受遮挡，面板仍可见。
+E35|truncated|近景变压器只见顶面与柱体，右下主体越界。
+E36|occluded|远处青柜下部被前景顶面遮住，上部和侧背面可见。
+E37|occluded|背景条件下远处柜体下部受前景遮挡。
+E38|truncated|近景变压器顶面柱体可见，主体底部出图。
+E39|truncated|右图缘只剩柜体窄面板及侧面片段。
+E40|truncated|右图缘目标仅有狭窄柜体侧面，与邻柜边缘相接。
+E41|clear|灰色变压器主体、接线柱和底座边界可辨。
+E42|occluded|灰色柜体面板及侧面可见，左下被前景设备挡住。
+E43|clear|灰色柜体面板、顶面及右侧轮廓可辨，对比偏弱。
+E44|clear|灰柜宽侧面、窄面板及底座可辨，未见明显遮挡。
+E45|occluded|远处灰柜面板可辨，下部被前景顶面挡住且右侧柱体重叠。
+E46|occluded|远处青柜下部被前景接线柱和设备顶面遮挡。
+E47|occluded|灰柜上部可辨，下部受前景灰色顶面遮挡。
+E48|truncated|右边缘青柜顶面及侧面被画面截断。
+E49|truncated|背景变体下右图缘柜体主体仍不完整。
+E50|truncated|远处右图缘青柜仅保留顶面与部分侧背面。
+E51|occluded|灰色圆柱上半部可见，下半部被前景变压器顶面挡住。
+E52|occluded|低光圆柱上半部与顶面可见，下部被前景变压器遮住。
+'''
+def parse():
+    result={}
+    for line in NOTES.strip().splitlines():
+        key,content,reason=line.split('|',2)
+        if key in result:raise ValueError('Duplicate note')
+        result[key]=[(content,reason)]
+    return result

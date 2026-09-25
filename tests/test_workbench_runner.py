@@ -37,7 +37,7 @@ class WorkbenchRunnerTests(unittest.TestCase):
                     self.dataset_root / f"images/{split}/{split}-{index}.png"
                 )
                 (self.dataset_root / f"labels/{split}/{split}-{index}.txt").write_text(
-                    "0 0.5 0.5 0.4 0.4\n", encoding="utf-8"
+                    "".join(f"{class_id} 0.5 0.5 0.4 0.4\n" for class_id in range(4)), encoding="utf-8"
                 )
         self.dataset = WorkbenchDataset(
             dataset_id="dataset", source_type="imported_yolo",
@@ -100,7 +100,11 @@ class WorkbenchRunnerTests(unittest.TestCase):
 
         module = types.ModuleType("ultralytics")
         module.YOLO = lambda _path: FakeModel()
-        with patch.dict("sys.modules", {"ultralytics": module}):
+        # Keep native torch out of the temporary sys.modules snapshot. Removing
+        # and re-importing its C extension can crash subsequent tests on macOS.
+        with patch.dict("sys.modules", {"ultralytics": module}), patch(
+            "src.sandbox.workbench_runner._device", return_value="cpu"
+        ):
             from src.sandbox.workbench_runner import _train
             _train(self.root / "yolo11n.pt", self.dataset_root,
                    self.run_root, self.recipe, False)
@@ -115,6 +119,15 @@ class WorkbenchRunnerTests(unittest.TestCase):
         self.assertEqual(second_view, view)
         self.assertEqual(first["membership_sha256"], second["membership_sha256"])
         self.assertEqual(second["link_modes"], {"existing": 4})
+
+    def test_missing_validation_class_is_rejected_before_training(self):
+        for path in (self.dataset_root / "labels/validation").glob("*.txt"):
+            path.write_text("0 0.5 0.5 0.4 0.4\n")
+        with patch("src.sandbox.workbench_runner._train") as train:
+            with self.assertRaisesRegex(ValueError, "validation selection lacks required classes"):
+                run_workbench_experiment(self.root, self.imported, self.runs,
+                                         self.run_root / "recipe.json")
+        train.assert_not_called()
 
     def test_completed_run_is_not_restarted_and_stale_status_is_repaired(self):
         best, last, onnx, validation, replay = self.completed_stages()
@@ -256,6 +269,50 @@ class WorkbenchRunnerTests(unittest.TestCase):
         self.assertEqual(result["results"]["primary"]["threshold"], 0.42)
         self.assertTrue((output / "primary.png").is_file())
         self.assertTrue((output / "result.json").is_file())
+
+    def test_operator_finetunes_verified_parent_and_pins_its_identity(self):
+        self._verified_run()
+        config = InspectionConfig(
+            self.root, self.root / "plan.json", self.root / "collection",
+            self.root / "px4", profile="development",
+        )
+        build_command(config, "workbench-run", parameters={
+            "experiment_id": "child", "dataset_id": "dataset", "preset": "smoke",
+            "parent_experiment_id": self.recipe.experiment_id,
+        })
+        from src.sandbox.workbench_models import WorkbenchExperimentRecipe
+        from src.sandbox.workbench_weights import resolve_initial_weights
+        child = WorkbenchExperimentRecipe.from_record(json.loads(
+            (self.runs / "child/recipe.json").read_text()
+        ))
+        self.assertEqual(child.initialization["parent_experiment_id"], "experiment")
+        self.assertEqual(child.initialization["parent_threshold"], 0.42)
+        self.assertEqual(resolve_initial_weights(self.root, child).read_bytes(), b"best")
+        # The new experiment remains reproducible after the original is edited.
+        (self.run_root / "training/weights/best.pt").write_bytes(b"changed")
+        self.assertEqual(resolve_initial_weights(self.root, child).read_bytes(), b"best")
+        with self.assertRaisesRegex(ValueError, "completed artifact changed"):
+            materialize_workbench_recipe(
+                self.root, self.imported, self.runs, "rejected-child", "dataset", "smoke",
+                parent_experiment_id="experiment",
+            )
+
+    def test_new_receipt_binds_comparison_and_replay_bytes(self):
+        from src.sandbox.workbench_run_guard import verified_completed_receipt
+        comparison = {"status": "complete", "deltas": {"macro_f1": -0.1}}
+        write_json(self.run_root / "comparison.json", comparison)
+        self._verified_run()
+        receipt = verified_completed_receipt(self.run_root, self.recipe)
+        self.assertEqual(receipt["comparison_sha256"], file_sha256(self.run_root / "comparison.json"))
+        for filename in ("comparison.json", "replay.json"):
+            path = self.run_root / filename
+            original = path.read_bytes()
+            value = json.loads(original)
+            value["unbound_mutation"] = True
+            write_json(path, value)
+            with self.assertRaisesRegex(ValueError, "completed artifact changed"):
+                verified_completed_receipt(self.run_root, self.recipe)
+            path.write_bytes(original)
 
     def test_operator_image_inference_accepts_only_managed_inbox_name(self):
         self._verified_run()

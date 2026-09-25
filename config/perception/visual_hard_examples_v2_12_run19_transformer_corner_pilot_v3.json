@@ -1,0 +1,81 @@
+{
+  "bbox_policy": {
+    "development": {
+      "maximum_bbox_height_fraction": 0.9,
+      "maximum_bbox_width_fraction": 0.9,
+      "minimum_border_margin_px": 2,
+      "mode": "drop_invalid_objects"
+    }
+  },
+  "class_frame_quotas": {
+    "development": {
+      "capacitor_bank": 0,
+      "reactor": 0,
+      "switchgear": 0,
+      "transformer": 20
+    },
+    "validation": {
+      "capacitor_bank": 0,
+      "reactor": 0,
+      "switchgear": 0,
+      "transformer": 0
+    }
+  },
+  "classes": [
+    "transformer",
+    "switchgear",
+    "capacitor_bank",
+    "reactor"
+  ],
+  "deduplicate_within_split": true,
+  "development_annotation_scope": "all_complete_visible_equipment",
+  "development_seeds": [
+    780104
+  ],
+  "forbidden_partitions": [
+    "full_validation",
+    "blind",
+    "heldout_test",
+    "qualification"
+  ],
+  "forbidden_seeds": [
+    3031,
+    3032,
+    3033,
+    3034,
+    3035,
+    3036,
+    3037,
+    3038,
+    3039,
+    3040,
+    6814
+  ],
+  "maps": [
+    "medium"
+  ],
+  "near_duplicate_hamming_threshold": 2,
+  "no_target_frame_quotas": {
+    "development": 0,
+    "validation": 0
+  },
+  "perceptual_hash_algorithm": "dhash64-v1",
+  "pilot_review_requirements": {
+    "actual_bbox_area_fraction_upper_exclusive": 0.01,
+    "automatic_expansion": false,
+    "automatic_training": false,
+    "joint_deduplication_with_previous_pilots_required": true,
+    "minimum_pairwise_dhash_separated_small_frames_per_class": 20,
+    "require_confirmed_landing": true,
+    "target_classes": [
+      "transformer"
+    ]
+  },
+  "protocol_id": "visual-hard-examples-v2.12-run19-transformer-corner-pilot-v3",
+  "purpose": "bounded transformer small-target pilot; not a training gate",
+  "schema_version": 1,
+  "selection_group": "recording_seed",
+  "split_group": "recording_seed",
+  "validation_annotation_scope": "none",
+  "validation_seeds": []
+}

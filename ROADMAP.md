@@ -6,6 +6,18 @@ diagnostics. The research track is gated by experimental evidence. An
 unfinished research study does not block a Sandbox Beta, and a polished App
 does not count as research evidence.
 
+## Current direction · Research preview
+
+The September 2026 desktop milestone is recorded in the
+[acceptance report](docs/results/sandbox_core_completion_20260925.md).
+The immediate release scope is a readable, small source checkout, a working
+Demo, portable core CI, and explicit external-asset requirements. Open research
+work includes stronger independent validation, real-domain transfer and repeated
+fixed-scene reliability measurements. Mobile UI is outside the current scope.
+
+The sections below preserve earlier product milestones; a checked historical
+release item is not a claim that the latest source has been publicly released.
+
 ## Sandbox v1 — Local Beta core complete
 
 - [x] Provide a dependency-free Demo profile and local browser App.
@@ -20,7 +32,8 @@ does not count as research evidence.
   ONNX export, replay, and receipt verification.
 - [x] Rebuild the latest unsigned Beta and repeat clean-install plus one
   App-managed Development flight acceptance on the release commit.
-- [x] Publish the GitHub Beta with a first-run guide and verified checksums.
+- [x] Upload the historical GitHub prerelease with a first-run guide and checksums
+  (repository visibility is separate from prerelease creation).
 
 ## Sandbox v1.1 — Public Beta stabilization
 

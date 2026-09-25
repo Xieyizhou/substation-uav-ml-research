@@ -52,6 +52,10 @@ from src.flight.takeoff_stability import (
     wait_for_takeoff_hover,
 )
 from src.flight.waypoint_progress import WaypointProgressWatchdog
+from src.flight.waypoint_policy import (
+    clamp, normalize_yaw_deg, return_has_geometric_obstacle_evidence,
+    print_waypoint_timeout_info, print_timeout_debug, timeout_info,
+)
 
 
 def configure_runtime(settings):
@@ -71,10 +75,6 @@ def configure_runtime(settings):
     LANDING_TIMEOUT_S = settings.landing_timeout_s
     WAYPOINT_TIMEOUT_MODE = settings.waypoint_timeout_mode
     configure_acceptance(REACHED_HORIZONTAL_ERROR_M, REACHED_VERTICAL_ERROR_M)
-
-
-def clamp(value, min_value, max_value):
-    return max(min_value, min(max_value, value))
 
 
 def velocity_command_from_error(error, speed_scale=1.0, yaw_deg=0.0):
@@ -104,11 +104,6 @@ def velocity_command_from_error(error, speed_scale=1.0, yaw_deg=0.0):
     )
 
 
-def normalize_yaw_deg(yaw_deg):
-    normalized = (float(yaw_deg) + 180.0) % 360.0 - 180.0
-    return 180.0 if normalized == -180.0 else normalized
-
-
 def waypoint_dwell_s(waypoint):
     requested = float(waypoint.get("dwell_s", 0.0))
     return max(TURN_SETTLE_S, requested) if requested > 0 else 0.0
@@ -128,74 +123,19 @@ def risk_adjusted_speed_scale(base_speed_scale, risk_level, risk_action):
 
 
 def waypoint_timeout_info(position, waypoint, speed_scale, perception_config):
-    distance_m = horizontal_distance_to_waypoint(position, waypoint) or 0.0
-    expected_speed_m_s = MAX_HORIZONTAL_SPEED_M_S * speed_scale
-    if perception_config.get("risk_action", "log_only") == "slow_down":
-        expected_speed_m_s = max(expected_speed_m_s * 0.35, MIN_RISK_SPEED_M_S)
-    if WAYPOINT_TIMEOUT_MODE == "auto":
-        base_timeout_s = distance_m / max(expected_speed_m_s, 0.2)
-        timeout_s = max(20.0, base_timeout_s * 3.0 + 10.0)
-        if perception_config.get("risk_action", "log_only") == "slow_down":
-            timeout_s *= 2.0
-    else:
-        timeout_s = WAYPOINT_TIMEOUT_MODE
-    return {
-        "distance_m": distance_m,
-        "expected_speed_m_s": expected_speed_m_s,
-        "timeout_s": timeout_s,
-    }
-
-
-def print_waypoint_timeout_info(waypoint, timeout_info):
-    print(f"Flying to {waypoint['name']}...")
-    print(f"  distance: {timeout_info['distance_m']:.2f} m")
-    print(f"  expected speed: {timeout_info['expected_speed_m_s']:.2f} m/s")
-    print(f"  timeout: {timeout_info['timeout_s']:.1f} s")
-
-
-def return_has_geometric_obstacle_evidence(route_direction, detection):
-    evidence_fields = ("nearest_obstacle", "detected_obstacles", "dynamic_grid_cells")
-    return route_direction == "return" and bool(detection) and any(detection.get(field) for field in evidence_fields)
+    return timeout_info(position, waypoint, speed_scale, perception_config,
+                        MAX_HORIZONTAL_SPEED_M_S, MIN_RISK_SPEED_M_S, WAYPOINT_TIMEOUT_MODE)
 
 
 def print_waypoint_timeout_debug(
     waypoint, latest, perception_config, perception_detector, command
 ):
     position = local_position(latest)
-    error = target_errors(position, waypoint)
     detection = current_perception_detection(
         perception_config, perception_detector, position, latest["attitude"]
     )
-    nearest = detection["nearest_obstacle"] if detection else None
-    command_speed = horizontal_command_speed(command)
-    print("Waypoint timeout debug:")
-    print(f"  waypoint: {waypoint['name']}")
-    print(
-        "  target N/E/D: "
-        f"{waypoint['north_m']:.2f}, {waypoint['east_m']:.2f}, {waypoint['down_m']:.2f}"
-    )
-    if position is None:
-        print("  latest local N/E/D: unavailable")
-        print("  current horizontal error: unavailable")
-    else:
-        print(
-            "  latest local N/E/D: "
-            f"{position.north_m:.2f}, {position.east_m:.2f}, {position.down_m:.2f}"
-        )
-        print(f"  current horizontal error: {error['horizontal_m']:.2f} m")
-    print(f"  latest perception_risk_level: {detection['risk_level'] if detection else 'clear'}")
-    if nearest is None:
-        print("  latest nearest obstacle: unavailable")
-    else:
-        print(
-            f"  latest nearest obstacle: {nearest['obstacle_name']} "
-            f"at {nearest['distance_m']:.2f} m"
-        )
-    print(
-        "  commanded speed: unavailable"
-        if command_speed is None
-        else f"  commanded speed: {command_speed:.2f} m/s"
-    )
+    print_timeout_debug(waypoint, position, target_errors(position, waypoint),
+                        detection, horizontal_command_speed(command))
 
 
 async def fly_to_waypoint(

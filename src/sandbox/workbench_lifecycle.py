@@ -18,10 +18,14 @@ from src.sandbox.workbench_runner import (
 def inspect_workbench_run(path):
     root = Path(path)
     result = {"run_root": str(root)}
-    for name in ("recipe", "status", "view", "validation",
+    updated = 0.0
+    for name in ("recipe", "status", "view", "training_efficiency", "validation",
                  "onnx_equivalence", "replay", "comparison", "receipt"):
         candidate = root / f"{name}.json"
         result[name] = json.loads(candidate.read_text()) if candidate.is_file() else None
+        if candidate.is_file():
+            updated = max(updated, candidate.stat().st_mtime)
+    result["updated_at"] = updated
     return result
 
 

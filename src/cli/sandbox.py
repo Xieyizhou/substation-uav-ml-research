@@ -201,73 +201,35 @@ def main(argv=None):
             return 1
         _print({"path": str(output / "recipe.json"), "recipe": recipe.to_record()})
         return 0
-    if args.command == "recipe-inspect":
-        inspect_recipe = _command("src.sandbox.experiment_recipe", "inspect_recipe")
+    record_commands = {
+        "recipe-inspect": ("experiment_recipe", "inspect_recipe", "recipe", False),
+        "experiment-inspect": ("experiment_runner", "inspect_result", "experiment", False),
+        "experiment-run": ("experiment_runner", "run_recipe", "experiment", False),
+        "supervisor-gate": ("supervisor_gate", "run_supervisor_gate", "supervisor gate", True),
+        "supervisor-gate-inspect": ("supervisor_gate", "inspect_supervisor_gate", "supervisor gate", True),
+        "acceptance-run": ("acceptance", "run_acceptance", "acceptance", True),
+        "acceptance-inspect": ("acceptance", "inspect_acceptance", "acceptance", True),
+    }
+    if args.command in record_commands:
+        module, function, label, gated = record_commands[args.command]
+        action = _command(f"src.sandbox.{module}", function)
+        if args.command.endswith("-inspect"):
+            arguments = (args.input,)
+            errors = ((FileNotFoundError, TypeError, ValueError)
+                      if not gated else (OSError, TypeError, ValueError))
+        elif args.command == "experiment-run":
+            arguments = (config.project_root, args.recipe)
+            errors = (FileNotFoundError, KeyError, RuntimeError, TypeError, ValueError)
+        else:
+            arguments = (config.project_root, args.output)
+            errors = (OSError, RuntimeError, ValueError)
         try:
-            result = inspect_recipe(args.input)
-        except (FileNotFoundError, TypeError, ValueError) as error:
-            print(f"Sandbox recipe failed: {error}")
+            result = action(*arguments)
+        except errors as error:
+            print(f"Sandbox {label} failed: {error}")
             return 1
         _print(result)
-        return 0
-    if args.command == "experiment-run":
-        run_recipe = _command("src.sandbox.experiment_runner", "run_recipe")
-        try:
-            result = run_recipe(config.project_root, args.recipe)
-        except (FileNotFoundError, KeyError, RuntimeError, TypeError, ValueError) as error:
-            print(f"Sandbox experiment failed: {error}")
-            return 1
-        _print(result)
-        return 0
-    if args.command == "experiment-inspect":
-        inspect_result = _command("src.sandbox.experiment_runner", "inspect_result")
-        try:
-            result = inspect_result(args.input)
-        except (FileNotFoundError, TypeError, ValueError) as error:
-            print(f"Sandbox experiment failed: {error}")
-            return 1
-        _print(result)
-        return 0
-    if args.command == "supervisor-gate":
-        run_supervisor_gate = _command(
-            "src.sandbox.supervisor_gate", "run_supervisor_gate"
-        )
-        try:
-            result = run_supervisor_gate(config.project_root, args.output)
-        except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
-            print(f"Sandbox supervisor gate failed: {error}")
-            return 1
-        _print(result)
-        return 0 if result["passed"] else 1
-    if args.command == "supervisor-gate-inspect":
-        inspect_supervisor_gate = _command(
-            "src.sandbox.supervisor_gate", "inspect_supervisor_gate"
-        )
-        try:
-            result = inspect_supervisor_gate(args.input)
-        except (FileNotFoundError, OSError, TypeError, ValueError) as error:
-            print(f"Sandbox supervisor gate failed: {error}")
-            return 1
-        _print(result)
-        return 0 if result["passed"] else 1
-    if args.command == "acceptance-run":
-        run_acceptance = _command("src.sandbox.acceptance", "run_acceptance")
-        try:
-            result = run_acceptance(config.project_root, args.output)
-        except (FileNotFoundError, OSError, RuntimeError, ValueError) as error:
-            print(f"Sandbox acceptance failed: {error}")
-            return 1
-        _print(result)
-        return 0 if result["passed"] else 1
-    if args.command == "acceptance-inspect":
-        inspect_acceptance = _command("src.sandbox.acceptance", "inspect_acceptance")
-        try:
-            result = inspect_acceptance(args.input)
-        except (FileNotFoundError, OSError, TypeError, ValueError) as error:
-            print(f"Sandbox acceptance failed: {error}")
-            return 1
-        _print(result)
-        return 0 if result["passed"] else 1
+        return int(gated and not result["passed"])
     serve_inspector = _command("src.inspection.app", "main")
     return serve_inspector([
         "--host", args.host,

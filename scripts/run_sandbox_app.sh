@@ -15,17 +15,18 @@ if [ "${1:-}" = "--profile" ]; then
 fi
 
 python_bin=
-for candidate in .venv/bin/python "${UAV_SANDBOX_PYTHON:-}" \
+for candidate in "${UAV_SANDBOX_PYTHON:-}" .venv/bin/python \
+  "$(command -v python3 || true)" \
   /opt/homebrew/bin/python3 /usr/local/bin/python3 /usr/bin/python3; do
   [ -n "$candidate" ] || continue
   [ -x "$candidate" ] || continue
-  if "$candidate" -c 'import importlib.util,sys; raise SystemExit(0 if sys.version_info >= (3,11) and importlib.util.find_spec("mavsdk") else 1)' 2>/dev/null; then
+  if "$candidate" -c 'import importlib.util,sys; raise SystemExit(0 if sys.version_info >= (3,11) and (sys.argv[1] == "demo" or importlib.util.find_spec("mavsdk")) else 1)' "$profile" 2>/dev/null; then
     python_bin=$candidate
     break
   fi
 done
 [ -n "$python_bin" ] || {
-  echo "No compatible Python 3.11+ runtime with mavsdk was found." >&2
+  echo "No compatible Python 3.11+ runtime was found (development/formal also require mavsdk)." >&2
   exit 1
 }
 

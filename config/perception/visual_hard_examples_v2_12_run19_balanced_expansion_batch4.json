@@ -1,0 +1,82 @@
+{
+  "batch_review_requirements": {
+    "automatic_expansion": false,
+    "automatic_training": false,
+    "background_requires_empty_valid_truth": true,
+    "different_seeds_do_not_prove_scene_independence": true,
+    "joint_deduplication_required": true,
+    "require_confirmed_landing": true
+  },
+  "bbox_policy": {
+    "development": {
+      "maximum_bbox_height_fraction": 0.9,
+      "maximum_bbox_width_fraction": 0.9,
+      "minimum_border_margin_px": 2,
+      "mode": "drop_invalid_objects"
+    }
+  },
+  "class_frame_quotas": {
+    "development": {
+      "capacitor_bank": 600,
+      "reactor": 600,
+      "switchgear": 600,
+      "transformer": 600
+    },
+    "validation": {
+      "capacitor_bank": 0,
+      "reactor": 0,
+      "switchgear": 0,
+      "transformer": 0
+    }
+  },
+  "classes": [
+    "transformer",
+    "switchgear",
+    "capacitor_bank",
+    "reactor"
+  ],
+  "deduplicate_within_split": true,
+  "development_annotation_scope": "all_complete_visible_equipment",
+  "development_seeds": [
+    780115,
+    780116,
+    780117,
+    780118
+  ],
+  "forbidden_partitions": [
+    "full_validation",
+    "blind",
+    "heldout_test",
+    "qualification"
+  ],
+  "forbidden_seeds": [
+    3031,
+    3032,
+    3033,
+    3034,
+    3035,
+    3036,
+    3037,
+    3038,
+    3039,
+    3040,
+    6814
+  ],
+  "maps": [
+    "medium",
+    "complex"
+  ],
+  "near_duplicate_hamming_threshold": 2,
+  "no_target_frame_quotas": {
+    "development": 600,
+    "validation": 0
+  },
+  "perceptual_hash_algorithm": "dhash64-v1",
+  "protocol_id": "visual-hard-examples-v2.12-run19-balanced-expansion-batch4",
+  "purpose": "bounded deficit-driven collection; not automatic training",
+  "schema_version": 1,
+  "selection_group": "recording_seed",
+  "split_group": "recording_seed",
+  "validation_annotation_scope": "none",
+  "validation_seeds": []
+}

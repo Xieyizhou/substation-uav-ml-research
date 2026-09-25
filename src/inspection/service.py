@@ -71,6 +71,31 @@ class InspectionService:
 
         return serialize(workbench_summary(self.config))
 
+    def feedback(self):
+        from src.sandbox.feedback_review import FeedbackReviewStore
+        enabled = self.config.profile == "development"
+        return dict(enabled=enabled, collections=FeedbackReviewStore(self.config).collections() if enabled else [])
+
+    def _feedback_store(self):
+        if self.config.profile != "development":
+            raise AccessDenied("Feedback review requires Development profile")
+        from src.sandbox.feedback_review import FeedbackReviewStore
+        return FeedbackReviewStore(self.config)
+
+    def feedback_collection(self, collection_id):
+        return self._feedback_store().detail(collection_id)
+
+    def feedback_sample(self, collection_id, sample_id):
+        return self._feedback_store().sample_detail(collection_id, sample_id)
+
+    def feedback_image(self, collection_id, sample_id):
+        store = self._feedback_store()
+        with store.completed(collection_id) as (directory, _, _):
+            return store.sample(collection_id, sample_id, directory=directory)[1]
+
+    def feedback_review(self, collection_id, sample_id, review, expected_identity=None):
+        return self._feedback_store().save(collection_id, sample_id, review, expected_identity)
+
     def workbench_run(self, experiment_id):
         from src.inspection.workbench import workbench_run
 
@@ -212,8 +237,40 @@ class InspectionService:
     def operator_status(self):
         return self._operator().status()
 
+    def live_replan(self):
+        from src.sandbox.live_replan_gate import summary
+        from src.sandbox.live_replan_display import flight_display
+        result=summary(self.config.project_root)
+        status=self._operator().status()
+        candidates=([status['active_job']] if status['active_job'] else [])+status['history']
+        job=next((j for j in candidates if j['action']=='live-replan-flight'),None)
+        result['latest_run']=flight_display(self.config.project_root,job)
+        return result
+
     def operator_start(self, action, scenario_id=None, parameters=None):
         return self._operator().start(action, scenario_id, parameters)
+
+    def visual_replan(self):
+        from src.sandbox.visual_replan_gate import summary
+        from src.sandbox.live_replan_display import flight_display
+        result = summary(self.config.project_root)
+        status = self._operator().status()
+        candidates = ([status['active_job']] if status['active_job'] else []) + status['history']
+        job = next((j for j in candidates if j['action'] == 'visual-replan-flight'), None)
+        result['latest_run'] = flight_display(self.config.project_root, job)
+        return result
+
+    def semantic_flight(self):
+        from src.inspection.semantic_flight import summary
+        return summary(self.config, self._operator().status())
+
+    def semantic_model(self, model_id):
+        from src.inspection.semantic_flight import model_status
+        return model_status(self.config, model_id)
+
+    def evidence(self):
+        from src.sandbox.evidence_registry import evidence_summary
+        return evidence_summary(self.config.project_root)
 
     def operator_stop(self, job_id):
         return self._operator().stop(job_id)

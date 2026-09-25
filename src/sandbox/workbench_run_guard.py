@@ -50,6 +50,11 @@ def verified_completed_receipt(run_root, recipe):
         "validation_sha256": root / "validation.json",
         "equivalence_sha256": root / "onnx_equivalence.json",
     }
+    if "training_efficiency_sha256" in receipt:
+        artifacts["training_efficiency_sha256"] = root / "training_efficiency.json"
+    for name in ("comparison", "replay"):
+        if f"{name}_sha256" in receipt:
+            artifacts[f"{name}_sha256"] = root / f"{name}.json"
     for field, artifact in artifacts.items():
         if not artifact.is_file() or receipt.get(field) != file_sha256(artifact):
             raise ValueError(f"workbench completed artifact changed: {artifact.name}")

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "visual_intake_ledger.schema.json",
+  "title": "Visual Candidate Intake Ledger",
+  "type": "object",
+  "required": ["schema_version", "dataset_version", "status", "entries", "training_admitted", "promotable"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "dataset_version": {"type": "string", "minLength": 1},
+    "status": {"enum": ["frozen_pending_capture", "pilot_pending_review", "candidate_pending_admission", "frozen"]},
+    "entries": {"type": "array", "items": {"$ref": "#/$defs/entry"}},
+    "training_admitted": {"const": false},
+    "promotable": {"const": false}
+  },
+  "$defs": {
+    "sha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"},
+    "entry": {
+      "type": "object",
+      "required": ["candidate_id", "data_role", "map_layout_id", "asset_family_ids", "equipment_instance_id", "recording_group", "derivation_group", "pose_id", "material_id", "lighting_id", "annotation_mode", "capture_status", "review_decision", "dedup_status", "admission_status"],
+      "properties": {
+        "candidate_id": {"type": "string"},
+        "data_role": {"enum": ["trusted_training_base", "new_training_candidate", "fixed_development_regression", "frozen_unseen_scene_test"]},
+        "map_layout_id": {"type": "string"},
+        "asset_family_ids": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+        "equipment_instance_id": {"type": ["string", "null"]},
+        "recording_group": {"type": "string"},
+        "derivation_group": {"type": "string"},
+        "pose_id": {"type": "string"},
+        "material_id": {"type": "string"},
+        "lighting_id": {"type": "string"},
+        "annotation_mode": {"const": "full_2d"},
+        "image_sha256": {"$ref": "#/$defs/sha256"},
+        "label_sha256": {"$ref": "#/$defs/sha256"},
+        "world_sha256": {"$ref": "#/$defs/sha256"},
+        "sensor_sha256": {"$ref": "#/$defs/sha256"},
+        "instance_present": {"type": ["boolean", "null"]},
+        "visibility_status": {"enum": ["unknown", "accepted", "rejected", "not_applicable"]},
+        "truncation_status": {"enum": ["unknown", "not_truncated", "truncated", "not_applicable"]},
+        "capture_status": {"enum": ["planned", "captured", "rejected", "failed"]},
+        "review_decision": {"enum": ["pending", "accepted", "held", "rejected"]},
+        "review_reason": {"type": ["string", "null"]},
+        "review_nature": {"enum": ["AI-assisted", "pending"]},
+        "reviewed_at": {"type": ["string", "null"]},
+        "exact_duplicate_of": {"type": ["string", "null"]},
+        "pixel_duplicate_of": {"type": ["string", "null"]},
+        "lineage_relations": {"type": "array", "items": {"type": "string"}},
+        "dedup_status": {"enum": ["pending", "unique", "designed_variant", "duplicate", "held"]},
+        "admission_status": {"enum": ["not_eligible", "pending", "admitted", "held", "rejected"]},
+        "failure_reason": {"type": ["string", "null"]}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

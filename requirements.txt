@@ -1,4 +1,5 @@
-mavsdk
+# Flight code uses the gRPC API; MAVSDK 4 changes to native bindings.
+mavsdk==3.17.2
 matplotlib
 pandas
 PyYAML>=6.0.3

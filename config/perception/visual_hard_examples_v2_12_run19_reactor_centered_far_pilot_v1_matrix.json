@@ -1,0 +1,17 @@
+{
+  "cooldown_s": 5,
+  "emit_stride": 30,
+  "frames_per_run": 90,
+  "matrix_id": "visual-hard-examples-v2.12-run19-reactor-centered-far-pilot-v1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run19_reactor_centered_far_pilot_v1.json",
+  "run_revision": "run19-reactor-centered-far-pilot-v1",
+  "runs": [
+    {
+      "map_id": "complex",
+      "seed": 780119,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-reactor-centered-far-pilot-v1/routes/complex-reactor-centered-far-v1.json"
+    }
+  ],
+  "schema_version": 1
+}

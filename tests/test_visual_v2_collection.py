@@ -1,4 +1,5 @@
 import json
+import copy
 import math
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -9,6 +10,7 @@ import xml.etree.ElementTree as ET
 from src.cli.visual import build_parser
 from src.flight.waypoint_executor import normalize_yaw_deg, velocity_command_from_error
 from src.ml import EQUIPMENT_CLASSES
+from src.ml.artifacts import object_sha256
 from src.vision.collection.audit import audit_collection_plan
 from src.vision.collection.dataset import (
     materialize_collection_datasets,
@@ -88,10 +90,24 @@ class VisualV2CollectionTests(unittest.TestCase):
         self.assertTrue(all(len(splits) == 1 for splits in layouts.values()))
         self.assertEqual({row["seed"] for row in first["scenarios"]}, set(range(3001, 3051)))
 
-    def test_v1_plan_identity_remains_unchanged(self):
+    def test_v1_identity_reflects_corrected_simple_map_inventory(self):
         plan = build_collection_plan("v1")
         self.assertEqual(
             plan["collection_plan_identity_sha256"],
+            "68ff86f37bcff804fccf1fdbd44ce2d8031da838a9509d0f1c832c8a6aeece45",
+        )
+        # The original simple map called its switchgear 'cabinet', which the
+        # locked equipment classes excluded. That catalog correction changes
+        # the inventory, not the seeds or randomization. Reconstruct the old
+        # inventory to prove the exact reason; old receipts remain unchanged.
+        historical = copy.deepcopy(plan)
+        historical.pop("collection_plan_identity_sha256")
+        for row in historical["scenarios"]:
+            if row["map_id"] == "simple":
+                self.assertIn("switchgear", row["expected_map_class_inventory"])
+                row["expected_map_class_inventory"].remove("switchgear")
+        self.assertEqual(
+            object_sha256(historical),
             "b785c320ef83c92776ff84d601f3531173f641992a8d745cf66f5e082d5b2d66",
         )
 

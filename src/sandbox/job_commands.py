@@ -231,6 +231,22 @@ def _collection_job(config, action, parameters):
 
 def build_command(config, action, scenario_id=None, parameters=None):
     profile = sandbox_profile(config.profile)
+    if action == "evidence-verify":
+        if scenario_id is not None or parameters:
+            raise ValueError("evidence verification accepts no overrides")
+        from uuid import uuid4
+        from src.sandbox.evidence_registry import registered_archive, CHECKS, REGISTRY
+        from src.sandbox.workflow import WorkflowArtifact
+        from src.ml.artifacts import file_sha256
+        _, archive = registered_archive(config.project_root)
+        if not archive.is_file():
+            raise ValueError("Historical evidence archive is not installed")
+        output = (CHECKS / (datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ") + "-" + uuid4().hex + ".json")).as_posix()
+        return SandboxCommand(action, (sys.executable, "main.py", "sandbox", "--project-root",
+            str(config.project_root), "evidence-flight-verify", "--output", output), 300.,
+            workflow="historical_evidence_verification",
+            artifacts=(WorkflowArtifact("archive_registration", file_sha256(config.project_root / REGISTRY), REGISTRY.as_posix()),),
+            expected_outputs=(output,), budget_paths=(output,), requires_runtime_idle=False)
     if action == "workflow-run":
         return build_workflow_command(config, parameters)
     if action.startswith("workbench-"):
@@ -241,6 +257,48 @@ def build_command(config, action, scenario_id=None, parameters=None):
         raise ValueError(f"action is unavailable in {config.profile} profile")
     if action == "doctor":
         return _doctor_command(config)
+    if action == "semantic-flight":
+        from src.sandbox.semantic_commands import build_semantic_command
+        return build_semantic_command(config, scenario_id, parameters)
+    if action == "visual-replan-flight":
+        if config.profile != "development" or scenario_id is not None or parameters:
+            raise ValueError("visual replan is a fixed development-only SITL scenario; no overrides")
+        from uuid import uuid4
+        from src.sandbox.visual_replan_gate import require_visual_gate, BASE, POSITIVE_RUN, STOP_PROOF
+        from src.sandbox.workflow import WorkflowArtifact
+        try:
+            gate = require_visual_gate(config.project_root)
+        except (OSError, KeyError, TypeError) as error:
+            raise ValueError(f"visual-replan gate unavailable or incomplete: {error}") from error
+        run_id = "sandbox-replan-v1-" + uuid4().hex
+        output = (BASE / run_id).as_posix()
+        return SandboxCommand(action,
+            (sys.executable, "-m", "src.sandbox.visual_replan_entry", "--fly", "--run-id", run_id),
+            600., scenario_id=run_id, workflow="bounded_visual_standoff_sitl",
+            artifacts=(WorkflowArtifact("visual_gate", gate["positive_receipt_sha256"], (BASE / POSITIVE_RUN / "completion.json").as_posix()),
+                       WorkflowArtifact("visual_stop_gate", gate["stop_receipt_sha256"], STOP_PROOF.as_posix())),
+            expected_outputs=(output+"/completion.json", output+"/runtime/receipt.json", output+"/vision/receipt.json"),
+            budget_paths=(output,))
+    if action == "live-replan-flight":
+        if config.profile != "development" or scenario_id is not None or parameters:
+            raise ValueError("live replan is a fixed development-only SITL scenario; no overrides")
+        from uuid import uuid4
+        from src.sandbox.live_replan_gate import require_repeat_gate, BASE, CAMPAIGN
+        from src.sandbox.workflow import WorkflowArtifact
+        try:
+            gate = require_repeat_gate(config.project_root)
+        except (OSError, KeyError, TypeError) as error:
+            raise ValueError(f"live-replan gate unavailable or incomplete: {error}") from error
+        run_id = "sandbox-replan-v1-" + uuid4().hex
+        output = (BASE / run_id).as_posix()
+        return SandboxCommand(
+            action,
+            (sys.executable, "-m", "scripts.flight.fly_sandbox_replan", "--fly", "--run-id", run_id),
+            600., scenario_id=run_id, workflow="bounded_live_replan_sitl",
+            artifacts=(WorkflowArtifact("repeat_gate", gate["campaign_hash"], (BASE / CAMPAIGN / "completion.json").as_posix()),),
+            expected_outputs=(output + "/completion.json", output + "/runtime/receipt.json"),
+            budget_paths=(output,),
+        )
     if action == "flight-smoke":
         return _flight_command(config, scenario_id, _display_mode(parameters))
     if action in {"map-flight-smoke", "map-record"}:

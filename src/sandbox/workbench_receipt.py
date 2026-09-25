@@ -27,6 +27,11 @@ def materialize_workbench_receipt(
         "comparison_status": comparison["status"],
         "passed": bool(gate["passed"]),
     }
+    if (root / "training_efficiency.json").is_file():
+        receipt["training_efficiency_sha256"] = file_sha256(root / "training_efficiency.json")
+    for name in ("comparison", "replay"):
+        if (root / f"{name}.json").is_file():
+            receipt[f"{name}_sha256"] = file_sha256(root / f"{name}.json")
     receipt["receipt_identity_sha256"] = object_sha256(receipt)
     write_json(root / "receipt.json", receipt)
     return receipt

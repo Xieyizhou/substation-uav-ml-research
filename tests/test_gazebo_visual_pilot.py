@@ -473,7 +473,7 @@ class GazeboTruthTests(unittest.TestCase):
         invalid = parse_gazebo_truth_message(
             truth_message(
                 1.0,
-                [box(99, 0, 0, 1, 1), box(1, 2, 2, 2, 3)],
+                [box(999, 0, 0, 1, 1), box(1, 2, 2, 2, 3)],
             ),
             topic="/research_camera/boxes",
             width=4,
@@ -484,6 +484,14 @@ class GazeboTruthTests(unittest.TestCase):
         self.assertEqual(no_target.objects, ())
         self.assertFalse(invalid.valid)
         self.assertEqual(len(invalid.invalid_reasons), 2)
+
+    def test_instance_label_99_is_valid_transformer_truth(self):
+        truth = parse_gazebo_truth_message(
+            truth_message(1.0, [box(99, 0, 0, 1, 1)]),
+            topic="/research_camera/boxes", width=4, height=3, receive_index=1,
+        )
+        self.assertTrue(truth.valid)
+        self.assertEqual(truth.objects[0].class_name, "transformer")
 
 
 class SynchronizationTests(unittest.TestCase):
@@ -553,7 +561,7 @@ class SynchronizationTests(unittest.TestCase):
 
     def test_invalid_truth_is_not_no_target(self):
         invalid = parse_gazebo_truth_message(
-            truth_message(1.0, [box(99, 0, 0, 1, 1)]),
+            truth_message(1.0, [box(999, 0, 0, 1, 1)]),
             topic="/research_camera/boxes",
             width=2,
             height=1,
@@ -584,7 +592,7 @@ class PilotRecordingTests(unittest.TestCase):
                 truth_message(
                     timestamp,
                     (
-                        [box(99, 0, 0, 1, 1)]
+                        [box(999, 0, 0, 1, 1)]
                         if index == invalid_truth_index
                         else [] if index == 10 else [box(2, 0, 0, 1, 1)]
                     ),

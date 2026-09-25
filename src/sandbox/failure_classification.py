@@ -5,6 +5,7 @@ from __future__ import annotations
 
 FAILURE_RULES = (
     ("resource_exhausted", True, ("no space", "disk budget", "out of memory", "oom")),
+    ("runtime_busy", True, ("address already in use", "runtime port")),
     ("deadline_exceeded", True, ("timed out", "timeout", "exceeded")),
     ("dependency_unavailable", False, (
         "no module named", "command not found", "dependency", "not installed",

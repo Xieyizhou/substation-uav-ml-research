@@ -1,0 +1,46 @@
+{
+  "cooldown_s": 5,
+  "emit_stride": 30,
+  "frames_per_run": 90,
+  "matrix_id": "visual-hard-examples-v2.12-run19-balanced-expansion-batch7",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run19_balanced_expansion_batch7.json",
+  "run_revision": "run19-balanced-expansion-batch7",
+  "runs": [
+    {
+      "frames": 30,
+      "map_id": "medium",
+      "seed": 780127,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-balanced-expansion-batch7/routes/medium-capacitor_bank-780127.json"
+    },
+    {
+      "frames": 90,
+      "map_id": "complex",
+      "seed": 780128,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-balanced-expansion-batch7/routes/complex-reactor-780128.json"
+    },
+    {
+      "frames": 60,
+      "map_id": "complex",
+      "seed": 780129,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-balanced-expansion-batch7/routes/complex-background-780129.json"
+    },
+    {
+      "frames": 90,
+      "map_id": "complex",
+      "seed": 780130,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-balanced-expansion-batch7/routes/complex-reactor-780130.json"
+    },
+    {
+      "frames": 60,
+      "map_id": "complex",
+      "seed": 780131,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-balanced-expansion-batch7/routes/complex-background-780131.json"
+    }
+  ],
+  "schema_version": 1
+}

@@ -214,9 +214,13 @@ async def execute_flight(
                 phase=phase_state["phase"],
                 landing_confirmed=True,
             )
-    except Exception as error:
+    except (Exception, asyncio.CancelledError) as error:
         print(f"Flight error: {error}")
         pending_error = error
+        # Stop route commands before landing; keep telemetry alive for confirmation.
+        active_controllers = [task for task in (mission_task, blocker_task, trial_task)
+                              if task is not None and not task.done()]
+        await cancel_tasks(active_controllers, settings.logger_shutdown_timeout_s)
         phase_name = (
             "landing_after_danger"
             if isinstance(error, DangerObstacleDetected)
@@ -236,6 +240,11 @@ async def execute_flight(
             landing_confirmed=landing_confirmed,
         )
         if event_writer is not None:
+            if landing_confirmed:
+                event_writer.publish(
+                    "landing_confirmed", phase=phase_state["phase"],
+                    landing_confirmed=True, recovery=True,
+                )
             event_writer.publish(
                 "mission_failed",
                 status="failed",

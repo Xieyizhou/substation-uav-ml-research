@@ -14,7 +14,7 @@ Create and activate a Python virtual environment:
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+python -m pip install -r requirements-test.txt
 ```
 
 Run commands from the repository root.
@@ -63,23 +63,29 @@ Copilot instruction/prompt files, and files named like `*.instruction.md`,
 Generated code-review graph data under `.code-review-graph/` is also local
 tooling state and must not be committed or pushed.
 
-Keep these files local and untracked. Before committing, run the full offline
+Keep these files local and untracked. Before committing, run the portable core
 test suite; the repository hygiene test fails when a prohibited agent prompt
 path is already tracked. Before any push, review `git status` and the commits
 that are ahead of the remote branch.
 
 ## Validation
 
-Run the offline test suite:
+Run the portable core suite (no local research data or ML stack required):
 
 ```bash
-python -m unittest discover -s tests -p "test_*.py" -v
+python scripts/run_tests.py --suite core --report outputs/core-tests.json
 ```
+
+For research changes, also run the relevant research tests in the environment
+described in [VALIDATION.md](docs/VALIDATION.md). The full discovery suite needs
+the original research artifacts; it is not the clean-clone entry point.
 
 Compile Python sources:
 
 ```bash
-python -m compileall -q src scripts main.py
+python -m compileall -q src main.py scripts/run_tests.py scripts/export_source.py
+# With Python 3.12+ for historical research scripts:
+python -m compileall -q src scripts archive main.py
 ```
 
 Check shell-script syntax:
@@ -95,6 +101,13 @@ git diff --check
 ```
 
 PX4 and Gazebo flight validation must be performed locally. Passing offline tests does not claim real-hardware validation.
+
+## Source and licensing
+
+Keep raw datasets, downloaded external images, weights and generated evidence
+out of Git. Add provenance and license details for any new third-party material
+to [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Do not change frozen receipts
+or script bytes to make historical verification pass.
 
 ## Pull Requests
 

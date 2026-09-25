@@ -12,7 +12,7 @@
       const method=persist?'pushState':'replaceState';history[method](null,'',`#${canonical}`);
     }
     if(persist)window.scrollTo({top:0,left:0,behavior:'auto'});
-    const titleNode=top||document.querySelector(`[data-route="${canonical}"]`),label=titleNode?.querySelector('b')?.textContent.trim()||titleNode?.textContent.trim()||'Research Toolbox';
+    const titleNode=exact||document.querySelector(`.subview[data-view="${canonical}"] h2`)||top,label=titleNode?.querySelector('b')?.textContent.trim()||titleNode?.textContent.trim()||'Research Toolbox';
     document.title=`${label} · UAV Research Sandbox`;
     return true;
   }

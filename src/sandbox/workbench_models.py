@@ -75,10 +75,13 @@ class WorkbenchExperimentRecipe:
     dataset_role: str = "development"
     baseline_package_identity_sha256: str | None = None
     recipe_identity_sha256: str = ""
+    initialization: dict[str, Any] | None = None
 
     def to_record(self) -> dict[str, Any]:
         value = asdict(self)
         value["workbench_recipe_schema_version"] = RECIPE_SCHEMA_VERSION
+        if self.initialization is None:
+            value.pop("initialization")  # Preserve identities of existing recipes.
         identity = value.pop("recipe_identity_sha256", "")
         value["recipe_identity_sha256"] = identity or object_sha256(value)
         return value
@@ -92,6 +95,10 @@ class WorkbenchExperimentRecipe:
         for name, allowed in ALLOWED.items():
             if parameters[name] not in allowed:
                 raise ValueError(f"unsupported workbench parameter: {name}")
+        if "freeze" in parameters and (
+            type(parameters["freeze"]) is not int or parameters["freeze"] not in (0, 5, 10)
+        ):
+            raise ValueError("unsupported workbench parameter: freeze")
         result = cls(parameters=parameters, **values)
         return cls(**{**asdict(result), "recipe_identity_sha256": object_sha256(
             {key: value for key, value in result.to_record().items()

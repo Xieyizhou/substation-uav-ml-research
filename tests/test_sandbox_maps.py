@@ -41,6 +41,14 @@ def sample_map(*, overlap=False, target_east=12.0):
 
 
 class SandboxMapTests(unittest.TestCase):
+    def test_presentation_world_disables_only_reference_grid(self):
+        from src.maps.sandbox_world import build_world_tree
+        tree = build_world_tree(sample_map())
+        self.assertEqual(tree.findtext("world/scene/grid"), "false")
+        self.assertIsNotNone(tree.find(".//model[@name='ground']/link/collision"))
+        for item in sample_map().objects:
+            self.assertIsNotNone(tree.find(f".//model[@name='{item.object_id}']/link/collision"))
+
     def test_identity_round_trip_is_stable(self):
         value = sample_map()
         restored = SandboxMap.from_record(value.to_record())

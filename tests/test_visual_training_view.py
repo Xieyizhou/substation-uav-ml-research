@@ -292,7 +292,7 @@ class TrainingIdentityTests(unittest.TestCase):
             first.training_view_identity_sha256,
             with_validation.training_view_identity_sha256,
         )
-        with self.assertRaisesRegex(ValueError, "locked class order"):
+        with self.assertRaisesRegex(ValueError, "locked equipment or proposal class order"):
             TrainingViewIdentity(
                 **{**values, "train_class_counts": {"transformer": 1}}
             )

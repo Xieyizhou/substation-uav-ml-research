@@ -1,4 +1,6 @@
 import json
+import os
+import subprocess
 from pathlib import Path
 import tempfile
 from types import SimpleNamespace
@@ -45,13 +47,31 @@ class FlightSmokeTests(unittest.TestCase):
         prepared = {"launcher_environment": {"HEADLESS": "1", "WORLD": "same"}}
         self.assertEqual(
             launcher_environment(prepared, "headless"),
-            {"HEADLESS": "1", "WORLD": "same"},
+            {"HEADLESS": "1", "WORLD": "same", "UAV_SANDBOX_DISPLAY_MODE": "headless"},
         )
         self.assertEqual(
             launcher_environment(prepared, "visual_preview"),
-            {"WORLD": "same"},
+            {"WORLD": "same", "UAV_SANDBOX_DISPLAY_MODE": "visual_preview"},
         )
         self.assertEqual(prepared["launcher_environment"]["HEADLESS"], "1")
+
+    def test_actual_shell_policy_overrides_inherited_headless(self):
+        script = Path("scripts/flight/start_px4_substation.sh").read_text()
+        policy = script.split('DISPLAY_MODE="', 1)[1].split('[[ -d "$PROJECT_ROOT" ]]', 1)[0]
+        policy = 'DISPLAY_MODE="' + policy
+        for mode, expected in (("visual_preview", "unset"), ("headless", "1")):
+            env = dict(os.environ, HEADLESS="1")
+            env.update(launcher_environment({"launcher_environment": {}}, mode))
+            result = subprocess.run(
+                ["bash", "-c", 'set -eu\nfail() { exit 2; }\n' + policy +
+                 '\nprintf "%s" "${HEADLESS-unset}"'],
+                env=env, text=True, capture_output=True, check=True,
+            )
+            self.assertEqual(result.stdout, expected)
+
+    def test_invalid_display_mode_rejected(self):
+        with self.assertRaises(ValueError):
+            launcher_environment({"launcher_environment": {}}, "unknown")
 
     def test_completion_requires_confirmed_landing_event(self):
         with tempfile.TemporaryDirectory() as temporary:

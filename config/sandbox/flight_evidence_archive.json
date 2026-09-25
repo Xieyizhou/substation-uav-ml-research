@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "path": "outputs/sandbox/evidence/flight-baseline-20260925.zip",
+  "manifest_sha256": "c6e64ea91907d7214382321114698c65e4c8737a45303858906345a85714d66c",
+  "scope": "Historical fixed-scene SITL evidence only; current runtime and model qualification remain separate."
+}

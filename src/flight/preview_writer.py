@@ -67,14 +67,17 @@ def save_preview(
         planner_config["start"],
         planner_config["resolution_m"],
         planner_config["altitude_m"],
+        local_frame=planner_config.get("local_frame"),
     )
     goal_local = cell_to_local_waypoint(
         planner_config["goal"],
         planner_config["resolution_m"],
         planner_config["altitude_m"],
+        local_frame=planner_config.get("local_frame"),
     )
 
     preview_json = {
+        "local_frame": planner_config.get("local_frame"),
         "planner_name": planner_name,
         "map_name": planner_config["map_name"],
         "target_id": planner_config.get("target_id"),

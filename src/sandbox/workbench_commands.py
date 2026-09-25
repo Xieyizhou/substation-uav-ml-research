@@ -25,7 +25,7 @@ def _parameters(value):
     if not isinstance(value, dict):
         raise ValueError("workbench parameters must be an object")
     allowed = {"experiment_id", "dataset_id", "preset", "epochs", "patience",
-               "imgsz", "batch", "workers", "device"}
+               "imgsz", "batch", "workers", "device", "freeze", "parent_experiment_id"}
     unknown = set(value) - allowed
     if unknown:
         raise ValueError(f"unsupported workbench fields: {sorted(unknown)}")
@@ -35,6 +35,28 @@ def _parameters(value):
 def build_workbench_command(config, action, parameters):
     if config.profile != "development":
         raise ValueError("model workbench is available only in development profile")
+    if action == "workbench-feedback-register":
+        from src.sandbox.feedback_review import FeedbackReviewStore
+        from src.sandbox.workbench_recipe import IDENTIFIER
+        values = parameters if isinstance(parameters, dict) else {}
+        if set(values) != {"dataset_id", "base_dataset_id", "collection_ids"}:
+            raise ValueError("Feedback registration requires dataset_id, base_dataset_id and collection_ids")
+        if not IDENTIFIER.fullmatch(str(values["dataset_id"])):
+            raise ValueError("Invalid dataset identifier")
+        ids = values["collection_ids"]
+        if not isinstance(ids, list) or not 1 <= len(ids) <= 16 or len(set(ids)) != len(ids):
+            raise ValueError("Select 1–16 distinct collections")
+        store = FeedbackReviewStore(config)
+        for identifier in ids:
+            detail = store.detail(identifier)
+            if any(row["status"] == "unreviewed" for row in detail["samples"]):
+                raise ValueError("Review or reject every sample before registration")
+        output = (config.workbench_datasets_root / values["dataset_id"]).relative_to(config.project_root).as_posix()
+        return SandboxCommand(action, (sys.executable, "main.py", "sandbox", "--project-root", str(config.project_root),
+            "--profile", "development", action, "--dataset-id", values["dataset_id"], "--base-dataset-id", str(values["base_dataset_id"]),
+            *(arg for identifier in ids for arg in ("--collection-id", identifier))), 300.,
+            workflow="reviewed_feedback_registration", expected_outputs=(output + "/dataset.json", output + "/provenance.json"),
+            budget_paths=(output,), requires_runtime_idle=False)
     if action == "workbench-dataset-import":
         values = parameters if isinstance(parameters, dict) else {}
         if set(values) not in ({"source", "dataset_id"},
@@ -120,13 +142,14 @@ def build_workbench_command(config, action, parameters):
         if any(not values.get(name) for name in required):
             raise ValueError("workbench run requires experiment, dataset, and preset")
         overrides = {name: values[name] for name in
-                     ("epochs", "patience", "imgsz", "batch", "workers", "device")
+                     ("epochs", "patience", "imgsz", "batch", "workers", "device", "freeze")
                      if name in values}
         recipe, run_root = materialize_workbench_recipe(
             config.project_root, config.workbench_datasets_root,
             config.workbench_runs_root, values["experiment_id"],
             values["dataset_id"], values["preset"], overrides,
             _baseline(config),
+            parent_experiment_id=values.get("parent_experiment_id") or None,
         )
         command = "workbench-run"
     elif action == "workbench-resume":

@@ -1,4 +1,4 @@
-# Sandbox Product 0.3 Quick Start
+# Research Preview Quick Start
 
 The local App has three explicit profiles. This keeps the first-run experience
 small while preserving the stricter research boundaries used by the full
@@ -36,7 +36,7 @@ Open [http://127.0.0.1:8765](http://127.0.0.1:8765). The launcher performs an
 idempotent bootstrap before starting the loopback-only server. Press `Ctrl-C`
 in the terminal to stop it.
 
-Open **Get started** after launch. The page evaluates requirements for the
+Open **System → Environment** after launch. The page evaluates requirements for the
 selected profile, separates required items from optional simulator features,
 and provides copyable commands or official PX4/Gazebo documentation. It never
 executes installation commands. Select **Check again** after making changes.
@@ -51,11 +51,11 @@ To use another port:
 
 In the App:
 
-1. Open **Experiments**.
+1. Open **Report Viewer → Acceptance** (or go directly to `/#results/acceptance`).
 2. Select **Demo classifier**.
 3. Select **Create recipe and run** and confirm the bounded local action.
-4. Open **Operator** to inspect the job and its bounded log.
-5. Return to **Experiments** to inspect the workflow receipt.
+4. Open **System → Activity** to inspect the job and its bounded log.
+5. Return to **Report Viewer → Acceptance** to inspect the workflow receipt.
 
 The workflow trains a nearest-centroid classifier from eight deterministic
 synthetic range/density samples and evaluates it on eight separate samples.
@@ -122,6 +122,9 @@ release gate and clean-install gate run in GitHub Actions on Python 3.11 and
 3.13.
 
 ## Enable the Full Simulator
+
+See [Research preview setup](RESEARCH_PREVIEW.md) for optional ML versions and
+the datasets, models and fixed-scene assets that are not included in a clone.
 
 Create the project environment and install the core runtime dependencies:
 

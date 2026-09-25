@@ -31,9 +31,24 @@ def compile_native_bridge():
         capture_output=True,
         text=True,
     ).stdout
+    # On macOS hosts where the default SDK symlink points at a newer malformed
+    # TBD archive, clang fails at link time before Gazebo is started.  Prefer a
+    # known installed SDK as a toolchain repair only; no image or timing logic
+    # changes.  An explicit caller SDKROOT remains authoritative.
+    environment = os.environ.copy()
+    if not environment.get("SDKROOT"):
+        for candidate in (
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX26.5.sdk",
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX26.sdk",
+            "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk",
+        ):
+            if Path(candidate).exists():
+                environment["SDKROOT"] = candidate
+                break
     subprocess.run(
         ["clang++", str(SOURCE), "-o", str(BINARY), *shlex.split(flags)],
         check=True,
+        env=environment,
     )
 
 

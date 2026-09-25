@@ -2,6 +2,8 @@
 
 import asyncio
 import contextlib
+import signal
+import threading
 
 
 async def cancel_tasks(tasks, timeout_s):
@@ -22,9 +24,22 @@ def run_with_bounded_shutdown(coroutine, shutdown_timeout_s):
     """Run a coroutine without allowing cancellation-resistant tasks to hang exit."""
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
+    root_task = loop.create_task(coroutine)
+    previous_handlers = {}
+    stop_requested = False
+    def request_stop(signum, frame):
+        nonlocal stop_requested
+        if not stop_requested:
+            stop_requested = True
+            loop.call_soon_threadsafe(root_task.cancel)
+    if threading.current_thread() is threading.main_thread():
+        for signum in (signal.SIGINT, signal.SIGTERM):
+            previous_handlers[signum] = signal.signal(signum, request_stop)
     try:
-        return loop.run_until_complete(coroutine)
+        return loop.run_until_complete(root_task)
     finally:
+        for signum, handler in previous_handlers.items():
+            signal.signal(signum, handler)
         pending = list(asyncio.all_tasks(loop))
         if pending:
             remaining = loop.run_until_complete(

@@ -1,0 +1,1990 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "original": "scripts/vision/after_tail_training_evaluation.py",
+      "archived": "archive/research_scripts/vision/after_tail_training_evaluation.py",
+      "sha256": "3ca6e74387456ae1187f4c2443932cb85b114917847a539f67d73a19898b2f42"
+    },
+    {
+      "original": "scripts/vision/analyze_class_geometry_gap.py",
+      "archived": "archive/research_scripts/vision/analyze_class_geometry_gap.py",
+      "sha256": "1ab39a0297f9c9d1da166fcfd1f48213763892aea21677fda59d9c256b4e708f"
+    },
+    {
+      "original": "scripts/vision/analyze_material_learning_trajectory.py",
+      "archived": "archive/research_scripts/vision/analyze_material_learning_trajectory.py",
+      "sha256": "5173e33b07bd347a7050fa9b31d1a619b9d4c2cae7dcf2c3d6a6dd519bd1fe2d"
+    },
+    {
+      "original": "scripts/vision/analyze_material_transition_windows.py",
+      "archived": "archive/research_scripts/vision/analyze_material_transition_windows.py",
+      "sha256": "cf6b44c785e85e474a2cd007838fdfd5be486c0f63ec47eacce84802b2c2ec6b"
+    },
+    {
+      "original": "scripts/vision/analyze_physical_tail_direction.py",
+      "archived": "archive/research_scripts/vision/analyze_physical_tail_direction.py",
+      "sha256": "a95fedb9ea3f831c131692e403bdf2ccf1e406f4b455d7b12504d34ab3efa42c"
+    },
+    {
+      "original": "scripts/vision/analyze_proposal_failure_lineage.py",
+      "archived": "archive/research_scripts/vision/analyze_proposal_failure_lineage.py",
+      "sha256": "59c0603c3ac99fa7399f7311b46fdab73a75233758daa80e33baf8ace9d5b94d"
+    },
+    {
+      "original": "scripts/vision/assess_material_shadow.py",
+      "archived": "archive/research_scripts/vision/assess_material_shadow.py",
+      "sha256": "333d34ee40e55c927a7a0b58aa4a1c7aff1cb64372cc8c67be6eac205c7620df"
+    },
+    {
+      "original": "scripts/vision/audit_appearance_background_dedup.py",
+      "archived": "archive/research_scripts/vision/audit_appearance_background_dedup.py",
+      "sha256": "d82e791afdc3c8ca2ffa5417bd8613c0df9b1336474de16c8fe7296b84186ead"
+    },
+    {
+      "original": "scripts/vision/audit_canonical_proposal_background.py",
+      "archived": "archive/research_scripts/vision/audit_canonical_proposal_background.py",
+      "sha256": "80948b34e8089fc0374c56c12cc57da388ad0d1e08008f6ff6459829e393b2ba"
+    },
+    {
+      "original": "scripts/vision/audit_canonical_recovery_increment.py",
+      "archived": "archive/research_scripts/vision/audit_canonical_recovery_increment.py",
+      "sha256": "901b93e6c26468e310a36c0ab24625497f54ad200d2bb81f06704f96beba594f"
+    },
+    {
+      "original": "scripts/vision/audit_expected_class_presence.py",
+      "archived": "archive/research_scripts/vision/audit_expected_class_presence.py",
+      "sha256": "8275483ebe77084e96b10ddf24925896fa23278a61f9d35882814f8423369504"
+    },
+    {
+      "original": "scripts/vision/audit_full_image_pilot.py",
+      "archived": "archive/research_scripts/vision/audit_full_image_pilot.py",
+      "sha256": "4767830efc1e7e71f5ae9c418eaf8a8fdb85e7db29785ce0fd1fe3474939f37c"
+    },
+    {
+      "original": "scripts/vision/audit_historical_baseline.py",
+      "archived": "archive/research_scripts/vision/audit_historical_baseline.py",
+      "sha256": "ddef4bc94e75cabe81b330a159f9003e40b6c36286d81602fc2a340b57cb4be1"
+    },
+    {
+      "original": "scripts/vision/audit_historical_results.py",
+      "archived": "archive/research_scripts/vision/audit_historical_results.py",
+      "sha256": "fc09dc822eb335994ef30a264e767394a1339b064effad00aa92662588a93cab"
+    },
+    {
+      "original": "scripts/vision/audit_material_dose_feasibility.py",
+      "archived": "archive/research_scripts/vision/audit_material_dose_feasibility.py",
+      "sha256": "3b973b4578002345111d1a84dfc75094ace9d59787255ba4e2e3a662602b6c91"
+    },
+    {
+      "original": "scripts/vision/audit_memorization_unmatched.py",
+      "archived": "archive/research_scripts/vision/audit_memorization_unmatched.py",
+      "sha256": "4d4dfb9bb8b8ea80518d96f2cf12d02684df027e6ae7dbc5ef446a99f1f4b846"
+    },
+    {
+      "original": "scripts/vision/audit_occlusion_shifted_dedup.py",
+      "archived": "archive/research_scripts/vision/audit_occlusion_shifted_dedup.py",
+      "sha256": "4b50a378a59e43dda9fbb54f953f63bbe4d0ebedf93ff905fbdf010bfb343ca9"
+    },
+    {
+      "original": "scripts/vision/audit_physical_low_light_evaluation.py",
+      "archived": "archive/research_scripts/vision/audit_physical_low_light_evaluation.py",
+      "sha256": "9bd51f328bcb41022f10653b5eb5a6da6b931020faa9c6a8001a972fc5c1e067"
+    },
+    {
+      "original": "scripts/vision/audit_recovery_annotation_compatibility.py",
+      "archived": "archive/research_scripts/vision/audit_recovery_annotation_compatibility.py",
+      "sha256": "ce8ef5f18fdca98dedf22e08d48300711490592cc6a80151a42c8e9e915cb2eb"
+    },
+    {
+      "original": "scripts/vision/audit_recovery_data_readiness.py",
+      "archived": "archive/research_scripts/vision/audit_recovery_data_readiness.py",
+      "sha256": "3c96637d840956c5e2a2720f6ccd62344719eeb581e01979692a2090cfadfd2e"
+    },
+    {
+      "original": "scripts/vision/audit_recovery_reference_groups.py",
+      "archived": "archive/research_scripts/vision/audit_recovery_reference_groups.py",
+      "sha256": "ae69df4fbcdc24e1a2df5b325dac5752def656591cb3fa102e0b61775c817e03"
+    },
+    {
+      "original": "scripts/vision/audit_recovery_scope_provenance.py",
+      "archived": "archive/research_scripts/vision/audit_recovery_scope_provenance.py",
+      "sha256": "befb2b4b634dabd0c898b1ff8a0737b521363ac0fb2a398efe0ba64c62ebf4a8"
+    },
+    {
+      "original": "scripts/vision/audit_retained_annotations.py",
+      "archived": "archive/research_scripts/vision/audit_retained_annotations.py",
+      "sha256": "cd25c877275d82aad1b4383b663f2a054940871d3480cab9af7f18321a882799"
+    },
+    {
+      "original": "scripts/vision/audit_reviewed_near_duplicates.py",
+      "archived": "archive/research_scripts/vision/audit_reviewed_near_duplicates.py",
+      "sha256": "b6af934c2b3d3fed0b73546a65cc157e0eaeaa640b866483b6a25238a33efebd"
+    },
+    {
+      "original": "scripts/vision/audit_scale_endpoint_results.py",
+      "archived": "archive/research_scripts/vision/audit_scale_endpoint_results.py",
+      "sha256": "91f7d9c5f60e9634fc8ff5885d43a3fa3d56d477b26ba5ab28e041d63a0d233c"
+    },
+    {
+      "original": "scripts/vision/audit_scale_stratified_dedup.py",
+      "archived": "archive/research_scripts/vision/audit_scale_stratified_dedup.py",
+      "sha256": "06cae273789362ee6d46bc9d4a44f199e9a9fca37b31db945275d815fe49419d"
+    },
+    {
+      "original": "scripts/vision/audit_simple_annotation_repair_errors.py",
+      "archived": "archive/research_scripts/vision/audit_simple_annotation_repair_errors.py",
+      "sha256": "6722a07962229c5756bdd5b67b03d2332c76baa981c604621443c098cd9af148"
+    },
+    {
+      "original": "scripts/vision/audit_stratified_expansion_dedup.py",
+      "archived": "archive/research_scripts/vision/audit_stratified_expansion_dedup.py",
+      "sha256": "75af2fe26109072ad3e9a79a4cc3c9a9dd9778fd01dd1bd3b1a24d4d5376eeb1"
+    },
+    {
+      "original": "scripts/vision/audit_targeted_coverage_dedup.py",
+      "archived": "archive/research_scripts/vision/audit_targeted_coverage_dedup.py",
+      "sha256": "a06e4898b8173312ad8b5460de9bf010bd0bd881208138479afddf2f6a94026c"
+    },
+    {
+      "original": "scripts/vision/audit_targeted_regression_dedup.py",
+      "archived": "archive/research_scripts/vision/audit_targeted_regression_dedup.py",
+      "sha256": "2d9bd1c738212217162fe0eb26f4a9613cdc1916381dbb0021ac783fa817b8e9"
+    },
+    {
+      "original": "scripts/vision/audit_visibility_repair_results.py",
+      "archived": "archive/research_scripts/vision/audit_visibility_repair_results.py",
+      "sha256": "d6b1cbf0e17765014fd659633e66330a56dacb3b3ae70d8151fd72f571511058"
+    },
+    {
+      "original": "scripts/vision/backbone_bn_update_policy.py",
+      "archived": "archive/research_scripts/vision/backbone_bn_update_policy.py",
+      "sha256": "cffa72f8e2946ac5028a6370d5b06c64163deeb455f85e6fd5f33f1a696ab90b"
+    },
+    {
+      "original": "scripts/vision/benchmark_closed_training_cpu.py",
+      "archived": "archive/research_scripts/vision/benchmark_closed_training_cpu.py",
+      "sha256": "05ccb5c0e0cbfc50d68550fdf3d2e3d0f7d1951cdacc3a6bb2b711190e770f6a"
+    },
+    {
+      "original": "scripts/vision/benchmark_material_latest.py",
+      "archived": "archive/research_scripts/vision/benchmark_material_latest.py",
+      "sha256": "f4c56dc307172e201fc1ef88c24cd75845e5eb02ca9be559e7df1ddc5676a447"
+    },
+    {
+      "original": "scripts/vision/benchmark_material_memory.py",
+      "archived": "archive/research_scripts/vision/benchmark_material_memory.py",
+      "sha256": "10c5d5f32e300a51b1ea91b6f8a2a7a39d2bb95f51d26d390a2173fcfafee7d1"
+    },
+    {
+      "original": "scripts/vision/benchmark_reviewed_hold_device.py",
+      "archived": "archive/research_scripts/vision/benchmark_reviewed_hold_device.py",
+      "sha256": "aedcea194c3e58be7c7bd5b0413492118008c42f2fe665c68e930ad5696d16d4"
+    },
+    {
+      "original": "scripts/vision/benchmark_workbench_replay.py",
+      "archived": "archive/research_scripts/vision/benchmark_workbench_replay.py",
+      "sha256": "6decd55802880bf6f8a35aa39afe21c23fd44f4694c15ecee9c268e4e8a07609"
+    },
+    {
+      "original": "scripts/vision/benchmark_workbench_training.py",
+      "archived": "archive/research_scripts/vision/benchmark_workbench_training.py",
+      "sha256": "133bdd48b4b529f2df79170e4aa4a8dd1cd4b1c6ed1f816a1d7c73bbcedd6c61"
+    },
+    {
+      "original": "scripts/vision/build_appearance_background_contact_sheet.py",
+      "archived": "archive/research_scripts/vision/build_appearance_background_contact_sheet.py",
+      "sha256": "cc666b9cd4683c7c7c373a3c0e292121e0f68f0b94fcc91ceb301633eec2277b"
+    },
+    {
+      "original": "scripts/vision/build_backbone_fit_evidence.py",
+      "archived": "archive/research_scripts/vision/build_backbone_fit_evidence.py",
+      "sha256": "c35472d5da9898b36c6c7d24034207db6108bd02c56647d01bd40b134170f58a"
+    },
+    {
+      "original": "scripts/vision/build_background_calibration_scenes.py",
+      "archived": "archive/research_scripts/vision/build_background_calibration_scenes.py",
+      "sha256": "33d0ebb87bb404d364a63aaac73a060b67601aba9d1475d1ba26fc6bee940aec"
+    },
+    {
+      "original": "scripts/vision/build_background_hard_negative_candidates.py",
+      "archived": "archive/research_scripts/vision/build_background_hard_negative_candidates.py",
+      "sha256": "1c2f56b019e4b7e5c231e073d2fc9cfe5c526364310a3f1ed79c3217237586d9"
+    },
+    {
+      "original": "scripts/vision/build_class_agnostic_proposal_view.py",
+      "archived": "archive/research_scripts/vision/build_class_agnostic_proposal_view.py",
+      "sha256": "985f3ea7c199d7609310370354db8111525fe637b6ec6fa21e7000bb8d591528"
+    },
+    {
+      "original": "scripts/vision/build_condition_coverage.py",
+      "archived": "archive/research_scripts/vision/build_condition_coverage.py",
+      "sha256": "cc331ed434755f8a4b157d0c31f0146939b26944af1c996967318fadc1e5b0c9"
+    },
+    {
+      "original": "scripts/vision/build_current_negative_coverage.py",
+      "archived": "archive/research_scripts/vision/build_current_negative_coverage.py",
+      "sha256": "5f4989e8cde2bb9a509ac9b1b0effafd24530f05286425ab8769bf420fcf1c8d"
+    },
+    {
+      "original": "scripts/vision/build_double_dose_error_review.py",
+      "archived": "archive/research_scripts/vision/build_double_dose_error_review.py",
+      "sha256": "24af0a5a8796400a4d15e02e629083e84fc0c59de6a65f282228185e6a459421"
+    },
+    {
+      "original": "scripts/vision/build_gray_body_error_review.py",
+      "archived": "archive/research_scripts/vision/build_gray_body_error_review.py",
+      "sha256": "8550cb7daa354737db4fda335f98008d3a255eabda0753aa34ff33fd61fa23ed"
+    },
+    {
+      "original": "scripts/vision/build_material_fixed_sequence_lr_review.py",
+      "archived": "archive/research_scripts/vision/build_material_fixed_sequence_lr_review.py",
+      "sha256": "6a30e00c4c97e123ee48aad4aa5371b8e3d6879a4807f9a0f4f3942d410f3150"
+    },
+    {
+      "original": "scripts/vision/build_material_late_rehearsal_review.py",
+      "archived": "archive/research_scripts/vision/build_material_late_rehearsal_review.py",
+      "sha256": "eedd8ee86c222152c0b8239d949117d7f141702d817f5b6da68de6a9d3566bf9"
+    },
+    {
+      "original": "scripts/vision/build_material_retention_review.py",
+      "archived": "archive/research_scripts/vision/build_material_retention_review.py",
+      "sha256": "eb47dde5c27f6661537d871d78c485f9da3e7f55be733ad3a15da3abbd060cd2"
+    },
+    {
+      "original": "scripts/vision/build_occlusion_shifted_contact_sheet.py",
+      "archived": "archive/research_scripts/vision/build_occlusion_shifted_contact_sheet.py",
+      "sha256": "cc86fbf8a5d8a69e0454611eb01c976e71bd39b65ae552ce0fdb2c9931b82c94"
+    },
+    {
+      "original": "scripts/vision/build_paired_visual_review.py",
+      "archived": "archive/research_scripts/vision/build_paired_visual_review.py",
+      "sha256": "784c7d00691c46ea5abb230a70a8f60099736be47e614167be7ea3cbb962312d"
+    },
+    {
+      "original": "scripts/vision/build_recovery_control_matrix.py",
+      "archived": "archive/research_scripts/vision/build_recovery_control_matrix.py",
+      "sha256": "455c9d377db0bd81e47690af76d3b05b0c505c9d6e3f222674f27b5ba1af499d"
+    },
+    {
+      "original": "scripts/vision/build_reviewed_endpoint_errors.py",
+      "archived": "archive/research_scripts/vision/build_reviewed_endpoint_errors.py",
+      "sha256": "24f990723f7de585ebf2383f8c0cad53dda5d3bbee09337619f06171f91d7f25"
+    },
+    {
+      "original": "scripts/vision/build_reviewed_order_error_pages.py",
+      "archived": "archive/research_scripts/vision/build_reviewed_order_error_pages.py",
+      "sha256": "2aa667537b1ab3f9f11f056e715c6fd558bf1a0413cf9fb9274d80a633114a73"
+    },
+    {
+      "original": "scripts/vision/build_same_source_material_dose_review.py",
+      "archived": "archive/research_scripts/vision/build_same_source_material_dose_review.py",
+      "sha256": "55173522b53bfeadcc88625a749d799e7101d6ad640f13f52eeb04f323bafc1e"
+    },
+    {
+      "original": "scripts/vision/build_scale_reactor_coverage.py",
+      "archived": "archive/research_scripts/vision/build_scale_reactor_coverage.py",
+      "sha256": "5f7da96938d2c9a6951c17e17211bd2821c647d8c0cedb1b70d2392938781a29"
+    },
+    {
+      "original": "scripts/vision/build_scale_stratified_contact_sheet.py",
+      "archived": "archive/research_scripts/vision/build_scale_stratified_contact_sheet.py",
+      "sha256": "13ef346411eaee1fb910ffedf6474317b93edc33ede954b2c1874b56b4552875"
+    },
+    {
+      "original": "scripts/vision/build_targeted_regression_contact_sheet.py",
+      "archived": "archive/research_scripts/vision/build_targeted_regression_contact_sheet.py",
+      "sha256": "da8666d377ff03f13fdbb315a996910d1368e2390329568bd4c3458152e85b49"
+    },
+    {
+      "original": "scripts/vision/build_v2_10_training_view.py",
+      "archived": "archive/research_scripts/vision/build_v2_10_training_view.py",
+      "sha256": "2f39830726d964e0bb9e93a14da17edf493332430495fe39a37d5abfec7546ac"
+    },
+    {
+      "original": "scripts/vision/build_v2_1_training_view.py",
+      "archived": "archive/research_scripts/vision/build_v2_1_training_view.py",
+      "sha256": "2971e5cccf63e7f623b7ebddfdef7bb775cccf085605d589b4130af642f0389c"
+    },
+    {
+      "original": "scripts/vision/build_visual_bridge_negative_v2_pilot_review.py",
+      "archived": "archive/research_scripts/vision/build_visual_bridge_negative_v2_pilot_review.py",
+      "sha256": "8f95b2a0039a3ef5db2b11c4c6f8fd0c650605d1ad76548e4663c8adee37eb7f"
+    },
+    {
+      "original": "scripts/vision/build_visual_bridge_negative_v2_remaining_review.py",
+      "archived": "archive/research_scripts/vision/build_visual_bridge_negative_v2_remaining_review.py",
+      "sha256": "16ecd847fa75543ff04bb3aa8d8d8cb97e003ba167e73a10af80da1c40fa9b37"
+    },
+    {
+      "original": "scripts/vision/build_visual_bridge_pilot_review.py",
+      "archived": "archive/research_scripts/vision/build_visual_bridge_pilot_review.py",
+      "sha256": "6fa0e6da8feccfc75c5155d00cb991ef0a0490f260d47dbeb829e7c6395417ec"
+    },
+    {
+      "original": "scripts/vision/build_visual_bridge_remaining_review.py",
+      "archived": "archive/research_scripts/vision/build_visual_bridge_remaining_review.py",
+      "sha256": "6843ac6c2f88990c7b6319256837e1b2d3f7dc7a3b2b13bbd264af1ad8511211"
+    },
+    {
+      "original": "scripts/vision/capture_appearance_background_regression.py",
+      "archived": "archive/research_scripts/vision/capture_appearance_background_regression.py",
+      "sha256": "021b4ada4dba1d4b0f6cb74a1ef4ee839ef6c9231eb9d434491ea57bd15be019"
+    },
+    {
+      "original": "scripts/vision/capture_cross_scene_additional.py",
+      "archived": "archive/research_scripts/vision/capture_cross_scene_additional.py",
+      "sha256": "cf64e0a2fb7684909c8957c3829920aefbcd00f4eec334773751c03575001c37"
+    },
+    {
+      "original": "scripts/vision/capture_cross_scene_recheck.py",
+      "archived": "archive/research_scripts/vision/capture_cross_scene_recheck.py",
+      "sha256": "905793d7d2dd0b8defa44bb4232a6d890853fe3aed02812d63dd94573fb68ba6"
+    },
+    {
+      "original": "scripts/vision/capture_hard_negative_v2_pilot.py",
+      "archived": "archive/research_scripts/vision/capture_hard_negative_v2_pilot.py",
+      "sha256": "93f298a702bee546217f07720bdbd01cf01d53c8b488b8d4e4a9adea4b7113f3"
+    },
+    {
+      "original": "scripts/vision/capture_hard_negative_v2_remaining.py",
+      "archived": "archive/research_scripts/vision/capture_hard_negative_v2_remaining.py",
+      "sha256": "e4243832b4fad0618e45bb311679d8a20aeab2c88dadbe0f8b51741bf5e73d53"
+    },
+    {
+      "original": "scripts/vision/capture_occlusion_shifted_regression.py",
+      "archived": "archive/research_scripts/vision/capture_occlusion_shifted_regression.py",
+      "sha256": "63c0d56a05815f7bbc0635a55d1b9204c6ff6d7d130806cf13d89a5cce638a70"
+    },
+    {
+      "original": "scripts/vision/capture_paired_visual_factors.py",
+      "archived": "archive/research_scripts/vision/capture_paired_visual_factors.py",
+      "sha256": "7c2cfb4f7707b07820ce46699108c5d3947a6cb9acec35e16bb0507cd6bf291a"
+    },
+    {
+      "original": "scripts/vision/capture_reactor_source_isolated.py",
+      "archived": "archive/research_scripts/vision/capture_reactor_source_isolated.py",
+      "sha256": "b70327fd108066bb1664d12b8335ba2e89bd826a98189b6496ea5ef981ce2639"
+    },
+    {
+      "original": "scripts/vision/capture_recovery_control_matrix.py",
+      "archived": "archive/research_scripts/vision/capture_recovery_control_matrix.py",
+      "sha256": "81734c8737cebb77aef831afece92d3caaefe0d467271918bb4c98a494d06096"
+    },
+    {
+      "original": "scripts/vision/capture_scale_stratified_coverage.py",
+      "archived": "archive/research_scripts/vision/capture_scale_stratified_coverage.py",
+      "sha256": "eef276d591ec8929f37a072ce2fd3b89a8952322215b57d7cde3339a26c0352f"
+    },
+    {
+      "original": "scripts/vision/capture_simple_annotation_repair.py",
+      "archived": "archive/research_scripts/vision/capture_simple_annotation_repair.py",
+      "sha256": "67aadd7145831f1f3f4d2dfb4eff0d9c43a8aa8e55e730ff508f86b55ee929e3"
+    },
+    {
+      "original": "scripts/vision/capture_simple_independent_scene.py",
+      "archived": "archive/research_scripts/vision/capture_simple_independent_scene.py",
+      "sha256": "af36df61c48fbe0ccf850d838cd7d14f87ee28f4465bc3e051c89308f258602e"
+    },
+    {
+      "original": "scripts/vision/capture_stratified_expansion.py",
+      "archived": "archive/research_scripts/vision/capture_stratified_expansion.py",
+      "sha256": "0a2651c969a835021b7ffe6db7f08d400266df29ff993968eec6a8ae751972af"
+    },
+    {
+      "original": "scripts/vision/capture_targeted_coverage_expansion.py",
+      "archived": "archive/research_scripts/vision/capture_targeted_coverage_expansion.py",
+      "sha256": "0e78d7450de4907ab62503022a50e9a937518508556f945305e71e2b80bf7d22"
+    },
+    {
+      "original": "scripts/vision/capture_targeted_regression.py",
+      "archived": "archive/research_scripts/vision/capture_targeted_regression.py",
+      "sha256": "509c4123ebf2b4f429459a6483f6ed58d2b8ac7493f205475b3e7437ef312a35"
+    },
+    {
+      "original": "scripts/vision/capture_visual_augmentation_pilot.py",
+      "archived": "archive/research_scripts/vision/capture_visual_augmentation_pilot.py",
+      "sha256": "60348437c4847bffc77376d2f583e025c725838ff48bc74db44ce9db9715dd99"
+    },
+    {
+      "original": "scripts/vision/capture_visual_augmentation_positives.py",
+      "archived": "archive/research_scripts/vision/capture_visual_augmentation_positives.py",
+      "sha256": "9330292f6a97780c5ffdd6e56082f5b67d506e1312152b79b01d39d62b615fc8"
+    },
+    {
+      "original": "scripts/vision/capture_visual_bridge_negative_v2_pilot.py",
+      "archived": "archive/research_scripts/vision/capture_visual_bridge_negative_v2_pilot.py",
+      "sha256": "1ee45e6686d87dc964a3f62a665ddb0b11f97b4fc81764808a229905405edbfd"
+    },
+    {
+      "original": "scripts/vision/capture_visual_bridge_negative_v2_remaining.py",
+      "archived": "archive/research_scripts/vision/capture_visual_bridge_negative_v2_remaining.py",
+      "sha256": "ddcfd62ff584684822dd174a76bd58a65f1f60e9092add8eafaccdcf8df081eb"
+    },
+    {
+      "original": "scripts/vision/capture_visual_bridge_pilot.py",
+      "archived": "archive/research_scripts/vision/capture_visual_bridge_pilot.py",
+      "sha256": "34e203dbbe250e5ea6dd6440b6fac902a4cbdb7ac669fafb8437c52f96358b91"
+    },
+    {
+      "original": "scripts/vision/capture_visual_bridge_pilot_v2.py",
+      "archived": "archive/research_scripts/vision/capture_visual_bridge_pilot_v2.py",
+      "sha256": "11d2c26e8049f8fb335f371860357a4289de9505615ca6c1763361478ecbcaf1"
+    },
+    {
+      "original": "scripts/vision/capture_visual_bridge_pilot_v2_retry.py",
+      "archived": "archive/research_scripts/vision/capture_visual_bridge_pilot_v2_retry.py",
+      "sha256": "e12794f095e67fb80a5e9d1bbee27aecd47c71ae372141712bb0b5312ba6d869"
+    },
+    {
+      "original": "scripts/vision/capture_visual_bridge_remaining.py",
+      "archived": "archive/research_scripts/vision/capture_visual_bridge_remaining.py",
+      "sha256": "f3b4ee567423f509ccec5f5109da136ac8f0861f68b84ddf234cdbbb507fd88a"
+    },
+    {
+      "original": "scripts/vision/check_instance_exposure_balance.py",
+      "archived": "archive/research_scripts/vision/check_instance_exposure_balance.py",
+      "sha256": "dad42d9ce05c377c3960c91648d77b6d417b736eb5cd60e5713e9ae92ce80f7e"
+    },
+    {
+      "original": "scripts/vision/check_material_pose_exposure_feasibility.py",
+      "archived": "archive/research_scripts/vision/check_material_pose_exposure_feasibility.py",
+      "sha256": "a3a56eb1c1518701c836c3d899b69c6d8ee089a66ca9a13e4348f8c41689e292"
+    },
+    {
+      "original": "scripts/vision/check_transfer_replacement_feasibility.py",
+      "archived": "archive/research_scripts/vision/check_transfer_replacement_feasibility.py",
+      "sha256": "5e47739bf416eb97d3e20171268d7378e3794121f1e1eb523673789197f2f7c9"
+    },
+    {
+      "original": "scripts/vision/close_physical_light_report.py",
+      "archived": "archive/research_scripts/vision/close_physical_light_report.py",
+      "sha256": "da01cd4131a4776f64ab7d5500929b7289c44933b1a25e3139b904420922d6a2"
+    },
+    {
+      "original": "scripts/vision/closed_budget_engine.py",
+      "archived": "archive/research_scripts/vision/closed_budget_engine.py",
+      "sha256": "4a087f5aaa4885796a450ad32b36234d6f0343a19091bbaefb03bf403fb23ca8"
+    },
+    {
+      "original": "scripts/vision/collect_feedback.py",
+      "archived": "archive/research_scripts/vision/collect_feedback.py",
+      "sha256": "3d19958122f1fb041127d9fee0c668a9fd4315b91296cb5ef72a3c8cc0e7f1af"
+    },
+    {
+      "original": "scripts/vision/collect_hard_examples.py",
+      "archived": "archive/research_scripts/vision/collect_hard_examples.py",
+      "sha256": "d296fa3d96d953ef26740c4bdf239d5b25a12ecd6664c7376cfadca4510f8b47"
+    },
+    {
+      "original": "scripts/vision/compare_double_dose_fit.py",
+      "archived": "archive/research_scripts/vision/compare_double_dose_fit.py",
+      "sha256": "bc2e83c80f755e88ee8eb802d57cf5e4c4a10d0b6c09b93787381b65e4cca6ff"
+    },
+    {
+      "original": "scripts/vision/compare_routed_backbone_fit.py",
+      "archived": "archive/research_scripts/vision/compare_routed_backbone_fit.py",
+      "sha256": "e7f61022f7a64ccf22342603dd3ec77687c9000d1bf9a24109c27675f32e6fd8"
+    },
+    {
+      "original": "scripts/vision/compute_condition_transfer_strata.py",
+      "archived": "archive/research_scripts/vision/compute_condition_transfer_strata.py",
+      "sha256": "b1a6367d4efd445962eed3f61b88c24c4d409a29ed96f0b29b5edb8b205b3ca9"
+    },
+    {
+      "original": "scripts/vision/confirm_closed_gamma_start.py",
+      "archived": "archive/research_scripts/vision/confirm_closed_gamma_start.py",
+      "sha256": "83cbdca445291786d2e23bcc9f5655443c3ef9967cbd8295140749eca1419771"
+    },
+    {
+      "original": "scripts/vision/confirm_physical_low_light_start.py",
+      "archived": "archive/research_scripts/vision/confirm_physical_low_light_start.py",
+      "sha256": "329684762689cb55a0d5f28c199435a46816843091728d0e7f9865d5c5e39377"
+    },
+    {
+      "original": "scripts/vision/correct_material_trajectory_labels.py",
+      "archived": "archive/research_scripts/vision/correct_material_trajectory_labels.py",
+      "sha256": "acc2552a1556627e7615bbb74c112f10700198b880da7862fdc747d2d462b402"
+    },
+    {
+      "original": "scripts/vision/create_semantic_review_batch.py",
+      "archived": "archive/research_scripts/vision/create_semantic_review_batch.py",
+      "sha256": "84abeaa5e64b4a6e24fa8563254461c86a607988e9f1ae175272ab90f721e6ea"
+    },
+    {
+      "original": "scripts/vision/curate_hard_examples.py",
+      "archived": "archive/research_scripts/vision/curate_hard_examples.py",
+      "sha256": "c384bebfe5edc8dc7f2a5f209af22e8ed303fa24a0ef7c696d7ab2b5395cadc3"
+    },
+    {
+      "original": "scripts/vision/diagnose_gray_body_transfer.py",
+      "archived": "archive/research_scripts/vision/diagnose_gray_body_transfer.py",
+      "sha256": "ad76d5475dd19acb6acecdc5f707f3f610b2ffade35e0b9e213a4d8eb6995c9d"
+    },
+    {
+      "original": "scripts/vision/diagnose_material_fixed_sequence_lr_fit.py",
+      "archived": "archive/research_scripts/vision/diagnose_material_fixed_sequence_lr_fit.py",
+      "sha256": "074a48206eb9e7d0e18f2b1fc646bf841937430e439cc29036174d5128cb0624"
+    },
+    {
+      "original": "scripts/vision/diagnose_material_retention_transfer.py",
+      "archived": "archive/research_scripts/vision/diagnose_material_retention_transfer.py",
+      "sha256": "43a55cec196206823be31b679466fb5d0bd65f8c7d35872cfdf1006bd5c13104"
+    },
+    {
+      "original": "scripts/vision/diagnose_multiscale_errors.py",
+      "archived": "archive/research_scripts/vision/diagnose_multiscale_errors.py",
+      "sha256": "e64f367b7e23b985b9811c356f55f613cd7be14edc8e8c039e119a799a2bc418"
+    },
+    {
+      "original": "scripts/vision/diagnose_negative_tail_capacity.py",
+      "archived": "archive/research_scripts/vision/diagnose_negative_tail_capacity.py",
+      "sha256": "bf777d66c5fe145b66f0d565d5bdf4485791fad99eec5d3255ed8551c2f47d4a"
+    },
+    {
+      "original": "scripts/vision/diagnose_proposal_failures.py",
+      "archived": "archive/research_scripts/vision/diagnose_proposal_failures.py",
+      "sha256": "218f0c54ff296f2874705028ad890fb1c872a00ac1c1c4ecff45cbb9b842c877"
+    },
+    {
+      "original": "scripts/vision/diagnose_reviewed_target_fit.py",
+      "archived": "archive/research_scripts/vision/diagnose_reviewed_target_fit.py",
+      "sha256": "8866ab79abd9394d7e6a95890940cf92fb36424bbcd970f93a85a7c4fbdc6a37"
+    },
+    {
+      "original": "scripts/vision/diagnose_routed_backbone_fit.py",
+      "archived": "archive/research_scripts/vision/diagnose_routed_backbone_fit.py",
+      "sha256": "cb95ffd698ed1e9dddef26966a2b5df1ea224fa20ee001de2da6112b4453c1a9"
+    },
+    {
+      "original": "scripts/vision/diagnose_routed_scale_fit.py",
+      "archived": "archive/research_scripts/vision/diagnose_routed_scale_fit.py",
+      "sha256": "14943ba436e3cba4b04aff3f6c73abd288b59512f82c610b4ac36ec32da6f375"
+    },
+    {
+      "original": "scripts/vision/diagnose_same_source_material_dose_fit.py",
+      "archived": "archive/research_scripts/vision/diagnose_same_source_material_dose_fit.py",
+      "sha256": "cc11f0132c866a967cf1697bce938f58b14ff69952c7006a2537f4f5ef6a454d"
+    },
+    {
+      "original": "scripts/vision/dose_matched_contrast_control.py",
+      "archived": "archive/research_scripts/vision/dose_matched_contrast_control.py",
+      "sha256": "4da45e515f792426749018c2dea95350923c822ac45b8d224abbfe6dded78218"
+    },
+    {
+      "original": "scripts/vision/double_dose_review_observations.py",
+      "archived": "archive/research_scripts/vision/double_dose_review_observations.py",
+      "sha256": "b47cec3114f9b4635de8c73e9ae892852ff7420beeb8bcb6a858adfe90a7362e"
+    },
+    {
+      "original": "scripts/vision/endpoint_member_fit.py",
+      "archived": "archive/research_scripts/vision/endpoint_member_fit.py",
+      "sha256": "71f6c4fa2e80e041234f95696f6ee9d017d3cdcc264649ff2f37ea6b4e529b32"
+    },
+    {
+      "original": "scripts/vision/evaluate_appearance_background_regression.py",
+      "archived": "archive/research_scripts/vision/evaluate_appearance_background_regression.py",
+      "sha256": "ab63a349c35d9724b4e3acd9d98cdddf1b033e5d9d6dc6eda59b656df3700918"
+    },
+    {
+      "original": "scripts/vision/evaluate_augmentation_ab.py",
+      "archived": "archive/research_scripts/vision/evaluate_augmentation_ab.py",
+      "sha256": "b03cd3eeb933b7178ccacf0a5a13cb8eedecc784e732f02960ba951474f9b3c1"
+    },
+    {
+      "original": "scripts/vision/evaluate_compensated_double_dose.py",
+      "archived": "archive/research_scripts/vision/evaluate_compensated_double_dose.py",
+      "sha256": "71781cb69ddae2c2e4ef0efa68e8a5766faae1485413050cfe7a02696b63bbf9"
+    },
+    {
+      "original": "scripts/vision/evaluate_cross_scene_recheck.py",
+      "archived": "archive/research_scripts/vision/evaluate_cross_scene_recheck.py",
+      "sha256": "b39d80e4b3168b1d66aeec056dd7b42313bbd7b6a1e54fd39bf0609b2a8ee519"
+    },
+    {
+      "original": "scripts/vision/evaluate_expanded_recheck.py",
+      "archived": "archive/research_scripts/vision/evaluate_expanded_recheck.py",
+      "sha256": "6de715c2973540a40804a6ca622e5398a53078dd4098959e9d0c3106be115023"
+    },
+    {
+      "original": "scripts/vision/evaluate_il_lower_rate.py",
+      "archived": "archive/research_scripts/vision/evaluate_il_lower_rate.py",
+      "sha256": "abce30e42d881b6f0ec72cccfef2c9fa6ec8e6d6fb0da39fb98116ded04c6e2d"
+    },
+    {
+      "original": "scripts/vision/evaluate_material_fixed_sequence_lr.py",
+      "archived": "archive/research_scripts/vision/evaluate_material_fixed_sequence_lr.py",
+      "sha256": "84b851bb27b141619a93309441bd910c1b3ed93e2fa9d488e745140eaf6bfaa8"
+    },
+    {
+      "original": "scripts/vision/evaluate_material_late_rehearsal.py",
+      "archived": "archive/research_scripts/vision/evaluate_material_late_rehearsal.py",
+      "sha256": "20dcfc69085d3d611e46114c7f1d34c76caee1aa534ba5abd07a3ac55e53e070"
+    },
+    {
+      "original": "scripts/vision/evaluate_negative_rehearsal_control.py",
+      "archived": "archive/research_scripts/vision/evaluate_negative_rehearsal_control.py",
+      "sha256": "df8cbc394e5ff7b33044e990aae80f8d4d23cd786eb82d385b0453a51b7e5d1f"
+    },
+    {
+      "original": "scripts/vision/evaluate_occlusion_shifted_regression.py",
+      "archived": "archive/research_scripts/vision/evaluate_occlusion_shifted_regression.py",
+      "sha256": "70a1b0167e4bcb9e94609fae16310f33b99527105f2956b94cf66d77f887575e"
+    },
+    {
+      "original": "scripts/vision/evaluate_order_fit_reviewed.py",
+      "archived": "archive/research_scripts/vision/evaluate_order_fit_reviewed.py",
+      "sha256": "f27d0fc844e7ed536e8287f8361bb31a550b616ba13446591690967085399787"
+    },
+    {
+      "original": "scripts/vision/evaluate_recovery_controls.py",
+      "archived": "archive/research_scripts/vision/evaluate_recovery_controls.py",
+      "sha256": "9e04c5a076cb3000df988b9bfdff104ec0548e5513355b1e18e5bbc4f0041c12"
+    },
+    {
+      "original": "scripts/vision/evaluate_recovery_matrix.py",
+      "archived": "archive/research_scripts/vision/evaluate_recovery_matrix.py",
+      "sha256": "6d398faad8291d1f8a95bf2e54aefc19b3b33f5309fe07e1c04965a883880040"
+    },
+    {
+      "original": "scripts/vision/evaluate_recovery_negative_ab_holdout.py",
+      "archived": "archive/research_scripts/vision/evaluate_recovery_negative_ab_holdout.py",
+      "sha256": "b408519346318838071a579f17f0a6c3ca5be5c05bb863a2770afeeaecf0caea"
+    },
+    {
+      "original": "scripts/vision/evaluate_repaired_positive_recheck.py",
+      "archived": "archive/research_scripts/vision/evaluate_repaired_positive_recheck.py",
+      "sha256": "301a094f8c02ab2ec73dfc17df9227eb1023f85e36253683f8e06c1bef0f29e5"
+    },
+    {
+      "original": "scripts/vision/evaluate_reviewed_scale.py",
+      "archived": "archive/research_scripts/vision/evaluate_reviewed_scale.py",
+      "sha256": "a5db248f606f9ffc085e6c75a603eeb6f57b5aeb7147772a91de7d5db91c8e68"
+    },
+    {
+      "original": "scripts/vision/evaluate_same_source_material_dose.py",
+      "archived": "archive/research_scripts/vision/evaluate_same_source_material_dose.py",
+      "sha256": "de5e05598d1e154a7aa8b10a3afb96352e92f3f8f7423243f63bb5e545860100"
+    },
+    {
+      "original": "scripts/vision/evaluate_scale_budget_ab.py",
+      "archived": "archive/research_scripts/vision/evaluate_scale_budget_ab.py",
+      "sha256": "8787c688dd0ef1e0674f6d5999ab99e23d82c0c9ab99d165bdf3483acf047c46"
+    },
+    {
+      "original": "scripts/vision/evaluate_scale_endpoints.py",
+      "archived": "archive/research_scripts/vision/evaluate_scale_endpoints.py",
+      "sha256": "0bb0b9b4d312bcca6d1b1f5c893b3faf95ff0a56f29e3a15a584b2947e0bb6f1"
+    },
+    {
+      "original": "scripts/vision/evaluate_scale_expansion_recheck.py",
+      "archived": "archive/research_scripts/vision/evaluate_scale_expansion_recheck.py",
+      "sha256": "e834f45dbf185c28c49bf516b8813146c2be033eba99692ffb30982a892019d5"
+    },
+    {
+      "original": "scripts/vision/evaluate_scale_stratified_coverage.py",
+      "archived": "archive/research_scripts/vision/evaluate_scale_stratified_coverage.py",
+      "sha256": "dd9c4ea3d332d4cf2a4ff061e5b1cb1f0cff01cad2566320e8b7cdbf35c6297f"
+    },
+    {
+      "original": "scripts/vision/evaluate_simple_annotation_repair.py",
+      "archived": "archive/research_scripts/vision/evaluate_simple_annotation_repair.py",
+      "sha256": "2376ad76293ee395f267eb5455f710c64f77581eea470f97c38df9957bff3eb8"
+    },
+    {
+      "original": "scripts/vision/evaluate_simple_independent_scene.py",
+      "archived": "archive/research_scripts/vision/evaluate_simple_independent_scene.py",
+      "sha256": "137ce3d25de654d6ec30b049bda0d4b68a7ec269b8f037590785f8ee8ae29f11"
+    },
+    {
+      "original": "scripts/vision/evaluate_stratified_expansion.py",
+      "archived": "archive/research_scripts/vision/evaluate_stratified_expansion.py",
+      "sha256": "274138590ab7778507834d13931b380c78aafffd7978798cb688f58b0f5ecdb1"
+    },
+    {
+      "original": "scripts/vision/evaluate_stratified_recheck.py",
+      "archived": "archive/research_scripts/vision/evaluate_stratified_recheck.py",
+      "sha256": "b69f3ce9046f52cbb14d3beaba0058e918fead3ea379d10ce987ec70761fa01e"
+    },
+    {
+      "original": "scripts/vision/evaluate_targeted_coverage.py",
+      "archived": "archive/research_scripts/vision/evaluate_targeted_coverage.py",
+      "sha256": "41bacc3f501994c85e3f41db2373f5429b4800b18bdac12fa0a3b0f480791161"
+    },
+    {
+      "original": "scripts/vision/evaluate_targeted_regression.py",
+      "archived": "archive/research_scripts/vision/evaluate_targeted_regression.py",
+      "sha256": "5fe10a7a282c44d4138f66608115546c8015ebd21ca9c3ca1d311759b74e461a"
+    },
+    {
+      "original": "scripts/vision/expand_transfer_probe.py",
+      "archived": "archive/research_scripts/vision/expand_transfer_probe.py",
+      "sha256": "496e5b4a9e655ebb3f8ff3218b78a55ba9f0227aac2f883f10e7ddf4421f629e"
+    },
+    {
+      "original": "scripts/vision/finalize_appearance_background_review.py",
+      "archived": "archive/research_scripts/vision/finalize_appearance_background_review.py",
+      "sha256": "0a38e93f35bc13488f20e5d64a91d3b2c28efc9205da35f20854c819521875a3"
+    },
+    {
+      "original": "scripts/vision/finalize_backbone_fit_research.py",
+      "archived": "archive/research_scripts/vision/finalize_backbone_fit_research.py",
+      "sha256": "dea8a8366115f9c8b7d46ef196ed434daf53f391ddbc47243c1e258722b773c8"
+    },
+    {
+      "original": "scripts/vision/finalize_background_hard_negative_review.py",
+      "archived": "archive/research_scripts/vision/finalize_background_hard_negative_review.py",
+      "sha256": "a8904d49fa87d035f91e753d1dcfb1b08fde251d0d14c935a7af843abc5ac52f"
+    },
+    {
+      "original": "scripts/vision/finalize_body_visibility_replay.py",
+      "archived": "archive/research_scripts/vision/finalize_body_visibility_replay.py",
+      "sha256": "ed7b444d9bdb379aaa92d53e2b36b1c27155ca82f833a3aa757fd3dfb3d1416d"
+    },
+    {
+      "original": "scripts/vision/finalize_canonical_increment_review.py",
+      "archived": "archive/research_scripts/vision/finalize_canonical_increment_review.py",
+      "sha256": "d59db62b2043a05263829de85d038b809436e77fc5a225f669716e165f3fe128"
+    },
+    {
+      "original": "scripts/vision/finalize_clear_context_audit.py",
+      "archived": "archive/research_scripts/vision/finalize_clear_context_audit.py",
+      "sha256": "68b6336c5908a72f95b2fcc2f525b2dce75f92f5dc84bbe73b0d76dbff9b6e60"
+    },
+    {
+      "original": "scripts/vision/finalize_closed_source_error_review.py",
+      "archived": "archive/research_scripts/vision/finalize_closed_source_error_review.py",
+      "sha256": "84bb25c41cbf2b71bf78fa4e7dab212f719d741da4f8b7b47214219a44f53343"
+    },
+    {
+      "original": "scripts/vision/finalize_condition_coverage.py",
+      "archived": "archive/research_scripts/vision/finalize_condition_coverage.py",
+      "sha256": "77e4e823dd8b11a701af61bc5f1b40ed055d59608ad0b8b3a989d7fcec435311"
+    },
+    {
+      "original": "scripts/vision/finalize_condition_transfer_strata.py",
+      "archived": "archive/research_scripts/vision/finalize_condition_transfer_strata.py",
+      "sha256": "f18f492d6c90dbee0180fb06da3aabad9538e48132d2ba22a2dc9ae133f73a08"
+    },
+    {
+      "original": "scripts/vision/finalize_development_content_strata.py",
+      "archived": "archive/research_scripts/vision/finalize_development_content_strata.py",
+      "sha256": "890f27463186a6121e826eec370345aecd810e373eef4dbdd333d28d2a2cb4c3"
+    },
+    {
+      "original": "scripts/vision/finalize_development_visibility_gaps.py",
+      "archived": "archive/research_scripts/vision/finalize_development_visibility_gaps.py",
+      "sha256": "d7e1e5392cded6bd5ee1442e600511774a29954eb84b3e0a810070e6a7c06929"
+    },
+    {
+      "original": "scripts/vision/finalize_device_benchmark.py",
+      "archived": "archive/research_scripts/vision/finalize_device_benchmark.py",
+      "sha256": "aff050fbfa0fcab531353ec99d1f6704b8fce0b91a5e8d7bcab0f11af1c9d4e5"
+    },
+    {
+      "original": "scripts/vision/finalize_dose_matched_audit.py",
+      "archived": "archive/research_scripts/vision/finalize_dose_matched_audit.py",
+      "sha256": "d567f2b639cd8ce365df35e487be39f1872018f1322a31ef728cecfdb85658db"
+    },
+    {
+      "original": "scripts/vision/finalize_double_dose_diagnosis.py",
+      "archived": "archive/research_scripts/vision/finalize_double_dose_diagnosis.py",
+      "sha256": "2ee13e660e77c63851de3c34e355846e6590d220863aa77a4dfed76e0cef71fd"
+    },
+    {
+      "original": "scripts/vision/finalize_endpoint_member_fit.py",
+      "archived": "archive/research_scripts/vision/finalize_endpoint_member_fit.py",
+      "sha256": "159e4430b2209d1007d48def219b858eb8422dbea2b93d27cf230583746475ac"
+    },
+    {
+      "original": "scripts/vision/finalize_gray_body_evaluation.py",
+      "archived": "archive/research_scripts/vision/finalize_gray_body_evaluation.py",
+      "sha256": "e9dfe23c2629f566686c67cbee5098f985679bbb18de86acc9f8b46e7b1bdc07"
+    },
+    {
+      "original": "scripts/vision/finalize_hard_negative_v2.py",
+      "archived": "archive/research_scripts/vision/finalize_hard_negative_v2.py",
+      "sha256": "569c5e5699a45631e8e6aed1972723e12d812bf08ddec5cb1b63f76a95a73046"
+    },
+    {
+      "original": "scripts/vision/finalize_historical_audit.py",
+      "archived": "archive/research_scripts/vision/finalize_historical_audit.py",
+      "sha256": "06136ca392556d316b08710a8f81cfe91b61e88adc2df96cc5b23118682b2ed0"
+    },
+    {
+      "original": "scripts/vision/finalize_material_analysis_correction.py",
+      "archived": "archive/research_scripts/vision/finalize_material_analysis_correction.py",
+      "sha256": "4e8ea8d6a21e0d997f11e62f794487043a724e69ce8406a9e0df19922d9ae320"
+    },
+    {
+      "original": "scripts/vision/finalize_material_fixed_sequence_lr.py",
+      "archived": "archive/research_scripts/vision/finalize_material_fixed_sequence_lr.py",
+      "sha256": "a6e9cc73477e8d561d055ab08c603bef489838aa5f6a0524ee5c3c6e606fa140"
+    },
+    {
+      "original": "scripts/vision/finalize_material_fixed_sequence_lr_evaluation.py",
+      "archived": "archive/research_scripts/vision/finalize_material_fixed_sequence_lr_evaluation.py",
+      "sha256": "f482933366b9c7df4050c22610fd4823f8559881e6e947a5115e3fe4bd56ee92"
+    },
+    {
+      "original": "scripts/vision/finalize_material_late_postcare.py",
+      "archived": "archive/research_scripts/vision/finalize_material_late_postcare.py",
+      "sha256": "f55a8c1e00a846c4e3631fedb3b4f17ea33689b55a82567f85cbddfb1175a177"
+    },
+    {
+      "original": "scripts/vision/finalize_material_late_rehearsal.py",
+      "archived": "archive/research_scripts/vision/finalize_material_late_rehearsal.py",
+      "sha256": "3afe7e31ebf46589803c0137cbcd63591cd240170cb223c86ae9b6b1aad985e8"
+    },
+    {
+      "original": "scripts/vision/finalize_material_late_rehearsal_evaluation.py",
+      "archived": "archive/research_scripts/vision/finalize_material_late_rehearsal_evaluation.py",
+      "sha256": "dbdb90800c5614ffbc8c7c88fdf114c30622b5fe78719ce132d1f6d4e067d90d"
+    },
+    {
+      "original": "scripts/vision/finalize_material_learning_analysis.py",
+      "archived": "archive/research_scripts/vision/finalize_material_learning_analysis.py",
+      "sha256": "bf6f663a66c46f48f6acb923c52802f2f26da4d233c2028c1d202babf5ca8f24"
+    },
+    {
+      "original": "scripts/vision/finalize_material_retention_evaluation.py",
+      "archived": "archive/research_scripts/vision/finalize_material_retention_evaluation.py",
+      "sha256": "7cfd0b2517f7ad275963e4db9ea8e6747d693d790258d93f715623c508d70174"
+    },
+    {
+      "original": "scripts/vision/finalize_material_view_design.py",
+      "archived": "archive/research_scripts/vision/finalize_material_view_design.py",
+      "sha256": "7c6cf1c8c451f05b5be6fb2f5195415fa15a2b220be267683dc9f51f449c56f0"
+    },
+    {
+      "original": "scripts/vision/finalize_material_view_materials_build.py",
+      "archived": "archive/research_scripts/vision/finalize_material_view_materials_build.py",
+      "sha256": "235feda414a802f150262c2668bd60ac8b752aae6f7e144173a43cee6ba05679"
+    },
+    {
+      "original": "scripts/vision/finalize_memorization_unmatched_review.py",
+      "archived": "archive/research_scripts/vision/finalize_memorization_unmatched_review.py",
+      "sha256": "5487fbd206b79b68496600d69341ddacc691717dae9ec8c54bd99d5a25df25e6"
+    },
+    {
+      "original": "scripts/vision/finalize_mild_routed_audit.py",
+      "archived": "archive/research_scripts/vision/finalize_mild_routed_audit.py",
+      "sha256": "233ed0cadcc4dde863a4634acefbed684052b4b25b78579c8de14348c9ba3a5b"
+    },
+    {
+      "original": "scripts/vision/finalize_multiscale_error_diagnosis.py",
+      "archived": "archive/research_scripts/vision/finalize_multiscale_error_diagnosis.py",
+      "sha256": "1b32cac7b78144cde79816591abf15b672d6842955f7585e421e4647f1b90ea1"
+    },
+    {
+      "original": "scripts/vision/finalize_near_similarity_review.py",
+      "archived": "archive/research_scripts/vision/finalize_near_similarity_review.py",
+      "sha256": "ec53cdca23ab85f979e2786c42f03500b9f6dc104126f787586334e155cbf617"
+    },
+    {
+      "original": "scripts/vision/finalize_occlusion_shifted_review.py",
+      "archived": "archive/research_scripts/vision/finalize_occlusion_shifted_review.py",
+      "sha256": "01a209740f39c1f5cc9a018277baf824bb96e61a17167d6f019d2cb02f895fb0"
+    },
+    {
+      "original": "scripts/vision/finalize_order_fit_review_index.py",
+      "archived": "archive/research_scripts/vision/finalize_order_fit_review_index.py",
+      "sha256": "9e4f2fa670106af7f16f1b9b4317327235edf5f69994e91563487ce4540d854a"
+    },
+    {
+      "original": "scripts/vision/finalize_order_retention.py",
+      "archived": "archive/research_scripts/vision/finalize_order_retention.py",
+      "sha256": "4de2e137fdd1397e28949d66be1a6ddbbfdcef753e4db2648d481590a28f3cdc"
+    },
+    {
+      "original": "scripts/vision/finalize_permutation_root_cause.py",
+      "archived": "archive/research_scripts/vision/finalize_permutation_root_cause.py",
+      "sha256": "be693b3e0655756762959d165f84bc473c96c50e159073b6ed8314c1320595bb"
+    },
+    {
+      "original": "scripts/vision/finalize_physical_light_evaluation.py",
+      "archived": "archive/research_scripts/vision/finalize_physical_light_evaluation.py",
+      "sha256": "7c9211a00cec63d934f13b965f2843a18d1f06d9cf1ab700c6436964281c928e"
+    },
+    {
+      "original": "scripts/vision/finalize_recovery_matrix_review.py",
+      "archived": "archive/research_scripts/vision/finalize_recovery_matrix_review.py",
+      "sha256": "858c3fb34502f7946192c3cddd155206c49306dc4b5bf9e9cd58a6dfa270e4b8"
+    },
+    {
+      "original": "scripts/vision/finalize_reviewed_hold_fit.py",
+      "archived": "archive/research_scripts/vision/finalize_reviewed_hold_fit.py",
+      "sha256": "925fdfc9bcfc537d7068693bf4e95cc8739debbd504b702f864417c556cff8a1"
+    },
+    {
+      "original": "scripts/vision/finalize_reviewed_target_fit.py",
+      "archived": "archive/research_scripts/vision/finalize_reviewed_target_fit.py",
+      "sha256": "d966eea300c625b00471b807ef5e1ad3a0c471d4d410592e8bf47d2b088d4379"
+    },
+    {
+      "original": "scripts/vision/finalize_routed_gray_audit.py",
+      "archived": "archive/research_scripts/vision/finalize_routed_gray_audit.py",
+      "sha256": "1622b2d0e59d352a43c52e2a10b4ee52d258c5489aeb7c4a4be617375c36613d"
+    },
+    {
+      "original": "scripts/vision/finalize_routed_reflection_audit.py",
+      "archived": "archive/research_scripts/vision/finalize_routed_reflection_audit.py",
+      "sha256": "5eea65a967db5aa571eeb864cf4ef91ee29ee4aa835e237dddfc28397b5e06a0"
+    },
+    {
+      "original": "scripts/vision/finalize_same_source_material_dose_evaluation.py",
+      "archived": "archive/research_scripts/vision/finalize_same_source_material_dose_evaluation.py",
+      "sha256": "942b12c2ad0a4980734b7cdb81497db2172a3f6f89ae1efaacde0bfcf51009d7"
+    },
+    {
+      "original": "scripts/vision/finalize_same_source_material_ready.py",
+      "archived": "archive/research_scripts/vision/finalize_same_source_material_ready.py",
+      "sha256": "005a7bc07311089d8c0eed9fe8333d8f405a5fdf890e5c46ffafac8b9d96131c"
+    },
+    {
+      "original": "scripts/vision/finalize_scale_endpoint_audit.py",
+      "archived": "archive/research_scripts/vision/finalize_scale_endpoint_audit.py",
+      "sha256": "aa928b938d0788108c9177a62deabb6dd1de4e824194e061e78291b3bf67e8ac"
+    },
+    {
+      "original": "scripts/vision/finalize_scale_stratified_review.py",
+      "archived": "archive/research_scripts/vision/finalize_scale_stratified_review.py",
+      "sha256": "bc33b173da82890bdbb017c1f7e298838b67e0477284318b30c8b070ef964b15"
+    },
+    {
+      "original": "scripts/vision/finalize_semantic_review.py",
+      "archived": "archive/research_scripts/vision/finalize_semantic_review.py",
+      "sha256": "d256e6d3dc2d9dbe28e5abd77a7487d516e1195386862bccc94fc6644002f237"
+    },
+    {
+      "original": "scripts/vision/finalize_simple_annotation_repair_review.py",
+      "archived": "archive/research_scripts/vision/finalize_simple_annotation_repair_review.py",
+      "sha256": "b5caeebca9416f47a9f68ac76be31fe97cd687d773855f246580d4bd42e93f6d"
+    },
+    {
+      "original": "scripts/vision/finalize_stratified_expansion_review.py",
+      "archived": "archive/research_scripts/vision/finalize_stratified_expansion_review.py",
+      "sha256": "1ea47cedf8bc0c655fb5de4921d7e962dd58a77b6188b5cdd4d247b6bd70e61b"
+    },
+    {
+      "original": "scripts/vision/finalize_targeted_coverage_review.py",
+      "archived": "archive/research_scripts/vision/finalize_targeted_coverage_review.py",
+      "sha256": "8113f5eecbef9baa3abaa6f819f9060564903e6bf9d41fae2eaa872189120407"
+    },
+    {
+      "original": "scripts/vision/finalize_targeted_regression_review.py",
+      "archived": "archive/research_scripts/vision/finalize_targeted_regression_review.py",
+      "sha256": "9e554644ac22312a073dda45e803cf341760a875d7371166d354e42647f64d76"
+    },
+    {
+      "original": "scripts/vision/finalize_unified_lighting_evaluation.py",
+      "archived": "archive/research_scripts/vision/finalize_unified_lighting_evaluation.py",
+      "sha256": "39cb94e65c3c15f2a30fdaf793bc9dbf54400406f788913aa9a8b29ebf46188a"
+    },
+    {
+      "original": "scripts/vision/finalize_visual_augmentation_positives.py",
+      "archived": "archive/research_scripts/vision/finalize_visual_augmentation_positives.py",
+      "sha256": "11377a281f78ab75c28069ab17ddedf04bebe1aa2cc32578aa69dbd9120c4a74"
+    },
+    {
+      "original": "scripts/vision/finalize_visual_augmentation_training.py",
+      "archived": "archive/research_scripts/vision/finalize_visual_augmentation_training.py",
+      "sha256": "e0a91813e51a76f9a9ad8717a912def5c01c56270c5e104cfecfdbbf3e7b7524"
+    },
+    {
+      "original": "scripts/vision/finalize_visual_bridge_pilot.py",
+      "archived": "archive/research_scripts/vision/finalize_visual_bridge_pilot.py",
+      "sha256": "1bacf1d4b2ed996ef1239b68297d4f4539ac614ec3a692427e5cdcd934f3535c"
+    },
+    {
+      "original": "scripts/vision/finalize_visual_bridge_training.py",
+      "archived": "archive/research_scripts/vision/finalize_visual_bridge_training.py",
+      "sha256": "9ee9e2703f9f9f37747b93324cbbd03020780ca52c5272fbe37709cb1d4c0055"
+    },
+    {
+      "original": "scripts/vision/follow_exposure_evaluation.py",
+      "archived": "archive/research_scripts/vision/follow_exposure_evaluation.py",
+      "sha256": "07d792b0d8d48a2b6404b6c5cf8a6a29d8f93eaadacf1e8b0d657c3ebc2aefb2"
+    },
+    {
+      "original": "scripts/vision/freeze_material_late_rehearsal.py",
+      "archived": "archive/research_scripts/vision/freeze_material_late_rehearsal.py",
+      "sha256": "62d1079f9f456bd2ceb19e9b48e69386331b356c18fc02a9eef48f083e981ab0"
+    },
+    {
+      "original": "scripts/vision/freeze_material_learning_trajectory.py",
+      "archived": "archive/research_scripts/vision/freeze_material_learning_trajectory.py",
+      "sha256": "3c4b9e928a9a5830d41138b31f3fc48ba413e31e07630f2bf6d93ef923ffff7e"
+    },
+    {
+      "original": "scripts/vision/freeze_reviewed_scale_control.py",
+      "archived": "archive/research_scripts/vision/freeze_reviewed_scale_control.py",
+      "sha256": "73397be19a9c3c98430f4f6fdac65f7cade561e7b67e0576dc15295eab645445"
+    },
+    {
+      "original": "scripts/vision/freeze_same_source_material_dose.py",
+      "archived": "archive/research_scripts/vision/freeze_same_source_material_dose.py",
+      "sha256": "61782e3d74097e55ae7ec9dd7da116861a073cf329e2781d6e2be3ce0fce23ed"
+    },
+    {
+      "original": "scripts/vision/freeze_visual_augmentation_240_v2.py",
+      "archived": "archive/research_scripts/vision/freeze_visual_augmentation_240_v2.py",
+      "sha256": "3a5ff6a2de1f50afe46e363e53dc6722c367cb27e2d268adeb5384d912e43e3d"
+    },
+    {
+      "original": "scripts/vision/generate_canonical_hard_route.py",
+      "archived": "archive/research_scripts/vision/generate_canonical_hard_route.py",
+      "sha256": "84f5fd33839dc8d243777ddf77bd8e2b2352bff92d5a63244334e454215cefec"
+    },
+    {
+      "original": "scripts/vision/gray_body_review_observations.py",
+      "archived": "archive/research_scripts/vision/gray_body_review_observations.py",
+      "sha256": "a62df760794ba2750a7b59c030367592c475a0b58202d88f3e6f28539bf2925a"
+    },
+    {
+      "original": "scripts/vision/ilr_review_notes.py",
+      "archived": "archive/research_scripts/vision/ilr_review_notes.py",
+      "sha256": "23c4c76b1f976c7a28867e5aae5d2f7a549a482818d43935e80738c2d65cb8aa"
+    },
+    {
+      "original": "scripts/vision/import_l05_original_review.py",
+      "archived": "archive/research_scripts/vision/import_l05_original_review.py",
+      "sha256": "6a687ded363359b79f59d6000815272a5115fe90d3ff750dc0696ee058a9b845"
+    },
+    {
+      "original": "scripts/vision/inspect_development_visibility_gaps.py",
+      "archived": "archive/research_scripts/vision/inspect_development_visibility_gaps.py",
+      "sha256": "951b4f79daa44fac60dc0354decd5d04979dfdd4c43cc0f494294076029ee8af"
+    },
+    {
+      "original": "scripts/vision/inspect_routed_backbone_results.py",
+      "archived": "archive/research_scripts/vision/inspect_routed_backbone_results.py",
+      "sha256": "55f1be19716ec6857c649aa168787094bbfe48cac44dd557a63be5c2daf9cc95"
+    },
+    {
+      "original": "scripts/vision/inspect_routed_fixed_bn_results.py",
+      "archived": "archive/research_scripts/vision/inspect_routed_fixed_bn_results.py",
+      "sha256": "dcef38ecb769d8d1683938af28fbc2c4ca68a73839e3d3b1a70e56c900ce1f3d"
+    },
+    {
+      "original": "scripts/vision/inspect_routed_gray_results.py",
+      "archived": "archive/research_scripts/vision/inspect_routed_gray_results.py",
+      "sha256": "e1a57caf346ca3e861a0546a327e97bc0b65c3e470afb8387f17cf573391dd63"
+    },
+    {
+      "original": "scripts/vision/inspect_routed_late_decay_results.py",
+      "archived": "archive/research_scripts/vision/inspect_routed_late_decay_results.py",
+      "sha256": "c559b93f3231048bcbf607349a0d5f742737eb3577c26c452593db39c7e0a1c6"
+    },
+    {
+      "original": "scripts/vision/inspect_routed_reflection_results.py",
+      "archived": "archive/research_scripts/vision/inspect_routed_reflection_results.py",
+      "sha256": "4aa9c9d2c41ffdec87f5d544162fff192b87179569c65739647f6363048d7b00"
+    },
+    {
+      "original": "scripts/vision/inspect_unified_lighting.py",
+      "archived": "archive/research_scripts/vision/inspect_unified_lighting.py",
+      "sha256": "af5f0bdb8d15bc721866051fd0545703337efe1b3e6d6df3bb06485b9b57e2b5"
+    },
+    {
+      "original": "scripts/vision/launch_backbone_bn_control.py",
+      "archived": "archive/research_scripts/vision/launch_backbone_bn_control.py",
+      "sha256": "05a2a4b6111a5891e95b9410b03bb85c3054511fab9969ee3d6c85552d38c1b3"
+    },
+    {
+      "original": "scripts/vision/launch_reviewed_saturation.py",
+      "archived": "archive/research_scripts/vision/launch_reviewed_saturation.py",
+      "sha256": "91e9c59991649226d86f65bc697360639fa5cd8c10ee7028763a5f79344e3eb8"
+    },
+    {
+      "original": "scripts/vision/launch_routed_gamma.py",
+      "archived": "archive/research_scripts/vision/launch_routed_gamma.py",
+      "sha256": "0d3e0af1f8895728108d1295f01f375d245213af7bc9ef483b1a575c9f6ccc85"
+    },
+    {
+      "original": "scripts/vision/launch_routed_reflection.py",
+      "archived": "archive/research_scripts/vision/launch_routed_reflection.py",
+      "sha256": "a9472a377dcab941e81d5473063455d925324502992e7c182606ae37c9784c0c"
+    },
+    {
+      "original": "scripts/vision/launch_routed_scale.py",
+      "archived": "archive/research_scripts/vision/launch_routed_scale.py",
+      "sha256": "c6569df1118727a4f7bbfbe5f1041dc13b13e1463cd186e1ec6b36d04cec364b"
+    },
+    {
+      "original": "scripts/vision/material_fixed_sequence_lr.py",
+      "archived": "archive/research_scripts/vision/material_fixed_sequence_lr.py",
+      "sha256": "033111851cff4ba13724b84d6810e6e63511c4ee710cbb9742d1de63d4beaff5"
+    },
+    {
+      "original": "scripts/vision/material_fixed_sequence_lr_observations.py",
+      "archived": "archive/research_scripts/vision/material_fixed_sequence_lr_observations.py",
+      "sha256": "c5b333dbbaa007c9dfb1431066baa87ca3713818eb311c2b460165c7a2e09c15"
+    },
+    {
+      "original": "scripts/vision/material_late_rehearsal_observations.py",
+      "archived": "archive/research_scripts/vision/material_late_rehearsal_observations.py",
+      "sha256": "2da875d047902a822c23a8c109d7e581886b3d03c004ddca862f8578a2649193"
+    },
+    {
+      "original": "scripts/vision/material_late_rehearsal_solver.py",
+      "archived": "archive/research_scripts/vision/material_late_rehearsal_solver.py",
+      "sha256": "e4fd4207975de676bd1fa721f18bce7395b4ca345d6030a3ed4ec1bdbb2dee8d"
+    },
+    {
+      "original": "scripts/vision/material_retention_review_observations.py",
+      "archived": "archive/research_scripts/vision/material_retention_review_observations.py",
+      "sha256": "814b05f16f0534cf712393f3abd02b207e7a89f10507fcf1db4e071254b4701f"
+    },
+    {
+      "original": "scripts/vision/material_trajectory_runtime.py",
+      "archived": "archive/research_scripts/vision/material_trajectory_runtime.py",
+      "sha256": "e020b0d4ee7f842cddf505ba5438039a2ef9c7c0b04e183d5e516582b6c60d51"
+    },
+    {
+      "original": "scripts/vision/materialize_curated_hard_examples.py",
+      "archived": "archive/research_scripts/vision/materialize_curated_hard_examples.py",
+      "sha256": "672ead0b4fc71e08cb140e5921190f11be17d94096112938f754f8d2097800e7"
+    },
+    {
+      "original": "scripts/vision/materialize_hard_examples.py",
+      "archived": "archive/research_scripts/vision/materialize_hard_examples.py",
+      "sha256": "d4adc4e349cf4320dc36d6fe363d1225e068b81f0c376442816b78fc6b320dc3"
+    },
+    {
+      "original": "scripts/vision/measure_recovery_memorization.py",
+      "archived": "archive/research_scripts/vision/measure_recovery_memorization.py",
+      "sha256": "843eb6ae91bbd900c3965dd3f7d5d96d125b42e6a3add8b6f7e4c3c690b2069d"
+    },
+    {
+      "original": "scripts/vision/measure_recovery_negative_ab.py",
+      "archived": "archive/research_scripts/vision/measure_recovery_negative_ab.py",
+      "sha256": "df24d0b6033abcdc7b1d1970ab7ca85345d93bbaa6a87e805d5191ba9ebf1821"
+    },
+    {
+      "original": "scripts/vision/mild_routed_contrast_control.py",
+      "archived": "archive/research_scripts/vision/mild_routed_contrast_control.py",
+      "sha256": "3d11a09d2c3663cb19acb4646ed5396f08e7f5793cee3afca379ebf7d33b5838"
+    },
+    {
+      "original": "scripts/vision/order_fit_reviewed_counts.py",
+      "archived": "archive/research_scripts/vision/order_fit_reviewed_counts.py",
+      "sha256": "805d61fcace3f60e19a32c12fe982a17d51473b978e7a67901ddcb1c2f1a0c7e"
+    },
+    {
+      "original": "scripts/vision/order_fit_reviewed_schedule.py",
+      "archived": "archive/research_scripts/vision/order_fit_reviewed_schedule.py",
+      "sha256": "d854ee0253bf0448c29278ccf560eafe575c88427914ded695b690f360e735a2"
+    },
+    {
+      "original": "scripts/vision/physical_lighting_review_pages.py",
+      "archived": "archive/research_scripts/vision/physical_lighting_review_pages.py",
+      "sha256": "1e673149a557fb3d1505a82aecc06dd99c8df4512d232e3ea4935fac406a1287"
+    },
+    {
+      "original": "scripts/vision/preflight_interleaved_small_scale.py",
+      "archived": "archive/research_scripts/vision/preflight_interleaved_small_scale.py",
+      "sha256": "28fdc7fc50c0d7e633198cfeff9b774addd99010c83f5c0a72756ec381d1c1ca"
+    },
+    {
+      "original": "scripts/vision/preflight_material_late_rehearsal.py",
+      "archived": "archive/research_scripts/vision/preflight_material_late_rehearsal.py",
+      "sha256": "edafebed3df7751b7859fbb076e23e2626931b7c5d6151a1a3eec263a5844ebc"
+    },
+    {
+      "original": "scripts/vision/preflight_material_learning_trajectory.py",
+      "archived": "archive/research_scripts/vision/preflight_material_learning_trajectory.py",
+      "sha256": "c6726888e59bc41d2dd7804485096bcf433e6bb128493f77fe9ab75e2acc3bff"
+    },
+    {
+      "original": "scripts/vision/preflight_order_fit_reviewed.py",
+      "archived": "archive/research_scripts/vision/preflight_order_fit_reviewed.py",
+      "sha256": "ba5f612be3444769cb21aef2b02fa64b71b8ee4917135ed6741426bff1d28d5f"
+    },
+    {
+      "original": "scripts/vision/preflight_reviewed_scale.py",
+      "archived": "archive/research_scripts/vision/preflight_reviewed_scale.py",
+      "sha256": "0e0aa144b265b4419527ccac5c8a0498b483b390fd79a7b217f993bb1e82ee7e"
+    },
+    {
+      "original": "scripts/vision/preflight_same_source_material_dose.py",
+      "archived": "archive/research_scripts/vision/preflight_same_source_material_dose.py",
+      "sha256": "54eb46ec5c91b9716d61c631f415cce9d485502c79f679af46a8ecf7a99e2d89"
+    },
+    {
+      "original": "scripts/vision/preflight_small_scale.py",
+      "archived": "archive/research_scripts/vision/preflight_small_scale.py",
+      "sha256": "b6541fbed0e3b9f632aa2803e5cfcc584fc81a305beb7354771cafeb2b81cde8"
+    },
+    {
+      "original": "scripts/vision/prepare_appearance_background_regression.py",
+      "archived": "archive/research_scripts/vision/prepare_appearance_background_regression.py",
+      "sha256": "37af229081144e00dc50debca623ce355f093078feb67b28bc130bddbc8579cb"
+    },
+    {
+      "original": "scripts/vision/prepare_cool_light_training.py",
+      "archived": "archive/research_scripts/vision/prepare_cool_light_training.py",
+      "sha256": "2f8dd70e4255fbfa0bcbd50c665bb6a18e1f2f12bf5abc057767d735ab868cc1"
+    },
+    {
+      "original": "scripts/vision/prepare_hard_negative_v2.py",
+      "archived": "archive/research_scripts/vision/prepare_hard_negative_v2.py",
+      "sha256": "7dabcd7594e71434f8748f23278c1015eb1f48898f58fbdd17517e8cb40e1a29"
+    },
+    {
+      "original": "scripts/vision/prepare_neutral_gray_training.py",
+      "archived": "archive/research_scripts/vision/prepare_neutral_gray_training.py",
+      "sha256": "564b6f8cba9f40b51351ea4e487b9a4a189096235866820d83698e9daaf35093"
+    },
+    {
+      "original": "scripts/vision/prepare_occlusion_shifted_regression.py",
+      "archived": "archive/research_scripts/vision/prepare_occlusion_shifted_regression.py",
+      "sha256": "5f4eaee3b4ff340517cb24f59356b10731cecbcee398ec3524fa9c0175f1f8e5"
+    },
+    {
+      "original": "scripts/vision/prepare_scale_stratified_coverage.py",
+      "archived": "archive/research_scripts/vision/prepare_scale_stratified_coverage.py",
+      "sha256": "1e2beacc6dfc2293ceacd60e67fc095ad8a9e1593bb2c749842da21aedc06189"
+    },
+    {
+      "original": "scripts/vision/prepare_simple_annotation_repair.py",
+      "archived": "archive/research_scripts/vision/prepare_simple_annotation_repair.py",
+      "sha256": "2d4af93f673738750132d23610bf06a14bb615f51fc131647268a035c8995ffd"
+    },
+    {
+      "original": "scripts/vision/prepare_stratified_expansion.py",
+      "archived": "archive/research_scripts/vision/prepare_stratified_expansion.py",
+      "sha256": "328107b4f55662519ce578f54223b701bc9c1a41b7c2af98cc1ce81a6c67d199"
+    },
+    {
+      "original": "scripts/vision/prepare_targeted_coverage_expansion.py",
+      "archived": "archive/research_scripts/vision/prepare_targeted_coverage_expansion.py",
+      "sha256": "5ddf29197d02291908df4ef4c3640d5fc22631fb2aac38a051f28a5e60f8f7b5"
+    },
+    {
+      "original": "scripts/vision/prepare_targeted_regression.py",
+      "archived": "archive/research_scripts/vision/prepare_targeted_regression.py",
+      "sha256": "a37dd04f916bd5fb2c78b625550035220d214abcf8692b61bfbd754c29621cc0"
+    },
+    {
+      "original": "scripts/vision/prepare_unseen_scene_test.py",
+      "archived": "archive/research_scripts/vision/prepare_unseen_scene_test.py",
+      "sha256": "5645b10b0ada230bdb4ab735067eb20677b923b2607cb49658399c7315328f74"
+    },
+    {
+      "original": "scripts/vision/prepare_visual_augmentation_composition.py",
+      "archived": "archive/research_scripts/vision/prepare_visual_augmentation_composition.py",
+      "sha256": "e9657a29e54f0ade6fc488d74496210b0b62bc54fedfa118258cea171cab83df"
+    },
+    {
+      "original": "scripts/vision/prepare_visual_augmentation_failure_analysis.py",
+      "archived": "archive/research_scripts/vision/prepare_visual_augmentation_failure_analysis.py",
+      "sha256": "994202e667b0b77f18d236aae9f601acb85baecee65e2b42c5026150c421e7c0"
+    },
+    {
+      "original": "scripts/vision/prepare_visual_augmentation_pilot.py",
+      "archived": "archive/research_scripts/vision/prepare_visual_augmentation_pilot.py",
+      "sha256": "639692f2c931b90f05766d4b990680f8a6de7e151ee97d0ce5bdc07d290c640e"
+    },
+    {
+      "original": "scripts/vision/prepare_visual_augmentation_training.py",
+      "archived": "archive/research_scripts/vision/prepare_visual_augmentation_training.py",
+      "sha256": "67ba03c19581aa9d45215617dc7ee8512653f12cfb0b4dca3bbd20b77ac068c1"
+    },
+    {
+      "original": "scripts/vision/preview_routed_gray_transfer.py",
+      "archived": "archive/research_scripts/vision/preview_routed_gray_transfer.py",
+      "sha256": "39df8a9d94150497e70bc6216ee49dbcfcd010b361d1d08c76c72ac3053b9580"
+    },
+    {
+      "original": "scripts/vision/preview_routed_reflection.py",
+      "archived": "archive/research_scripts/vision/preview_routed_reflection.py",
+      "sha256": "793868e478b9738ba0b4af3db73cc677239302709bedfce9e407c024446c59bc"
+    },
+    {
+      "original": "scripts/vision/probe_feedback_collection.py",
+      "archived": "archive/research_scripts/vision/probe_feedback_collection.py",
+      "sha256": "34dd8205d52d72c84aac4c034ae3997e6f04a40ab81da8e2d6dac5dde8e82b33"
+    },
+    {
+      "original": "scripts/vision/probe_reviewed_scale.py",
+      "archived": "archive/research_scripts/vision/probe_reviewed_scale.py",
+      "sha256": "90499c3cb9a32844eafa966c44b058191610a681214a9672dc79a60d8fab6cd5"
+    },
+    {
+      "original": "scripts/vision/probe_reviewed_source_variants.py",
+      "archived": "archive/research_scripts/vision/probe_reviewed_source_variants.py",
+      "sha256": "d628492fdc634da77b9be6d13c927277c13534a67188533ced8493fd42884ad8"
+    },
+    {
+      "original": "scripts/vision/probe_trained_reviewed_scale.py",
+      "archived": "archive/research_scripts/vision/probe_trained_reviewed_scale.py",
+      "sha256": "22bd7f9008fcafc8f2c3f70d0abb7752330ff047044a400912acceb6d2ada8ca"
+    },
+    {
+      "original": "scripts/vision/reconcile_order_fit_risk_review_links.py",
+      "archived": "archive/research_scripts/vision/reconcile_order_fit_risk_review_links.py",
+      "sha256": "5b7c0fc6c2b419c7f67eab59cad2380f8dfeb410e9c9cead63ee8fd0bcd52805"
+    },
+    {
+      "original": "scripts/vision/record_backbone_bn_start.py",
+      "archived": "archive/research_scripts/vision/record_backbone_bn_start.py",
+      "sha256": "0af23a2eba5a434650e6e1d6cf02737907a49ba6c38ba50bbedddd9014eb829b"
+    },
+    {
+      "original": "scripts/vision/record_backbone_positive_review.py",
+      "archived": "archive/research_scripts/vision/record_backbone_positive_review.py",
+      "sha256": "3709d4d3384e0acc99502f9ebe478a8301e40b7cfd64c6f197e4ffafa87257fb"
+    },
+    {
+      "original": "scripts/vision/record_cpu4_training_start.py",
+      "archived": "archive/research_scripts/vision/record_cpu4_training_start.py",
+      "sha256": "e2a5badce4cab44dc6a2550aef5cb15706b546a89bb8267c843839b43d136c86"
+    },
+    {
+      "original": "scripts/vision/record_development_visibility_review.py",
+      "archived": "archive/research_scripts/vision/record_development_visibility_review.py",
+      "sha256": "0c6b85a783f5cb20967288a34f8adab7575ec2d47dfa9ea5ab83f73bd557012c"
+    },
+    {
+      "original": "scripts/vision/record_dose_matched_review.py",
+      "archived": "archive/research_scripts/vision/record_dose_matched_review.py",
+      "sha256": "767affcd238989b5f4605aab906808d3d90c5d0035cba3f432ac238dbe1aac70"
+    },
+    {
+      "original": "scripts/vision/record_dose_matched_start.py",
+      "archived": "archive/research_scripts/vision/record_dose_matched_start.py",
+      "sha256": "f15d38d33cbc20b5de4a47be25e9d3cbda765028e3c471eeec3da4c790a6e5ac"
+    },
+    {
+      "original": "scripts/vision/record_double_dose_error_review.py",
+      "archived": "archive/research_scripts/vision/record_double_dose_error_review.py",
+      "sha256": "a3115f237915600c57cdaf5f3c9b4a78b888ecb359e68361d1b2e03a0dc3ce7f"
+    },
+    {
+      "original": "scripts/vision/record_exposure_review.py",
+      "archived": "archive/research_scripts/vision/record_exposure_review.py",
+      "sha256": "a645b4a4dccb45bc719519530a79aa99f3f58d7bca7a10bf446757eb4a91dc27"
+    },
+    {
+      "original": "scripts/vision/record_gray_body_error_review.py",
+      "archived": "archive/research_scripts/vision/record_gray_body_error_review.py",
+      "sha256": "999d5052e2de13cc0563757be283d3c3236ec3412977913fe9e86739e06747a5"
+    },
+    {
+      "original": "scripts/vision/record_ilr_review.py",
+      "archived": "archive/research_scripts/vision/record_ilr_review.py",
+      "sha256": "e2ea6677c82f77f437b05d23a4421f87a2593c632029b425f01d88dc649df34a"
+    },
+    {
+      "original": "scripts/vision/record_interleaved_training_launch.py",
+      "archived": "archive/research_scripts/vision/record_interleaved_training_launch.py",
+      "sha256": "2d48e4f781405192fd99f0654535f9ac76157278d407542d280ffd66402c6b3d"
+    },
+    {
+      "original": "scripts/vision/record_material_fixed_sequence_lr_review.py",
+      "archived": "archive/research_scripts/vision/record_material_fixed_sequence_lr_review.py",
+      "sha256": "ee46bc36b9505f023c588c6c6f22b7b0c97536901089713c6f010650bc7602b6"
+    },
+    {
+      "original": "scripts/vision/record_material_late_rehearsal_review.py",
+      "archived": "archive/research_scripts/vision/record_material_late_rehearsal_review.py",
+      "sha256": "f4298e09d02531c90b53f01625d37e712ae1119c1df8e2cc6f4575a72dc93c57"
+    },
+    {
+      "original": "scripts/vision/record_material_retention_review.py",
+      "archived": "archive/research_scripts/vision/record_material_retention_review.py",
+      "sha256": "9adf2726bc0ff8ba32ee34680e4f3bf9562514df801cc7817d1680eeefe15059"
+    },
+    {
+      "original": "scripts/vision/record_material_routed_start.py",
+      "archived": "archive/research_scripts/vision/record_material_routed_start.py",
+      "sha256": "f292d4b873da19e5453007bf6d1ed51a3815b0ce9cbb88d2bc5cd2528862e53b"
+    },
+    {
+      "original": "scripts/vision/record_mild_routed_review.py",
+      "archived": "archive/research_scripts/vision/record_mild_routed_review.py",
+      "sha256": "61bb4cfdc0ee77de5fd1d745cc3197a4c119d4834be23153c7155b3feb305f62"
+    },
+    {
+      "original": "scripts/vision/record_mild_routed_start.py",
+      "archived": "archive/research_scripts/vision/record_mild_routed_start.py",
+      "sha256": "a236b29c5c5a1df84763bc782d6d7a981744ddff6bac402ffe0768b62a550b6f"
+    },
+    {
+      "original": "scripts/vision/record_multiscale_error_review.py",
+      "archived": "archive/research_scripts/vision/record_multiscale_error_review.py",
+      "sha256": "196c383031cf40de857e1829ed0e135591972d9b8c349cd2923e403cf1d7f2e2"
+    },
+    {
+      "original": "scripts/vision/record_reactor_calibration_review.py",
+      "archived": "archive/research_scripts/vision/record_reactor_calibration_review.py",
+      "sha256": "9cc2cf31bbf915261a393d58460bcd4cfc82f5fcb79ef05d19c469487c3cbb3d"
+    },
+    {
+      "original": "scripts/vision/record_reactor_condition_review.py",
+      "archived": "archive/research_scripts/vision/record_reactor_condition_review.py",
+      "sha256": "ef8e8261add62b718c53748243d148a3c63cb2476e95b6730c3757dfaef49c04"
+    },
+    {
+      "original": "scripts/vision/record_reviewed_endpoint_review.py",
+      "archived": "archive/research_scripts/vision/record_reviewed_endpoint_review.py",
+      "sha256": "e04b8e6ea80556e7dbc48e43b2265fb826e183131bd72c98eebfe3c8f3143dd5"
+    },
+    {
+      "original": "scripts/vision/record_reviewed_scale_fp.py",
+      "archived": "archive/research_scripts/vision/record_reviewed_scale_fp.py",
+      "sha256": "7cfceaee6c2024bd12b90d1c3fa384d8e9c0f2dc6ae930adf665a3ee533e72b2"
+    },
+    {
+      "original": "scripts/vision/record_reviewed_scale_misses.py",
+      "archived": "archive/research_scripts/vision/record_reviewed_scale_misses.py",
+      "sha256": "65caca8e2555160d214f8d776665ffabf13db5429b528c3b9303a083cde39569"
+    },
+    {
+      "original": "scripts/vision/record_routed_backbone_start.py",
+      "archived": "archive/research_scripts/vision/record_routed_backbone_start.py",
+      "sha256": "e1cccfad28543db4315b6ab9a42c15c5af2873e8008f855e669e321e00eda8cd"
+    },
+    {
+      "original": "scripts/vision/record_routed_fixed_bn_start.py",
+      "archived": "archive/research_scripts/vision/record_routed_fixed_bn_start.py",
+      "sha256": "5baa76163f04c006a6d72c600c27f8ae7fa4092951f715cf2c2a9c1c388e77d3"
+    },
+    {
+      "original": "scripts/vision/record_routed_gamma_start.py",
+      "archived": "archive/research_scripts/vision/record_routed_gamma_start.py",
+      "sha256": "236a04887cc13143f863b3d80dac923fea1f18e4511c327dc3639c9ca2becd54"
+    },
+    {
+      "original": "scripts/vision/record_routed_gray_results_review.py",
+      "archived": "archive/research_scripts/vision/record_routed_gray_results_review.py",
+      "sha256": "a85fa9967c4424df933cb695ffb51b3bf7b9c7e83fc066ae3fc984c2bbcd9a5b"
+    },
+    {
+      "original": "scripts/vision/record_routed_gray_start.py",
+      "archived": "archive/research_scripts/vision/record_routed_gray_start.py",
+      "sha256": "3b49ee9fbd36e90f33387b169a44ca2426094dea5d2d3e40e7be49c8d9e13eed"
+    },
+    {
+      "original": "scripts/vision/record_routed_late_decay_start.py",
+      "archived": "archive/research_scripts/vision/record_routed_late_decay_start.py",
+      "sha256": "0fe796cad0e730663e1ab8cd1556dfc2482d7fec8b82efdcd65a4feb257e9754"
+    },
+    {
+      "original": "scripts/vision/record_routed_reflection_results_review.py",
+      "archived": "archive/research_scripts/vision/record_routed_reflection_results_review.py",
+      "sha256": "c7f031fbf4acf004b38e3a2e355c3339e642ef5a1752078b6a43baf4d0a396f4"
+    },
+    {
+      "original": "scripts/vision/record_routed_reflection_start.py",
+      "archived": "archive/research_scripts/vision/record_routed_reflection_start.py",
+      "sha256": "14df29059d9270c4c54cbf66618b3b971e49e611feb7593718e5dd968370d766"
+    },
+    {
+      "original": "scripts/vision/record_routed_scale_start.py",
+      "archived": "archive/research_scripts/vision/record_routed_scale_start.py",
+      "sha256": "d21e0f881f3d611ba936cebeb91bcb9a81bc623b25bba56431420e5ca81a3335"
+    },
+    {
+      "original": "scripts/vision/record_same_source_material_dose_review.py",
+      "archived": "archive/research_scripts/vision/record_same_source_material_dose_review.py",
+      "sha256": "eb426d3c9f227887e402f3be3138f1c36cd7197d2b180240ff1383d92c2c03b8"
+    },
+    {
+      "original": "scripts/vision/record_small_backbone_start.py",
+      "archived": "archive/research_scripts/vision/record_small_backbone_start.py",
+      "sha256": "d79efbc8bed70a21d4965f97d2ffbd2c9a915de5f4a7559eae64b27c64e4fc98"
+    },
+    {
+      "original": "scripts/vision/record_unified_lighting_errors.py",
+      "archived": "archive/research_scripts/vision/record_unified_lighting_errors.py",
+      "sha256": "52242b20a0f78c70a929585ed0ac545d99d048e0f98266915eaf7a5e668a2715"
+    },
+    {
+      "original": "scripts/vision/reference_batch_order.py",
+      "archived": "archive/research_scripts/vision/reference_batch_order.py",
+      "sha256": "02a27a12273117b77261b5853139558ee5eef86ab702b445cbc63425fd30f96c"
+    },
+    {
+      "original": "scripts/vision/repair_replay_exact_overlap.py",
+      "archived": "archive/research_scripts/vision/repair_replay_exact_overlap.py",
+      "sha256": "a38430cd9fb60f8c7f47db0933909ea03c9af25294b46e71f28f655e5d9af8e6"
+    },
+    {
+      "original": "scripts/vision/replay_development_visibility_gaps.py",
+      "archived": "archive/research_scripts/vision/replay_development_visibility_gaps.py",
+      "sha256": "4ba3241de24cb0040b94fb0c8dc9c60cba26d889ac4098507a0e2d0581208813"
+    },
+    {
+      "original": "scripts/vision/replay_pilot_audit_remaining.py",
+      "archived": "archive/research_scripts/vision/replay_pilot_audit_remaining.py",
+      "sha256": "6b151d56c86d5ede75070cabf8143460a6dbc9eee41b0640d9f117854ddc4bbe"
+    },
+    {
+      "original": "scripts/vision/report_exposure_diagnosis.py",
+      "archived": "archive/research_scripts/vision/report_exposure_diagnosis.py",
+      "sha256": "2c028f6878d0ae22a5bac99a66f27ec3a48c5eee7692a28ea7f92d2eccf70e50"
+    },
+    {
+      "original": "scripts/vision/report_material_latest.py",
+      "archived": "archive/research_scripts/vision/report_material_latest.py",
+      "sha256": "d24b08645b2e6964843482c45a4d88f4b49c8262a0567fe9245936fbd01d1028"
+    },
+    {
+      "original": "scripts/vision/report_material_memory.py",
+      "archived": "archive/research_scripts/vision/report_material_memory.py",
+      "sha256": "e0306454a3cfc27f670860daac6e9c943fd290451aeb4de0aca09f736b93602a"
+    },
+    {
+      "original": "scripts/vision/report_material_shadow.py",
+      "archived": "archive/research_scripts/vision/report_material_shadow.py",
+      "sha256": "89dc5e4e858e84708d09370e53fa4653dc5b65513166abe093165058173717e2"
+    },
+    {
+      "original": "scripts/vision/retest_material_shadow.py",
+      "archived": "archive/research_scripts/vision/retest_material_shadow.py",
+      "sha256": "350844dc66d9fd85460b18b1e6ac125c785d46c92489aaf37bd46de870e1098e"
+    },
+    {
+      "original": "scripts/vision/retest_material_shadow_warmup.py",
+      "archived": "archive/research_scripts/vision/retest_material_shadow_warmup.py",
+      "sha256": "c9a495971d9e5274ce1ec23ab0219d5a0bafb2bb7578c9e055f812dd6f0667bc"
+    },
+    {
+      "original": "scripts/vision/review_backbone_fit_residuals.py",
+      "archived": "archive/research_scripts/vision/review_backbone_fit_residuals.py",
+      "sha256": "d6823f1b45817413866330a15dbc95ed6c716edf65ec592ee8a3d5ff0ca73343"
+    },
+    {
+      "original": "scripts/vision/review_backbone_negative_errors.py",
+      "archived": "archive/research_scripts/vision/review_backbone_negative_errors.py",
+      "sha256": "b892b6f63e397f2099e78bf673ff02fee881ae52039bf227975e6e9c3457ae0b"
+    },
+    {
+      "original": "scripts/vision/review_background_hard_negative_candidates.py",
+      "archived": "archive/research_scripts/vision/review_background_hard_negative_candidates.py",
+      "sha256": "c52f9e67fae1ece5c377a76596df156f99fb3cd40a97291540b857f2c2970e83"
+    },
+    {
+      "original": "scripts/vision/review_cool_light_pilot.py",
+      "archived": "archive/research_scripts/vision/review_cool_light_pilot.py",
+      "sha256": "8cb399a65ca283ef0879d4c9de8cf8568bf19def520141902d4eb7b6d0c9c108"
+    },
+    {
+      "original": "scripts/vision/review_fit_bridge_residual.py",
+      "archived": "archive/research_scripts/vision/review_fit_bridge_residual.py",
+      "sha256": "e99b84e3f62da16285c51d834032cebbb48a19b6d8489111167a40544387c1e0"
+    },
+    {
+      "original": "scripts/vision/review_full_image_remaining.py",
+      "archived": "archive/research_scripts/vision/review_full_image_remaining.py",
+      "sha256": "1b838085d4dcdeafb64b404f2990969089980a4b3cd4d90fb7c516ddd11a4046"
+    },
+    {
+      "original": "scripts/vision/review_hard_negative_v2_pilot.py",
+      "archived": "archive/research_scripts/vision/review_hard_negative_v2_pilot.py",
+      "sha256": "c605259b8dc52e54c6f62170b1e4b67657bab739f947a2fda40008fda688f48a"
+    },
+    {
+      "original": "scripts/vision/review_reviewed_hold_fit.py",
+      "archived": "archive/research_scripts/vision/review_reviewed_hold_fit.py",
+      "sha256": "3953570f4c4c813ffc218ff0233f9bb64c602b887568c026fda023bd523e762a"
+    },
+    {
+      "original": "scripts/vision/review_routed_amplitude_fit.py",
+      "archived": "archive/research_scripts/vision/review_routed_amplitude_fit.py",
+      "sha256": "1c38d81e55151082f47a69134ca830dd9544429fbdd4027301e39fb4fa3b68fc"
+    },
+    {
+      "original": "scripts/vision/review_routed_gray_preview.py",
+      "archived": "archive/research_scripts/vision/review_routed_gray_preview.py",
+      "sha256": "ad875cea973d60c07545d835ab4437b1733904e4302ee12e3760d8a3f4705e54"
+    },
+    {
+      "original": "scripts/vision/review_routed_reflection_preview.py",
+      "archived": "archive/research_scripts/vision/review_routed_reflection_preview.py",
+      "sha256": "de0e4444fcebf9364ba0b01ccfd6c3b0fc142e2b92940f533ca8e656b3ac1cb8"
+    },
+    {
+      "original": "scripts/vision/review_trusted_training_base.py",
+      "archived": "archive/research_scripts/vision/review_trusted_training_base.py",
+      "sha256": "7d64aa4c7678b455c64d5fb86349e59b89795565f939851904920e8e03be5d2d"
+    },
+    {
+      "original": "scripts/vision/review_visual_augmentation_positive_pilot.py",
+      "archived": "archive/research_scripts/vision/review_visual_augmentation_positive_pilot.py",
+      "sha256": "c242e9097c8486066a899393762a3a1637e01b428ffc6040cf59f8c93b12436e"
+    },
+    {
+      "original": "scripts/vision/reviewed_hold_gate.py",
+      "archived": "archive/research_scripts/vision/reviewed_hold_gate.py",
+      "sha256": "00467ee6261b8eb6772cec55e0efa0347831f5432dbfbaef5f0f6dd61c78032c"
+    },
+    {
+      "original": "scripts/vision/reviewed_saturation_control.py",
+      "archived": "archive/research_scripts/vision/reviewed_saturation_control.py",
+      "sha256": "8e463985c2397cda6c3e0f4f85779c607f11dd85b42e2f2fcc214f07f829e909"
+    },
+    {
+      "original": "scripts/vision/reviewed_scale_runtime.py",
+      "archived": "archive/research_scripts/vision/reviewed_scale_runtime.py",
+      "sha256": "158fc342dc798eee0bf51d786c99792cdfb0571b43cb5a69de667dd7b43a49d3"
+    },
+    {
+      "original": "scripts/vision/routed_backbone_bn_control.py",
+      "archived": "archive/research_scripts/vision/routed_backbone_bn_control.py",
+      "sha256": "8bef31a884f1651788fd3e468c9b8f0566ab97ece857accd7120001a19719200"
+    },
+    {
+      "original": "scripts/vision/routed_backbone_control.py",
+      "archived": "archive/research_scripts/vision/routed_backbone_control.py",
+      "sha256": "bf1dc046493b4650dbbf9db3a7aabf098098581bb62ad4825e148ca542f685ad"
+    },
+    {
+      "original": "scripts/vision/routed_gray_transfer_control.py",
+      "archived": "archive/research_scripts/vision/routed_gray_transfer_control.py",
+      "sha256": "18958c1929ba3085ac956a4cff6c2c26187c023b11c4f0435f7bb97266798f32"
+    },
+    {
+      "original": "scripts/vision/routed_reflection_control.py",
+      "archived": "archive/research_scripts/vision/routed_reflection_control.py",
+      "sha256": "3ab3c43276ded06cfc7554c67a475bb9db4bd2ca38034bdfdbdf3745e63c8a6d"
+    },
+    {
+      "original": "scripts/vision/run_background_calibration_flight.py",
+      "archived": "archive/research_scripts/vision/run_background_calibration_flight.py",
+      "sha256": "26586773c94f86fbd0bc1a97b1baefb0a1abc631f746de8080e3befa920406e7"
+    },
+    {
+      "original": "scripts/vision/run_canonical_landing_collection.py",
+      "archived": "archive/research_scripts/vision/run_canonical_landing_collection.py",
+      "sha256": "86a18c0f5c5101d238dd673ae7a9ecc7ec176ee2c87ca6dc6706fa44a20fd134"
+    },
+    {
+      "original": "scripts/vision/run_closed_cpu_evaluation.py",
+      "archived": "archive/research_scripts/vision/run_closed_cpu_evaluation.py",
+      "sha256": "e4f4d3b354b34a4b7221c723c7227215d907c50050756215041189899a2c43e5"
+    },
+    {
+      "original": "scripts/vision/run_hard_example_flight.py",
+      "archived": "archive/research_scripts/vision/run_hard_example_flight.py",
+      "sha256": "9addff36127600cfe34ac5989a002d8564e6b7d6bd5c412ec479428cff984a79"
+    },
+    {
+      "original": "scripts/vision/run_hard_example_matrix.py",
+      "archived": "archive/research_scripts/vision/run_hard_example_matrix.py",
+      "sha256": "cf0fe01118251d1e4d91830f366f84fe72463b2fd79054f618794a1eb88695af"
+    },
+    {
+      "original": "scripts/vision/run_order_fit_diagnostics.py",
+      "archived": "archive/research_scripts/vision/run_order_fit_diagnostics.py",
+      "sha256": "3b14c926639cd685f770b3b59f3e709d65ea9842cb361934811a0177234094b9"
+    },
+    {
+      "original": "scripts/vision/run_physical_low_light_evaluation.py",
+      "archived": "archive/research_scripts/vision/run_physical_low_light_evaluation.py",
+      "sha256": "2916acf2faeaf92cf4a7a158ce2d746f33bbb9ac8051173fcde5a356febe47da"
+    },
+    {
+      "original": "scripts/vision/run_recovery_augmentation_ab.py",
+      "archived": "archive/research_scripts/vision/run_recovery_augmentation_ab.py",
+      "sha256": "42ff89ce6e0931aac4bb2b862adb8c92a7e12499488496ec4f1160d535b43be7"
+    },
+    {
+      "original": "scripts/vision/run_recovery_expanded_experiment.py",
+      "archived": "archive/research_scripts/vision/run_recovery_expanded_experiment.py",
+      "sha256": "5b052f64aa63989b5975e45d90220f68aad62aff33076a54e3bb7d9bd34cb418"
+    },
+    {
+      "original": "scripts/vision/run_recovery_memorization.py",
+      "archived": "archive/research_scripts/vision/run_recovery_memorization.py",
+      "sha256": "723e93bb0b95ccdb0aa865e39a92fcbf053758d9152db27feaeb1d7bfa24293f"
+    },
+    {
+      "original": "scripts/vision/run_recovery_memorization_batchmatched.py",
+      "archived": "archive/research_scripts/vision/run_recovery_memorization_batchmatched.py",
+      "sha256": "054fa7bf102ec49456d24c2235a6004d0d5adce6fa1179f87a7b9d79ed44e89c"
+    },
+    {
+      "original": "scripts/vision/run_recovery_negative_ab.py",
+      "archived": "archive/research_scripts/vision/run_recovery_negative_ab.py",
+      "sha256": "71616dbdcf4e0d307e8ee74d58e5a8fe969e7f5d6fd14f68a83000489841ff43"
+    },
+    {
+      "original": "scripts/vision/run_recovery_paired_calibration.py",
+      "archived": "archive/research_scripts/vision/run_recovery_paired_calibration.py",
+      "sha256": "50f93f22641cca2f14342c6e30f3dffbdcd8ea208ee92211b74273ed35c7f5ac"
+    },
+    {
+      "original": "scripts/vision/run_recovery_repaired_positive.py",
+      "archived": "archive/research_scripts/vision/run_recovery_repaired_positive.py",
+      "sha256": "a7b172625a9e0ef3d64340465a494cc97fa76a82d0117a41f17b1fa4bbf5dbc4"
+    },
+    {
+      "original": "scripts/vision/run_recovery_scale_budget_ab.py",
+      "archived": "archive/research_scripts/vision/run_recovery_scale_budget_ab.py",
+      "sha256": "e11e58b877926acd622107d093dd27d71542f813565896d0b9f611f0061d8e1e"
+    },
+    {
+      "original": "scripts/vision/run_recovery_scale_expansion.py",
+      "archived": "archive/research_scripts/vision/run_recovery_scale_expansion.py",
+      "sha256": "3c098d55636589959b17837bf2ed25f0a98b92d0687c2397ff4f6a644121120c"
+    },
+    {
+      "original": "scripts/vision/run_recovery_stratified_experiment.py",
+      "archived": "archive/research_scripts/vision/run_recovery_stratified_experiment.py",
+      "sha256": "fc45cc06b8f152c8a1c5409285e8373bdbbbe1448f829f2b53c9e0fd0a18d8c4"
+    },
+    {
+      "original": "scripts/vision/run_reviewed_hold_pipeline.py",
+      "archived": "archive/research_scripts/vision/run_reviewed_hold_pipeline.py",
+      "sha256": "e61894bb744115244b05e4cb2aacf444028db5c7a0867133d62e7b0609835101"
+    },
+    {
+      "original": "scripts/vision/run_same_source_material_dose.py",
+      "archived": "archive/research_scripts/vision/run_same_source_material_dose.py",
+      "sha256": "6adc5420acc098b530417cf39c80003fd4b7e25a45343bcf92a22f615f1203a3"
+    },
+    {
+      "original": "scripts/vision/run_tail_interleaving_training.py",
+      "archived": "archive/research_scripts/vision/run_tail_interleaving_training.py",
+      "sha256": "2c8b247a90a26ac09727e007e957ca824f052e0000a72ea527a9507a4be94e5d"
+    },
+    {
+      "original": "scripts/vision/run_visual_augmentation_composition.py",
+      "archived": "archive/research_scripts/vision/run_visual_augmentation_composition.py",
+      "sha256": "07e5cd4499c7aff654d77ef1c2bb12c59928ebd51b14a853d31c0571933cf08d"
+    },
+    {
+      "original": "scripts/vision/run_visual_augmentation_training.py",
+      "archived": "archive/research_scripts/vision/run_visual_augmentation_training.py",
+      "sha256": "5d7aeb66d74e99c91b3733de7309978d532b848787ebb879297cb543fb2c6dce"
+    },
+    {
+      "original": "scripts/vision/run_visual_bridge_training.py",
+      "archived": "archive/research_scripts/vision/run_visual_bridge_training.py",
+      "sha256": "be370d215552b6afb7467636f53d41e3a26ac34d5b0a639ee4ef6533afcca080"
+    },
+    {
+      "original": "scripts/vision/run_visual_bridge_training_grid.py",
+      "archived": "archive/research_scripts/vision/run_visual_bridge_training_grid.py",
+      "sha256": "8aabaf6a02da9a5a8677cbabdcdb481f139a6a17008b2fb54ce2a17a7a1929a5"
+    },
+    {
+      "original": "scripts/vision/same_source_material_dose_observations.py",
+      "archived": "archive/research_scripts/vision/same_source_material_dose_observations.py",
+      "sha256": "8d643e0464567d1271e4410e34510e42f313a307215539ccd0d986659359e4df"
+    },
+    {
+      "original": "scripts/vision/same_source_material_quality.py",
+      "archived": "archive/research_scripts/vision/same_source_material_quality.py",
+      "sha256": "62d5e161cbd2f810d84e50238c9714b55c87cf3c649ee0a65e426aaab7928369"
+    },
+    {
+      "original": "scripts/vision/scale_endpoint_control.py",
+      "archived": "archive/research_scripts/vision/scale_endpoint_control.py",
+      "sha256": "3bcaddd82fd8b1b74f4031b53d3679061242aa750213d16264daca02ee29cc00"
+    },
+    {
+      "original": "scripts/vision/start_background_calibration_scene.py",
+      "archived": "archive/research_scripts/vision/start_background_calibration_scene.py",
+      "sha256": "149975efc9998a6360dff9cc5a8685f693386eabd1e7192d986361befcd1a1e0"
+    },
+    {
+      "original": "scripts/vision/summarize_double_dose_review.py",
+      "archived": "archive/research_scripts/vision/summarize_double_dose_review.py",
+      "sha256": "91002b581a3b18ff166f9ec9df57f6e4aa50f4468c506494314e7c978d6babb3"
+    },
+    {
+      "original": "scripts/vision/summarize_gray_body_review.py",
+      "archived": "archive/research_scripts/vision/summarize_gray_body_review.py",
+      "sha256": "b3a03216e208bad4d5076f4a9cb8cd34c85f011eddaaa8eb6ea13868f8e76066"
+    },
+    {
+      "original": "scripts/vision/summarize_gray_fit_transfer.py",
+      "archived": "archive/research_scripts/vision/summarize_gray_fit_transfer.py",
+      "sha256": "508ec64ae224068b606887e2dbb447a966d3d68f6704a2115dac37bb5f43cf48"
+    },
+    {
+      "original": "scripts/vision/summarize_material_fixed_sequence_lr_fit.py",
+      "archived": "archive/research_scripts/vision/summarize_material_fixed_sequence_lr_fit.py",
+      "sha256": "c8e510aee199eb8771f37ce36319561628090a8f941485907506935fda5a5e06"
+    },
+    {
+      "original": "scripts/vision/summarize_material_fixed_sequence_lr_review.py",
+      "archived": "archive/research_scripts/vision/summarize_material_fixed_sequence_lr_review.py",
+      "sha256": "f10acacefcf1ec2c8491ab9d9158d1000861a9ce886acd23563c16c871c8f252"
+    },
+    {
+      "original": "scripts/vision/summarize_material_late_rehearsal_fit.py",
+      "archived": "archive/research_scripts/vision/summarize_material_late_rehearsal_fit.py",
+      "sha256": "94745a27c3262f217e6aff6c21586ca777d35e9459227f479c55ba3660b8613d"
+    },
+    {
+      "original": "scripts/vision/summarize_material_late_rehearsal_review.py",
+      "archived": "archive/research_scripts/vision/summarize_material_late_rehearsal_review.py",
+      "sha256": "89ba641b20af920a1a71dc5197e77ba0b13c515b03c7476392056d3112759adc"
+    },
+    {
+      "original": "scripts/vision/summarize_material_learning_trajectory.py",
+      "archived": "archive/research_scripts/vision/summarize_material_learning_trajectory.py",
+      "sha256": "fbfba74f1b5eaab556795a24f5e17c9c47a725bc06b3825d6814638e96618936"
+    },
+    {
+      "original": "scripts/vision/summarize_material_retention_review.py",
+      "archived": "archive/research_scripts/vision/summarize_material_retention_review.py",
+      "sha256": "ca1138229dc2f814a257f4f1d2a6cd0c59620ecb7f7f62007a4d1d5619046f9a"
+    },
+    {
+      "original": "scripts/vision/summarize_material_retention_transfer.py",
+      "archived": "archive/research_scripts/vision/summarize_material_retention_transfer.py",
+      "sha256": "b6c3cad66382aa9c306596e5a49832cd8b020f4f1ab401a83960627c1e33bc99"
+    },
+    {
+      "original": "scripts/vision/summarize_material_shadow_latency.py",
+      "archived": "archive/research_scripts/vision/summarize_material_shadow_latency.py",
+      "sha256": "08a7ef4fc231abd69ce85155059a3a087348f2215d16b67cb49d3452c53b9a71"
+    },
+    {
+      "original": "scripts/vision/summarize_material_shadow_warmup.py",
+      "archived": "archive/research_scripts/vision/summarize_material_shadow_warmup.py",
+      "sha256": "e210958c5bdc0d4b3b319cfa0a0f8ded80fa8a601695b82045d618fcd87b04fc"
+    },
+    {
+      "original": "scripts/vision/summarize_negative_rehearsal_results.py",
+      "archived": "archive/research_scripts/vision/summarize_negative_rehearsal_results.py",
+      "sha256": "136305946ac563695921bc1a6ed5a54e2c58c7fe4a7d12e17cd2e6e62fc2f5d8"
+    },
+    {
+      "original": "scripts/vision/summarize_order_fit_review_coverage.py",
+      "archived": "archive/research_scripts/vision/summarize_order_fit_review_coverage.py",
+      "sha256": "9e8a0b9c060ccd60ca897616615dba91f21566a36390fc575977ca6290d9e21a"
+    },
+    {
+      "original": "scripts/vision/summarize_physical_light_error_review.py",
+      "archived": "archive/research_scripts/vision/summarize_physical_light_error_review.py",
+      "sha256": "0a032d4765d5037650a857940b7159a7346252095ba892b45d1f2d5ccb1032c4"
+    },
+    {
+      "original": "scripts/vision/summarize_reactor_condition_coverage.py",
+      "archived": "archive/research_scripts/vision/summarize_reactor_condition_coverage.py",
+      "sha256": "6f8fa939d9c41a100f29ea5a256616bc4a9734471959696a73e43456f184223c"
+    },
+    {
+      "original": "scripts/vision/summarize_recovery_controls.py",
+      "archived": "archive/research_scripts/vision/summarize_recovery_controls.py",
+      "sha256": "bdecfdbefccbf9afea8e245208f9a6dde7ab434173d0da3a8a1050267d843fc5"
+    },
+    {
+      "original": "scripts/vision/summarize_same_source_material_dose_fit.py",
+      "archived": "archive/research_scripts/vision/summarize_same_source_material_dose_fit.py",
+      "sha256": "25709f0f9a819b654be7b4c7e3817776f368c46458c19053a1ab0333f0514206"
+    },
+    {
+      "original": "scripts/vision/summarize_same_source_material_dose_review.py",
+      "archived": "archive/research_scripts/vision/summarize_same_source_material_dose_review.py",
+      "sha256": "6ffb3b3e6cb239233663a6302df2d06a68fbab603b653fa08fac925fe9c9176f"
+    },
+    {
+      "original": "scripts/vision/summarize_small_scale_order_fit.py",
+      "archived": "archive/research_scripts/vision/summarize_small_scale_order_fit.py",
+      "sha256": "21b038cc28d944daad20a24246c2d2b8b9276742310cd4f49d3d94f3c174f7f0"
+    },
+    {
+      "original": "scripts/vision/summarize_transfer_pilot.py",
+      "archived": "archive/research_scripts/vision/summarize_transfer_pilot.py",
+      "sha256": "6361d0f9d97266ddc0a7852b921c11889fafbb687ebe0021406b6d764a63b026"
+    },
+    {
+      "original": "scripts/vision/train_lineage_capped_control.py",
+      "archived": "archive/research_scripts/vision/train_lineage_capped_control.py",
+      "sha256": "b93e637ec3e9b167c922c281e90dff67d66b2505823f3f0b36fa65bb29012a48"
+    },
+    {
+      "original": "scripts/vision/train_material_fixed_sequence_lr.py",
+      "archived": "archive/research_scripts/vision/train_material_fixed_sequence_lr.py",
+      "sha256": "c98505a986c2aebdb57d5c7cd8ff0faed3d0314ae108f486e00b02f6864116d3"
+    },
+    {
+      "original": "scripts/vision/train_material_late_rehearsal.py",
+      "archived": "archive/research_scripts/vision/train_material_late_rehearsal.py",
+      "sha256": "7b7c148528159b319e55a0e84c6fb0cecbe1827d0db58dd917f95aa1e10b0e1f"
+    },
+    {
+      "original": "scripts/vision/train_material_learning_trajectory.py",
+      "archived": "archive/research_scripts/vision/train_material_learning_trajectory.py",
+      "sha256": "c57005d84dfe403d6b55e440bc7252ef5334e9837c74be58a7923add5867267d"
+    },
+    {
+      "original": "scripts/vision/train_negative_rehearsal_control.py",
+      "archived": "archive/research_scripts/vision/train_negative_rehearsal_control.py",
+      "sha256": "737f0a06e266ea251375397b5f57e0011bc8f0e0bd1da79a5bec0ec1ef36a813"
+    },
+    {
+      "original": "scripts/vision/train_order_fit_reviewed.py",
+      "archived": "archive/research_scripts/vision/train_order_fit_reviewed.py",
+      "sha256": "0d78f6a75ae98d98f02985171395adfd818e229f3e6cf535b00f063f57f69283"
+    },
+    {
+      "original": "scripts/vision/train_reviewed_scale_control.py",
+      "archived": "archive/research_scripts/vision/train_reviewed_scale_control.py",
+      "sha256": "c7b25b2f8a70834948082db8384c7b9debc881a6a36c57e32f782bdeeae33ffb"
+    },
+    {
+      "original": "scripts/vision/train_same_source_material_dose.py",
+      "archived": "archive/research_scripts/vision/train_same_source_material_dose.py",
+      "sha256": "5e500fb1ffb85f8c04f5fdd3ca6518adc988906f0a030b7165dc012c7c0cacc6"
+    },
+    {
+      "original": "scripts/vision/validate_material_feasibility_gate.py",
+      "archived": "archive/research_scripts/vision/validate_material_feasibility_gate.py",
+      "sha256": "b9ecba0f8226f6ef164659be87dcd54e793f5b2e6f234d78d79c700d1f572c60"
+    },
+    {
+      "original": "scripts/vision/verify_material_latest.py",
+      "archived": "archive/research_scripts/vision/verify_material_latest.py",
+      "sha256": "14ddb7068bb2cc5ed561379d80f85030178a4ba60de15745cc05b1d894ea2c4e"
+    },
+    {
+      "original": "scripts/vision/verify_material_memory.py",
+      "archived": "archive/research_scripts/vision/verify_material_memory.py",
+      "sha256": "52eefc320e9be8e7eb2f2c390e7b495bee713ac36a81c372aa4abe5ecde3a011"
+    },
+    {
+      "original": "scripts/vision/verify_material_shadow_fix.py",
+      "archived": "archive/research_scripts/vision/verify_material_shadow_fix.py",
+      "sha256": "7a73535bc14e37ba22e92538960a59c5803d20484093e22ef92ac21758f710a9"
+    },
+    {
+      "original": "scripts/vision/verify_material_shadow_warmup.py",
+      "archived": "archive/research_scripts/vision/verify_material_shadow_warmup.py",
+      "sha256": "c10d939aa42495e2fe44a7d345260d78db01ade3c624afe5b8a9955e0e3590e5"
+    },
+    {
+      "original": "scripts/vision/verify_material_view_design.py",
+      "archived": "archive/research_scripts/vision/verify_material_view_design.py",
+      "sha256": "a35c21d2150ac043edd2c3c8d9c78a786ddc5cfa52cb0bdb183f267f0546e26d"
+    },
+    {
+      "original": "scripts/vision/verify_order_fit_legacy_integer_keys.py",
+      "archived": "archive/research_scripts/vision/verify_order_fit_legacy_integer_keys.py",
+      "sha256": "3c290ddd2c2303c41d624fc10be70947b7a42ee3c221ceb64026caf34872ae2d"
+    },
+    {
+      "original": "scripts/vision/verify_order_fit_review_dependencies.py",
+      "archived": "archive/research_scripts/vision/verify_order_fit_review_dependencies.py",
+      "sha256": "945754e5c7a5291ed9eca105eccaec16186779b38fdb83931b4e919336749a10"
+    },
+    {
+      "original": "scripts/vision/verify_reactor_condition_coverage.py",
+      "archived": "archive/research_scripts/vision/verify_reactor_condition_coverage.py",
+      "sha256": "683ac24c4808b237b14691b7f58ac82945cc71bbbba6394ad540d35fb4c192b1"
+    },
+    {
+      "original": "scripts/vision/verify_recovery_control_capture.py",
+      "archived": "archive/research_scripts/vision/verify_recovery_control_capture.py",
+      "sha256": "658d9d640fde4d9bd09351f9784b894b2864abddcd5198d755d9906531a3ef1f"
+    }
+  ]
+}

@@ -19,7 +19,7 @@ class HardExampleCuratorTests(unittest.TestCase):
         self.assertEqual([row.frame_id for row in accepted], ["complete"])
         self.assertEqual(rejected[0]["reason"], "bbox_touches_frame_boundary")
 
-    def test_seed_policy_keeps_only_bound_target_instance(self):
+    def test_seed_policy_cannot_erase_other_visible_target_labels(self):
         row = candidate("frame", "development", "a", "0" * 16)
         row = Candidate(**{**row.__dict__, "seed": 6101, "objects": (
             {"annotation_id": "truth-instance-0057-box-0000", "class_name": "transformer", "bbox_xyxy": [100, 100, 900, 900]},
@@ -29,8 +29,29 @@ class HardExampleCuratorTests(unittest.TestCase):
             "target_instance_labels_by_seed": {"6101": [57]},
             "development": {"mode": "drop_invalid_objects"},
         })
-        self.assertEqual([item["class_name"] for item in accepted[0].objects], ["transformer"])
-        self.assertIn("non_target_instance", {item["reason"] for item in rejected})
+        self.assertEqual(accepted, [])
+        self.assertEqual(rejected[0]["scope"], "frame")
+        self.assertIn("non_target_instance", rejected[0]["annotation_reasons"])
+        self.assertEqual(len(row.objects), 2)
+
+    def test_one_edge_target_rejects_entire_multitarget_frame(self):
+        row = candidate("frame", "development", "a", "0" * 16)
+        row = Candidate(**{**row.__dict__, "objects": (
+            {"annotation_id": "a", "class_name": "transformer", "bbox_xyxy": [100, 100, 900, 900]},
+            {"annotation_id": "b", "class_name": "switchgear", "bbox_xyxy": [0, 100, 200, 200]},
+        )})
+        accepted, rejected = apply_bbox_policy([row], {"development": {"mode": "drop_invalid_objects"}})
+        self.assertEqual(accepted, [])
+        self.assertEqual(rejected[0]["would_remove_annotation_count"], 1)
+        self.assertEqual(len(row.objects), 2)
+
+    def test_filter_cannot_turn_target_frame_into_background(self):
+        row = candidate("edge", "development", "a", "0" * 16)
+        row = Candidate(**{**row.__dict__, "objects": (
+            {"annotation_id": "a", "class_name": "transformer", "bbox_xyxy": [0, 100, 200, 200]},
+        )})
+        accepted, _ = apply_bbox_policy([row], {"development": {"mode": "drop_invalid_objects"}})
+        self.assertEqual(accepted, [])
 
     def test_hamming_hex(self):
         self.assertEqual(hamming_hex("0000000000000000", "0000000000000003"), 2)

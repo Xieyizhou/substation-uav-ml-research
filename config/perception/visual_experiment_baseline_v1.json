@@ -1,0 +1,370 @@
+{
+  "schema_version": 1,
+  "baseline_id": "visual-four-class-recovery-baseline-v1",
+  "created_at": "2026-09-05T03:56:23.090747+00:00",
+  "source_commit": "5a86fe5b33ffcf01f455f0ffd721430591446861-dirty",
+  "scope": "Frozen comparison contract, not training/data admission/deployment approval.",
+  "class_order": [
+    "transformer",
+    "switchgear",
+    "capacitor_bank",
+    "reactor"
+  ],
+  "ordinary_cabinet_is_target": false,
+  "model": {
+    "package_root": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1",
+    "package_identity_sha256": "c4668e91de36947b7dd35f493e280cdd7dc7f8080513df6ac9037a30d17a2db1",
+    "weights_sha256": "820f882a5d375be0a294555c7168d49b6d68c21adce97f00b45fe7b0ebc54836",
+    "frozen_confidence_threshold": 0.37,
+    "primary_input_size": 640,
+    "batch": 1,
+    "export_sizes": [
+      320,
+      416,
+      640
+    ]
+  },
+  "data": {
+    "memberships": {
+      "development_replay_pool": {
+        "path": "data/research/visual_yolo_v2/identity/train_membership.jsonl",
+        "frame_count": 15585,
+        "recording_ids": [
+          "visual-v2-development-development-01-background_transit_v2-3005-r01",
+          "visual-v2-development-development-01-capacitor_bank_centered_v2-3003-r01",
+          "visual-v2-development-development-01-reactor_centered_v2-3004-r01",
+          "visual-v2-development-development-01-switchgear_centered_v2-3002-r01",
+          "visual-v2-development-development-01-transformer_centered_v2-3001-r01",
+          "visual-v2-development-development-02-background_transit_v2-3010-r01",
+          "visual-v2-development-development-02-capacitor_bank_centered_v2-3008-r01",
+          "visual-v2-development-development-02-reactor_centered_v2-3009-r01",
+          "visual-v2-development-development-02-switchgear_centered_v2-3007-r01",
+          "visual-v2-development-development-02-transformer_centered_v2-3006-r01",
+          "visual-v2-development-development-03-background_transit_v2-3015-r01",
+          "visual-v2-development-development-03-capacitor_bank_centered_v2-3013-r01",
+          "visual-v2-development-development-03-reactor_centered_v2-3014-r01",
+          "visual-v2-development-development-03-switchgear_centered_v2-3012-r01",
+          "visual-v2-development-development-03-transformer_centered_v2-3011-r01",
+          "visual-v2-development-development-04-background_transit_v2-3020-r01",
+          "visual-v2-development-development-04-capacitor_bank_centered_v2-3018-r01",
+          "visual-v2-development-development-04-reactor_centered_v2-3019-r01",
+          "visual-v2-development-development-04-switchgear_centered_v2-3017-r01",
+          "visual-v2-development-development-04-transformer_centered_v2-3016-r01",
+          "visual-v2-development-development-05-background_transit_v2-3025-r01",
+          "visual-v2-development-development-05-capacitor_bank_centered_v2-3023-r01",
+          "visual-v2-development-development-05-reactor_centered_v2-3024-r01",
+          "visual-v2-development-development-05-switchgear_centered_v2-3022-r01",
+          "visual-v2-development-development-05-transformer_centered_v2-3021-r01",
+          "visual-v2-development-development-06-background_transit_v2-3030-r01",
+          "visual-v2-development-development-06-capacitor_bank_centered_v2-3028-r01",
+          "visual-v2-development-development-06-reactor_centered_v2-3029-r01",
+          "visual-v2-development-development-06-switchgear_centered_v2-3027-r01",
+          "visual-v2-development-development-06-transformer_centered_v2-3026-r01"
+        ],
+        "sha256": "e2076b6007a33ac58538567a15546e8e6775302d21bb009214b825064148b9c7"
+      },
+      "validation": {
+        "path": "data/research/visual_yolo_v2/identity/validation_membership.jsonl",
+        "frame_count": 6941,
+        "recording_ids": [
+          "visual-v2-validation-validation-01-background_transit_v2-3035-r01",
+          "visual-v2-validation-validation-01-capacitor_bank_centered_v2-3033-r01",
+          "visual-v2-validation-validation-01-reactor_centered_v2-3034-r01",
+          "visual-v2-validation-validation-01-switchgear_centered_v2-3032-r01",
+          "visual-v2-validation-validation-01-transformer_centered_v2-3031-r01",
+          "visual-v2-validation-validation-02-background_transit_v2-3040-r01",
+          "visual-v2-validation-validation-02-capacitor_bank_centered_v2-3038-r01",
+          "visual-v2-validation-validation-02-reactor_centered_v2-3039-r01",
+          "visual-v2-validation-validation-02-switchgear_centered_v2-3037-r01",
+          "visual-v2-validation-validation-02-transformer_centered_v2-3036-r01"
+        ],
+        "sha256": "52a2086323607048dd4a6c5be1ff07ae1bf8179e0a76e7030881a99a60c6f674"
+      },
+      "full_validation": {
+        "path": "data/research/visual_yolo_v2/identity/full_validation_membership.jsonl",
+        "frame_count": 54452,
+        "recording_ids": [
+          "visual-v2-validation-validation-01-background_transit_v2-3035-r01",
+          "visual-v2-validation-validation-01-capacitor_bank_centered_v2-3033-r01",
+          "visual-v2-validation-validation-01-reactor_centered_v2-3034-r01",
+          "visual-v2-validation-validation-01-switchgear_centered_v2-3032-r01",
+          "visual-v2-validation-validation-01-transformer_centered_v2-3031-r01",
+          "visual-v2-validation-validation-02-background_transit_v2-3040-r01",
+          "visual-v2-validation-validation-02-capacitor_bank_centered_v2-3038-r01",
+          "visual-v2-validation-validation-02-reactor_centered_v2-3039-r01",
+          "visual-v2-validation-validation-02-switchgear_centered_v2-3037-r01",
+          "visual-v2-validation-validation-02-transformer_centered_v2-3036-r01"
+        ],
+        "sha256": "30c899d54d841a94063ed6e787942ae51a1a9375b12faf2c49c18b6845e6135e"
+      }
+    },
+    "protected_indices": [
+      {
+        "role": "v2",
+        "path": "data/research/canonical_views_v1/protected-v2-image-index-v1/images.jsonl",
+        "record_count": 61393,
+        "sha256": "5e80c83f5d6c4071a6031bcf3a0bbedc0ae965b7d666f8f3b8f495a43827a644"
+      },
+      {
+        "role": "blind",
+        "path": "data/research/canonical_views_v1/protected-blind-image-index-v1/images.jsonl",
+        "record_count": 68511,
+        "sha256": "8575a675b48c9aea8f6e39b4a143ea5e5dbb69943d77ca4498059a713e019b17"
+      },
+      {
+        "role": "qualification",
+        "path": "data/research/canonical_views_v1/protected-qualification-index-v1/images.jsonl",
+        "record_count": 250,
+        "sha256": "c2c5af27f1ec3c4d6b15dc381296abb0b0e44c56c0c14cb8e14e91a6a5dacd57"
+      }
+    ],
+    "validation_relationship": "All 6941 quick-validation samples are included in full_validation; these are not independent tests.",
+    "selection_rules": {
+      "training_sources": "development only; final run19 hard-view membership remains pending",
+      "replay_per_class_target": 1000,
+      "hard_view_frame_quotas": {
+        "transformer": 600,
+        "switchgear": 600,
+        "capacitor_bank": 600,
+        "reactor": 600,
+        "no_target": 600
+      },
+      "grouping": "recording/seed; canonical views additionally grouped by scene and view lineage",
+      "protected_usage": "No training or tuning on blind/qualification. Validation/full_validation may select models and thresholds. Protected image hashes only for exclusion audits.",
+      "dedup": "Exact and near dedup against complete retained development and protected inventories required before admission.",
+      "annotation_revision": "Label repairs require a new version; reevaluate all contenders on that same version."
+    }
+  },
+  "evaluation": {
+    "four_class": {
+      "baseline_threshold": 0.37,
+      "candidate_threshold_selection": "validation only; macro-F1 maximum over 0.05..0.75 step 0.01; ties choose lower threshold. Freeze before held-out evaluation.",
+      "report": [
+        "mAP50-95",
+        "macro_f1",
+        "per_class_recall",
+        "per_class_precision",
+        "small_object_recall",
+        "no_target_frame_fpr"
+      ],
+      "new_numeric_promotion_thresholds": null,
+      "promotion_note": "No invented mAP/FPR gate or automatic promotion; existing package, equivalence and qualification requirements remain."
+    },
+    "proposal": {
+      "role": "Auxiliary class-agnostic localization diagnostic, not four-class classification",
+      "input_size": 640,
+      "max_proposals": 16,
+      "nms_iou": 0.7,
+      "matching_iou_min": 0.5,
+      "overall_recall_min": 0.98,
+      "present_class_recall_min": 0.95,
+      "post_cap_proposal_p95_max": 16,
+      "fpr_in_existing_pass_condition": false,
+      "diagnostic_additions": [
+        "pre_cap_proposal_p95",
+        "cap_saturation_rate",
+        "truncation_recall_loss",
+        "duplicate_box_rate"
+      ]
+    },
+    "qualification": {
+      "scope": "Existing v2.11 complex qualification; not all-map qualification",
+      "config": "config/perception/active_inspection_v2_11_complex_qualification_v1.json",
+      "thresholds": {
+        "pairing_rate_min": 0.95,
+        "skew_p95_ms_max": 33.334,
+        "class_recall_min": 0.95,
+        "class_accuracy_min": 0.9,
+        "localization_median_m_max": 1.0,
+        "localization_p95_m_max": 2.0,
+        "exploration_coverage_min": 0.9
+      }
+    },
+    "onnx": "Existing identity-bound equivalence at 320/416/640; implementation and package receipts pinned."
+  },
+  "status": {
+    "step_1": "comparison_baseline_frozen",
+    "training_data_ready": false,
+    "latest_batch_admitted_frames": 0,
+    "latest_batch_unreviewed_frames": 223,
+    "latest_batch_candidate_frame_coverage": {
+      "transformer": 174,
+      "switchgear": 134,
+      "capacitor_bank": 59,
+      "reactor": 16
+    },
+    "empty_truth_candidates_not_accepted_negatives": 34,
+    "next_blockers": [
+      "pose acknowledgement and pairing timeouts",
+      "manual full-object and negative review",
+      "annotation compatibility and complete protected inventory confirmation",
+      "joint curation and quotas"
+    ],
+    "next_step": "Repair collection and audit annotation retention.",
+    "historical_metrics": "v2.11 quick training validation used 40 switchgear-only frames. Run18 uses one equipment class and different validation labels. Do not compare their mAP directly with this four-class baseline.",
+    "recipe_state": "Pending recipe is evidence only; warmup_bias_lr and experimental changes are not yet approved recipes."
+  },
+  "pinned_files": [
+    {
+      "path": "config/perception/active_inspection_multimap_qualification_policy_v1.json",
+      "sha256": "08dd7eeba86da66531e7633b8a4e40291bde9a1cd3821e07d4c4231d56ae8179"
+    },
+    {
+      "path": "config/perception/active_inspection_v2_11_complex_qualification_v1.json",
+      "sha256": "f4dfa5d28cd86d53d3d5b531f2063a4888461b88562f49c885ece2a34999df26"
+    },
+    {
+      "path": "config/perception/equipment_classes.json",
+      "sha256": "c0ed105229b9adac31610da4f104cc28fd8bf6ccc5ee09ae1dfe2c26417b3263"
+    },
+    {
+      "path": "data/research/canonical_views_v1/complex-expansion-round1-pilot-v1/collection-receipt.json",
+      "sha256": "dda41daffd0572e4c84549c5fbc45f2f6ba89cd2f818336893b30c9553e75af9"
+    },
+    {
+      "path": "data/research/canonical_views_v1/expansion-round1-joint-audit-v1.json",
+      "sha256": "af6dcd7a7c54c7fee4753cdf6d4c707ad2445d56a9a9df48fc15cbaacd6ad59d"
+    },
+    {
+      "path": "data/research/canonical_views_v1/historical-label-retention-audit-v1.json",
+      "sha256": "2904b30ee7c5e64f758342d587fc8e449b8d73256ff36d066bf2c97d821f6a4b"
+    },
+    {
+      "path": "data/research/canonical_views_v1/medium-expansion-round1-pilot-v1/collection-receipt.json",
+      "sha256": "5f5e01afde7dde3c77e1b5e1018232d0cab5fd09ee4b22e1d6be4c32d97ddfca"
+    },
+    {
+      "path": "data/research/canonical_views_v1/protected-blind-image-index-v1/images.jsonl",
+      "sha256": "8575a675b48c9aea8f6e39b4a143ea5e5dbb69943d77ca4498059a713e019b17"
+    },
+    {
+      "path": "data/research/canonical_views_v1/protected-qualification-index-v1/images.jsonl",
+      "sha256": "c2c5af27f1ec3c4d6b15dc381296abb0b0e44c56c0c14cb8e14e91a6a5dacd57"
+    },
+    {
+      "path": "data/research/canonical_views_v1/protected-v2-image-index-v1/images.jsonl",
+      "sha256": "5e80c83f5d6c4071a6031bcf3a0bbedc0ae965b7d666f8f3b8f495a43827a644"
+    },
+    {
+      "path": "data/research/canonical_views_v1/run19-training-recipe-pending-v1.json",
+      "sha256": "a0ec066e715f4caf7bb389033b0e0927beb2c869dad33bede8820a27c0a2132a"
+    },
+    {
+      "path": "data/research/canonical_views_v1/simple-expansion-round1-pilot-v1/collection-receipt.json",
+      "sha256": "0274f3dfa6c93a7f2597b726a80092fccf3b456e49dceff531b4de8c56e536be"
+    },
+    {
+      "path": "data/research/run19-product-scope-v1/scope-decision.json",
+      "sha256": "9ccb56bfac258e0e7af1067d22e8bf86383c724659d51e3fc8fd3ba6bd8e9cff"
+    },
+    {
+      "path": "data/research/run19-product-scope-v1/truth-semantics-audit-v1.json",
+      "sha256": "83af38aeaf47cfb05b963b65fbea38d3f353f74847de90d1cdfe184da8bf9071"
+    },
+    {
+      "path": "data/research/visual_yolo_v2/dataset.yaml",
+      "sha256": "95b4e6389936f8467a7ae87e8d538330fb46abd03c962e9ca0a6dbcc4eba620d"
+    },
+    {
+      "path": "data/research/visual_yolo_v2/identity/full_validation_membership.jsonl",
+      "sha256": "30c899d54d841a94063ed6e787942ae51a1a9375b12faf2c49c18b6845e6135e"
+    },
+    {
+      "path": "data/research/visual_yolo_v2/identity/labels_manifest.json",
+      "sha256": "fb3fd9e19c476a5944a7954cab0481069a7a44c508e93e1f7d3a66db28c50734"
+    },
+    {
+      "path": "data/research/visual_yolo_v2/identity/train_membership.jsonl",
+      "sha256": "e2076b6007a33ac58538567a15546e8e6775302d21bb009214b825064148b9c7"
+    },
+    {
+      "path": "data/research/visual_yolo_v2/identity/training_view_identity.json",
+      "sha256": "8336623073e740845426fc96412e42673a2a85c947941b0c6d2ee512e0cfbbe4"
+    },
+    {
+      "path": "data/research/visual_yolo_v2/identity/validation_membership.jsonl",
+      "sha256": "52a2086323607048dd4a6c5be1ff07ae1bf8179e0a76e7030881a99a60c6f674"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/equivalence/onnx_equivalence_320.json",
+      "sha256": "42751901f4260cc61aafa22482bb1dd0f455659101c05bdff48ca9f34074ca4d"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/equivalence/onnx_equivalence_416.json",
+      "sha256": "e96e576ce79dc545be3bddc333c11c42c15a4e8a36d40c05cbabe17b3b4afea7"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/equivalence/onnx_equivalence_640.json",
+      "sha256": "575a9e09716798b3f5aedcfd549e836e84c20267131f7edce3f2122e5662afb3"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/full_validation_results.json",
+      "sha256": "9bc8195fbe57cb4082e2b0260f54af858d59f29a5a7ca939981f0bc9e28edaec"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/manifest.json",
+      "sha256": "a583f0b104132d35bcc1532265dd4ec47faaf264fa55ad52801874f308687972"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/model_identities.json",
+      "sha256": "70fabdff09a800aa83b80027ce24e97cd3edca39cb2b011e3b02e9676840ed1d"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/onnx/model_320.onnx",
+      "sha256": "f090b6bc6ba98d43c4aeced48936eb2a42d3f3d3c37cbdb9d2ed3eead1d398ca"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/onnx/model_416.onnx",
+      "sha256": "473011dd3e776df318db91b68ffd9d7789366967d86c6b2df71d2d679e8a35ec"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/onnx/model_640.onnx",
+      "sha256": "9d675dc91f33244c7064c3c91b461f3f58facc94ac79f6111118f6b6f787cbc1"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/package_status.json",
+      "sha256": "4e4fde9c4ba91b0393a621d28522fdeb67c42c906f2bbba4d19da2882f8110a5"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/preprocessing_identities.json",
+      "sha256": "b33f698dcb768bc640205535884066d6445f483047264bc18eeb718866c1155f"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/training_history.csv",
+      "sha256": "6f9a47f777dc0e63766e87551e23d4b83f9ec8af283d60f6c54ab536917a7b62"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/training_provenance.json",
+      "sha256": "5ac9ac7e3786e7f5ef63cca9dc4a1f65d37cb4f860548881ab3d0fec3ebe541a"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/training_view_identity.json",
+      "sha256": "eb660812042cd661a907b6880f3e0c2b090d488f90747d342199373dddbb81b5"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/weights/best.onnx",
+      "sha256": "9d675dc91f33244c7064c3c91b461f3f58facc94ac79f6111118f6b6f787cbc1"
+    },
+    {
+      "path": "models/equipment/visual-yolo11n-baseline-v2.11-candidate-package-v1/weights/best.pt",
+      "sha256": "820f882a5d375be0a294555c7168d49b6d68c21adce97f00b45fe7b0ebc54836"
+    },
+    {
+      "path": "scripts/vision/verify_experiment_baseline.py",
+      "sha256": "2369911c20f1878002b83475c9d11802df3d8855333f5f80e89e54c09f36a760"
+    },
+    {
+      "path": "src/vision/evaluation/detection_metrics.py",
+      "sha256": "9e4adc43ff1bcde6de3441500b6e775c6345b9daf06c15639fb741c9f8314d4c"
+    },
+    {
+      "path": "src/vision/evaluation/onnx_gate.py",
+      "sha256": "0e587dd8e555f34b5f84143b519b599b81afb482f1628d50e6d36779e03af623"
+    },
+    {
+      "path": "src/vision/evaluation/proposal_audit.py",
+      "sha256": "6b049c347874ddcbc37ffab8566626d470de823dfe88b4891d12f3e050997e73"
+    }
+  ],
+  "baseline_identity_sha256": "473e84a2d111811fce9f86cdd7b79dac715391a0cccba8ff82e7d1d99420a147"
+}

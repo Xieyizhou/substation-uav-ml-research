@@ -98,6 +98,14 @@ def astar(
         for next_cell, move_cost in neighbors(current, allow_diagonal):
             if not grid.is_free(next_cell) or next_cell in closed:
                 continue
+            # A free diagonal endpoint does not make the connecting segment
+            # safe: do not cut between occupied orthogonal neighbours.
+            dx, dy = next_cell[0] - current[0], next_cell[1] - current[1]
+            if dx and dy and (
+                not grid.is_free((current[0] + dx, current[1]))
+                or not grid.is_free((current[0], current[1] + dy))
+            ):
+                continue
 
             tentative_g = g_score[current] + move_cost
             if tentative_g >= g_score.get(next_cell, float("inf")):
@@ -140,10 +148,11 @@ def grid_path_to_local_waypoints(
     path: list[Cell],
     resolution_m: float = 1.0,
     altitude_m: float = 2.5,
+    local_frame=None,
 ) -> list[dict[str, object]]:
     waypoints = []
     for index, cell in enumerate(path, start=1):
-        waypoints.append(cell_to_local_waypoint(cell, resolution_m, altitude_m, index))
+        waypoints.append(cell_to_local_waypoint(cell, resolution_m, altitude_m, index, local_frame=local_frame))
     return waypoints
 
 
@@ -152,11 +161,14 @@ def cell_to_local_waypoint(
     resolution_m: float = 1.0,
     altitude_m: float = 2.5,
     index: Optional[int] = None,
+    local_frame=None,
 ) -> dict[str, object]:
     x, y = cell
+    from src.planner.local_frame import LocalFrame
+    east,north=LocalFrame.from_mapping(local_frame).to_local((x+0.5)*resolution_m,(y+0.5)*resolution_m)
     waypoint = {
-        "north_m": (y + 0.5) * resolution_m,
-        "east_m": (x + 0.5) * resolution_m,
+        "north_m": north,
+        "east_m": east,
         "down_m": -altitude_m,
     }
     if index is not None:

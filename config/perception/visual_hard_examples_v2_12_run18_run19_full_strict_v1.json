@@ -1,0 +1,122 @@
+{
+  "bbox_policy": {
+    "development": {
+      "maximum_bbox_height_fraction": 0.9,
+      "maximum_bbox_width_fraction": 0.9,
+      "minimum_border_margin_px": 2,
+      "mode": "drop_invalid_objects"
+    }
+  },
+  "class_frame_quotas": {
+    "development": {
+      "capacitor_bank": 600,
+      "reactor": 600,
+      "switchgear": 600,
+      "transformer": 600
+    },
+    "validation": {
+      "capacitor_bank": 0,
+      "reactor": 0,
+      "switchgear": 0,
+      "transformer": 0
+    }
+  },
+  "classes": [
+    "transformer",
+    "switchgear",
+    "capacitor_bank",
+    "reactor"
+  ],
+  "deduplicate_within_split": true,
+  "development_annotation_scope": "all_complete_visible_equipment",
+  "development_seeds": [
+    7601,
+    7602,
+    7603,
+    7604,
+    7605,
+    7606,
+    7607,
+    7608,
+    7609,
+    7610,
+    7611,
+    7612,
+    7613,
+    7614,
+    7615,
+    7616,
+    7617,
+    7618,
+    7619,
+    7620,
+    7621,
+    7622,
+    7623,
+    7624,
+    7625,
+    7626,
+    7627,
+    7628,
+    7629,
+    7630,
+    7631,
+    7632,
+    780101,
+    780102,
+    780103,
+    780104,
+    780105,
+    780106,
+    780107,
+    780108,
+    780109,
+    780110,
+    780111,
+    780112,
+    780113,
+    780114,
+    780115,
+    780116,
+    780117,
+    780118
+  ],
+  "forbidden_partitions": [
+    "validation",
+    "full_validation",
+    "blind",
+    "heldout_test",
+    "qualification"
+  ],
+  "forbidden_seeds": [
+    3031,
+    3032,
+    3033,
+    3034,
+    3035,
+    3036,
+    3037,
+    3038,
+    3039,
+    3040,
+    6814
+  ],
+  "maps": [
+    "simple",
+    "medium",
+    "complex"
+  ],
+  "near_duplicate_hamming_threshold": 2,
+  "no_target_frame_quotas": {
+    "development": 600,
+    "validation": 0
+  },
+  "perceptual_hash_algorithm": "dhash64-v1",
+  "protocol_id": "visual-hard-examples-v2.12-run18-run19-full-strict-v1",
+  "purpose": "full retained raw-pool re-curation before further deficit-driven collection; no gate relaxation",
+  "schema_version": 1,
+  "selection_group": "recording_seed",
+  "split_group": "recording_seed",
+  "training_authorized_by_this_receipt": false,
+  "validation_seeds": []
+}

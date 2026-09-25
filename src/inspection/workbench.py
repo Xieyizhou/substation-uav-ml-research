@@ -19,8 +19,10 @@ def _run_summary(value):
     comparison = value.get("comparison") or {}
     return {
         "experiment_id": recipe.get("experiment_id"),
+        "updated_at": value.get("updated_at", 0),
         "dataset_id": recipe.get("dataset_id"), "preset": recipe.get("preset"),
         "parameters": recipe.get("parameters", {}), "state": status.get("state"),
+        "initialization": recipe.get("initialization"),
         "stage": status.get("stage"), "progress": status.get("progress"),
         "epoch": status.get("epoch"), "total_epochs": status.get("total_epochs"),
         "eta_seconds": status.get("eta_seconds"), "error": status.get("error"),
@@ -36,6 +38,8 @@ def _run_summary(value):
         "threshold": selected.get("threshold"), "timing": replay.get("timing"),
         "comparison": comparison.get("deltas"),
         "comparison_status": comparison.get("status"),
+        "comparison_source": comparison.get("baseline_experiment_id") or comparison.get("baseline_kind", "legacy baseline"),
+        "comparison_scope": comparison.get("scope"),
     }
 
 
@@ -48,6 +52,7 @@ def workbench_summary(config):
         config.project_root, config.workbench_datasets_root
     )
     runs = [_run_summary(row) for row in list_workbench_runs(config.workbench_runs_root)]
+    runs.sort(key=lambda row: (row["updated_at"], row["experiment_id"] or ""))
     return {
         "enabled": True, "datasets": datasets, "runs": runs,
         "verified_models": list_verified_models(config.workbench_runs_root),

@@ -18,6 +18,42 @@ from src.sandbox.operator import OperatorBusy, SandboxOperator
 STATIC_ROOT = Path(__file__).with_name("static")
 LOOPBACK_HOSTS = frozenset({"127.0.0.1", "localhost", "::1"})
 
+# Closed allowlists: URL input never selects arbitrary service attributes.
+GET_ACTIONS = {
+    "/api/doctor": "doctor",
+    "/api/profile": "profile",
+    "/api/version": "version",
+    "/api/setup": "setup",
+    "/api/dashboard": "dashboard",
+    "/api/runtime": "runtime",
+    "/api/research": "research",
+    "/api/experiments": "experiments",
+    "/api/workbench": "workbench",
+    "/api/feedback": "feedback",
+    "/api/maps": "maps",
+    "/api/map-runs": "map_runs",
+    "/api/lidar": "lidar",
+    "/api/live-replan": "live_replan",
+    "/api/visual-replan": "visual_replan",
+    "/api/evidence": "evidence",
+    "/api/semantic-flight": "semantic_flight",
+    "/api/acceptance": "acceptance",
+    "/api/preflight": "preflight",
+    "/api/storage": "storage",
+    "/api/recordings": "recordings",
+    "/api/scenarios": "scenarios",
+}
+POST_ACTIONS = {
+    "/api/feedback/review": ("feedback_review", ("collection_id", "sample_id", "review", "expected_identity"), 200),
+    "/api/operator/start": ("operator_start", ("action", "scenario_id", "parameters"), 202),
+    "/api/operator/stop": ("operator_stop", ("job_id",), 200),
+    "/api/maps/draft": ("map_save", ("map",), 200),
+    "/api/maps/draft/delete": ("map_delete", ("map_id",), 200),
+    "/api/maps/revision": ("map_revision_create", ("map_id",), 201),
+    "/api/maps/import": ("map_import", ("bundle_base64",), 201),
+    "/api/maps/register": ("map_recording_register", ("run_id", "dataset_id"), 201),
+}
+
 
 class InspectionHandler(BaseHTTPRequestHandler):
     service: InspectionService
@@ -46,30 +82,11 @@ class InspectionHandler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             if not isinstance(body, dict):
                 raise ValueError("JSON request must be an object")
-            if self.path == "/api/operator/start":
-                return self._json(
-                    self.service.operator_start(
-                        body.get("action"), body.get("scenario_id"),
-                        body.get("parameters"),
-                    ),
-                    202,
-                )
-            if self.path == "/api/operator/stop":
-                return self._json(self.service.operator_stop(body.get("job_id")))
-            if self.path == "/api/maps/draft":
-                return self._json(self.service.map_save(body.get("map")))
-            if self.path == "/api/maps/draft/delete":
-                return self._json(self.service.map_delete(body.get("map_id")))
-            if self.path == "/api/maps/revision":
-                return self._json(
-                    self.service.map_revision_create(body.get("map_id")), 201
-                )
-            if self.path == "/api/maps/import":
-                return self._json(self.service.map_import(body.get("bundle_base64")), 201)
-            if self.path == "/api/maps/register":
-                return self._json(self.service.map_recording_register(
-                    body.get("run_id"), body.get("dataset_id")
-                ), 201)
+            action = POST_ACTIONS.get(self.path)
+            if action is not None:
+                method, fields, status = action
+                result = getattr(self.service, method)(*(body.get(key) for key in fields))
+                return self._json(result, status)
             self._json({"error": "unknown endpoint"}, 404)
         except OperatorBusy as error:
             self._json({"error": str(error)}, 409)
@@ -80,46 +97,23 @@ class InspectionHandler(BaseHTTPRequestHandler):
         print(f"inspection: {message % args}")
 
     def _api(self, path, query):
-        if path == "/api/doctor":
-            return self._json(self.service.doctor())
-        if path == "/api/profile":
-            return self._json(self.service.profile())
-        if path == "/api/version":
-            return self._json(self.service.version())
-        if path == "/api/setup":
-            return self._json(self.service.setup())
-        if path == "/api/dashboard":
-            return self._json(self.service.dashboard())
-        if path == "/api/runtime":
-            return self._json(self.service.runtime())
-        if path == "/api/research":
-            return self._json(self.service.research())
-        if path == "/api/experiments":
-            return self._json(self.service.experiments())
-        if path == "/api/workbench":
-            return self._json(self.service.workbench())
-        if path == "/api/maps":
-            return self._json(self.service.maps())
-        if path == "/api/map-runs":
-            return self._json(self.service.map_runs())
-        if path == "/api/lidar":
-            return self._json(self.service.lidar())
-        if path == "/api/acceptance":
-            return self._json(self.service.acceptance())
-        if path == "/api/preflight":
-            return self._json(self.service.preflight())
-        if path == "/api/storage":
-            return self._json(self.service.storage())
-        if path == "/api/recordings":
-            return self._json(self.service.recordings())
-        if path == "/api/scenarios":
-            return self._json(self.service.scenarios())
+        method = GET_ACTIONS.get(path)
+        if method is not None:
+            return self._json(getattr(self.service, method)())
         if path == "/api/operator":
             return self._json({
                 **self.service.operator_status(),
                 "operator_token": self.operator_token,
             })
         parts = [unquote(item) for item in path.split("/") if item]
+        if len(parts) == 3 and parts[1] == "semantic-model":
+            return self._json(self.service.semantic_model(parts[2]))
+        if len(parts) == 3 and parts[1] == "feedback":
+            return self._json(self.service.feedback_collection(parts[2]))
+        if len(parts) == 4 and parts[1] == "feedback":
+            return self._json(self.service.feedback_sample(parts[2], parts[3]))
+        if len(parts) == 5 and parts[1] == "feedback" and parts[4] == "image":
+            return self._file(self.service.feedback_image(parts[2], parts[3]))
         if len(parts) == 3 and parts[1] == "maps":
             return self._json(self.service.map_detail(parts[2]))
         if len(parts) == 6 and parts[1:3] == ["maps", "revision"]:
@@ -155,8 +149,8 @@ class InspectionHandler(BaseHTTPRequestHandler):
     def _static(self, path):
         name = "index.html" if path == "/" else path.lstrip("/")
         if name not in {
-            "index.html", "app.js", "style.css", "operator.css", "research.css",
-            "experiments.css", "setup.css", "setup.js",
+            "index.html", "app.js", "semantic_flight.js", "live_replan.js", "visual_replan.js", "evidence.js", "style.css", "operator.css", "research.css",
+            "experiments.css", "setup.css", "setup.js", "feedback.js", "feedback.css",
             "profile.css", "ui_state.js", "navigation.css", "navigation.js",
             "map_studio.css", "map_canvas.js", "map_studio_actions.js",
             "map_studio.js", "map_flight.js", "scenario_selector.js",
@@ -186,6 +180,9 @@ class InspectionHandler(BaseHTTPRequestHandler):
 
 
 class SandboxHTTPServer(ThreadingHTTPServer):
+    # The desktop starts multiple independent panel requests in one burst.
+    request_queue_size = 64
+
     def __init__(self, address, handler, operator):
         self.operator = operator
         super().__init__(address, handler)

@@ -15,7 +15,8 @@ from src.sandbox.job_process import (
     ownership_is_held, process_alive, start_job_process, stop_job_pid,
     stop_job_process,
 )
-from src.sandbox.job_runtime import monitor_process
+from src.sandbox.job_runtime import monitor_process, stop_managed_process
+from src.sandbox.managed_flight_stop import cooperative_stop, FLIGHT_ACTIONS
 from src.sandbox.workflow import (
     materialize_workflow_receipt, materialize_workflow_recipe,
 )
@@ -99,6 +100,10 @@ class SandboxOperator:
                 self.store.ownership_path(job.job_id), job.ownership_token
             )
 
+        def stop_recovered():
+            if not cooperative_stop(self.config, job, ownership_released):
+                stop_job_pid(job.pid, stopped=ownership_released)
+
         try:
             next_storage_check = 0.0
             while not ownership_released():
@@ -106,7 +111,7 @@ class SandboxOperator:
                     job.state, job.stop_requested = "stopping", True
                     self.store.write(job)
                     if process_alive(job.pid):
-                        stop_job_pid(job.pid, stopped=ownership_released)
+                        stop_recovered()
                     break
                 violation = job_recovery.recovered_budget_violation(
                     self.config, job, next_storage_check
@@ -115,12 +120,12 @@ class SandboxOperator:
                 if violation[0]:
                     job.error = violation[0]
                     if process_alive(job.pid):
-                        stop_job_pid(job.pid, stopped=ownership_released)
+                        stop_recovered()
                     break
                 if job_recovery.elapsed_seconds(job) > job.timeout_s:
                     job.error = f"job exceeded {job.timeout_s:.0f}s timeout"
                     if process_alive(job.pid):
-                        stop_job_pid(job.pid, stopped=ownership_released)
+                        stop_recovered()
                     break
             result = job_recovery.read_process_result(self.store, job.job_id)
             if result is not None:
@@ -241,7 +246,7 @@ class SandboxOperator:
             job.state = "failed"
             job.error = f"{type(error).__name__}: {error}"
             if process is not None and process.poll() is None:
-                stop_job_process(process)
+                stop_managed_process(process, job, self.config)
         finally:
             if handle is not None and not handle.closed:
                 handle.close()
@@ -297,4 +302,6 @@ class SandboxOperator:
         if active is not None:
             self.stop(active.job_id)
         if self._thread is not None:
-            self._thread.join(timeout=40.0)
+            # Allow the bounded landing request plus forced-cleanup fallback
+            # to finish before this server's daemon monitor is torn down.
+            self._thread.join(timeout=130.0 if active is not None and active.action in FLIGHT_ACTIONS else 40.0)

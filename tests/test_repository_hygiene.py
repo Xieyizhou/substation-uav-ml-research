@@ -1,4 +1,7 @@
 import subprocess
+import json
+import shutil
+import tempfile
 import unittest
 from pathlib import Path, PurePosixPath
 
@@ -50,6 +53,9 @@ FORBIDDEN_NAME_FRAGMENTS = (
 
 
 def tracked_files():
+    if not (PROJECT_ROOT / ".git").exists():
+        manifest = json.loads((PROJECT_ROOT / "SOURCE_MANIFEST.json").read_text())
+        return [PurePosixPath(row["path"]) for row in manifest]
     result = subprocess.run(
         ["git", "ls-files", "-z"],
         cwd=PROJECT_ROOT,
@@ -81,9 +87,16 @@ def is_agent_prompt_path(path):
 
 
 class RepositoryHygieneTests(unittest.TestCase):
+    def setUp(self):
+        # Test ignore rules independently of local Git metadata. Source ZIPs
+        # intentionally omit .git, and Git worktrees may use a pointer file.
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.ignore_root = Path(temporary.name)
+        subprocess.run(["git", "init", "-q", str(self.ignore_root)], check=True)
+        shutil.copy2(PROJECT_ROOT / ".gitignore", self.ignore_root / ".gitignore")
+
     def test_ai_agent_prompt_files_are_not_tracked(self):
-        if not (PROJECT_ROOT / ".git").exists():
-            self.skipTest("Git metadata is unavailable")
         prohibited = sorted(
             str(path)
             for path in tracked_files()
@@ -107,7 +120,7 @@ class RepositoryHygieneTests(unittest.TestCase):
         )
         result = subprocess.run(
             ["git", "check-ignore", "--stdin"],
-            cwd=PROJECT_ROOT,
+            cwd=self.ignore_root,
             input="\n".join(generated),
             text=True,
             check=True,
@@ -127,7 +140,7 @@ class RepositoryHygieneTests(unittest.TestCase):
         )
         result = subprocess.run(
             ["git", "check-ignore", "--stdin"],
-            cwd=PROJECT_ROOT,
+            cwd=self.ignore_root,
             input="\n".join(tracked_definitions),
             text=True,
             capture_output=True,

@@ -164,6 +164,7 @@ def build_replan_config(args, planner_config):
         "width": planner_config["width"],
         "height": planner_config["height"],
         "resolution_m": planner_config["resolution_m"],
+        "local_frame": planner_config.get("local_frame"),
         "altitude_m": planner_config["altitude_m"],
         "goal_cell": planner_config["goal"],
         "start_cell": planner_config["start"],

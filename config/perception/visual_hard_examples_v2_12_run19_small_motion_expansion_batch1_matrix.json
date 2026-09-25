@@ -1,0 +1,23 @@
+{
+  "cooldown_s": 5,
+  "emit_stride": 30,
+  "frames_per_run": 90,
+  "matrix_id": "visual-hard-examples-v2.12-run19-small-motion-expansion-batch1",
+  "protocol": "config/perception/visual_hard_examples_v2_12_run19_small_motion_expansion_batch1.json",
+  "run_revision": "run19-small-motion-expansion-batch1",
+  "runs": [
+    {
+      "map_id": "medium",
+      "seed": 780105,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-small-motion-expansion-batch1/routes/medium-transformer-expansion-batch1.json"
+    },
+    {
+      "map_id": "medium",
+      "seed": 780106,
+      "split": "development",
+      "visual_route": "data/research/visual_hard_examples_v2_12/run19-small-motion-expansion-batch1/routes/medium-capacitor_bank-expansion-batch1.json"
+    }
+  ],
+  "schema_version": 1
+}

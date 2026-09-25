@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
 from pathlib import Path
 import shutil
+import resource
+import sys
 import time
 
 from src.ml import EQUIPMENT_CLASSES
@@ -15,6 +18,7 @@ from src.sandbox.workbench_run_guard import (
     exclusive_workbench_run, verified_completed_receipt,
 )
 from src.sandbox.workbench_receipt import materialize_workbench_receipt
+from src.sandbox.workbench_weights import resolve_initial_weights
 from src.vision.evaluation.detection_metrics import (
     select_confidence_threshold, threshold_metrics,
 )
@@ -57,16 +61,37 @@ def _link(source, destination):
 
 
 def _prepare_view(dataset, run_root, parameters):
+    reviewed_members = None
+    if getattr(dataset, "source_type", None) == "reviewed_feedback":
+        from src.sandbox.workbench_membership import verify_reviewed_dataset
+        reviewed_members = verify_reviewed_dataset(dataset)
     source, root = Path(dataset.dataset_root), Path(run_root) / "view"
-    members, modes = [], {}
+    members, modes, coverage = [], {}, {}
     for split, limit_name in (("train", "train_limit"),
                               ("validation", "validation_limit")):
-        images = _evenly(
-            [path for path in (source / "images" / split).iterdir() if path.is_file()],
-            parameters[limit_name],
-        )
+        candidates = [path for path in (source / "images" / split).iterdir() if path.is_file()]
+        limit = parameters[limit_name]
+        if split == "train" and reviewed_members is not None:
+            required = {source / row["image_path"] for row in reviewed_members
+                        if row["annotation_source"] == "explicit_review"}
+            if limit is not None and len(required) > limit:
+                raise ValueError("Training budget cannot include all reviewed feedback; choose a larger preset")
+            images = sorted(required) + _evenly([p for p in candidates if p not in required],
+                        None if limit is None else limit-len(required))
+        else:
+            images = _evenly(candidates, limit)
         if not images:
             raise ValueError(f"workbench dataset {split} split is empty")
+        counts = Counter()
+        for image in images:
+            label = source / "labels" / split / f"{image.stem}.txt"
+            for row in label.read_text().splitlines():
+                if row.strip():
+                    counts[int(row.split()[0])] += 1
+        missing = [name for index, name in enumerate(EQUIPMENT_CLASSES) if not counts[index]]
+        if missing and split == "validation":
+            raise ValueError(f"workbench {split} selection lacks required classes: {', '.join(missing)}")
+        coverage[split] = {name: counts[index] for index, name in enumerate(EQUIPMENT_CLASSES)}
         for image in images:
             label = source / "labels" / split / f"{image.stem}.txt"
             if not label.is_file():
@@ -84,7 +109,8 @@ def _prepare_view(dataset, run_root, parameters):
     )
     write_json(root / "membership.json", members)
     return root, {"membership_sha256": object_sha256(members),
-                  "frame_count": len(members), "link_modes": modes}
+                  "frame_count": len(members), "link_modes": modes,
+                  "class_counts": coverage}
 
 
 def _device(requested):
@@ -108,12 +134,33 @@ def _train(weights, view, run_root, recipe, resume):
     if resume and not checkpoint.is_file():
         raise FileNotFoundError("workbench resume requires last.pt")
     model = YOLO(str(checkpoint if resume else weights))
-    started, durations = time.monotonic(), []
+    previous_epoch_end, durations = time.monotonic(), []
+    started = previous_epoch_end
+    efficiency = {"recipe_identity_sha256": recipe.recipe_identity_sha256,
+                  "freeze": parameters.get("freeze", 0), "resumed": resume,
+                  "max_resumable_checkpoint_bytes": 0}
+
+    def training_started(trainer):
+        efficiency.update(
+            parameter_count=sum(p.numel() for p in trainer.model.parameters()),
+            trainable_parameter_count=sum(p.numel() for p in trainer.model.parameters() if p.requires_grad),
+            device=str(trainer.device),
+        )
 
     def epoch_finished(trainer):
+        nonlocal previous_epoch_end
         epoch = min(parameters["epochs"], int(trainer.epoch) + 1)
-        elapsed = time.monotonic() - started
-        durations.append(elapsed / epoch)
+        # Ultralytics calls this hook again after final best-model validation.
+        if epoch <= efficiency.get("last_completed_epoch", 0):
+            return
+        efficiency["last_completed_epoch"] = epoch
+        now = time.monotonic()
+        durations.append(now - previous_epoch_end)
+        previous_epoch_end = now
+        if checkpoint.is_file():
+            efficiency["max_resumable_checkpoint_bytes"] = max(
+                efficiency["max_resumable_checkpoint_bytes"], checkpoint.stat().st_size
+            )
         eta = sum(durations[-5:]) / len(durations[-5:]) * (
             parameters["epochs"] - epoch
         )
@@ -122,6 +169,7 @@ def _train(weights, view, run_root, recipe, resume):
                 total_epochs=parameters["epochs"], eta_seconds=max(0, eta),
                 checkpoint_available=checkpoint.is_file())
 
+    model.add_callback("on_train_start", training_started)
     model.add_callback("on_fit_epoch_end", epoch_finished)
     if resume:
         model.train(resume=True)
@@ -137,10 +185,20 @@ def _train(weights, view, run_root, recipe, resume):
             flipud=0.0, perspective=0.0, mixup=0.0, copy_paste=0.0,
             close_mosaic=min(10, parameters["epochs"]), verbose=True,
             cls_remap=False,
+            freeze=parameters.get("freeze", 0),
         )
     best = directory / "weights/best.pt"
     if not best.is_file():
         raise FileNotFoundError(best)
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    efficiency.update(
+        elapsed_seconds=time.monotonic() - started,
+        epoch_callback_intervals_seconds=durations,
+        process_peak_rss_bytes=int(peak if sys.platform == "darwin" else peak * 1024),
+        rss_scope="process lifetime; includes imports; excludes child workers",
+        final_best_bytes=best.stat().st_size,
+    )
+    write_json(Path(run_root) / "training_efficiency.json", efficiency)
     return best, checkpoint
 
 
@@ -173,7 +231,11 @@ def _export_and_gate(best, view, run_root, recipe, _pt_frames):
     ))
     onnx = Path(run_root) / "model" / f"model_{size}.onnx"
     onnx.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(exported, onnx)
+    # The export is run-local; move it instead of storing a second full model.
+    if exported.resolve().parent == Path(best).resolve().parent:
+        exported.replace(onnx)
+    else:
+        shutil.copy2(exported, onnx)
     from src.sandbox.workbench_equivalence import evaluate_workbench_equivalence
     gate = evaluate_workbench_equivalence(
         best, onnx, view, imgsz=size, device=_device(recipe.parameters["device"]),
@@ -185,23 +247,18 @@ def _export_and_gate(best, view, run_root, recipe, _pt_frames):
 
 
 def replay_workbench_model(onnx, view, run_root, recipe, threshold):
-    from ultralytics import YOLO
-
-    model, timings, frames = YOLO(str(onnx)), [], []
-    for image in sorted((view / "images/validation").iterdir()):
-        started = time.perf_counter()
-        result = model.predict(source=str(image), imgsz=recipe.parameters["imgsz"],
-                               conf=0.05, device="cpu", verbose=False)[0]
-        timings.append((time.perf_counter() - started) * 1_000)
+    timings = []
     frames = collect_predictions(
         onnx, view, "validation", device="cpu",
-        imgsz=recipe.parameters["imgsz"], batch=1,
+        imgsz=recipe.parameters["imgsz"], batch=1, timings=timings,
     )
     environment, environment_id = runtime_environment()
     value = {"workbench_replay_schema_version": 1,
              "model_sha256": file_sha256(onnx), "frame_count": len(frames),
              "successful_frame_count": len(timings), "failed_frame_count": 0,
              "threshold": threshold, "metrics": threshold_metrics(frames, threshold),
+             "prediction_passes": 1,
+             "timing_scope": "stream_next_including_decode_preprocess_inference_nms_first_frame_startup",
              "timing": timing_summary(timings), "runtime": environment,
              "runtime_identity_sha256": environment_id}
     value["replay_identity_sha256"] = object_sha256(value)
@@ -234,10 +291,8 @@ def _run_workbench_experiment(project_root, imported_root, run_root, recipe, res
     dataset = resolve_workbench_dataset(project_root, imported_root, recipe.dataset_id)
     if dataset.dataset_identity_sha256 != recipe.dataset_identity_sha256:
         raise ValueError("workbench dataset identity changed")
-    weights = project_root / "yolo11n.pt"
-    if file_sha256(weights) != recipe.pretrained_weights_sha256:
-        raise ValueError("workbench pretrained weights changed")
     try:
+        weights = resolve_initial_weights(project_root, recipe)
         update_workbench_status(run_root, recipe, state="running", stage="view_preparation",
                 progress=0.0, error=None, failure_code=None)
         view, view_summary = _prepare_view(dataset, run_root, recipe.parameters)

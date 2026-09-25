@@ -65,6 +65,9 @@ def build_world_tree(map_value: SandboxMap):
     _text(world, "magnetic_field", "6e-06 2.3e-05 -4.2e-05")
     ET.SubElement(world, "atmosphere", type="adiabatic")
     scene = ET.SubElement(world, "scene")
+    # Hide Gazebo's display-only reference grid for presentation flights.
+    # This does not alter ground geometry, collisions or planner cells.
+    _text(scene, "grid", "false")
     level = map_value.light_level
     _text(scene, "ambient", f"{0.72 * level:g} {0.72 * level:g} {0.72 * level:g} 1")
     _text(scene, "background", "0.72 0.75 0.78 1")

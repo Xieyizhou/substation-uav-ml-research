@@ -22,6 +22,7 @@ from src.sandbox.storage_policy import (
     GIB,
     OutputBudgetExceeded,
     capture_output_baseline,
+    directory_size,
     output_budget_violation,
     require_output_budget,
     storage_summary,
@@ -80,6 +81,19 @@ class SandboxStorageTests(unittest.TestCase):
                 "--project-root", str(self.root), "retention-apply",
                 "--input", str(output), "--confirm-identity", "wrong",
             ]), 1)
+
+    def test_hardlinked_training_views_do_not_inflate_storage_usage(self):
+        root = self.root / "outputs/sandbox/workbench"
+        image = root / "datasets/source.png"
+        image.parent.mkdir(parents=True)
+        image.write_bytes(b"pixels" * 100)
+        before = directory_size(root)
+        view = root / "runs/child/view/image.png"
+        view.parent.mkdir(parents=True)
+        view.hardlink_to(image)
+        self.assertEqual(directory_size(root), before)
+        (view.parent / "independent.png").write_bytes(image.read_bytes())
+        self.assertEqual(directory_size(root), 2 * before)
 
     def test_output_budget_blocks_before_reserved_space_is_consumed(self):
         usage = shutil.disk_usage(self.root)
