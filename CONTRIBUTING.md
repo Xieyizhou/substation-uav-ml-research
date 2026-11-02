@@ -13,7 +13,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements-test.txt
 ```
 
-Run commands from the repository root. Core checks also require Node.js on PATH for three executable JavaScript tests. Local validation and CI use Node 26.4.0; no npm packages are needed. The offline visual examples and Demo do not require Node.
+Run commands from the repository root. Core checks require Git CLI, Bash/POSIX shell tools, and `/usr/bin/python3` for a retained packaging-refusal contract, including when run from a source ZIP. They also require Node.js on PATH for three executable JavaScript tests. Local validation and CI use Node 26.4.0; no npm packages are needed. The offline visual examples and Demo do not require Node.
 
 ## Project Structure
 

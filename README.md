@@ -94,7 +94,7 @@ python scripts/verify_case_studies.py
 python scripts/export_source.py --output dist/research-toolbox-source.zip
 ```
 
-Core checks also require Node.js on PATH for three executable JavaScript contracts; local validation and CI use Node 26.4.0. The test runner collects unittest classes, pytest functions and parameterized tests. A requested module with zero tests or a skipped required check fails acceptance. Research/native/SITL groups are explicit opt-ins; see [validation](docs/VALIDATION.md) and [contributing](CONTRIBUTING.md).
+Core checks require Git, Bash/POSIX shell tools and `/usr/bin/python3` for a legacy packaging contract, plus Node.js on PATH for three executable JavaScript contracts; local validation and CI use Node 26.4.0. The test runner collects unittest classes, pytest functions and parameterized tests. A requested module with zero tests or a skipped required check fails acceptance. Research/native/SITL groups are explicit opt-ins; see [validation](docs/VALIDATION.md) and [contributing](CONTRIBUTING.md).
 
 The source exporter and clean-install gate share a tracked-file inventory. The ZIP includes per-file hashes and source provenance; it excludes research datasets, weights, environments and generated runs. See [distribution details](docs/PUBLICATION_SCOPE.md).
 

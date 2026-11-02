@@ -39,6 +39,8 @@ python -m venv .venv-test
 .venv-test/bin/python scripts/run_tests.py --suite core --report outputs/core-tests.json
 ```
 
+即使从源码 ZIP 运行，核心集合也需要 Git CLI 和 Bash/POSIX Shell 工具。一项保留的 macOS 打包拒绝契约会先调用 `/usr/bin/python3` 读取版本，因此该路径也必须可执行；它与选择的测试虚拟环境 Python 分开。GitHub Ubuntu/macOS 宿主提供这些工具，精简容器需自行准备。
+
 核心集合还需 PATH 中的 Node.js 执行三项 JavaScript 契约检查；本机使用 26.4.0，CI 通过 [setup-node](https://github.com/actions/setup-node) 显式安装同版本，不需 npm 依赖。缺失 Node 导致必需测试跳过，不能算通过。Demo 和三个轻量样例不需要 Node。
 
 核心集合需要 Python 3.12+：保留的几何适配器测试会导入使用新版语法的研究辅助脚本。测试使用临时数据和模拟接口，不会启动真实飞行，也不需要作者的历史训练数据、模型权重、Torch、ONNX、SciPy、PX4 或 Gazebo。安装后的测试环境包含 NumPy、Pandas、Matplotlib、Pillow、PyYAML、OpenCV、psutil 和 MAVSDK 等依赖；直接依赖及约束以依赖文件为准。MAVSDK 固定为 `3.17.2`，对应此源码的 gRPC 接口。

@@ -19,6 +19,8 @@ This guide describes dependency and asset boundaries for the research-toolbox-20
 
 The workflow configures Demo on Linux with Python 3.11/3.13, lightweight examples on Linux/macOS with Python 3.11/3.13, portable core on Linux with Python 3.12/3.13/3.14, and the existing native build on macOS 15. These are configured jobs, not a claim that the unpublished candidate has run remotely. See [validation](VALIDATION.md) and the [workflow](../.github/workflows/ci.yml).
 
+Core tests also require Git CLI, Bash/POSIX shell tools and an executable `/usr/bin/python3` for the retained packaging-refusal contract. These tools are needed even when testing an unpacked source ZIP; the chosen virtual-environment Python does not replace that one legacy system-Python call.
+
 Core JavaScript contract checks use Node 26.4.0 locally; the workflow explicitly installs that version with [setup-node](https://github.com/actions/setup-node). There are no npm dependencies. Missing Node produces required skips and fails core acceptance. Demo and the three examples do not require it.
 
 The pinned ML/research stack was exercised on macOS arm64 with Python 3.14.
