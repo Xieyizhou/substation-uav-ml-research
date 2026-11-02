@@ -93,6 +93,12 @@ jobs:
             requirements-test.txt
             requirements-offline.txt
 
+      - name: Set up Node for executable JavaScript contract checks
+        uses: actions/setup-node@v6
+        with:
+          node-version: "26.4.0"
+          package-manager-cache: false
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip

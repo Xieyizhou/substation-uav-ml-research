@@ -62,7 +62,7 @@ python3 scripts/verify_case_studies.py
 | --- | --- |
 | Demo、回执样例 | Python 3.11+ 标准库 |
 | 数据审核、缓存比较 | `requirements-offline.txt` |
-| 核心测试 | Python 3.12–3.14 与 `requirements-test.txt`，含 pytest |
+| 核心测试 | Python 3.12–3.14、`requirements-test.txt`（含 pytest）和 PATH 中的 Node.js |
 | 真实训练与推理 | 核心及 `requirements-ml.txt`、自备审核数据和权重；现有图片推理经过 Ultralytics |
 | 原生集成与飞行 | 外部 PX4/Gazebo、平台插件、输入资产和重新验收 |
 
@@ -79,7 +79,7 @@ python examples/generate_fixtures.py --check
 python scripts/export_source.py --output dist/research-toolbox-source.zip
 ```
 
-测试入口收集 unittest、pytest 函数及参数化测试；请求模块收集零项或必需检查被跳过时，不能算通过。研究、原生与 SITL 集合显式选择，详见[验证说明](docs/VALIDATION.md)与[贡献指南](CONTRIBUTING.md)。导出与安装验收共用已跟踪源码清单，源码包提供逐文件哈希和提交来源，排除本地数据、权重、环境和运行输出。
+核心集合还需 Node.js 执行三项 JavaScript 契约检查，本机验证及 CI 配置使用 26.4.0。测试入口收集 unittest、pytest 函数及参数化测试；请求模块收集零项或必需检查被跳过时，不能算通过。研究、原生与 SITL 集合显式选择，详见[验证说明](docs/VALIDATION.md)与[贡献指南](CONTRIBUTING.md)。导出与安装验收共用已跟踪源码清单，源码包提供逐文件哈希和提交来源，排除本地数据、权重、环境和运行输出。
 
 [GitHub main CI](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)只表示线上主分支；本地候选的验证与尚未触发的 CI 在版本说明中分开记录。
 

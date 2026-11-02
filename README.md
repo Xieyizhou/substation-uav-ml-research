@@ -76,7 +76,7 @@ Actual September 25, 2026 capture. The models, datasets and qualified-flight rec
 | --- | --- | --- |
 | Demo / receipt example | Python 3.11+ only | Deterministic local workflow |
 | Dataset audit / cached comparison | `requirements-offline.txt` (Pillow, PyYAML) | No training or inference |
-| Portable core tests | Python 3.12–3.14, `requirements-test.txt` including pytest | No author datasets, weights, PX4 or Gazebo |
+| Portable core tests | Python 3.12–3.14, `requirements-test.txt` including pytest, Node.js on PATH | No author datasets, weights, PX4 or Gazebo |
 | Real visual training / inference | Core + `requirements-ml.txt`, reviewed data and relevant weights | Existing image inference uses Ultralytics; ONNX Runtime alone is insufficient |
 | Native integration / SITL | Matching external PX4/Gazebo, plugins, inputs and new runtime qualification | Experimental, platform dependent |
 
@@ -94,7 +94,7 @@ python scripts/verify_case_studies.py
 python scripts/export_source.py --output dist/research-toolbox-source.zip
 ```
 
-The test runner collects unittest classes, pytest functions and parameterized tests. A requested module with zero tests or a skipped required check fails acceptance. Research/native/SITL groups are explicit opt-ins; see [validation](docs/VALIDATION.md) and [contributing](CONTRIBUTING.md).
+Core checks also require Node.js on PATH for three executable JavaScript contracts; local validation and CI use Node 26.4.0. The test runner collects unittest classes, pytest functions and parameterized tests. A requested module with zero tests or a skipped required check fails acceptance. Research/native/SITL groups are explicit opt-ins; see [validation](docs/VALIDATION.md) and [contributing](CONTRIBUTING.md).
 
 The source exporter and clean-install gate share a tracked-file inventory. The ZIP includes per-file hashes and source provenance; it excludes research datasets, weights, environments and generated runs. See [distribution details](docs/PUBLICATION_SCOPE.md).
 

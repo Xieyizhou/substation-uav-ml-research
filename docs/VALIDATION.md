@@ -39,6 +39,8 @@ python -m venv .venv-test
 .venv-test/bin/python scripts/run_tests.py --suite core --report outputs/core-tests.json
 ```
 
+核心集合还需 PATH 中的 Node.js 执行三项 JavaScript 契约检查；本机使用 26.4.0，CI 通过 [setup-node](https://github.com/actions/setup-node) 显式安装同版本，不需 npm 依赖。缺失 Node 导致必需测试跳过，不能算通过。Demo 和三个轻量样例不需要 Node。
+
 核心集合需要 Python 3.12+：保留的几何适配器测试会导入使用新版语法的研究辅助脚本。测试使用临时数据和模拟接口，不会启动真实飞行，也不需要作者的历史训练数据、模型权重、Torch、ONNX、SciPy、PX4 或 Gazebo。安装后的测试环境包含 NumPy、Pandas、Matplotlib、Pillow、PyYAML、OpenCV、psutil 和 MAVSDK 等依赖；直接依赖及约束以依赖文件为准。MAVSDK 固定为 `3.17.2`，对应此源码的 gRPC 接口。
 
 执行器使用显式依赖 `pytest>=9,<10`，同时收集 `unittest.TestCase`、顶层测试函数和参数化测试。JSON 报告记录实际收集、执行、失败、错误、跳过及逐模块数量。pytest 的子测试数量可能单独显示，不应与顶层收集项混加。任何选中模块收集零项、必要测试跳过或空集合均不能通过。`--list` 仅列出模块，不执行测试。

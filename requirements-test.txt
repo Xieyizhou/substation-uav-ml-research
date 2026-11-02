@@ -1,4 +1,5 @@
 # Portable core checks: no trained weights, Torch, SciPy, PX4 or Gazebo.
+# Also requires Node.js on PATH for executable JavaScript tests (see docs/VALIDATION.md).
 -r requirements.txt
 -r requirements-offline.txt
 opencv-python-headless>=4.10,<5

@@ -9,7 +9,7 @@ This guide describes dependency and asset boundaries for the research-toolbox-20
 | Offline dataset audit / cached comparison | Python 3.11+; `requirements-offline.txt` | Tracked generated format fixtures |
 | Receipt verification example | Python 3.11+; standard library only | Tracked source; no model |
 | Browser Demo | Python 3.11+; standard library only | None |
-| Portable core tests | Python 3.12+; `requirements-test.txt` (includes core runtime) | None; tests use fixtures and simulated interfaces |
+| Portable core tests | Python 3.12+; `requirements-test.txt` (includes core runtime); Node.js on PATH | None; tests use fixtures and simulated interfaces |
 | Planning and analysis | `requirements.txt` | Small tracked map definitions; your logs for analysis |
 | Visual training and ONNX | Python 3.12+; core + `requirements-ml.txt` | A reviewed YOLO dataset; parent weights where applicable |
 | Historical research tests | `requirements-research.txt` | Original datasets, models and receipts |
@@ -18,6 +18,8 @@ This guide describes dependency and asset boundaries for the research-toolbox-20
 | macOS shell build | Full Xcode with Swift 6 support | No Python for native Demo; external runtime for research profiles |
 
 The workflow configures Demo on Linux with Python 3.11/3.13, lightweight examples on Linux/macOS with Python 3.11/3.13, portable core on Linux with Python 3.12/3.13/3.14, and the existing native build on macOS 15. These are configured jobs, not a claim that the unpublished candidate has run remotely. See [validation](VALIDATION.md) and the [workflow](../.github/workflows/ci.yml).
+
+Core JavaScript contract checks use Node 26.4.0 locally; the workflow explicitly installs that version with [setup-node](https://github.com/actions/setup-node). There are no npm dependencies. Missing Node produces required skips and fails core acceptance. Demo and the three examples do not require it.
 
 The pinned ML/research stack was exercised on macOS arm64 with Python 3.14.
 `scipy==1.18.1` in the research requirements requires Python 3.12 or newer.
