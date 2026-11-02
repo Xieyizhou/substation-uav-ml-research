@@ -17,7 +17,7 @@ This guide describes dependency and asset boundaries for the research-toolbox-20
 | Selected-model fixed-scene flight | Full local simulation + verified Workbench model | Registered historical archive to restore six fixed assets, then new current-runtime qualification |
 | macOS shell build | Full Xcode with Swift 6 support | No Python for native Demo; external runtime for research profiles |
 
-The workflow configures Demo on Linux with Python 3.11/3.13, lightweight examples on Linux/macOS with Python 3.11/3.13, portable core on Linux with Python 3.12/3.13/3.14, and the existing native build on macOS 15. These are configured jobs, not a claim that the unpublished candidate has run remotely. See [validation](VALIDATION.md) and the [workflow](../.github/workflows/ci.yml).
+The workflow configures Demo on Linux with Python 3.11/3.13, lightweight examples on Linux/macOS with Python 3.11/3.13, portable core on Linux with Python 3.12/3.13/3.14, and the existing native build on macOS 15. Workflow definitions describe configured checks. Consult the release report and the Actions run for the exact commit to see which checks executed. See [validation](VALIDATION.md) and the [workflow](../.github/workflows/ci.yml).
 
 Core tests also require Git CLI, Bash/POSIX shell tools and an executable `/usr/bin/python3` for the retained packaging-refusal contract. These tools are needed even when testing an unpacked source ZIP; the chosen virtual-environment Python does not replace that one legacy system-Python call.
 

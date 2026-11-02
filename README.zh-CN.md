@@ -81,6 +81,6 @@ python scripts/export_source.py --output dist/research-toolbox-source.zip
 
 核心集合还需 Git、Bash/POSIX Shell 和 `/usr/bin/python3`（保留的打包拒绝检查使用），并需 Node.js 执行三项 JavaScript 契约检查，本机验证及 CI 配置使用 26.4.0。测试入口收集 unittest、pytest 函数及参数化测试；请求模块收集零项或必需检查被跳过时，不能算通过。研究、原生与 SITL 集合显式选择，详见[验证说明](docs/VALIDATION.md)与[贡献指南](CONTRIBUTING.md)。导出与安装验收共用已跟踪源码清单，源码包提供逐文件哈希和提交来源，排除本地数据、权重、环境和运行输出。
 
-[GitHub main CI](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)只表示线上主分支；本地候选的验证与尚未触发的 CI 在版本说明中分开记录。
+[GitHub main CI](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)只表示线上主分支；本地验收与对应提交的远端 CI 结果在发布报告中分开记录，旧提交的绿色检查不替代当前版本验收。
 
 项目代码与生成格式样例使用 [MIT](LICENSE)。外部包与资产保留原条款，包括可选 Ultralytics 的 AGPL-3.0。参见[来源](PROVENANCE.md)与[第三方说明](THIRD_PARTY_NOTICES.md)。

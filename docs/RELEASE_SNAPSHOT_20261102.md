@@ -16,7 +16,7 @@ The source ZIP is accompanied by `RELEASE_REPORT.json` and `SHA256SUMS`. That re
 
 The local acceptance matrix targets macOS arm64: core Python 3.12, 3.13 and 3.14; the standard-library Demo and the lightweight examples on Python 3.11; examples and source identity checks from an independently unpacked archive. The dependency record is retained with the release evidence. Core tests use fixtures and simulated interfaces, with local loopback binding permitted where required. Core also requires Git, Bash/POSIX shell tools and `/usr/bin/python3` for a retained packaging-refusal contract. Three executable JavaScript contracts also need Node.js on PATH; local checks and the workflow use Node 26.4.0, without npm dependencies.
 
-The [CI workflow](../.github/workflows/ci.yml) additionally configures Ubuntu core checks, Ubuntu/macOS lightweight examples and the existing native macOS build. This local preparation does not push, merge or run remote Actions. Linux execution and the native app job must be checked on the eventual publication PR; they are not reported as passed by local source acceptance. A pre-existing green main-branch run belongs to its own commit.
+The [CI workflow](../.github/workflows/ci.yml) additionally configures Ubuntu core checks, Ubuntu/macOS lightweight examples and the existing native macOS build. Consult the publication PR and release report for actual Ubuntu and native macOS results on the bound commit. Local source acceptance and remote Actions are separate records; a pre-existing green main-branch run belongs to its own commit.
 
 Reproduce the portable checks after installing `requirements-test.txt` with Python 3.12–3.14:
 
