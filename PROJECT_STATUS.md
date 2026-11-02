@@ -1,23 +1,16 @@
 # Substation UAV ML Research Status
 
-## Current preview · 2026-09-25
+## Current source direction · 2026-11-02
 
-The current source is a **desktop research preview**. Its dependency-free Demo,
-portable core, and model feedback workflow have distinct validation boundaries.
-Start with the [README](README.md) or [中文说明](README.zh-CN.md), then consult
-[setup and artifact requirements](docs/RESEARCH_PREVIEW.md).
+The publication snapshot is a **visual research toolbox and engineering case collection**. Its supported entry points are the three [offline examples](examples/README.md), the standard-library Demo and the [code guide](docs/CODE_GUIDE.md). The broader autonomous-flight expansion is paused. No new flight qualification or real-domain model qualification is introduced by this source preparation.
 
-The [September 25 acceptance report](docs/results/sandbox_core_completion_20260925.md)
-records 974 portable core tests, 2,093 full local tests, and the actual fixed-scene
-feedback/qualification loop. It retains the model metric decline and the
-controlled visual-revalidation abort. It does not certify real aircraft,
-independent real-site generalization or every future mission.
+This snapshot starts from the September 25 public commit and selects publication changes. Later October integration findings appear as curated [case excerpts](docs/case-studies/README.md); the full later research worktree is not merged. Local candidate checks and configured remote CI are distinguished in the [release notes](docs/RELEASE_SNAPSHOT_20261102.md). Existing v0.6.4 binaries retain their original scope.
 
-The current GitHub workflow is the authority for the latest source CI status.
-Historical prerelease binaries and results below retain their original scope;
-they do not automatically describe the current checkout or its release status.
+## Historical desktop milestone · 2026-09-25
 
-## Research Goal
+The [acceptance report](docs/results/sandbox_core_completion_20260925.md) records 974 portable core tests, 2,093 local research tests and the fixed-scene feedback loop for that dated identity. It retains the model metric decline and controlled visual-revalidation abort. The historical observations below do not qualify changed source, models or environments.
+
+## Historical research goal
 
 Develop a simulation-first platform for studying ML-assisted UAV risk
 assessment, traversability, route planning, and substation equipment

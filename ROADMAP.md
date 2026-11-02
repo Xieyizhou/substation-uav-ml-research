@@ -6,17 +6,13 @@ diagnostics. The research track is gated by experimental evidence. An
 unfinished research study does not block a Sandbox Beta, and a polished App
 does not count as research evidence.
 
-## Current direction · Research preview
+## Current direction · Offline research toolbox
 
-The September 2026 desktop milestone is recorded in the
-[acceptance report](docs/results/sandbox_core_completion_20260925.md).
-The immediate release scope is a readable, small source checkout, a working
-Demo, portable core CI, and explicit external-asset requirements. Open research
-work includes stronger independent validation, real-domain transfer and repeated
-fixed-scene reliability measurements. Mobile UI is outside the current scope.
+The current source preparation adds three self-contained visual examples, a common export/install inventory, pytest collection auditing, a code guide and four curated cases. See the [release snapshot](docs/RELEASE_SNAPSHOT_20261102.md) for validation boundaries.
 
-The sections below preserve earlier product milestones; a checked historical
-release item is not a claim that the latest source has been publicly released.
+Near-term maintenance should keep these offline workflows usable, accept focused bug fixes and preserve experiment provenance. A new detector backend, further real-domain data collection or renewed flight integration should begin only as a separately scoped study with its own inputs and acceptance criteria. The broader flight-control expansion is paused.
+
+The sections below preserve earlier product and research milestones. Checked items describe their dated work; open items are historical possibilities rather than an active delivery commitment.
 
 ## Sandbox v1 — Local Beta core complete
 

@@ -1,0 +1,199 @@
+{
+  "case_excerpt_schema_version": 1,
+  "case_id": "shared-magnetic-model",
+  "curated_on": "2026-11-02",
+  "evidence_role": "historical_excerpt",
+  "formal_evidence": false,
+  "identity": "61337a6cc809f6a3476f602dded3b747587f7df65042672d881f3f938665a918",
+  "limitations": [
+    "This dated comparison is ground-only; both full-stack missions retained failed status and refused ARM.",
+    "Different observation windows must not be treated as identical samples.",
+    "The original installed magnetometer library was not explicitly SHA-bound by the original worker.",
+    "A systematic ground heading offset does not fully explain later airborne threshold crossings or larger yaw resets.",
+    "Subsequent historical experiments are separate evidence; this excerpt does not qualify the publication source."
+  ],
+  "qualifies_current_source": false,
+  "record_date": "2026-10-22",
+  "selected": {
+    "actual_backup_injection_occurred": {
+      "pointer": "/actual_backup_injection_occurred",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": false
+    },
+    "conditions": {
+      "pointer": "/conditions",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/ground-full-stack-comparison-evidence.json",
+      "value": [
+        {
+          "SDK_original_kill_reaped": true,
+          "actual_mission_status": "failed",
+          "airborne_qualification": false,
+          "condition": "original",
+          "full_P0_qualified": false,
+          "maximum_original_control_gravity_error_deg": 0.04638874480756276,
+          "maximum_original_control_orientation_error_deg": 0.8146632338168447,
+          "maximum_pacing_wait_ms": 0.0,
+          "mean_original_control_heading_error_deg": 0.7979305263416946,
+          "native_children_exit0_within_original6s": true,
+          "no_ARM_or_TAKEOFF_commands": true,
+          "normal_ARM_qualification": false,
+          "original_20ms_pair_and150ms_age_and_1deg_ground_guards_passed": true,
+          "original_ARM_refusal_verified": true,
+          "original_ULog_window_attitude_coverage_complete": true,
+          "original_full_physical_pair_skew_ns": [
+            -16000000,
+            4000000
+          ],
+          "original_ground_observations": 75,
+          "original_parameter_store_unchanged": true,
+          "pacing_faults": 0,
+          "port_snapshot_elapsed_ms": 35.552959016058594,
+          "protected_parameters_checked": 517,
+          "queue": {
+            "accepted": 5251,
+            "dropped": 0,
+            "fault": false,
+            "forwarded": 4610,
+            "instance": 0,
+            "pending": 641,
+            "produced": 5251
+          },
+          "raw_4ms_all_sensor_vectors_qualified": false,
+          "run_id": "20261022T113448Z-template_training-low_layer_round_trip"
+        },
+        {
+          "SDK_original_kill_reaped": true,
+          "actual_mission_status": "failed",
+          "airborne_qualification": false,
+          "condition": "shared",
+          "full_P0_qualified": false,
+          "maximum_original_control_gravity_error_deg": 0.029925352804108754,
+          "maximum_original_control_orientation_error_deg": 0.030275042893479327,
+          "maximum_pacing_wait_ms": 0.0,
+          "mean_original_control_heading_error_deg": -0.00034411747445536395,
+          "native_children_exit0_within_original6s": true,
+          "no_ARM_or_TAKEOFF_commands": true,
+          "normal_ARM_qualification": false,
+          "original_20ms_pair_and150ms_age_and_1deg_ground_guards_passed": true,
+          "original_ARM_refusal_verified": true,
+          "original_ULog_window_attitude_coverage_complete": true,
+          "original_full_physical_pair_skew_ns": [
+            -16000000,
+            4000000
+          ],
+          "original_ground_observations": 75,
+          "original_parameter_store_unchanged": true,
+          "pacing_faults": 0,
+          "port_snapshot_elapsed_ms": 35.358708002604544,
+          "protected_parameters_checked": 517,
+          "queue": {
+            "accepted": 5063,
+            "dropped": 0,
+            "fault": false,
+            "forwarded": 4414,
+            "instance": 0,
+            "pending": 649,
+            "produced": 5063
+          },
+          "raw_4ms_all_sensor_vectors_qualified": false,
+          "run_id": "20261022T113556Z-template_training-low_layer_round_trip"
+        }
+      ]
+    },
+    "exact_ground_ULog_ECM_attitude_pairs": {
+      "pointer": "/exact_ground_ULog_ECM_attitude_pairs",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": 3750
+    },
+    "formal_evidence": {
+      "pointer": "/formal_evidence",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/ground-full-stack-comparison-evidence.json",
+      "value": false
+    },
+    "full_causal_attribution_of_later_threshold_crossing_proven": {
+      "pointer": "/full_causal_attribution_of_later_threshold_crossing_proven",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": false
+    },
+    "gz_declination_deg": {
+      "pointer": "/gz_declination_deg",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": 2.563849121940044
+    },
+    "healthy_route_on_new_model_qualified": {
+      "pointer": "/healthy_route_on_new_model_qualified",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/ground-full-stack-comparison-evidence.json",
+      "value": false
+    },
+    "installed_library_was_not_explicitly_SHA_bound_by_original_worker": {
+      "pointer": "/installed_library_was_not_explicitly_SHA_bound_by_original_worker",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": true
+    },
+    "later_airborne_threshold_crossing_fully_explained": {
+      "pointer": "/later_airborne_threshold_crossing_fully_explained",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/ground-full-stack-comparison-evidence.json",
+      "value": false
+    },
+    "latitude_deg": {
+      "pointer": "/latitude_deg",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": 47.397971057728974
+    },
+    "longitude_deg": {
+      "pointer": "/longitude_deg",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": 8.546163739800146
+    },
+    "mean_original_ground_heading_error_deg": {
+      "pointer": "/mean_original_ground_heading_error_deg",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": 0.8531668422062629
+    },
+    "model_declination_difference_deg": {
+      "pointer": "/model_declination_difference_deg",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": 0.8419160447031007
+    },
+    "normal_ARM_qualification": {
+      "pointer": "/normal_ARM_qualification",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/ground-full-stack-comparison-evidence.json",
+      "value": false
+    },
+    "original_mean_heading_offset_reduction_deg": {
+      "pointer": "/original_mean_heading_offset_reduction_deg",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/ground-full-stack-comparison-evidence.json",
+      "value": 0.79827464381615
+    },
+    "px4_declination_deg": {
+      "pointer": "/px4_declination_deg",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "value": 3.4057651666431448
+    },
+    "shared_WMM_candidate_ground_only": {
+      "pointer": "/shared_WMM_candidate_ground_only",
+      "source": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/ground-full-stack-comparison-evidence.json",
+      "value": true
+    }
+  },
+  "sources": [
+    {
+      "bundled": false,
+      "bytes": 4591,
+      "path": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/magnetic-model-mismatch-evidence.json",
+      "sha256": "3032b3e05985d35287ce26e9efd0d039acaa181ab0454e493fa53c8075a387d6"
+    },
+    {
+      "bundled": false,
+      "bytes": 14382,
+      "path": "outputs/sandbox/diagnostics/magnetic_model_consistency_20261022/ground-full-stack-comparison-evidence.json",
+      "sha256": "f44ba3e175b9c6a568015e750a6035a85db2a7988c2873e1d66a2dbbdefb4c97"
+    },
+    {
+      "bundled": false,
+      "bytes": 7575,
+      "path": "docs/PX4_SHARED_MAGNETIC_MODEL_GROUND_20261022.md",
+      "sha256": "043eef22edd747707b36236eaeabb148073b8055adf4899d5f6f8f72a515e752"
+    }
+  ]
+}

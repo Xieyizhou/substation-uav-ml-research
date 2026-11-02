@@ -1,0 +1,221 @@
+{
+  "case_excerpt_schema_version": 1,
+  "case_id": "bounded-shutdown-diagnostics",
+  "curated_on": "2026-11-02",
+  "evidence_role": "historical_excerpt",
+  "formal_evidence": false,
+  "identity": "2121fcb1a3c0529c81274874fffb686fad653701e89a713d88ef284cdabc4c96",
+  "limitations": [
+    "A completed route with a logger queue overflow retains its failure.",
+    "Pending queue entries are not counted as already written ULog samples.",
+    "The old internal spawn blocker stack was not captured; the unique low-level cause is not proved.",
+    "No ordinary ARM, real flight, current-source qualification or full lifecycle logging claim follows from this excerpt."
+  ],
+  "qualifies_current_source": false,
+  "record_date": "2026-10-22",
+  "selected": {
+    "after_mission_completed_to_simulator_stop_request_s": {
+      "pointer": "/results/1/mission_completed_to_simulator_stop_request_s",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 1.1676502090122085
+    },
+    "after_no_old_ULog_rewritten": {
+      "pointer": "/results/1/no_old_ULog_rewritten",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": true
+    },
+    "after_original_task_completion_not_changed": {
+      "pointer": "/results/1/original_task_completion_not_changed",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": true
+    },
+    "after_port_0_duration_ms": {
+      "pointer": "/results/1/port_commands/0/duration_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 31.076707993634045
+    },
+    "after_port_0_native_execution": {
+      "pointer": "/results/1/port_commands/0/native_execution",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": {
+        "implementation": "darwin_posix_spawn_cloexec_default",
+        "only_owned_child_signalled": true,
+        "original_timeout_s": 1.9999985409958754,
+        "pid": 99397,
+        "reaped": true,
+        "received_host_monotonic_s": 236109.268827708,
+        "requested_host_monotonic_s": 236109.2381735,
+        "returncode": 1,
+        "stderr_bytes": 0,
+        "stdout_bytes": 151
+      }
+    },
+    "after_port_1_duration_ms": {
+      "pointer": "/results/1/port_commands/1/duration_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 3.9223330095410347
+    },
+    "after_port_1_native_execution": {
+      "pointer": "/results/1/port_commands/1/native_execution",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": {
+        "implementation": "darwin_posix_spawn_cloexec_default",
+        "only_owned_child_signalled": true,
+        "original_timeout_s": 1.9689205829927232,
+        "pid": 99399,
+        "reaped": true,
+        "received_host_monotonic_s": 236109.272752416,
+        "requested_host_monotonic_s": 236109.268851333,
+        "returncode": 0,
+        "stderr_bytes": 0,
+        "stdout_bytes": 0
+      }
+    },
+    "after_port_2_duration_ms": {
+      "pointer": "/results/1/port_commands/2/duration_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 1.763832988217473
+    },
+    "after_port_2_native_execution": {
+      "pointer": "/results/1/port_commands/2/native_execution",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": {
+        "implementation": "darwin_posix_spawn_cloexec_default",
+        "only_owned_child_signalled": true,
+        "original_timeout_s": 1.9649975409847684,
+        "pid": 99400,
+        "reaped": true,
+        "received_host_monotonic_s": 236109.274527166,
+        "requested_host_monotonic_s": 236109.272771708,
+        "returncode": 0,
+        "stderr_bytes": 0,
+        "stdout_bytes": 0
+      }
+    },
+    "after_port_snapshot_total_ms": {
+      "pointer": "/results/1/port_snapshot_total_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 36.76691700820811
+    },
+    "after_queue_capacity_per_instance": {
+      "pointer": "/results/1/queue_capacity_per_instance",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 4096
+    },
+    "after_queue_terminal": {
+      "pointer": "/results/1/queue_terminal",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": {
+        "accepted": 54450,
+        "dropped": 0,
+        "fault": false,
+        "forwarded": 52727,
+        "instance": 0,
+        "pending": 1723,
+        "produced": 54450
+      }
+    },
+    "after_sdk_original_stop_to_reap_ms": {
+      "pointer": "/results/1/sdk_original_stop_to_reap_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 1.373584003886208
+    },
+    "after_simulator_original_shutdown_grace_s": {
+      "pointer": "/results/1/simulator_original_shutdown_grace_s",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 6
+    },
+    "before_mission_completed_to_simulator_stop_request_s": {
+      "pointer": "/results/0/mission_completed_to_simulator_stop_request_s",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 63.6920470839832
+    },
+    "before_no_old_ULog_rewritten": {
+      "pointer": "/results/0/no_old_ULog_rewritten",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": true
+    },
+    "before_original_task_completion_not_changed": {
+      "pointer": "/results/0/original_task_completion_not_changed",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": true
+    },
+    "before_port_0_duration_ms": {
+      "pointer": "/results/0/port_commands/0/duration_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 62604.552875010995
+    },
+    "before_port_1_duration_ms": {
+      "pointer": "/results/0/port_commands/1/duration_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 6.949000002350658
+    },
+    "before_port_2_duration_ms": {
+      "pointer": "/results/0/port_commands/2/duration_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 4.210666986182332
+    },
+    "before_port_snapshot_total_ms": {
+      "pointer": "/results/0/port_snapshot_total_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 62615.73249998037
+    },
+    "before_queue_capacity_per_instance": {
+      "pointer": "/results/0/queue_capacity_per_instance",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 4096
+    },
+    "before_queue_terminal": {
+      "pointer": "/results/0/queue_terminal",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": {
+        "accepted": 57036,
+        "dropped": 13251,
+        "fault": true,
+        "forwarded": 52940,
+        "instance": 0,
+        "pending": 4096,
+        "produced": 70287
+      }
+    },
+    "before_sdk_original_stop_to_reap_ms": {
+      "pointer": "/results/0/sdk_original_stop_to_reap_ms",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 1.6325000033248216
+    },
+    "before_simulator_original_shutdown_grace_s": {
+      "pointer": "/results/0/simulator_original_shutdown_grace_s",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": 6
+    },
+    "formal_evidence": {
+      "pointer": "/formal_evidence",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": false
+    },
+    "normal_ARM_qualification": {
+      "pointer": "/normal_ARM_qualification",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": false
+    },
+    "specific_old_spawn_blocker_stack_not_captured": {
+      "pointer": "/specific_old_spawn_blocker_stack_not_captured",
+      "source": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "value": true
+    }
+  },
+  "sources": [
+    {
+      "bundled": false,
+      "bytes": 7880,
+      "path": "outputs/sandbox/diagnostics/original_pose_delivery_20261022/post-landing-exit-boundary-qualification.json",
+      "sha256": "d4229df0a8100afd8acfadc5e5853cdf81ad61b7e7aeba75cd4b16ae2642afe2"
+    },
+    {
+      "bundled": false,
+      "bytes": 7125,
+      "path": "docs/PX4_ORIGINAL_POSE_DELIVERY_AND_HEALTHY_ROUTE_20261022.md",
+      "sha256": "157e31249c785dbe15fd137c9471438ee5dd0a852ff494dba1c81ce0d47814d3"
+    }
+  ]
+}

@@ -36,6 +36,17 @@ jobs:
       - name: Check dependency-free desktop launcher
         run: ./scripts/run_sandbox_app.sh --help
 
+      - name: Check deterministic format fixtures without third-party packages
+        run: python examples/generate_fixtures.py --check
+
+      - name: Check published historical case excerpts without third-party packages
+        run: python scripts/verify_case_studies.py
+
+      - name: Verify receipts and reject altered output without third-party packages
+        run: >-
+          python examples/receipt_check/run.py
+          --output outputs/examples/receipt-check-stdlib
+
       - name: Compile all sources including historical research (Python 3.12+)
         if: matrix.python-version == '3.13'
         run: python -m compileall -q src scripts archive main.py
@@ -66,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12", "3.13", "3.14"]
 
     steps:
       - name: Check out repository
@@ -80,6 +91,7 @@ jobs:
           cache-dependency-path: |
             requirements.txt
             requirements-test.txt
+            requirements-offline.txt
 
       - name: Install dependencies
         run: |
@@ -109,6 +121,57 @@ jobs:
           --obstacle-config config/substation_obstacles.json
           --return-home
           --altitude 1.5
+
+  offline-examples:
+    name: Source bundle and offline examples · ${{ matrix.os }} · Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-15]
+        python-version: ["3.11", "3.13"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements-offline.txt
+
+      - name: Export tracked source and verify unpacked manifest identity
+        run: |
+          python scripts/export_source.py --output outputs/source.zip
+          unzip -q outputs/source.zip -d outputs/source-copy
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from src.sandbox.source_bundle import describe_source, source_paths, source_revision
+          root = Path.cwd()
+          unpacked = root / "outputs/source-copy"
+          manifest, provenance = describe_source(source_paths(root), source_revision(root))
+          assert json.loads((unpacked / "SOURCE_MANIFEST.json").read_text()) == manifest
+          assert json.loads((unpacked / "SOURCE_PROVENANCE.json").read_text()) == provenance
+          assert len(source_paths(unpacked)) == len(manifest)
+          assert source_revision(unpacked) == provenance["source_commit_sha"]
+          print("Verified", len(manifest), "source files", provenance["source_manifest_sha256"])
+          PY
+
+      - name: Install only lightweight example dependencies
+        run: python -m pip install -r requirements-offline.txt
+
+      - name: Run examples from the unpacked source bundle
+        working-directory: outputs/source-copy
+        run: |
+          python examples/generate_fixtures.py --check
+          python examples/dataset_audit/run.py --output outputs/examples/dataset-audit
+          python examples/prediction_comparison/run.py --output outputs/examples/prediction-comparison
+          python examples/receipt_check/run.py --output outputs/examples/receipt-check
+          python examples/receipt_check/run.py --receipt outputs/examples/dataset-audit/receipt.json
+          python examples/receipt_check/run.py --receipt outputs/examples/prediction-comparison/receipt.json
 
   macos-app:
     name: Native macOS App

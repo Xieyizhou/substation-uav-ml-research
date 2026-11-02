@@ -1,5 +1,20 @@
 # Research Preview Quick Start
 
+Start with the three offline visual examples for data audit, cached prediction comparison and receipt verification:
+
+```sh
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-offline.txt
+python examples/dataset_audit/run.py --output outputs/examples/dataset-audit
+python examples/prediction_comparison/run.py --output outputs/examples/prediction-comparison
+python examples/receipt_check/run.py --output outputs/examples/receipt-check
+```
+
+Use Python 3.11+ and a new output directory for each run. Open `outputs/examples/prediction-comparison/comparison.html` locally. The images are generated geometry and the predictions are constructed caches, so the comparison demonstrates reporting rather than recognition quality. See [expected results and input provenance](../examples/README.md).
+
+The rest of this guide describes the optional browser Demo and historical simulator workflows. Simulator actions require external inputs and current qualification; they are not part of the offline examples.
+
 The local App has three explicit profiles. This keeps the first-run experience
 small while preserving the stricter research boundaries used by the full
 simulator.
@@ -104,8 +119,8 @@ python3 main.py sandbox --profile demo release-gate-inspect \
   --input outputs/sandbox/demo/release-gate/local/release_gate.json
 ```
 
-The clean-install Beta gate goes one step further: it copies only Git-tracked
-files, creates a new virtual environment with an isolated home directory, and
+The clean-install Beta gate goes one step further: it copies the selected Git-tracked
+source inventory (or a verified unpacked source manifest), creates a new virtual environment with an isolated home directory, and
 repeats bootstrap, Demo execution, receipt inspection, and a loopback App
 smoke check:
 
@@ -117,9 +132,7 @@ python3 main.py sandbox --profile demo beta-install-gate-inspect \
   --input outputs/sandbox/demo/beta-install/local/beta_install_gate.json
 ```
 
-No package download, dataset, model weight, PX4, or Gazebo is used. Both the
-release gate and clean-install gate run in GitHub Actions on Python 3.11 and
-3.13.
+No package download, dataset, model weight, PX4, or Gazebo is used. The workflow configures both gates on Python 3.11 and 3.13. Candidate execution evidence is recorded separately from historical CI.
 
 ## Enable the Full Simulator
 

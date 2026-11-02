@@ -13,6 +13,7 @@ import tempfile
 import time
 
 from src.ml.artifacts import file_sha256, git_commit, object_sha256, write_json
+from src.sandbox.source_bundle import describe_source, source_paths, write_source_metadata
 from src.sandbox.gate_outcome import (
     ENVIRONMENT_UNAVAILABLE, PASSED, PRODUCT_FAILURE, validate_outcome,
 )
@@ -24,36 +25,22 @@ BETA_INSTALL_VERSION = "1.0.0"
 
 
 def _tracked_files(root):
-    result = subprocess.run(
-        ["git", "ls-files", "-z"], cwd=root, check=True,
-        capture_output=True, timeout=30,
-    )
-    files = []
-    for raw in result.stdout.split(b"\0"):
-        if not raw:
-            continue
-        relative = PurePosixPath(os.fsdecode(raw))
-        if relative.is_absolute() or ".." in relative.parts:
-            raise ValueError("Git returned an unsafe tracked path")
-        source = root.joinpath(*relative.parts)
-        if source.is_file():
-            files.append((relative.as_posix(), source))
-    if not files:
-        raise ValueError("no tracked source files were found")
-    return tuple(files)
+    return tuple(source_paths(root))
 
 
 def _copy_source(root, destination):
     files = _tracked_files(root)
-    manifest = []
+    manifest, provenance = describe_source(files, git_commit(root))
     for relative, source in files:
         target = destination / relative
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
-        manifest.append({"path": relative, "sha256": file_sha256(source)})
+    write_source_metadata(destination, manifest, provenance)
+    source_paths(destination)  # Recheck the actual copied bytes against the inventory.
     return {
         "file_count": len(manifest),
         "source_manifest_sha256": object_sha256(manifest),
+        "source_commit_sha": provenance["source_commit_sha"],
     }
 
 
@@ -194,7 +181,7 @@ def run_beta_install_gate(project_root, output, python_executable=None):
         "checks": checks,
         "passed": len(checks) == 8 and all(check["passed"] for check in checks),
         "scope_note": (
-            "Validates a tracked-source copy, fresh virtual environment, Demo "
+            "Validates the shared source manifest, fresh virtual environment, Demo "
             "workflow, release receipt, and loopback App without external assets."
         ),
     }

@@ -1,0 +1,159 @@
+{
+  "class_names": [
+    "transformer",
+    "switchgear",
+    "capacitor_bank",
+    "reactor"
+  ],
+  "dataset_role": "demo",
+  "equipment_photographs": false,
+  "files": [
+    {
+      "bytes": 7022,
+      "path": "baseline.json",
+      "sha256": "c2dd6337f573661becb991f046329fb5a26f71e9b15e07784175cbfdd7e45869"
+    },
+    {
+      "bytes": 7391,
+      "path": "candidate.json",
+      "sha256": "ca75f1a0439583ab31910021c4c10b91e6df1347c84469c6a48ef9f83383f719"
+    },
+    {
+      "bytes": 124,
+      "path": "dataset/dataset.yaml",
+      "sha256": "199e3ef236561fcfc58d2c6f12b557d599a70873c25612cd55983d685c02dfa2"
+    },
+    {
+      "bytes": 1308,
+      "path": "dataset/images/train/format-00.png",
+      "sha256": "5af0871c80d50da8bf689c072976f8f289ae474eead417747de5ba3802115bfc"
+    },
+    {
+      "bytes": 1308,
+      "path": "dataset/images/train/format-01.png",
+      "sha256": "5c267a688da09acd1b57fc1033738978394a43c90a4050c7fa6edb69afb1ec83"
+    },
+    {
+      "bytes": 1306,
+      "path": "dataset/images/train/format-02.png",
+      "sha256": "caf334e6f6031e3627c567a7f93425dc12dbcb5e6c3fdd2cf96c2a39c8e48695"
+    },
+    {
+      "bytes": 1304,
+      "path": "dataset/images/train/format-03.png",
+      "sha256": "0a1620e7251d1f1b1cc538a3932db3f6ab933b88511ddec6a417d2c98d8d5f4f"
+    },
+    {
+      "bytes": 1315,
+      "path": "dataset/images/train/format-04.png",
+      "sha256": "d192860208f5153927f713d49606d1dfcf33c404e019efcf82256532a60c9409"
+    },
+    {
+      "bytes": 1312,
+      "path": "dataset/images/train/format-05.png",
+      "sha256": "827a7db0502658ab64789b360c4ba96e0a186c9a9b00e587613a0d7e6bb32b8f"
+    },
+    {
+      "bytes": 1313,
+      "path": "dataset/images/train/format-06.png",
+      "sha256": "1f521ea0748171942cf891bb741d61e196684e6dc20fbbf475a78be0819c09e0"
+    },
+    {
+      "bytes": 1311,
+      "path": "dataset/images/train/format-07.png",
+      "sha256": "74a757b647c374bc5eee34f9f6f388d6d751c56789f3ffbd54db3b7158b8c2bb"
+    },
+    {
+      "bytes": 1316,
+      "path": "dataset/images/validation/format-08.png",
+      "sha256": "5454e0d2c21b25a5580f0cab9a56f2684de3e6360db3c36c29cd91d26dbb6140"
+    },
+    {
+      "bytes": 1317,
+      "path": "dataset/images/validation/format-09.png",
+      "sha256": "4a4bf701944bf8971148b9816c7effacc4bc1911a4d166b7a1477a0ecfec865a"
+    },
+    {
+      "bytes": 1314,
+      "path": "dataset/images/validation/format-10.png",
+      "sha256": "9c4e61996baea61ebc387100947ac30c4fdacabf8f5ba4ea8e553d756c989d0e"
+    },
+    {
+      "bytes": 1311,
+      "path": "dataset/images/validation/format-11.png",
+      "sha256": "205f425d7e20d15ff0705e359962773fd0dce962aa75b5eee6ce8b1256821846"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/train/format-00.txt",
+      "sha256": "14284092019ac58ae4561b420a9bfe4c9e5a60f9661244a81530c53c3347e74e"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/train/format-01.txt",
+      "sha256": "73855972041dce46ea563d6daa7387a644b6d46e9fba86c1249c675fb4b92af5"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/train/format-02.txt",
+      "sha256": "b6941b221f22cfc3074d76515bce26fa7f622d168f2242997db755211279d20f"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/train/format-03.txt",
+      "sha256": "e9bceafc3130f10651efee4a32fe1b3f1d5cf16ef6d82826a3dbe29e7117e136"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/train/format-04.txt",
+      "sha256": "b4049563857150d3733d52d2e7c8f14a5c121be1c12931e91520a09dd73c13c3"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/train/format-05.txt",
+      "sha256": "2950765eb87698db982b6828a025951fd5f5153d05743425628168f4ab3feae1"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/train/format-06.txt",
+      "sha256": "82ebf71980ffcdf6cb55c9a9ee6a112199c5c44d1af08f81238532be4b33693c"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/train/format-07.txt",
+      "sha256": "9c53d3ddd2bbcb2a37feaf66bbfa65d319e4aa1e4fdd492a7277e900f5a6d331"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/validation/format-08.txt",
+      "sha256": "1f61104ad4e6bc4b7ff6e4eb9dafccfe93ba827380606d00476a9470224394a1"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/validation/format-09.txt",
+      "sha256": "ec376d28413273fab3d975c2b4a77cf551ad61ce7a2cff61e88700fb16c4a26d"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/validation/format-10.txt",
+      "sha256": "b8027e1ffdeba13f412c7ae0c4b907cf0d27f509809e79c8b1b59e890ffc10af"
+    },
+    {
+      "bytes": 184,
+      "path": "dataset/labels/validation/format-11.txt",
+      "sha256": "889aafb2a196c12d5942c5518a3477c4ac3a5925343cb710c00965a6b4446414"
+    }
+  ],
+  "fixture_schema_version": 1,
+  "formal_evidence": false,
+  "generator": "examples/generate_fixtures.py",
+  "image_count": 12,
+  "image_origin": "project_generated_geometric_rectangles",
+  "independently_reviewed_labels": false,
+  "license": "MIT",
+  "prediction_origin": "manually_constructed_cached_predictions",
+  "split_counts": {
+    "train": 8,
+    "validation": 4
+  }
+}

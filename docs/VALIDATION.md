@@ -1,96 +1,85 @@
-# 核心验收与历史研究复现
+# 验证入口与证据边界
 
-## 核心检查
+源码候选的验证分为无第三方依赖 Demo、轻量离线样例、便携核心检查，以及显式选择的研究检查。通过前一层不代表后续各层已经通过。历史飞行和模型结果也不会自动成为当前源码的资格。
 
-完整核心集合需要 Python 3.12+：其中保留的几何适配器测试会导入使用新版语法的冻结研究辅助脚本。
-Demo 仍支持 Python 3.11；CI 分别在 3.11 / 3.13 检查 Demo、3.12 / 3.13 检查完整核心。
+## 无第三方依赖检查：Python 3.11+
 
-```sh
-python -m venv .venv
-.venv/bin/python -m pip install -r requirements-test.txt
-.venv/bin/python scripts/run_tests.py --suite core --report outputs/core-tests.json
-```
-
-核心检查覆盖桌面 HTTP 服务、主 CLI、采集、规划、飞行控制契约、任务管理与 Workbench。
-使用临时数据和模拟接口，不会启动真实飞行或要求本机历史训练数据。
-不需要 Torch、ONNX、SciPy、PX4 或 Gazebo；NumPy、Pillow、OpenCV 和 psutil 是明确的测试依赖。
-飞行 API 使用 MAVSDK 的 gRPC 接口，因此固定为实测的 `mavsdk==3.17.2`。
-不固定时，新环境会装到不兼容的 MAVSDK 4 原生接口。
-
-CI 使用相同的 `scripts/run_tests.py --suite core` 入口。新测试默认进入核心集合。
-`config/sandbox/test_suites.json` 显式列出历史研究例外，清单重复或引用不存在模块会失败。
-`--list` 只列出选中的模块，不执行测试。报告包含失败、错误和跳过原因。
-
-源码 ZIP 应使用支持 Unix 文件权限的解压工具（例如 `unzip`）；某些程序化解压 API
-不还原可执行位。导出包含 `.gitignore` 和逐文件清单，不包含 `.git`、环境或实验数据。
-仓库规范测试也支持在这种源码副本中执行。
-
-## 历史研究复现
+在仓库根目录执行，输出目录必须尚不存在；重新运行时使用新的目录名。
 
 ```sh
-.venv/bin/python -m pip install -r requirements-research.txt
-.venv/bin/python scripts/run_tests.py --suite research --report outputs/research-tests.json
+python main.py sandbox --profile demo bootstrap
+python examples/generate_fixtures.py --check
+python examples/receipt_check/run.py --output outputs/examples/receipt-check
+python main.py sandbox --profile demo release-gate --output outputs/sandbox/demo/release-gate/local
+python main.py sandbox --profile demo release-gate-inspect --input outputs/sandbox/demo/release-gate/local/release_gate.json
+python main.py sandbox --profile demo beta-install-gate --output outputs/sandbox/demo/beta-install/local
+python main.py sandbox --profile demo beta-install-gate-inspect --input outputs/sandbox/demo/beta-install/local/beta_install_gate.json
 ```
 
-研究集合包含已冻结的实验适配器、真实小型训练/导出以及历史审核回执检查。
-需要原始 `data/research/`、相关模型和回执声明的依赖；仅下载源码不能复现这些历史结果。
-缺失依赖或数据应报告失败，不会以跳过代替通过。不要从历史目录中抽取零散文件并修改哈希。
+Demo 使用构造输入。回执样例同时检查原始输出有效和修改后的副本被拒绝，不会修改历史证据。HTTP 服务和安装门禁中的服务检查需要允许绑定本机回环端口；权限拒绝必须保留为实际失败，不能当作通过。
 
-每个研究测试模块在独立进程中运行。原因是历史实验适配器会配置共享模块的全局目录；
-这与它们原来的独立 CLI 执行方式一致，并保留冻结源码字节。
-普通 `python -m unittest discover -s tests` 仍可用于已配置研究环境的同进程全量回归。
-
-## 可搬迁历史证据
+## 轻量视觉离线样例：Python 3.11+
 
 ```sh
-.venv/bin/python main.py sandbox evidence-freeze \
-  --records named-records.json --output outputs/sandbox/evidence/snapshot.zip
-.venv/bin/python main.py sandbox evidence-inspect \
-  --input outputs/sandbox/evidence/snapshot.zip --identity <冻结时返回的清单哈希>
-.venv/bin/python main.py sandbox evidence-flight-verify \
-  --output outputs/sandbox/evidence/checks/my-verification.json
+python -m venv .venv-offline
+.venv-offline/bin/python -m pip install -r requirements-offline.txt
+.venv-offline/bin/python examples/dataset_audit/run.py --output outputs/examples/dataset-audit
+.venv-offline/bin/python examples/prediction_comparison/run.py --output outputs/examples/prediction-comparison
+.venv-offline/bin/python examples/receipt_check/run.py --receipt outputs/examples/dataset-audit/receipt.json
+.venv-offline/bin/python examples/receipt_check/run.py --receipt outputs/examples/prediction-comparison/receipt.json
 ```
 
-`named-records.json` 是“记录名称 → 文件路径”的 JSON 对象。包内保存原始记录字节和这些记录
-`inputs` 声明的所有直接依赖，以 SHA-256 命名去重；原绝对路径仅作为来源标识保存，读取时不访问它们。
-嵌套 JSON 输入不会自动变成独立审核记录；需要审核的记录必须显式列入清单。
-清单哈希须在包外保管，不能从待验证包内读取一个哈希再用它证明同一个包可信。
+这层只安装 Pillow 和 PyYAML。输入是项目自生成的格式图像、标签及手工构造的缓存预测，没有下载模型或重新推理。数据审核检验结构、类别和重复内容；比较结果演示指标计算；回执检验记录和输出字节的一致性。它们均不证明真实设备识别精度、标注正确、独立站点泛化或飞行安全。输出与限制见[样例说明](../examples/README.md)。
 
-当前注册包由 `config/sandbox/flight_evidence_archive.json` 绑定，覆盖原飞行门禁实际审核的
-50 份记录及全部直接依赖。专用验证同时检查 6 次 LiDAR 正向、1 次无路拒绝、1 次视觉改线、
-1 次受控停止，以及降落、解除武装和进程清理结果。桌面 Flight Console 可发起受管核验并查看日志。
+## 便携核心检查：Python 3.12–3.14
 
-包约 404 MB，不随源码导出；对应历史文件约 10.06 GB，原文件保留。
-这份核验只证明历史运行。源码或模型变化后，必须产生相应的新运行验收，旧结果不能自动授权新实现。
+```sh
+python -m venv .venv-test
+.venv-test/bin/python -m pip install -r requirements-test.txt
+.venv-test/bin/python scripts/run_tests.py --suite core --report outputs/core-tests.json
+```
 
-## 桌面反馈迭代
+核心集合需要 Python 3.12+：保留的几何适配器测试会导入使用新版语法的研究辅助脚本。测试使用临时数据和模拟接口，不会启动真实飞行，也不需要作者的历史训练数据、模型权重、Torch、ONNX、SciPy、PX4 或 Gazebo。安装后的测试环境包含 NumPy、Pandas、Matplotlib、Pillow、PyYAML、OpenCV、psutil 和 MAVSDK 等依赖；直接依赖及约束以依赖文件为准。MAVSDK 固定为 `3.17.2`，对应此源码的 gRPC 接口。
 
-Development profile 中依次使用：
+执行器使用显式依赖 `pytest>=9,<10`，同时收集 `unittest.TestCase`、顶层测试函数和参数化测试。JSON 报告记录实际收集、执行、失败、错误、跳过及逐模块数量。pytest 的子测试数量可能单独显示，不应与顶层收集项混加。任何选中模块收集零项、必要测试跳过或空集合均不能通过。`--list` 仅列出模块，不执行测试。
 
-1. Dataset Manager → 飞行并采集反馈（现有固定 SITL 场景）。
-2. 逐张查看图片并纠正框，显式确认完整标注或无目标；无法可靠标注的图片可以拒绝。
-   预测只作为草稿提示。审核会记录审核者、原始图片、上一版身份和时间，过期修改被拒绝。
-3. 选择基础数据集并注册新 ID。整次采集必须全部完成接纳或拒绝，且至少接纳一张。
-   新反馈仅进入训练，保留基础数据的固定验证子集；相邻反馈不会随机拆入验证。
-4. Training Studio 选择注册数据和历史父模型。训练预算不足以保留全部接纳反馈时会拒绝，
-   不会静默丢弃这些反馈。训练前重查受管反馈数据的图片、标签、成员及来源哈希。
-5. Managed model runs 查看实际父模型比较。新模型阈值在开发验证集选择，父模型使用冻结阈值；
-   差值和各自阈值写入 comparison.json，并由新完成回执绑定。负向差值不会隐藏。
+`config/sandbox/test_suites.json` 将例外分别放在 `research_modules`、`native_modules`、`sitl_modules`，新测试默认进入 core，重复、交叉或不存在的模块会导致选择失败。当前 native 和 sitl 清单为空，表示此发布快照未选择独立原生或 SITL 测试；空集合不代表验收完成。core 内保留的飞行契约和模拟接口测试也不等于执行原生飞行。
 
-注册数据保存当时的全部审核快照；后续纠正需创建新的数据集版本。
-导入基础数据的原有划分会保留，不能仅因注册成功便声称不同物理场景或盲测独立。
-完成训练和 ONNX 校验代表技术产物可读与一致，不自动代表质量提升或所选模型已经通过飞行验收。
+## 历史研究复现：需要额外资产
 
-6. Flight Console 选择已验证模型，先“验收完整任务”，再“验收中途停止”。
-   停止验收必须在开始水平飞行后点击“停车并降落”，并确认已降落、解除武装与进程清理。
-   两项都针对当前输入通过后，“执行已验收任务”才可用。每次任务仍保存有上限的反馈，可返回审核。
+```sh
+.venv-test/bin/python -m pip install -r requirements-research.txt
+.venv-test/bin/python scripts/run_tests.py --suite research --report outputs/research-tests.json
+```
 
-当前入口使用 `src/flight/semantic_mission.py` 与 `sitl_lifecycle.py`，输出到
-`outputs/sandbox/semantic_runs/`。从受信任证据包仅提取固定场景资源到 `runtime_assets/`；
-原实验目录中的绝对路径仅作为来源文字，不用于当前启动。
-当前运行身份绑定核心源码、模型回执与 ONNX、场景、PX4 二进制/启动文件/模型资源/插件、
-Python 及关键依赖版本与 Gazebo 版本。身份使用逻辑相对名称，因此位置改变不改变身份。
-启动前与飞行结束后重新检查输入；任何身份变化都需要重新验收，历史通过不能替代。
-这只适用于固定本机 SITL 场景，不代表真机或未验收场景的资格。
+research 集合包含冻结的实验适配器、真实小型训练/导出和历史审核回执检查，需要原始数据、模型及回执声明的环境。它逐模块启动独立进程，避免历史适配器的全局目录配置互相污染。缺失依赖或数据应报告失败，不以跳过替代通过。`--suite all` 同样保留模块隔离，并包含所有显式组；仅下载源码通常不具备它所需的资产。
 
-桌面验收范围为桌面浏览器；按用户要求，不包含手机布局。
+不要使用 `python -m unittest discover` 的结果声称已经执行完整发布集合：它不能收集顶层 pytest 函数和参数化测试。也不要为恢复历史结果改写冻结文件的哈希。
+
+## 源码分发与 CI
+
+```sh
+python scripts/export_source.py --output outputs/research-toolbox-source.zip
+unzip outputs/research-toolbox-source.zip -d outputs/research-toolbox-source
+```
+
+导出默认只包含共享清单允许的已跟踪文件，Beta 安装复制也使用同一清单。`--include-untracked` 只适合明确选择的开发快照。源码 ZIP 带有逐文件大小和 SHA-256 的 `SOURCE_MANIFEST.json`，以及绑定提交和清单身份的 `SOURCE_PROVENANCE.json`；不包含 `.git`、虚拟环境、模型权重或原始实验数据。清单校验可以发现字节变化，不能替代可信来源或数字签名。使用支持 Unix 文件权限的工具解压；某些程序化解压接口不恢复可执行位。
+
+[Offline validation 工作流](../.github/workflows/ci.yml)配置了以下任务：
+
+| 任务 | 配置的平台与 Python | 检查内容 |
+| --- | --- | --- |
+| 无第三方依赖 Demo | Ubuntu；3.11、3.13 | Demo、格式图像重生成对照、回执修改拒绝、发布门禁与独立安装 |
+| 便携核心 | Ubuntu；3.12、3.13、3.14 | 实际 pytest 核心集合、编译、Shell 语法与 A-star 预览 |
+| 源码包和轻量样例 | Ubuntu、macOS 15；3.11、3.13 | 导出与解压清单一致、仅轻量依赖、从解压源码运行三个样例 |
+| 原生 macOS 应用 | macOS 15 | 既有 Swift 测试、构建、元数据、签名与预览打包检查 |
+
+表格描述工作流配置，不是已通过的结果。未上传的本地候选不会触发 GitHub Actions；公开 main 分支或旧安装包的绿色检查不能证明新候选通过。准备源码时应另外保存实际本机平台、Python 版本、命令、报告和源码身份；Linux 与应用构建只有取得相应实际运行结果后才能列为通过。
+
+## 历史证据、模型与飞行资格
+
+精选[工程案例与模型摘要](case-studies/README.md)记录过去实验的观测和限制，其中小型片段可离线复查，完整原始数据、模型、ULog 和本机工具链不随源码提供。摘要检查不等于重新运行实验。
+
+原有 `sandbox evidence-freeze`、`evidence-inspect` 和 `evidence-flight-verify` 支持绑定直接依赖的历史证据包。清单身份应在包外可信保存，不能从待验证包内取出哈希便据此证明来源可信。历史包及固定 SITL 所需资产不属于默认下载；更改源码、模型、场景、原生二进制或关键环境后，必须重新执行对应验收。
+
+Workbench 的导入、反馈审核、开发集阈值选择和结果回执可阅读并按自身条件使用；数据注册成功不证明物理场景独立，ONNX 可读或数值一致不证明质量提升，历史任务完成不授予新源码、真机或未验收场景飞行资格。当前默认入口是离线工具与样例；完整训练和飞行复现的额外条件见[发布范围](PUBLICATION_SCOPE.md)。
