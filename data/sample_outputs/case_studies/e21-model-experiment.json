@@ -1,0 +1,647 @@
+{
+  "case_excerpt_schema_version": 1,
+  "case_id": "e21-model-experiment",
+  "curated_on": "2026-11-02",
+  "evidence_role": "historical_excerpt",
+  "formal_evidence": false,
+  "identity": "62b63eec483daaca061cdee6fabd6692fe2309a115e2542e1449309e3b6da98e",
+  "limitations": [
+    "Synthetic canonical scene families and AI-reviewed labels do not establish real-world or unseen-asset accuracy.",
+    "Q3 test-layout-05 and test-layout-06 have already been used and are not a fresh holdout for future selection.",
+    "Weights, source images, complete training receipts and prediction caches are not bundled.",
+    "The checker recomputes displayed metrics from excerpt counts; it does not rerun training, image inference, matching or label review.",
+    "Small objects follow the historical 640-reference convention: original 1920-wide box area times (640/1920)^2 < 32^2."
+  ],
+  "qualifies_current_source": false,
+  "record_date": "2026-09-28",
+  "selected": {
+    "candidate": {
+      "pointer": "/models/candidate",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/test-results.json",
+      "value": {
+        "frame_count": 56,
+        "layouts": {
+          "test-layout-05": {
+            "macro_f1": 0.8774236327053229,
+            "no_target_false_positive_rate": 0.0,
+            "per_class": {
+              "capacitor_bank": {
+                "f1": 0.8928571428571429,
+                "fn": 4,
+                "fp": 2,
+                "precision": 0.9259259259259259,
+                "recall": 0.8620689655172413,
+                "tp": 25
+              },
+              "reactor": {
+                "f1": 0.9090909090909091,
+                "fn": 5,
+                "fp": 2,
+                "precision": 0.9459459459459459,
+                "recall": 0.875,
+                "tp": 35
+              },
+              "switchgear": {
+                "f1": 0.75,
+                "fn": 10,
+                "fp": 4,
+                "precision": 0.84,
+                "recall": 0.6774193548387096,
+                "tp": 21
+              },
+              "transformer": {
+                "f1": 0.9577464788732395,
+                "fn": 2,
+                "fp": 1,
+                "precision": 0.9714285714285714,
+                "recall": 0.9444444444444444,
+                "tp": 34
+              }
+            },
+            "small_object_count": 10,
+            "small_object_recall": 0.5,
+            "threshold": 0.43
+          },
+          "test-layout-06": {
+            "macro_f1": 0.8590828693569115,
+            "no_target_false_positive_rate": 0.0,
+            "per_class": {
+              "capacitor_bank": {
+                "f1": 0.8955223880597015,
+                "fn": 6,
+                "fp": 1,
+                "precision": 0.967741935483871,
+                "recall": 0.8333333333333334,
+                "tp": 30
+              },
+              "reactor": {
+                "f1": 0.927536231884058,
+                "fn": 0,
+                "fp": 5,
+                "precision": 0.8648648648648649,
+                "recall": 1.0,
+                "tp": 32
+              },
+              "switchgear": {
+                "f1": 0.7118644067796609,
+                "fn": 12,
+                "fp": 5,
+                "precision": 0.8076923076923077,
+                "recall": 0.6363636363636364,
+                "tp": 21
+              },
+              "transformer": {
+                "f1": 0.9014084507042254,
+                "fn": 3,
+                "fp": 4,
+                "precision": 0.8888888888888888,
+                "recall": 0.9142857142857143,
+                "tp": 32
+              }
+            },
+            "small_object_count": 12,
+            "small_object_recall": 0.5833333333333334,
+            "threshold": 0.43
+          }
+        },
+        "model_sha256": "0f76dd97623943f092522da950c574207a72ee0562be976b580a30ae1c9bf9a2",
+        "pooled": {
+          "macro_f1": 0.8680323524162352,
+          "no_target_false_positive_rate": 0.0,
+          "per_class": {
+            "capacitor_bank": {
+              "f1": 0.894308943089431,
+              "fn": 10,
+              "fp": 3,
+              "precision": 0.9482758620689655,
+              "recall": 0.8461538461538461,
+              "tp": 55
+            },
+            "reactor": {
+              "f1": 0.9178082191780821,
+              "fn": 5,
+              "fp": 7,
+              "precision": 0.9054054054054054,
+              "recall": 0.9305555555555556,
+              "tp": 67
+            },
+            "switchgear": {
+              "f1": 0.7304347826086957,
+              "fn": 22,
+              "fp": 9,
+              "precision": 0.8235294117647058,
+              "recall": 0.65625,
+              "tp": 42
+            },
+            "transformer": {
+              "f1": 0.9295774647887324,
+              "fn": 5,
+              "fp": 5,
+              "precision": 0.9295774647887324,
+              "recall": 0.9295774647887324,
+              "tp": 66
+            }
+          },
+          "small_object_count": 22,
+          "small_object_recall": 0.5454545454545454,
+          "threshold": 0.43
+        },
+        "threshold": 0.43
+      }
+    },
+    "candidate_selection_policy": {
+      "pointer": "/candidate_selection",
+      "source": "outputs/sandbox/training-round-20260928-train704/experiment-protocol.json",
+      "value": "For each matched seed trained/inferred at 704, use unchanged global threshold grid and all original E10-paired individual gates; small-object definition stays at 640 reference. Require three-seed mean >=.01 and >=2 wins. Q3 sealed otherwise."
+    },
+    "current": {
+      "pointer": "/models/current",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/test-results.json",
+      "value": {
+        "frame_count": 56,
+        "layouts": {
+          "test-layout-05": {
+            "macro_f1": 0.2347099175587548,
+            "no_target_false_positive_rate": 0.5,
+            "per_class": {
+              "capacitor_bank": {
+                "f1": 0.05714285714285715,
+                "fn": 28,
+                "fp": 5,
+                "precision": 0.16666666666666666,
+                "recall": 0.034482758620689655,
+                "tp": 1
+              },
+              "reactor": {
+                "f1": 0.046511627906976744,
+                "fn": 39,
+                "fp": 2,
+                "precision": 0.3333333333333333,
+                "recall": 0.025,
+                "tp": 1
+              },
+              "switchgear": {
+                "f1": 0.35185185185185186,
+                "fn": 12,
+                "fp": 58,
+                "precision": 0.24675324675324675,
+                "recall": 0.6129032258064516,
+                "tp": 19
+              },
+              "transformer": {
+                "f1": 0.48333333333333345,
+                "fn": 7,
+                "fp": 55,
+                "precision": 0.34523809523809523,
+                "recall": 0.8055555555555556,
+                "tp": 29
+              }
+            },
+            "small_object_count": 10,
+            "small_object_recall": 0.2,
+            "threshold": 0.11
+          },
+          "test-layout-06": {
+            "macro_f1": 0.20565944443093484,
+            "no_target_false_positive_rate": 0.5,
+            "per_class": {
+              "capacitor_bank": {
+                "f1": 0.0,
+                "fn": 36,
+                "fp": 5,
+                "precision": 0.0,
+                "recall": 0.0,
+                "tp": 0
+              },
+              "reactor": {
+                "f1": 0.058823529411764705,
+                "fn": 31,
+                "fp": 1,
+                "precision": 0.5,
+                "recall": 0.03125,
+                "tp": 1
+              },
+              "switchgear": {
+                "f1": 0.37398373983739835,
+                "fn": 10,
+                "fp": 67,
+                "precision": 0.25555555555555554,
+                "recall": 0.696969696969697,
+                "tp": 23
+              },
+              "transformer": {
+                "f1": 0.3898305084745763,
+                "fn": 12,
+                "fp": 60,
+                "precision": 0.27710843373493976,
+                "recall": 0.6571428571428571,
+                "tp": 23
+              }
+            },
+            "small_object_count": 12,
+            "small_object_recall": 0.3333333333333333,
+            "threshold": 0.11
+          }
+        },
+        "model_sha256": "b8f4a676ebb88b3bf79d16e816098c927611c2e674eefa8b2398118261b3d878",
+        "pooled": {
+          "macro_f1": 0.21971874874351655,
+          "no_target_false_positive_rate": 0.5,
+          "per_class": {
+            "capacitor_bank": {
+              "f1": 0.026315789473684213,
+              "fn": 64,
+              "fp": 10,
+              "precision": 0.09090909090909091,
+              "recall": 0.015384615384615385,
+              "tp": 1
+            },
+            "reactor": {
+              "f1": 0.051948051948051945,
+              "fn": 70,
+              "fp": 3,
+              "precision": 0.4,
+              "recall": 0.027777777777777776,
+              "tp": 2
+            },
+            "switchgear": {
+              "f1": 0.36363636363636365,
+              "fn": 22,
+              "fp": 125,
+              "precision": 0.25149700598802394,
+              "recall": 0.65625,
+              "tp": 42
+            },
+            "transformer": {
+              "f1": 0.4369747899159664,
+              "fn": 19,
+              "fp": 115,
+              "precision": 0.31137724550898205,
+              "recall": 0.7323943661971831,
+              "tp": 52
+            }
+          },
+          "small_object_count": 22,
+          "small_object_recall": 0.2727272727272727,
+          "threshold": 0.11
+        },
+        "threshold": 0.11
+      }
+    },
+    "frozen_selection_identity": {
+      "pointer": "/frozen_selection_identity",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/test-results.json",
+      "value": "f57f00ad0193a3d47131fbf6e2330563f9904d00c53afab59a048d3ca5862860"
+    },
+    "identity": {
+      "pointer": "/identity",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/frozen-selection.json",
+      "value": "f57f00ad0193a3d47131fbf6e2330563f9904d00c53afab59a048d3ca5862860"
+    },
+    "paired_gates": {
+      "pointer": "/paired_gates",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": {
+        "mean": {
+          "limit": 0.01,
+          "passed": true,
+          "value": 0.01840280665135574
+        },
+        "wins": {
+          "limit": 2,
+          "passed": true,
+          "value": 3
+        }
+      }
+    },
+    "paired_seed_score_deltas": {
+      "pointer": "/paired_seed_score_deltas",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": [
+        0.015945761614575282,
+        0.033785452862728604,
+        0.005477205476763336
+      ]
+    },
+    "parent": {
+      "pointer": "/models/parent",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/test-results.json",
+      "value": {
+        "frame_count": 56,
+        "layouts": {
+          "test-layout-05": {
+            "macro_f1": 0.4059247688958996,
+            "no_target_false_positive_rate": 1.0,
+            "per_class": {
+              "capacitor_bank": {
+                "f1": 0.46511627906976755,
+                "fn": 19,
+                "fp": 4,
+                "precision": 0.7142857142857143,
+                "recall": 0.3448275862068966,
+                "tp": 10
+              },
+              "reactor": {
+                "f1": 0.3461538461538462,
+                "fn": 31,
+                "fp": 3,
+                "precision": 0.75,
+                "recall": 0.225,
+                "tp": 9
+              },
+              "switchgear": {
+                "f1": 0.32967032967032966,
+                "fn": 16,
+                "fp": 45,
+                "precision": 0.25,
+                "recall": 0.4838709677419355,
+                "tp": 15
+              },
+              "transformer": {
+                "f1": 0.48275862068965514,
+                "fn": 8,
+                "fp": 52,
+                "precision": 0.35,
+                "recall": 0.7777777777777778,
+                "tp": 28
+              }
+            },
+            "small_object_count": 10,
+            "small_object_recall": 0.4,
+            "threshold": 0.15
+          },
+          "test-layout-06": {
+            "macro_f1": 0.33464781905148877,
+            "no_target_false_positive_rate": 1.0,
+            "per_class": {
+              "capacitor_bank": {
+                "f1": 0.36363636363636365,
+                "fn": 26,
+                "fp": 9,
+                "precision": 0.5263157894736842,
+                "recall": 0.2777777777777778,
+                "tp": 10
+              },
+              "reactor": {
+                "f1": 0.20512820512820512,
+                "fn": 28,
+                "fp": 3,
+                "precision": 0.5714285714285714,
+                "recall": 0.125,
+                "tp": 4
+              },
+              "switchgear": {
+                "f1": 0.3111111111111111,
+                "fn": 19,
+                "fp": 43,
+                "precision": 0.24561403508771928,
+                "recall": 0.42424242424242425,
+                "tp": 14
+              },
+              "transformer": {
+                "f1": 0.4587155963302752,
+                "fn": 10,
+                "fp": 49,
+                "precision": 0.33783783783783783,
+                "recall": 0.7142857142857143,
+                "tp": 25
+              }
+            },
+            "small_object_count": 12,
+            "small_object_recall": 0.5,
+            "threshold": 0.15
+          }
+        },
+        "model_sha256": "8632df447d78920ed2ec36cd2e302876afa1bea0580896b60192b397e172fa6d",
+        "pooled": {
+          "macro_f1": 0.3713576627704489,
+          "no_target_false_positive_rate": 1.0,
+          "per_class": {
+            "capacitor_bank": {
+              "f1": 0.40816326530612246,
+              "fn": 45,
+              "fp": 13,
+              "precision": 0.6060606060606061,
+              "recall": 0.3076923076923077,
+              "tp": 20
+            },
+            "reactor": {
+              "f1": 0.2857142857142857,
+              "fn": 59,
+              "fp": 6,
+              "precision": 0.6842105263157895,
+              "recall": 0.18055555555555555,
+              "tp": 13
+            },
+            "switchgear": {
+              "f1": 0.32044198895027626,
+              "fn": 35,
+              "fp": 88,
+              "precision": 0.24786324786324787,
+              "recall": 0.453125,
+              "tp": 29
+            },
+            "transformer": {
+              "f1": 0.4711111111111111,
+              "fn": 18,
+              "fp": 101,
+              "precision": 0.34415584415584416,
+              "recall": 0.7464788732394366,
+              "tp": 53
+            }
+          },
+          "small_object_count": 22,
+          "small_object_recall": 0.45454545454545453,
+          "threshold": 0.15
+        },
+        "threshold": 0.15
+      }
+    },
+    "scope": {
+      "pointer": "/scope",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": "Old56 + unchanged calibration56 + small-dev56 + independent switch-dev56; candidate threshold chosen among thresholds satisfying all individual gates; Q and Q2 tests retired"
+    },
+    "seed_17_individual_passed": {
+      "pointer": "/individual/17/passed",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": true
+    },
+    "seed_27_individual_passed": {
+      "pointer": "/individual/27/passed",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": false
+    },
+    "seed_7_individual_passed": {
+      "pointer": "/individual/7/passed",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": true
+    },
+    "seed_order": {
+      "pointer": "/seeds",
+      "source": "outputs/sandbox/training-round-20260928-train704/experiment-protocol.json",
+      "value": [
+        7,
+        17,
+        27
+      ]
+    },
+    "selected_candidate": {
+      "pointer": "/selected_candidate",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": "candidate-17"
+    },
+    "selected_model_sha256": {
+      "pointer": "/selected_model_sha256",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/frozen-selection.json",
+      "value": "0f76dd97623943f092522da950c574207a72ee0562be976b580a30ae1c9bf9a2"
+    },
+    "selected_threshold": {
+      "pointer": "/selected_threshold",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": 0.43
+    },
+    "test_accessed": {
+      "pointer": "/test_accessed",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "value": false
+    },
+    "test_gates": {
+      "pointer": "/gates",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/test-results.json",
+      "value": {
+        "absolute_macro_f1": {
+          "limit": 0.85,
+          "passed": true,
+          "value": 0.8680323524162352
+        },
+        "background_FP_rate": {
+          "limit": 0,
+          "passed": true,
+          "value": 0.0
+        },
+        "layout_macro_delta_test-layout-05": {
+          "limit": -0.01,
+          "passed": true,
+          "value": 0.642713715146568
+        },
+        "layout_macro_delta_test-layout-06": {
+          "limit": -0.01,
+          "passed": true,
+          "value": 0.6534234249259766
+        },
+        "pooled_macro_delta_current": {
+          "limit": 0.01,
+          "passed": true,
+          "value": 0.6483136036727186
+        },
+        "pooled_macro_delta_parent": {
+          "limit": 0,
+          "passed": true,
+          "value": 0.4966746896457863
+        },
+        "recall_delta_capacitor_bank": {
+          "limit": -0.03,
+          "passed": true,
+          "value": 0.8307692307692307
+        },
+        "recall_delta_reactor": {
+          "limit": -0.03,
+          "passed": true,
+          "value": 0.9027777777777778
+        },
+        "recall_delta_switchgear": {
+          "limit": -0.03,
+          "passed": true,
+          "value": 0.0
+        },
+        "recall_delta_transformer": {
+          "limit": -0.03,
+          "passed": true,
+          "value": 0.19718309859154926
+        },
+        "small_recall_delta": {
+          "limit": 0,
+          "passed": true,
+          "value": 0.2727272727272727
+        }
+      }
+    },
+    "test_passed": {
+      "pointer": "/passed",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/test-results.json",
+      "value": true
+    },
+    "test_policy": {
+      "pointer": "/test_policy",
+      "source": "outputs/sandbox/training-round-20260928-train704/experiment-protocol.json",
+      "value": "Q3 test-layout-05/06 remains sealed and may be opened once only after E21 development pass; E10-E20 never opened it; Q/Q2 consumed."
+    },
+    "test_roles": {
+      "pointer": "/test_roles",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/frozen-selection.json",
+      "value": [
+        "test-layout-05",
+        "test-layout-06"
+      ]
+    },
+    "test_scope": {
+      "pointer": "/scope",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/test-results.json",
+      "value": "Synthetic canonical families, source-bound annotations and AI-reviewed, not real-world or unseen-asset evidence"
+    },
+    "threshold": {
+      "pointer": "/threshold",
+      "source": "outputs/sandbox/training-round-20260928-train704/evaluation/frozen-selection.json",
+      "value": 0.43
+    },
+    "training_epochs": {
+      "pointer": "/train_config/epochs",
+      "source": "outputs/sandbox/training-round-20260928-train704/experiment-protocol.json",
+      "value": 2
+    },
+    "training_input_size": {
+      "pointer": "/train_config/imgsz",
+      "source": "outputs/sandbox/training-round-20260928-train704/experiment-protocol.json",
+      "value": 704
+    }
+  },
+  "sources": [
+    {
+      "bundled": false,
+      "bytes": 13098,
+      "path": "outputs/sandbox/training-round-20260928-train704/evaluation/development-results.json",
+      "sha256": "26b9997edf5cf0fe30b2e10439fed3bde91dc1e81cf43c6c250d0668eff9bf06"
+    },
+    {
+      "bundled": false,
+      "bytes": 710,
+      "path": "outputs/sandbox/training-round-20260928-train704/evaluation/frozen-selection.json",
+      "sha256": "88ce9c808c1a20d268af8c0405c666d03d73dfb94999c0d240b2a858f4c6a86a"
+    },
+    {
+      "bundled": false,
+      "bytes": 13010,
+      "path": "outputs/sandbox/training-round-20260928-train704/evaluation/test-results.json",
+      "sha256": "d2b3016952e73d2db1c2228c0bafb8b5034a8bcf490abc9bea78dfef297c7767"
+    },
+    {
+      "bundled": false,
+      "bytes": 11036,
+      "path": "outputs/sandbox/training-round-20260928-train704/experiment-protocol.json",
+      "sha256": "5bec154df3636470b9db211b1a86abeede1f549ac024c4fda490a6d6053eec9c"
+    },
+    {
+      "bundled": false,
+      "bytes": 5268,
+      "path": "outputs/sandbox/training-round-20260928-train704/test_once.py",
+      "sha256": "b51e9015084d53f2a752eb675e99ffef644ff5b1f69adb99afa229a71db042e1"
+    },
+    {
+      "bundled": false,
+      "bytes": 7247,
+      "path": "docs/results/next_model_development_20260927.md",
+      "sha256": "955fbe0679c42d19c3105020e656906f17369f831be60c83626b4009d89452b6"
+    }
+  ]
+}

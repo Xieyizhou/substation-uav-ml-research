@@ -1,0 +1,133 @@
+{
+  "case_excerpt_schema_version": 1,
+  "case_id": "telemetry-event-loop",
+  "curated_on": "2026-11-02",
+  "evidence_role": "historical_excerpt",
+  "formal_evidence": false,
+  "identity": "077dedb29f89b1ca6be8863a9b4260d33c5fd9360a6a820aed0f63c3ee74acfb",
+  "limitations": [
+    "This is a curated historical measurement excerpt, not the complete native source, ULog or flight qualification bundle.",
+    "Logger cadence alone does not independently prove each MAVSDK source is fresh.",
+    "The concurrent validation change applies to this dated experiment; it is not evidence for every earlier disconnect or for ordinary ARM qualification."
+  ],
+  "qualifies_current_source": false,
+  "record_date": "2026-10-24",
+  "selected": {
+    "after_max_gap_s": {
+      "pointer": "/cases/1/maximum_first30s_logger_gap_s",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "value": 0.20599999999999996
+    },
+    "after_rows": {
+      "pointer": "/cases/1/original_csv_first30s_rows",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "value": 150
+    },
+    "before_max_gap_s": {
+      "pointer": "/cases/0/maximum_first30s_logger_gap_s",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "value": 17.966
+    },
+    "before_rows": {
+      "pointer": "/cases/0/original_csv_first30s_rows",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "value": 18
+    },
+    "both_native_children_exit0_within_original_6s": {
+      "pointer": "/both_native_children_exit0_within_original_6s",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "value": true
+    },
+    "failure_message": {
+      "pointer": "/failure_message",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "value": "Local position telemetry is stale (17.9s > 2.0s)"
+    },
+    "freshness_gate_unchanged": {
+      "pointer": "/original_2s_freshness_gate_unchanged",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "value": true
+    },
+    "ground_check_to_refusal_host_s": {
+      "pointer": "/ground_check_to_refusal_host_s",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "value": 17.94072725
+    },
+    "ground_stability_passed": {
+      "pointer": "/cases/1/actual_original_ground_stability_passed",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "value": true
+    },
+    "ground_to_dual_trace_s": {
+      "pointer": "/cases/1/ground_start_to_dual_trace_start_host_s",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "value": 19.579629249987192
+    },
+    "healthy_flight_qualified": {
+      "pointer": "/healthy_flight_qualified",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "value": false
+    },
+    "logger_cadence_only": {
+      "pointer": "/logger_cadence_only",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "value": true
+    },
+    "no_ARM_or_TAKEOFF_verified_from_actual_ULog": {
+      "pointer": "/no_ARM_or_TAKEOFF_verified_from_actual_ULog",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "value": true
+    },
+    "normal_ARM_qualification": {
+      "pointer": "/normal_ARM_qualification",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "value": false
+    },
+    "offline_validation_s": {
+      "pointer": "/validate_protocol_duration_s",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-profile-v1.json",
+      "value": 17.22714812500635
+    },
+    "original_2s_position_gate_preserved": {
+      "pointer": "/original_2s_position_gate_preserved",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "value": true
+    },
+    "profile_offline_only": {
+      "pointer": "/offline_only",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-profile-v1.json",
+      "value": true
+    },
+    "task_status": {
+      "pointer": "/task_status",
+      "source": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "value": "failed"
+    }
+  },
+  "sources": [
+    {
+      "bundled": false,
+      "bytes": 5473,
+      "path": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-failure-audit-v1.json",
+      "sha256": "7777cb8e72694d28b6dd841da3984ace9bea33c2ce1498bacf24c672510ab64b"
+    },
+    {
+      "bundled": false,
+      "bytes": 679,
+      "path": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/prearm-profile-v1.json",
+      "sha256": "71f0190aaa688df52a41ab67fa6db053513d086761d0d0c4fc55853b961a715a"
+    },
+    {
+      "bundled": false,
+      "bytes": 4241,
+      "path": "outputs/sandbox/diagnostics/native_timing_healthy_20261024/telemetry-progress-v1.json",
+      "sha256": "5abe2c39e577712e8d71864ecd1822daa5cb92737c7d06bd6044a8252ae11e8b"
+    },
+    {
+      "bundled": false,
+      "bytes": 7735,
+      "path": "docs/PX4_NATIVE_TIMING_HEALTHY_FLIGHT_20261024.md",
+      "sha256": "4234d219fd1b31055578fceb14c2a271e5c2de086d7fea92ac91b5b3c3299539"
+    }
+  ]
+}

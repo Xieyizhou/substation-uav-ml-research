@@ -32,10 +32,11 @@ MODULE_COMMANDS = {
 def build_parser():
     parser = argparse.ArgumentParser(
         prog="python main.py",
-        description="Unified command center for maps, flight, experiments, and reports.",
+        description="Unified command center for visual research, maps, flight, and reports.",
         epilog=(
-            "Start here: python main.py map; python main.py point; "
-            "python main.py task; python main.py check all"
+            "Start here: python main.py sandbox --profile demo doctor. "
+            "For offline visual examples, see examples/README.md; "
+            "for simulator setup, see docs/RESEARCH_PREVIEW.md."
         ),
     )
     commands = parser.add_subparsers(dest="command", metavar="command")

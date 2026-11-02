@@ -270,5 +270,13 @@
     "test_visual_bridge_training": "Reads historical admission, training and evaluation receipts.",
     "test_ml_training_optional": "Performs real Torch training and ONNX export; requires optional ML stack.",
     "test_historical_envelope_evidence": "Reads two frozen historical flight receipts; geometry unit coverage remains in core."
+  },
+  "native_modules": [],
+  "sitl_modules": [],
+  "suite_descriptions": {
+    "core": "Portable offline tests; no external weights, PX4, Gazebo or author-local receipts.",
+    "research": "Opt-in frozen research checks; original external assets required and each module is process-isolated.",
+    "native": "Opt-in native/compiler integration checks; none selected in this source snapshot.",
+    "sitl": "Opt-in live simulator checks; none selected in this source snapshot."
   }
 }

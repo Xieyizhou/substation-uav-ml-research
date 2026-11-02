@@ -26,27 +26,9 @@ def file_sha256(path: Path) -> str:
 
 
 def git_commit(root: Path | None = None) -> str:
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=3,
-        )
-        status = subprocess.run(
-            ["git", "status", "--porcelain", "--untracked-files=no"],
-            cwd=root,
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=3,
-        )
-    except (OSError, subprocess.SubprocessError):
-        return "unknown"
-    commit = result.stdout.strip()
-    return f"{commit}-dirty" if status.stdout.strip() else commit
+    # An unpacked bundle must never borrow the enclosing checkout's identity.
+    from src.sandbox.source_bundle import source_revision
+    return source_revision(Path.cwd() if root is None else root)
 
 
 def write_json(path: Path, value: Any) -> Path:

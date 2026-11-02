@@ -1,14 +1,10 @@
 # Contributing
 
-Thank you for your interest in this project.
-
-This repository is a simulation-first UAV autonomy research platform built
-around PX4 SITL, Gazebo, MAVSDK-Python, A* path planning, live/replayed LiDAR,
-geometric and learned-risk interfaces, and local replanning.
+The public focus is offline visual research workflows and documented integration cases. Start with the [code guide](docs/CODE_GUIDE.md) and [examples](examples/README.md). PX4/Gazebo and the native shell remain optional research components.
 
 ## Development Setup
 
-Use Python 3.12+ for the full core suite. Create and activate a virtual environment:
+Use Python 3.12–3.14 for the full core suite. Create and activate a virtual environment:
 
 ```bash
 python3 -m venv .venv
@@ -17,7 +13,7 @@ python -m pip install --upgrade pip
 python -m pip install -r requirements-test.txt
 ```
 
-Run commands from the repository root.
+Run commands from the repository root. Core checks require Git CLI, Bash/POSIX shell tools, and `/usr/bin/python3` for a retained packaging-refusal contract, including when run from a source ZIP. They also require Node.js on PATH for three executable JavaScript tests. Local validation and CI use Node 26.4.0; no npm packages are needed. The offline visual examples and Demo do not require Node.
 
 ## Project Structure
 
@@ -77,8 +73,18 @@ python scripts/run_tests.py --suite core --report outputs/core-tests.json
 ```
 
 For research changes, also run the relevant research tests in the environment
-described in [VALIDATION.md](docs/VALIDATION.md). The full discovery suite needs
-the original research artifacts; it is not the clean-clone entry point.
+described in [VALIDATION.md](docs/VALIDATION.md). The `research` group needs original research artifacts. `native` and `sitl` are explicit opt-in groups; this snapshot assigns no modules to them and executing an empty group fails rather than reporting success. Their empty lists do not mean native integration or flights are validated. The existing native Swift CI job is separate.
+
+The pytest runner collects unittest classes, top-level functions and parameterized cases. Required skips and modules with no collected tests fail acceptance. Research modules run in separate processes to preserve historical module configuration. Add asset-dependent tests to the appropriate manifest group; do not hide portable tests to obtain a passing core run.
+
+Check the small shipped artifacts as well:
+
+```sh
+python examples/generate_fixtures.py --check
+python scripts/verify_case_studies.py
+```
+
+Default exports contain selected Git-tracked paths. Stage intentionally added files before a developer export, and commit a clean candidate before distributing it. `--include-untracked` is an explicit development-only option and must not be used for a release. Export and clean-install validation share `src/sandbox/source_bundle.py`.
 
 Compile Python sources:
 

@@ -1,0 +1,373 @@
+{
+  "dataset_role": "demo",
+  "description": "Geometric format fixtures. No model inference or real equipment accuracy is represented.",
+  "formal_evidence": false,
+  "frames": [
+    {
+      "height": 240,
+      "image_relative_path": "dataset/images/validation/format-08.png",
+      "image_sha256": "5454e0d2c21b25a5580f0cab9a56f2684de3e6360db3c36c29cd91d26dbb6140",
+      "predictions": [
+        {
+          "bbox": [
+            30,
+            34,
+            90,
+            84
+          ],
+          "class_name": "transformer",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            35,
+            141,
+            110,
+            186
+          ],
+          "class_name": "capacitor_bank",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            215,
+            151,
+            240,
+            176
+          ],
+          "class_name": "reactor",
+          "confidence": 0.9
+        }
+      ],
+      "sample_id": "format-08",
+      "truth": [
+        {
+          "bbox": [
+            30,
+            34,
+            90,
+            84
+          ],
+          "class_name": "transformer",
+          "small": false
+        },
+        {
+          "bbox": [
+            190,
+            39,
+            218,
+            63
+          ],
+          "class_name": "switchgear",
+          "small": true
+        },
+        {
+          "bbox": [
+            35,
+            141,
+            110,
+            186
+          ],
+          "class_name": "capacitor_bank",
+          "small": false
+        },
+        {
+          "bbox": [
+            215,
+            151,
+            240,
+            176
+          ],
+          "class_name": "reactor",
+          "small": true
+        }
+      ],
+      "width": 320
+    },
+    {
+      "height": 240,
+      "image_relative_path": "dataset/images/validation/format-09.png",
+      "image_sha256": "4a4bf701944bf8971148b9816c7effacc4bc1911a4d166b7a1477a0ecfec865a",
+      "predictions": [
+        {
+          "bbox": [
+            33,
+            34,
+            93,
+            84
+          ],
+          "class_name": "transformer",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            187,
+            39,
+            215,
+            63
+          ],
+          "class_name": "switchgear",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            38,
+            141,
+            113,
+            186
+          ],
+          "class_name": "capacitor_bank",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            212,
+            151,
+            237,
+            176
+          ],
+          "class_name": "reactor",
+          "confidence": 0.9
+        }
+      ],
+      "sample_id": "format-09",
+      "truth": [
+        {
+          "bbox": [
+            33,
+            34,
+            93,
+            84
+          ],
+          "class_name": "transformer",
+          "small": false
+        },
+        {
+          "bbox": [
+            187,
+            39,
+            215,
+            63
+          ],
+          "class_name": "switchgear",
+          "small": true
+        },
+        {
+          "bbox": [
+            38,
+            141,
+            113,
+            186
+          ],
+          "class_name": "capacitor_bank",
+          "small": false
+        },
+        {
+          "bbox": [
+            212,
+            151,
+            237,
+            176
+          ],
+          "class_name": "reactor",
+          "small": true
+        }
+      ],
+      "width": 320
+    },
+    {
+      "height": 240,
+      "image_relative_path": "dataset/images/validation/format-10.png",
+      "image_sha256": "9c4e61996baea61ebc387100947ac30c4fdacabf8f5ba4ea8e553d756c989d0e",
+      "predictions": [
+        {
+          "bbox": [
+            36,
+            34,
+            96,
+            84
+          ],
+          "class_name": "transformer",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            184,
+            39,
+            212,
+            63
+          ],
+          "class_name": "switchgear",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            41,
+            141,
+            116,
+            186
+          ],
+          "class_name": "capacitor_bank",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            209,
+            151,
+            234,
+            176
+          ],
+          "class_name": "reactor",
+          "confidence": 0.9
+        }
+      ],
+      "sample_id": "format-10",
+      "truth": [
+        {
+          "bbox": [
+            36,
+            34,
+            96,
+            84
+          ],
+          "class_name": "transformer",
+          "small": false
+        },
+        {
+          "bbox": [
+            184,
+            39,
+            212,
+            63
+          ],
+          "class_name": "switchgear",
+          "small": true
+        },
+        {
+          "bbox": [
+            41,
+            141,
+            116,
+            186
+          ],
+          "class_name": "capacitor_bank",
+          "small": false
+        },
+        {
+          "bbox": [
+            209,
+            151,
+            234,
+            176
+          ],
+          "class_name": "reactor",
+          "small": true
+        }
+      ],
+      "width": 320
+    },
+    {
+      "height": 240,
+      "image_relative_path": "dataset/images/validation/format-11.png",
+      "image_sha256": "205f425d7e20d15ff0705e359962773fd0dce962aa75b5eee6ce8b1256821846",
+      "predictions": [
+        {
+          "bbox": [
+            39,
+            34,
+            99,
+            84
+          ],
+          "class_name": "transformer",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            181,
+            39,
+            209,
+            63
+          ],
+          "class_name": "switchgear",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            44,
+            141,
+            119,
+            186
+          ],
+          "class_name": "capacitor_bank",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            206,
+            151,
+            231,
+            176
+          ],
+          "class_name": "reactor",
+          "confidence": 0.9
+        },
+        {
+          "bbox": [
+            135,
+            110,
+            158,
+            132
+          ],
+          "class_name": "reactor",
+          "confidence": 0.8
+        }
+      ],
+      "sample_id": "format-11",
+      "truth": [
+        {
+          "bbox": [
+            39,
+            34,
+            99,
+            84
+          ],
+          "class_name": "transformer",
+          "small": false
+        },
+        {
+          "bbox": [
+            181,
+            39,
+            209,
+            63
+          ],
+          "class_name": "switchgear",
+          "small": true
+        },
+        {
+          "bbox": [
+            44,
+            141,
+            119,
+            186
+          ],
+          "class_name": "capacitor_bank",
+          "small": false
+        },
+        {
+          "bbox": [
+            206,
+            151,
+            231,
+            176
+          ],
+          "class_name": "reactor",
+          "small": true
+        }
+      ],
+      "width": 320
+    }
+  ],
+  "prediction_fixture_schema_version": 1,
+  "prediction_origin": "manually_constructed_cached_predictions"
+}

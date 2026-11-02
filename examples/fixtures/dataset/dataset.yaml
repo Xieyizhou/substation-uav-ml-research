@@ -1,0 +1,8 @@
+path: .
+train: images/train
+val: images/validation
+names:
+  0: transformer
+  1: switchgear
+  2: capacitor_bank
+  3: reactor

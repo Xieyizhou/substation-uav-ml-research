@@ -35,7 +35,7 @@ class SourceExportTests(unittest.TestCase):
         script = self.write("scripts/run.sh", "#!/bin/sh\nexit 0\n")
         script.chmod(0o755)
         self.write("archive/research_scripts/vision/old.py", "OLD = True\n")
-        report = export_source(self.root, self.root / "source.zip")
+        report = export_source(self.root, self.root / "source.zip", include_untracked=True)
         with zipfile.ZipFile(report["output"]) as bundle:
             self.assertEqual(bundle.read("README.md"), b"current content")
             self.assertIn("src/new_module.py", bundle.namelist())
@@ -51,10 +51,10 @@ class SourceExportTests(unittest.TestCase):
     def test_symlink_is_not_dereferenced_and_existing_bundle_is_preserved(self):
         (self.root / "src/private.py").symlink_to("../.git/config")
         output = self.root / "source.zip"
-        export_source(self.root, output)
+        export_source(self.root, output, include_untracked=True)
         before = output.read_bytes()
         with zipfile.ZipFile(output) as bundle:
             self.assertNotIn("src/private.py", bundle.namelist())
         with self.assertRaises(FileExistsError):
-            export_source(self.root, output)
+            export_source(self.root, output, include_untracked=True)
         self.assertEqual(output.read_bytes(), before)

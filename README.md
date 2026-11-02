@@ -1,201 +1,105 @@
-<div align="center">
+# UAV Visual Research Toolbox
 
-# UAV Research Sandbox
+Small offline workflows for substation equipment vision, with engineering case studies from PX4/Gazebo integration. The four example classes are transformer, switchgear, capacitor bank and reactor.
 
-**A desktop workspace for substation UAV simulation and visual model research.**
+[中文说明](README.zh-CN.md) · [Quick start](docs/SANDBOX_QUICKSTART.md) · [Code guide](docs/CODE_GUIDE.md) · [Case studies](docs/case-studies/README.md)
 
-Plan a route · Collect feedback · Review labels · Train and compare · Fly in SITL
+## Run the offline examples
 
-[![Validation](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml)
-![Research preview](https://img.shields.io/badge/status-research_preview-087f70)
-![Simulation only](https://img.shields.io/badge/scope-simulation_only-53657a)
-[![Project code: MIT](https://img.shields.io/badge/project_code-MIT-53657a)](LICENSE)
-
-[Quick start](#try-the-demo) · [中文说明](README.zh-CN.md) · [Workflow guide](docs/VALIDATION.md) · [CLI reference](docs/CLI_REFERENCE.md) · [Project status](PROJECT_STATUS.md)
-
-</div>
-
-![Development profile: Flight Console with a completed, qualified simulation task](docs/assets/research_preview_desktop.png)
-
-*Actual desktop capture from the September 25, 2026 local acceptance run. The model,
-datasets and flight receipts shown here are local research artifacts, not bundled demo data.*
-
-## What this project is
-
-A local research sandbox connecting **PX4 SITL and Gazebo simulation**, **A\* route
-planning**, and **visual model iteration**. Use the desktop browser workspace or
-the optional macOS shell; the same managed workflows are available through the CLI.
-
-This is a **research preview**. The dependency-free Demo is ready to explore;
-training and flight need separately installed tools and supplied research assets.
-The project has not been validated on real aircraft or energized substations.
-
-## Explore the workspace
-
-| Workspace | What you can do |
-| --- | --- |
-| **Map Studio** | Edit a substation layout, check routes and freeze an immutable map revision. |
-| **Flight Console** | Run managed simulation tasks, inspect trajectories, and request a controlled stop and landing. |
-| **Dataset Manager** | Inspect collected frames, explicitly accept or reject labels, and register a versioned dataset. |
-| **Training Studio** | Run bounded YOLO experiments, fine-tune a verified parent and export ONNX. |
-| **Model Tester** | Inspect verified candidates and compare local-image predictions; native image import is available in the macOS shell. |
-| **Report Viewer** | Inspect evaluation results, job logs and identity-bound receipts. |
-
-The current model feedback loop is:
-
-```mermaid
-flowchart LR
-    A[Collect in SITL] --> B[Review every frame]
-    B --> C[Register dataset]
-    C --> D[Train and compare]
-    D --> E[Qualify selected model]
-    E --> F[Execute in fixed scene]
-    F --> A
-```
-
-Predictions are review drafts, not automatic ground truth. A selected model needs
-both a complete-task check and an in-motion controlled-stop check for the current
-runtime identity. Changes to the bound code, model or runtime require new checks.
-Custom-map flight and the qualified fixed-scene model task are separate workflows.
-
-## Try the Demo
-
-**Requirements:** Git, Python 3.11+ and a desktop browser on macOS or Linux.
-No Python packages, trained weights, datasets, PX4 or Gazebo are needed for Demo.
+Use Python **3.11+** on macOS or Linux. From a checkout of this source snapshot:
 
 ```sh
-git clone https://github.com/Xieyizhou/substation-uav-ml-research.git
-cd substation-uav-ml-research
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements-offline.txt
+python examples/dataset_audit/run.py --output outputs/examples/dataset-audit
+python examples/prediction_comparison/run.py --output outputs/examples/prediction-comparison
+python examples/receipt_check/run.py --output outputs/examples/receipt-check
+```
+
+Each output directory must be new. The commands use tracked geometric images and constructed predictions; they need no trained model, download of research assets, PX4 or Gazebo.
+
+| Workflow | What to inspect | What it demonstrates |
+| --- | --- | --- |
+| Dataset audit | `outputs/examples/dataset-audit/audit.json` | Import 8 training and 4 validation images through the existing YOLO dataset audit; reject malformed boxes and duplicate images. |
+| Prediction comparison | `outputs/examples/prediction-comparison/comparison.html` | Annotated images, per-class counts and metric changes on exactly the same cached inputs. Open the HTML locally. |
+| Receipt check | `outputs/examples/receipt-check/tamper_check.json` | Verify the original result and reject an altered copy. This example needs only the Python standard library. |
+
+The images are generated shapes, and the predictions are **manually constructed caches**. Their scores demonstrate matching and reporting, not equipment recognition accuracy. Dataset structure checks do not establish label correctness or independent physical sites. Receipts bind recorded bytes; they are not signatures or flight qualifications. See [example inputs and contracts](examples/README.md).
+
+## Explore the implementation
+
+The reusable parts are the audited data import, fixed experiment inputs, same-membership comparison and result verification. The examples call existing modules rather than introducing a second training system.
+
+| Capability | Start reading |
+| --- | --- |
+| Data audit and registration | [workbench_datasets.py](src/sandbox/workbench_datasets.py) |
+| Recipes and experiment receipts | [workbench_recipe.py](src/sandbox/workbench_recipe.py), [workbench_receipt.py](src/sandbox/workbench_receipt.py) |
+| Detection metrics and comparison | [detection_metrics.py](src/vision/evaluation/detection_metrics.py), [workbench_comparison.py](src/sandbox/workbench_comparison.py) |
+| Offline example orchestration | [offline_examples.py](src/sandbox/offline_examples.py) |
+| CLI, browser UI and optional simulation | [code guide](docs/CODE_GUIDE.md) |
+| Export and clean-install source identity | [source_bundle.py](src/sandbox/source_bundle.py) |
+
+## Read the engineering cases
+
+[Four curated case studies](docs/case-studies/README.md) retain measurements, failures, changes and remaining uncertainties:
+
+- Source verification blocking the telemetry event loop.
+- Shutdown diagnostics delaying simulator cleanup and overflowing a logging queue.
+- A shared magnetic model reducing static ground heading disagreement.
+- The E21 model comparison: three development seeds and a 56-frame synthetic test, including switchgear and small-object weaknesses.
+
+Small JSON excerpts carry the original artifact hashes. Run `python3 scripts/verify_case_studies.py` to check their internal arithmetic and excerpt identities. This does not reproduce the original training or flights. Full raw logs, weights and source datasets remain external.
+
+## Optional browser Demo
+
+A separate deterministic range/density classifier demonstrates managed jobs, recipes and receipts. It runs with **Python 3.11+ and no packages**:
+
+```sh
 ./scripts/run_sandbox_app.sh
 ```
 
-Open **[localhost:8765](http://127.0.0.1:8765/#results/acceptance)** →
-**Acceptance** → **Demo classifier** → **Create recipe and run**.
-The deterministic synthetic example demonstrates recipes and receipts; it does
-not measure detector quality. Press `Ctrl-C` in the terminal to stop the server.
-
-For a terminal-only run:
-
-```sh
-python3 main.py sandbox --profile demo demo-run --output outputs/sandbox/demo/runs/first
-python3 main.py sandbox --profile demo demo-inspect --input outputs/sandbox/demo/runs/first
-```
-
-[First-run guide and troubleshooting →](docs/SANDBOX_QUICKSTART.md)
-
-## Choose a research setup
-
-| Mode | Additional requirements | Scope |
-| --- | --- | --- |
-| **Demo** | None beyond Python | Synthetic workflow tour; no flight or real YOLO training. |
-| **Development · offline** | Core + ML dependencies and your own reviewed YOLO dataset | Training, ONNX checks, replay and comparison. |
-| **Development · simulation** | Compatible PX4/Gazebo, required model/data and scenario assets | Map flight, collection and the fixed-scene feedback loop. |
-| **Formal** | Frozen artifacts and the matching experiment protocol | Evidence-preserving evaluation; not an aircraft certification. |
-
-Start a development environment with **Python 3.12+** (the pinned local ML
-acceptance environment used Python 3.14):
-
-```sh
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -r requirements.txt
-# Optional: install before using real visual training; see the compatibility guide.
-python -m pip install -r requirements-ml.txt
-./scripts/run_sandbox_app.sh --profile development
-```
-
-The ML pins were validated locally on **Python 3.14 / macOS arm64**; that is
-separate from the Demo and core CI matrix. A source clone does **not** include
-trained weights, raw datasets, PX4/Gazebo, or the local frozen evidence archive.
-Some advanced workflows therefore remain unavailable until their inputs are
-provided. There is no automatic download of the author's research environment.
-
-[Setup and artifact boundaries](docs/RESEARCH_PREVIEW.md) ·
-[Dataset import and training](docs/RESEARCH_INSPECTOR.md) ·
-[Current model qualification](docs/VALIDATION.md#桌面反馈迭代)
-
-### Optional macOS app
-
-With a full Xcode installation, build the native shell from this checkout:
-
-```sh
-./scripts/build_macos_app.sh release
-open "dist/UAV Research Sandbox.app"
-```
-
-The native Demo can run without a repository or Python. Development and Formal
-use an external Python/simulator environment. Local builds are ad-hoc signed,
-not Apple-notarized. Existing older prerelease binaries do not necessarily match
-this source snapshot; see the [macOS guide](docs/MACOS_APP.md).
-
-## What has been verified
-
-| Evidence | Result and boundary |
-| --- | --- |
-| Portable core, September 25 | **974 tests passed** in an independently unpacked source tree with core test dependencies and no ML stack. Current CI is linked above. |
-| Full local research environment, September 25 | **2,093 tests passed**. Research checks require local artifacts and are separate from source-only CI. |
-| Desktop feedback loop | Collected 51 frames; AI-assisted explicit review accepted 46 and rejected 5; registered, fine-tuned, compared and flew the selected model in the existing fixed scene. |
-| Model comparison | Parent macro-F1 **0.970238 → 0.968013** on the same 64-image development validation set. The new model did **not** improve this metric. |
-| Runtime checks | Complete-task and controlled-stop checks passed. One later task aborted during visual revalidation and landed safely; an unchanged retry completed. No statistical success-rate claim. |
-| Historical evidence | 50 original records were reverified from a portable archive. These records do not qualify changed code or models. |
-
-[Acceptance report and exact identities →](docs/results/sandbox_core_completion_20260925.md)
-
-**Known limits:** simulation only; desktop only; no demonstrated real-image
-transfer or real-airframe readiness. The reviewed feedback used AI assistance,
-not independent human annotation. The retained base validation split is not
-proof of independence across physical sites. Historical selected runs are not
-universal performance guarantees.
+Open [localhost:8765](http://127.0.0.1:8765/#results/acceptance), then **Acceptance → Demo classifier → Create recipe and run**. Stop the server with `Ctrl-C`. A terminal-only alternative is in the [quick start](docs/SANDBOX_QUICKSTART.md).
 
 <details>
-<summary>Earlier research results and their evidence boundaries</summary>
+<summary>Historical desktop workspace</summary>
 
-- [Live LiDAR stability and six round trips](docs/results/v0.1_lidar_validation_20260728.md)
-- [Frozen visual baseline and historical-study audit](docs/results/verified_visual_and_flight_baselines_20260820.md)
-- [Dynamic replanning and speed-envelope results](docs/results/planning_reliability_20260820.md)
-- [Real-domain source eligibility](docs/REAL_DOMAIN_V3_SOURCES.md)
-- [Selected demonstration metrics](data/sample_outputs/comparison_summary.md)
+![September 25 desktop workspace](docs/assets/research_preview_desktop.png)
 
-Raw scans, model weights and most generated receipts are not stored in Git.
-Reports identify historical observations, not tests automatically reproduced by
-cloning this repository.
+Actual September 25, 2026 capture. The models, datasets and qualified-flight receipts shown are author-local research assets and are not bundled. The browser workspace includes map editing, collection, label review, training, model testing and reports. Its full research setup is described in [Research preview](docs/RESEARCH_PREVIEW.md).
 
 </details>
 
-## Develop and verify
+## Dependencies and scope
 
-Use Python 3.12+ for the complete core suite; Demo still supports Python 3.11.
+| Task | Install or supply | Scope |
+| --- | --- | --- |
+| Demo / receipt example | Python 3.11+ only | Deterministic local workflow |
+| Dataset audit / cached comparison | `requirements-offline.txt` (Pillow, PyYAML) | No training or inference |
+| Portable core tests | Python 3.12–3.14, `requirements-test.txt` including pytest, Node.js on PATH | No author datasets, weights, PX4 or Gazebo |
+| Real visual training / inference | Core + `requirements-ml.txt`, reviewed data and relevant weights | Existing image inference uses Ultralytics; ONNX Runtime alone is insufficient |
+| Native integration / SITL | Matching external PX4/Gazebo, plugins, inputs and new runtime qualification | Experimental, platform dependent |
+
+This **research-toolbox-20261102 source snapshot** uses the September 25 public baseline plus selected publication changes and October case excerpts. It does not merge the full later local flight-control worktree. Full autonomy expansion is paused; the public direction is offline research workflows and documented engineering results. No real-aircraft or real-substation readiness is claimed.
+
+The older **v0.6.4 macOS prerelease** belongs to its own commit. This source snapshot has no new desktop installer. See [publication scope](docs/PUBLICATION_SCOPE.md), [release notes](docs/RELEASE_SNAPSHOT_20261102.md) and [historical index](docs/HISTORY_INDEX.md).
+
+## Develop and distribute
 
 ```sh
-python3 -m venv .venv
-source .venv/bin/activate
 python -m pip install -r requirements-test.txt
 python scripts/run_tests.py --suite core --report outputs/core-tests.json
+python examples/generate_fixtures.py --check
+python scripts/verify_case_studies.py
+python scripts/export_source.py --output dist/research-toolbox-source.zip
 ```
 
-CI checks the dependency-free Demo, portable core, and native macOS tests/build/
-packaging. Offline checks do not run PX4/Gazebo missions or reproduce the author's
-full training data. See [validation](docs/VALIDATION.md) and
-[contributing](CONTRIBUTING.md) for research tests and contribution expectations.
+Core checks require Git, Bash/POSIX shell tools and `/usr/bin/python3` for a legacy packaging contract, plus Node.js on PATH for three executable JavaScript contracts; local validation and CI use Node 26.4.0. The test runner collects unittest classes, pytest functions and parameterized tests. A requested module with zero tests or a skipped required check fails acceptance. Research/native/SITL groups are explicit opt-ins; see [validation](docs/VALIDATION.md) and [contributing](CONTRIBUTING.md).
 
-| Path | Purpose |
-| --- | --- |
-| `src/` / `main.py` | Maintained application, CLI, planning, perception and flight modules |
-| `apps/macos/` | Optional SwiftUI shell |
-| `config/` / `simulation/` | Contracts, presets and simulator definitions |
-| `scripts/` | Entry points and evidence-dependent research tooling |
-| `archive/research_scripts/` | Preserved historical scripts with checksum manifest |
-| `tests/` | Portable core and separately declared research tests |
-| `docs/` / `data/sample_outputs/` | Guides, dated reports and curated small samples |
+The source exporter and clean-install gate share a tracked-file inventory. The ZIP includes per-file hashes and source provenance; it excludes research datasets, weights, environments and generated runs. See [distribution details](docs/PUBLICATION_SCOPE.md).
 
-For lightweight sharing, `python3 scripts/export_source.py --output dist/source.zip`
-creates a source-only bundle with a per-file hash manifest. Local datasets,
-weights, environments and generated runs stay outside the bundle.
+[GitHub main CI](https://github.com/Xieyizhou/substation-uav-ml-research/actions/workflows/ci.yml) describes the published main branch. Local candidate validation and the configured CI matrix are distinguished in the release notes; a historical green run does not verify this candidate.
 
-## License and provenance
+## License
 
-Project-authored code retains the [MIT license](LICENSE) from
-[uav-path-planning-demo](https://github.com/Xieyizhou/uav-path-planning-demo).
-See [provenance](PROVENANCE.md) and [third-party notices](THIRD_PARTY_NOTICES.md).
-External dependencies and assets have their own terms; in particular, the
-optional Ultralytics stack is AGPL-3.0 and is not relicensed by this repository.
+Project code and generated format fixtures use [MIT](LICENSE). See [provenance](PROVENANCE.md) and [third-party notices](THIRD_PARTY_NOTICES.md). External packages and assets retain their terms, including the optional Ultralytics AGPL-3.0 stack.
